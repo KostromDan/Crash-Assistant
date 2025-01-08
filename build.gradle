@@ -57,7 +57,10 @@ subprojects { subproject ->
 
 
 task collectJars(type: Copy) {
-    def deps = [':fabric', ':neoforge_coremod']
+    def deps = [
+//            ':fabric',
+            ':neoforge_coremod'
+    ]
             .collect { path -> project(path).tasks.remapJar }
     dependsOn deps
     from deps

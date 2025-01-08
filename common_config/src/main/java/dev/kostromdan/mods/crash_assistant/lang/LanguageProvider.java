@@ -15,10 +15,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class LanguageProvider {
+    private static final Logger LOGGER = LogManager.getLogger();
     public static Path OPTIONS_PATH = Paths.get("options.txt");
     public static Path LANG_PATH = Paths.get("config", "crash_assistant", "lang");
-    private static final Logger LOGGER = LogManager.getLogger();
-
     public static HashMap<String, Lang> languages = new HashMap<>();
     public static String currentLangName;
 

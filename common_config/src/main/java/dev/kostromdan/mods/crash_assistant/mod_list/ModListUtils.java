@@ -19,10 +19,9 @@ import java.util.stream.Collectors;
 
 public class ModListUtils {
     public static final Logger LOGGER = LogManager.getLogger();
-
+    public static final Path USERNAME_FILE = Paths.get("local", "crash_assistant", "username.info");
     private static final Path MODS_FOLDER = Paths.get("mods");
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
-    public static final Path USERNAME_FILE = Paths.get("local", "crash_assistant", "username.info");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static HashSet<String> getCurrentModList() {
@@ -95,9 +94,9 @@ public class ModListUtils {
                 }
             }
             List<String> modpackCreators = CrashAssistantConfig.getModpackCreators();
-            if(modpackCreators.contains(currentUsername) || modpackCreators.isEmpty()) {
+            if (modpackCreators.contains(currentUsername) || modpackCreators.isEmpty()) {
                 generatedMsg += "Modlist changes beyond the latest successful launch:\n";
-            }else {
+            } else {
                 generatedMsg += "Modlist changes beyond the modpack:\n";
             }
 

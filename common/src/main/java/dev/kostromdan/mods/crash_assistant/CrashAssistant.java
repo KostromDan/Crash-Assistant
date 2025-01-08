@@ -1,9 +1,7 @@
 package dev.kostromdan.mods.crash_assistant;
 
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.utils.ManualCrashThrower;
-import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

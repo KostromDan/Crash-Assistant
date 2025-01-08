@@ -7,7 +7,6 @@ import gs.mclo.api.MclogsClient;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
-import java.sql.Time;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Timer;
@@ -71,7 +70,7 @@ public class CrashAssistantGUI {
 
             @Override
             public void run() {
-                if (!frame.isFocused()||!frame.isVisible()|| frame.isActive()) {
+                if (!frame.isFocused() || !frame.isVisible() || frame.isActive()) {
                     SwingUtilities.invokeLater(() -> {
                         frame.setAlwaysOnTop(true);
                         frame.toFront();

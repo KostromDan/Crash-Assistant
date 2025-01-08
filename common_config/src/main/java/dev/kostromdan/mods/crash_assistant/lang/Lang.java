@@ -7,16 +7,15 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class Lang {
-    public HashMap<String, String> lang;
     public static final HashMap<String, String> PlaceHolderToConfigMap = new HashMap<>() {{
         put("$SUPPORT_NAME$", "text.support_name");
         put("$MODPACK_NAME$", "text.modpack_name");
         put("$SUPPORT_PLACE$", "text.support_place");
     }};
+    public HashMap<String, String> lang;
 
-    public String get(String key) {
-        String value = lang.getOrDefault(key, LanguageProvider.languages.get("en_us").lang.get(key));
-        return applyPlaceHolders(value);
+    public Lang(HashMap<String, String> lang) {
+        this.lang = lang;
     }
 
     private static String applyPlaceHolders(String value) {
@@ -33,8 +32,8 @@ public class Lang {
         return value;
     }
 
-
-    public Lang(HashMap<String, String> lang) {
-        this.lang = lang;
+    public String get(String key) {
+        String value = lang.getOrDefault(key, LanguageProvider.languages.get("en_us").lang.get(key));
+        return applyPlaceHolders(value);
     }
 }

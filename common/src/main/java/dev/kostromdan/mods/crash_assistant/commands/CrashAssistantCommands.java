@@ -29,8 +29,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class CrashAssistantCommands {
-    public static Instant lastCrashCommand = Instant.ofEpochMilli(0);
-    public static boolean isDeadLocked = false;
     public static final HashMap<String, String> supportedCrashCommands = new HashMap<>() {{
         put("game", "Minecraft");
         put("jwm", "JVM");
@@ -41,6 +39,8 @@ public class CrashAssistantCommands {
         add("--withHeapDump");
         add("--GCBeforeHeapDump");
     }};
+    public static Instant lastCrashCommand = Instant.ofEpochMilli(0);
+    public static boolean isDeadLocked = false;
 
     @SuppressWarnings("unchecked")
     public static <S> LiteralArgumentBuilder<S> getCommands() {
@@ -280,6 +280,12 @@ public class CrashAssistantCommands {
         return args;
     }
 
+    public static ArgumentBuilder getCrashArg(int i) {
+        return RequiredArgumentBuilder.argument("arg" + i, StringArgumentType.string())
+                .suggests(new CrashArgsSuggestionProvider<>())
+                .executes(CrashAssistantCommands::crash);
+    }
+
     public static class CrashArgsSuggestionProvider<S> implements SuggestionProvider<S> {
         @Override
         public CompletableFuture<Suggestions> getSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
@@ -301,11 +307,5 @@ public class CrashAssistantCommands {
             }
             return builder.buildFuture();
         }
-    }
-
-    public static ArgumentBuilder getCrashArg(int i) {
-        return RequiredArgumentBuilder.argument("arg" + i, StringArgumentType.string())
-                .suggests(new CrashArgsSuggestionProvider<>())
-                .executes(CrashAssistantCommands::crash);
     }
 }

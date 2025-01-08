@@ -1,0 +1,34 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+issueTrackerURL = "https://github.com/KostromDan/Crash-Assistant/issues"
+license = "MIT"
+
+[[mods]]
+modId = "crash_assistant"
+version = "${version}"
+displayName = "Crash Assistant"
+authors = "KostromDan"
+description = '''
+Shows a GUI after Minecraft crashes, immediately showing all affected logs, crash reports, or hs_err files. Provides a one-click solution to upload them, copy the link, and perform other actions for easier reporting, debugging, and troubleshooting.
+'''
+#logoFile = ""
+
+[[dependencies.crash_assistant]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.crash_assistant]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[mixins]]
+config = "crash_assistant.mixins.json"
+
+[[mixins]]
+config = "crash_assistant-forge.mixins.json"

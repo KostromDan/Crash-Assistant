@@ -1,6 +1,5 @@
 package dev.kostromdan.mods.crash_assistant.loading_utils;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
@@ -10,11 +9,10 @@ import org.apache.logging.log4j.core.Core;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -220,15 +218,5 @@ public interface JarInJarHelper {
             values.put(entry.getKey(), entry.getValue().getAsString());
         }
         return values;
-    }
-
-
-    static Path getJarInJar(String name) throws IOException, URISyntaxException {
-        //Idea taken from org.sinytra.connector.locator.EmbeddedDependencies#getJarInJar
-        Path pathInModFile = Path.of(JarInJarHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI()).resolve("META-INF/jarjar/" + name);
-        URI filePathUri = new URI("jij:" + pathInModFile.toAbsolutePath().toUri().getRawSchemeSpecificPart()).normalize();
-        Map<String, ?> outerFsArgs = ImmutableMap.of("packagePath", pathInModFile);
-        FileSystem zipFS = FileSystems.newFileSystem(filePathUri, outerFsArgs);
-        return zipFS.getPath("/");
     }
 }

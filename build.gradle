@@ -22,8 +22,8 @@ subprojects { subproject ->
 
         var archives_name
         base {
-            if (subproject.name in ['forge_coremod']) {
-                archivesName = "$rootProject.archives_name-forge"
+            if (subproject.name in ['neoforge_coremod']) {
+                archivesName = "$rootProject.archives_name-neoforge"
             } else {
                 archivesName = "$rootProject.archives_name-$project.name"
             }
@@ -45,19 +45,19 @@ subprojects { subproject ->
         java {
             withSourcesJar()
 
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
         }
 
         tasks.withType(JavaCompile).configureEach {
-            it.options.release = 17
+            it.options.release = 21
         }
     }
 }
 
 
 task collectJars(type: Copy) {
-    def deps = [':fabric', ':forge_coremod']
+    def deps = [':fabric', ':neoforge_coremod']
             .collect { path -> project(path).tasks.remapJar }
     dependsOn deps
     from deps

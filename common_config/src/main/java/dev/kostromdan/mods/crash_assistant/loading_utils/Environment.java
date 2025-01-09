@@ -1,7 +1,5 @@
 package dev.kostromdan.mods.crash_assistant.loading_utils;
 
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,9 +9,8 @@ public enum Environment {
     SERVER,
     CLIENT;
 
-    private static Environment currentEnvironment = null;
     private static final Path currentEnvironmentPath = Paths.get("local", "crash_assistant", "environment.info");
-
+    private static Environment currentEnvironment = null;
 
     public static void setEnvironment(Environment environment) {
         currentEnvironment = environment;
@@ -27,10 +24,9 @@ public enum Environment {
 
     public static Environment getCurrentEnvironment() {
         if (currentEnvironment == null) {
-            try{
+            try {
                 currentEnvironment = Environment.valueOf(new String(Files.readAllBytes(currentEnvironmentPath)));
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 currentEnvironment = Environment.SERVER;
                 JarInJarHelper.LOGGER.error(e);
             }

@@ -14,11 +14,11 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 public class ControlPanel {
+    public static boolean modListDiffShown = false;
     private final JPanel panel;
     private final FileListPanel fileListPanel;
     private final JButton uploadAllButton;
     private String generatedMsg = null;
-    public static boolean modListDiffShown = false;
 
     public ControlPanel(FileListPanel fileListPanel) {
         this.fileListPanel = fileListPanel;

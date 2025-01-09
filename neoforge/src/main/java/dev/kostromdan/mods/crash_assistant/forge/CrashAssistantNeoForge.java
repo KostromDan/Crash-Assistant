@@ -6,6 +6,7 @@ import dev.kostromdan.mods.crash_assistant.commands.CrashAssistantCommands;
 import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -13,7 +14,9 @@ import net.neoforged.neoforge.common.NeoForge;
 public final class CrashAssistantNeoForge {
     public CrashAssistantNeoForge() {
         CrashAssistant.init();
-        NeoForge.EVENT_BUS.register(ClientModEvents.class);
+        if (FMLEnvironment.dist.isClient()) {
+            NeoForge.EVENT_BUS.register(ClientModEvents.class);
+        }
 
     }
 

@@ -23,7 +23,10 @@ public class CrashAssistantDependencyLocator extends JarInJarDependencyLocator i
 
     @Override
     public void scanMods(List<IModFile> loadedMods, IDiscoveryPipeline pipeline) {
-        if (Environment.getCurrentEnvironment() == Environment.SERVER) return;
+        if (Environment.getCurrentEnvironment() == Environment.SERVER) {
+            LOGGER.warn("Crash Assistant is client only mod. Prevented mod loading!");
+            return;
+        };
         try {
             SecureJar secureJar = SecureJar.from(Path.of(CrashAssistantDependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
             IModFile modFile = IModFile.create(secureJar, JarModsDotTomlModFileReader::manifestParser);

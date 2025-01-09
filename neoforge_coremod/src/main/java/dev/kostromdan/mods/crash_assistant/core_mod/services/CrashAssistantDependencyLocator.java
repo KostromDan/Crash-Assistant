@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.core_mod.services;
 
 import cpw.mods.jarhandling.SecureJar;
+import dev.kostromdan.mods.crash_assistant.loading_utils.Environment;
 import net.neoforged.fml.loading.moddiscovery.locators.JarInJarDependencyLocator;
 import net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader;
 import net.neoforged.neoforgespi.locating.IDependencyLocator;
@@ -21,19 +22,15 @@ public class CrashAssistantDependencyLocator extends JarInJarDependencyLocator i
     public static final Logger LOGGER = LoggerFactory.getLogger("CrashAssistantDependencyLocator");
 
     @Override
-    public int getPriority() {
-        return LOWEST_SYSTEM_PRIORITY;
-    }
-
-    @Override
     public void scanMods(List<IModFile> loadedMods, IDiscoveryPipeline pipeline) {
+        if (Environment.getCurrentEnvironment() == Environment.SERVER) return;
         try {
             SecureJar secureJar = SecureJar.from(Path.of(CrashAssistantDependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
             IModFile modFile = IModFile.create(secureJar, JarModsDotTomlModFileReader::manifestParser);
             Optional<IModFile> neoForgeMod = loadModFileFrom(modFile, Path.of("META-INF", "jarjar", "crash_assistant-neoforge.jar"), pipeline);
             pipeline.addModFile(neoForgeMod.get());
         } catch (Exception e) {
-            LOGGER.error("Error while extracting crash_assistant-neoforge.jar: ", e);
+            LOGGER.error("Error while adding crash_assistant-neoforge.jar to pipeline: ", e);
         }
     }
 }

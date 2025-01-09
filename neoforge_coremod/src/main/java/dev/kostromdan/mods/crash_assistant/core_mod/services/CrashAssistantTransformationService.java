@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * CrashAssistantApp should be launched as soon as possible after game start
  * to be able to help players even with coremod/mixin/hs_err crashes.
- * So we launch it from static block of ITransformationService, the first point, we can launch it from forge mod.
+ * So we launch it from initialize of ITransformationService, the first point, we can launch it from forge mod.
  */
 public class CrashAssistantTransformationService implements ITransformationService {
     public static final Logger LOGGER = LoggerFactory.getLogger("CrashAssistantTransformationService");

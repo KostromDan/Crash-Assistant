@@ -1,4 +1,12 @@
+1.2.5:
+- Fixed grammar in crash jvm command.
+- Don't load mod instead of crashing dedicated server.
+- Improve modlist diff dialog.
+- Link in generated msg is now surrounded by <>.
+- Small fixes.
+
 1.2.4:
+- Neoforge 1.21.1 port.
 - Added "the" to upload button text in en_us lang.
 
 1.2.3:

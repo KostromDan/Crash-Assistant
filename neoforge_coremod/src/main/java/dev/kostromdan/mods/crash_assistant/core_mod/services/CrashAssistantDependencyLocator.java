@@ -33,7 +33,7 @@ public class CrashAssistantDependencyLocator extends JarInJarDependencyLocator i
             Optional<IModFile> neoForgeMod = loadModFileFrom(modFile, Path.of("META-INF", "jarjar", "crash_assistant-neoforge.jar"), pipeline);
             pipeline.addModFile(neoForgeMod.get());
         } catch (Exception e) {
-            LOGGER.error("Error while extracting mod.jar: ", e);
+            LOGGER.error("Error while extracting crash_assistant-neoforge.jar: ", e);
         }
     }
 }

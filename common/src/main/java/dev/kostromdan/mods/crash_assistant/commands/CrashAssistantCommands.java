@@ -31,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 public class CrashAssistantCommands {
     public static final HashMap<String, String> supportedCrashCommands = new HashMap<>() {{
         put("game", "Minecraft");
-        put("jwm", "JVM");
+        put("jvm", "JVM");
         put("no_crash", "noCrash");
     }};
     public static final HashSet<String> supportedCrashArgs = new HashSet<>() {{

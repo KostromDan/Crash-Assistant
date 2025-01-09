@@ -23,8 +23,9 @@ public interface JarInJarHelper {
 
     static void launchCrashAssistantApp(String launchTarget) {
         if (!launchTarget.toLowerCase().contains("client")) {
-            LOGGER.error("launchTarget: " + launchTarget + ". Crash Assistant is client only mod. Remove it from server!");
-            System.exit(-1);
+            Environment.setEnvironment(Environment.CLIENT);
+            LOGGER.error("launchTarget: " + launchTarget + ". Crash Assistant is client only mod. Mod will do nothing!");
+            return;
         }
         LOGGER.info("Launching CrashAssistantApp");
         try {

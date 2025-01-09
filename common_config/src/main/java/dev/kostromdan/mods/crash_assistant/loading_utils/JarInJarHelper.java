@@ -23,10 +23,11 @@ public interface JarInJarHelper {
 
     static void launchCrashAssistantApp(String launchTarget) {
         if (!launchTarget.toLowerCase().contains("client")) {
-            Environment.setEnvironment(Environment.CLIENT);
-            LOGGER.error("launchTarget: " + launchTarget + ". Crash Assistant is client only mod. Mod will do nothing!");
+            Environment.setEnvironment(Environment.SERVER);
+            LOGGER.warn("launchTarget: " + launchTarget + ". Crash Assistant is client only mod. Mod will do nothing!");
             return;
         }
+        Environment.setEnvironment(Environment.CLIENT);
         LOGGER.info("Launching CrashAssistantApp");
         try {
             ProcessHandle currentProcess = ProcessHandle.current();

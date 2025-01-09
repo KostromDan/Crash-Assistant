@@ -70,7 +70,7 @@ public class CrashAssistantGUI {
 
             @Override
             public void run() {
-                if (!frame.isFocused() || !frame.isVisible() || frame.isActive()) {
+                if (!ControlPanel.modListDiffShown && (!frame.isFocused() || !frame.isVisible() || frame.isActive())) {
                     SwingUtilities.invokeLater(() -> {
                         frame.setAlwaysOnTop(true);
                         frame.toFront();

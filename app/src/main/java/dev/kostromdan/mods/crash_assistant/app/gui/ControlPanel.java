@@ -18,6 +18,7 @@ public class ControlPanel {
     private final FileListPanel fileListPanel;
     private final JButton uploadAllButton;
     private String generatedMsg = null;
+    public static boolean modListDiffShown = false;
 
     public ControlPanel(FileListPanel fileListPanel) {
         this.fileListPanel = fileListPanel;
@@ -89,7 +90,23 @@ public class ControlPanel {
     }
 
     private void showModList() {
-        JOptionPane.showMessageDialog(null, ModListUtils.generateDiffMsg(), LanguageProvider.get("gui.modlist_diff_dialog_name"), JOptionPane.INFORMATION_MESSAGE);
+        modListDiffShown = true;
+        JTextPane textPane = new JTextPane();
+        textPane.setEditable(false);
+        textPane.setContentType("text/html");
+        textPane.setText(ModListUtils.generateDiffMsg(true));
+        textPane.setCaretPosition(0);
+
+        JScrollPane scrollPane = new JScrollPane(textPane);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new Dimension(Math.min(scrollPane.getPreferredSize().width, 700), 300));
+
+        JOptionPane.showMessageDialog(
+                null,
+                scrollPane,
+                LanguageProvider.get("gui.modlist_diff_dialog_name"),
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
 
     private void uploadAllFiles() {
@@ -140,7 +157,7 @@ public class ControlPanel {
                 }
                 generatedMsg = CrashAssistantConfig.get("text.modpack_name") + " crashed!\n";
                 for (FilePanel panel : fileListPanel.filePanelList) {
-                    generatedMsg += panel.getFileName() + ": " + panel.getUploadedLink() + "\n";
+                    generatedMsg += panel.getFileName() + ": <" + panel.getUploadedLink() + ">\n";
                 }
                 generatedMsg += "\n";
                 generatedMsg += ModListUtils.generateDiffMsg();

@@ -82,6 +82,21 @@ public class ModListUtils {
     }
 
     public static String generateDiffMsg() {
+        return generateDiffMsg(false);
+    }
+
+    public static String getFormattedString(boolean asHtmlWithColor, String text) {
+        return getFormattedString(asHtmlWithColor, text, "");
+    }
+
+    public static String getFormattedString(boolean asHtmlWithColor, String text, String style) {
+        if (asHtmlWithColor) {
+            return "<span" + (style.isEmpty() ? "" : " style='" + style + "'") + ">" + text + "</span><br>";
+        }
+        return text + "\n";
+    }
+
+    public static String generateDiffMsg(boolean asHtmlWithColor) {
         String generatedMsg = "";
         if (CrashAssistantConfig.get("modpack_modlist.enabled")) {
             ModListDiff diff = ModListUtils.getDiff();
@@ -93,28 +108,35 @@ public class ModListUtils {
                 } catch (Exception ignored) {
                 }
             }
+            if (asHtmlWithColor) {
+                generatedMsg += "<html><body style='font-family: Arial; font-size: 12px;'>";
+            }
             List<String> modpackCreators = CrashAssistantConfig.getModpackCreators();
             if (modpackCreators.contains(currentUsername) || modpackCreators.isEmpty()) {
-                generatedMsg += "Modlist changes beyond the latest successful launch:\n";
+                generatedMsg += getFormattedString(asHtmlWithColor, "Modlist changes beyond the latest successful launch:");
             } else {
-                generatedMsg += "Modlist changes beyond the modpack:\n";
+                generatedMsg += getFormattedString(asHtmlWithColor, "Modlist changes beyond the modpack:");
             }
 
             if (diff.addedMods().isEmpty() && diff.removedMods().isEmpty()) {
-                generatedMsg += "Modpack modlist wasn't modified.\n";
+                generatedMsg += getFormattedString(asHtmlWithColor, "Modpack modlist wasn't modified.", "color: orange;");
             } else {
-                generatedMsg += "Added mods:\n";
+                generatedMsg += getFormattedString(asHtmlWithColor, "Added mods:");
                 if (diff.addedMods().isEmpty()) {
-                    generatedMsg += "Mods weren't added.\n";
+                    generatedMsg += getFormattedString(asHtmlWithColor, "Mods weren't added.", "color: orange;");
                 } else {
-                    generatedMsg += String.join("\n", diff.addedMods());
+                    generatedMsg += diff.addedMods().stream().map(x -> getFormattedString(asHtmlWithColor, x, "color: green;")).collect(Collectors.joining(""));
                 }
-                generatedMsg += "\nRemoved mods:\n";
+                generatedMsg += getFormattedString(asHtmlWithColor, "");
+                generatedMsg += getFormattedString(asHtmlWithColor, "Removed mods:");
                 if (diff.removedMods().isEmpty()) {
-                    generatedMsg += "Mods weren't removed.\n";
+                    generatedMsg += getFormattedString(asHtmlWithColor, "Mods weren't removed.", "color: orange;");
                 } else {
-                    generatedMsg += String.join("\n", diff.removedMods());
+                    generatedMsg += diff.removedMods().stream().map(x -> getFormattedString(asHtmlWithColor, x, "color: red;")).collect(Collectors.joining(""));
                 }
+            }
+            if (asHtmlWithColor) {
+                generatedMsg += "</body></html>";
             }
         }
         return generatedMsg;

@@ -180,6 +180,7 @@ public class FilePanel {
                 transformCopyLinkButton();
 
                 uploadButton.setText(LanguageProvider.get("gui.copied"));
+                CrashAssistantGUI.highlightButton(uploadButton, new Color(100, 255, 100), 2600);
                 uploadButton.setEnabled(false);
             }
             new java.util.Timer().schedule(

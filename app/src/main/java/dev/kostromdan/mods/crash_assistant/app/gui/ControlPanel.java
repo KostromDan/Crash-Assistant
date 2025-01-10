@@ -8,6 +8,8 @@ import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.net.URI;
 import java.net.URL;
@@ -18,6 +20,7 @@ public class ControlPanel {
     private final JPanel panel;
     private final FileListPanel fileListPanel;
     private final JButton uploadAllButton;
+    private final JButton requestHelpButton;
     private String generatedMsg = null;
 
     public ControlPanel(FileListPanel fileListPanel) {
@@ -68,7 +71,7 @@ public class ControlPanel {
         gbc.gridy = 0;
         bottomPanel.add(uploadAllButton, gbc);
 
-        JButton requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));
+        requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));
         requestHelpButton.addActionListener(e -> requestHelp());
         gbc.gridy = 1;
         bottomPanel.add(requestHelpButton, gbc);
@@ -164,6 +167,7 @@ public class ControlPanel {
             }
             ClipboardUtils.copy(generatedMsg);
             uploadAllButton.setText(LanguageProvider.get("gui.copied"));
+            CrashAssistantGUI.highlightButton(uploadAllButton, new Color(100, 255, 100), 2600);
             new java.util.Timer().schedule(
                     new java.util.TimerTask() {
                         @Override
@@ -175,5 +179,24 @@ public class ControlPanel {
                     3000
             );
         }).start();
+    }
+
+    public HyperlinkListener getHyperlinkListener() {
+        return e -> {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                String description = e.getDescription();
+
+                JButton buttonToHighlight;
+                if ("LANG.gui.upload_all_comment".equals(description)) {
+                    buttonToHighlight = uploadAllButton;
+                } else if ("SUPPORT_NAME".equals(description)) {
+                    buttonToHighlight = requestHelpButton;
+                }else{
+                    CrashAssistantApp.LOGGER.error("Unsupported hyperlink event: " + description);
+                    return;
+                }
+                CrashAssistantGUI.highlightButton(buttonToHighlight, new Color(255, 100, 100), 3000);
+            }
+        };
     }
 }

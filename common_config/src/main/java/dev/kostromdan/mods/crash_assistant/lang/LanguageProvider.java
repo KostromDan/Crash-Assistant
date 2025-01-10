@@ -30,6 +30,10 @@ public class LanguageProvider {
         return languages.getOrDefault(currentLangName, languages.get("en_us")).get(key);
     }
 
+    public static String get(String key,HashSet<String> placeHoldersSurroundedWithHref) {
+        return languages.getOrDefault(currentLangName, languages.get("en_us")).get(key, placeHoldersSurroundedWithHref);
+    }
+
     public static void updateLang() {
         currentLangName = getCurrentLang();
     }

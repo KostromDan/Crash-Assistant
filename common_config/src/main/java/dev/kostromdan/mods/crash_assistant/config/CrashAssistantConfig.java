@@ -50,6 +50,9 @@ public class CrashAssistantConfig {
         addOption("general.default_lang",
                 "If options.txt doesn't exist, the default language will be used.",
                 "en_us");
+        addOption("general.show_dont_send_screenshot_of_gui_notice",
+                "Append comment text with notice about sending screenshot of this gui tells nothing to modpack creators.",
+                true);
 
         ArrayList<String> defaultBlacklistedLogs = new ArrayList<>();
         defaultBlacklistedLogs.add("CrashAssistant: latest.log");

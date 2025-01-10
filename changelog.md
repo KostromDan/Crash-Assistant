@@ -1,3 +1,11 @@
+1.2.6:
+- Done a lot of work to prevent posting screenshot of GUI instead of generated msg:
+  - `Upload all...` and `$SUPPORT_NAME$` of commentLabel are now hyperlinks. Pressing them will result blinking for 3 seconds of according button background with light red.
+  - Then upload finished: `Copied!` button background will blink with light green for 3 seconds to request user attention.
+  - Added under comment label optional bold red text `Please read the text above carefully. Screenshot of this GUI, tells us nothing!`. You can disable this with new config option.
+- Improved and simplified Environment check to prevent potential issues.
+- Small fixes.
+
 1.2.5:
 - Fixed grammar in crash jvm command.
 - Don't load mod instead of crashing dedicated server.

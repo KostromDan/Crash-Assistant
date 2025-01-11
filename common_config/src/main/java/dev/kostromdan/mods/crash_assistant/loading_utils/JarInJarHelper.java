@@ -40,7 +40,7 @@ public interface JarInJarHelper {
 
             ProcessBuilder crashAssistantAppProcessBuilder = new ProcessBuilder(
                     javaBinary.get(),
-                    "-XX:+UseG1GC",
+                    "-XX:+UseSerialGC",
                     "-XX:MaxHeapFreeRatio=30",
                     "-XX:MinHeapFreeRatio=10",
                     "-XX:MaxGCPauseMillis=10000",

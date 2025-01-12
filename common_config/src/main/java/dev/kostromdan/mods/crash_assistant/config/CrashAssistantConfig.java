@@ -81,7 +81,8 @@ public class CrashAssistantConfig {
                 "#player_help channel");
         addOption("text.modpack_name",
                 "$MODPACK_NAME$ in lang files will be replaced with this value.\n" +
-                        "For example this placeHolder used in: \"gui.title_crashed_with_report\": \"Oops, $MODPACK_NAME$ crashed!\"",
+                        "For example this placeHolder used in: \"gui.title_crashed_with_report\": \"Oops, $MODPACK_NAME$ crashed!\"\n" +
+                        "Supports Better Compatibility Checker integration. You can use $BCC.modpackVersion$, $BCC.modpackName$, etc and it will be replaced with value from config/bcc-common.toml",
                 "Minecraft");
 
         config.setComment("modpack_modlist", "Settings of modlist feature.\n" +

@@ -22,6 +22,7 @@
   "gui.request_help_button": "Request help in the $SUPPORT_NAME$",
   "gui.failed_to_upload_file": "Failed to upload file",
   "gui.browser_button_tooltip": "Open link in browser",
+  "text.modpack_name": " $MODPACK_NAME$ ",
   "commands.mod_config_tooltip": "Click to open config",
   "commands.nickname_tooltip": "Click to copy nick",
   "commands.modlist_disabled_error_msg": "Modlist feature is disabled! You can enable it in ",

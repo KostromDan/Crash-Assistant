@@ -163,7 +163,7 @@ public class ControlPanel {
 
                     }
                 }
-                generatedMsg = CrashAssistantConfig.get("text.modpack_name") + " crashed!\n";
+                generatedMsg = LanguageProvider.get("text.modpack_name") + " crashed!\n";
                 for (FilePanel panel : fileListPanel.filePanelList) {
                     generatedMsg += panel.getFileName() + ": <" + panel.getUploadedLink() + ">\n";
                 }

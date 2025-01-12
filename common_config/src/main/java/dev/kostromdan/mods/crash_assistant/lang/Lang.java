@@ -20,6 +20,7 @@ public class Lang {
         put("$MODPACK_NAME$", "text.modpack_name");
         put("$SUPPORT_PLACE$", "text.support_place");
         put("$LANG.gui.upload_all_comment$", null);
+        put("$LANG.gui.file_list_label$", null);
         put("$BCC.modpackVersion$", null);
         put("$BCC.modpackName$", null);
     }};

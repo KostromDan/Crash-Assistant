@@ -10,20 +10,22 @@ import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 import gs.mclo.api.response.UploadLogResponse;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.net.URI;
 import java.net.URL;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class ControlPanel {
     public static boolean stopMovingToTop = false;
-    private final JPanel panel;
+    private static boolean moddedMinecraftWarningShown = false;
+    private static JPanel panel;
+    public static JDialog dialog;
     private final FileListPanel fileListPanel;
-    private final JButton uploadAllButton;
-    private final JButton requestHelpButton;
+    public final JButton uploadAllButton;
+    public final JButton requestHelpButton;
     private String generatedMsg = null;
 
     public ControlPanel(FileListPanel fileListPanel) {
@@ -118,6 +120,23 @@ public class ControlPanel {
 
     private void uploadAllFiles() {
         stopMovingToTop = true;
+        if (!moddedMinecraftWarningShown && Objects.equals(CrashAssistantConfig.get("general.help_link"), "https://discord.gg/moddedmc")) {
+            JEditorPane commentPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.upload_all_button_moddedmc_warning", new HashSet<>() {{
+                add("$LANG.gui.file_list_label$");
+            }}));
+            JOptionPane optionPane = new JOptionPane(
+                    commentPane,
+                    JOptionPane.WARNING_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+            );
+            dialog = optionPane.createDialog(
+                    panel,
+                    LanguageProvider.get("gui.upload_all_button_moddedmc_warning_title")
+            );
+            moddedMinecraftWarningShown = true;
+            dialog.setVisible(true);
+            return;
+        }
         new Thread(() -> {
             uploadAllButton.setEnabled(false);
             if (generatedMsg == null) {
@@ -196,25 +215,6 @@ public class ControlPanel {
                     3000
             );
         }).start();
-    }
-
-    public HyperlinkListener getHyperlinkListener() {
-        return e -> {
-            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                String description = e.getDescription();
-
-                JButton buttonToHighlight;
-                if ("LANG.gui.upload_all_comment".equals(description)) {
-                    buttonToHighlight = uploadAllButton;
-                } else if ("SUPPORT_NAME".equals(description)) {
-                    buttonToHighlight = requestHelpButton;
-                } else {
-                    CrashAssistantApp.LOGGER.error("Unsupported hyperlink event: " + description);
-                    return;
-                }
-                CrashAssistantGUI.highlightButton(buttonToHighlight, new Color(255, 100, 100), 3000);
-            }
-        };
     }
 
     public String uploadModlistDiff(String diff) throws ExecutionException, InterruptedException, UploadException {

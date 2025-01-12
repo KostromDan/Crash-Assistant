@@ -214,7 +214,6 @@ public class CrashAssistantConfig {
                 hash += ((AbstractCommentedConfig) value).commentMap().hashCode();
             }
         }
-        LOGGER.info(hash);
         return hash;
     }
 

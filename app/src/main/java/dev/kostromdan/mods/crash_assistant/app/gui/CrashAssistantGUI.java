@@ -7,6 +7,8 @@ import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import gs.mclo.api.MclogsClient;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.nio.file.Path;
@@ -17,9 +19,9 @@ import java.util.Timer;
 public class CrashAssistantGUI {
     public static final MclogsClient MCLogsClient = new MclogsClient("CrashAssistant");
     private final JFrame frame;
-    private final FileListPanel fileListPanel;
-    private final ControlPanel controlPanel;
-    private static HashSet<JButton> highlightedButtons = new HashSet<>();
+    private static FileListPanel fileListPanel;
+    private static ControlPanel controlPanel;
+    private static HashSet<JComponent> highlightedButtons = new HashSet<>();
 
 
     public CrashAssistantGUI(Map<String, Path> availableLogs) {
@@ -34,6 +36,7 @@ public class CrashAssistantGUI {
                 LanguageProvider.get("gui.title_crashed_with_report") :
                 LanguageProvider.get("gui.title_crashed_without_report");
         JLabel titleLabel = new JLabel(titleText, SwingConstants.LEFT);
+        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         titleLabel.setFont(titleLabel.getFont().deriveFont(16f));
 
         String commentText = LanguageProvider.get("gui.comment_under_title", new HashSet<>() {{
@@ -45,28 +48,13 @@ public class CrashAssistantGUI {
             commentText += "\n<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
         }
 
-        JEditorPane commentLabel = new JEditorPane();
-        commentLabel.setEditable(false);
-        commentLabel.setContentType("text/html");
-        commentLabel.setText("<html><div style='white-space:nowrap;'>" + commentText.replaceAll("\n", "<br>") + "</div></html>");
-
-        Font defaultFont = UIManager.getFont("Label.font");
-        String bodyRule = "body { font-family: " + defaultFont.getFamily() + "; " +
-                "font-size: " + defaultFont.getSize() + "pt; }";
-        ((HTMLDocument) commentLabel.getDocument()).getStyleSheet().addRule(bodyRule);
-
-        commentLabel.setEditable(false);
-        commentLabel.setOpaque(false);
-        commentLabel.setBackground(titleLabel.getBackground());
-
-        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        commentLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JEditorPane commentPane = getEditorPane(commentText);
 
         JPanel labelPanel = new JPanel();
         labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.Y_AXIS));
         labelPanel.add(titleLabel);
         if (!commentText.isEmpty()) {
-            labelPanel.add(commentLabel);
+            labelPanel.add(commentPane);
         }
 
         frame.add(labelPanel, BorderLayout.NORTH);
@@ -75,7 +63,6 @@ public class CrashAssistantGUI {
         frame.add(fileListPanel.getScrollPane(), BorderLayout.CENTER);
 
         controlPanel = new ControlPanel(fileListPanel);
-        commentLabel.addHyperlinkListener(controlPanel.getHyperlinkListener());
         frame.add(controlPanel.getPanel(), BorderLayout.SOUTH);
 
         int heightWithoutScrollPane = frame.getPreferredSize().height;
@@ -112,7 +99,7 @@ public class CrashAssistantGUI {
         }, 0, 50);
     }
 
-    public static void highlightButton(JButton button, Color color, long time) {
+    public static void highlightButton(JComponent button, Color color, long time) {
         if (highlightedButtons.contains(button)) {
             return;
         }
@@ -138,6 +125,49 @@ public class CrashAssistantGUI {
         });
 
         timer.start();
+    }
+
+    public static HyperlinkListener getHyperlinkListener() {
+        return e -> {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                String description = e.getDescription();
+
+                JComponent componentToHighlight;
+                if ("LANG.gui.upload_all_comment".equals(description)) {
+                    componentToHighlight = controlPanel.uploadAllButton;
+                } else if ("LANG.gui.file_list_label".equals(description)) {
+                    componentToHighlight = fileListPanel.getScrollPane();
+                    if (ControlPanel.dialog != null) {
+                        ControlPanel.dialog.dispose();
+                    }
+                } else if ("SUPPORT_NAME".equals(description)) {
+                    componentToHighlight = controlPanel.requestHelpButton;
+                } else {
+                    CrashAssistantApp.LOGGER.error("Unsupported hyperlink event: " + description);
+                    return;
+                }
+                CrashAssistantGUI.highlightButton(componentToHighlight, new Color(255, 100, 100), 3000);
+            }
+        };
+    }
+
+    public static JEditorPane getEditorPane(String text) {
+        JEditorPane pane = new JEditorPane();
+        pane.setEditable(false);
+        pane.setContentType("text/html");
+        pane.setText("<html><div style='white-space:nowrap;'>" + text.replaceAll("\n", "<br>") + "</div></html>");
+
+        Font defaultFont = UIManager.getFont("Label.font");
+        String bodyRule = "body { font-family: " + defaultFont.getFamily() + "; " +
+                "font-size: " + defaultFont.getSize() + "pt; }";
+        ((HTMLDocument) pane.getDocument()).getStyleSheet().addRule(bodyRule);
+
+        pane.setEditable(false);
+        pane.setOpaque(false);
+        pane.setBackground(new JButton().getBackground());
+        pane.addHyperlinkListener(getHyperlinkListener());
+        pane.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return pane;
     }
 }
 

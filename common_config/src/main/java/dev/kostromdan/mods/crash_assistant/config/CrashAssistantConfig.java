@@ -195,13 +195,26 @@ public class CrashAssistantConfig {
                 config.clear();
             }
             int old_values_hash = config.valueMap().hashCode();
-            int old_comments_hash = config.commentMap().hashCode();
+            long old_comments_hash = getCommentsHash();
             setupDefaultValues();
-            if (config.valueMap().hashCode() != old_values_hash || config.commentMap().hashCode() != old_comments_hash) {
+            if (config.valueMap().hashCode() != old_values_hash || getCommentsHash() != old_comments_hash) {
                 save();
             }
             lastConfigUpdate = CONFIG_PATH.toFile().lastModified();
         });
+    }
+
+    public static long getCommentsHash(){
+        long hash = 0;
+        hash += config.commentMap().hashCode();
+        for (var entry : config.valueMap().entrySet()) {
+            var value = entry.getValue();
+            if (value instanceof AbstractCommentedConfig) {
+                hash += ((AbstractCommentedConfig) value).commentMap().hashCode();
+            }
+        }
+        LOGGER.info(hash);
+        return hash;
     }
 
     public static void save() {

@@ -25,6 +25,7 @@ repositories {
 dependencies {
     neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
     shadowBundle 'com.electronwill.night-config:toml:3.6.4'
+    shadowBundle 'com.electronwill.night-config:json:3.6.4'
     implementation project(path: ':common_config')
     shadowBundle project(path: ':common_config')
 }

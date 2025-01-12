@@ -114,7 +114,7 @@ public class ControlPanel {
     }
 
     private void uploadAllFiles() {
-        ControlPanel.stopMovingToTop = true;
+        stopMovingToTop = true;
         new Thread(() -> {
             uploadAllButton.setEnabled(false);
             if (generatedMsg == null) {

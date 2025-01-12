@@ -1,3 +1,20 @@
+1.2.7:
+- Reduced memory usage of app for ~3mb.
+- Add support of another launcher launcherlogs:
+  - FTB Electron App
+  - Prism Launcher
+  - GDLauncher
+  - MultiMC
+  - Modrinth
+- If generatedMsg + modlistDiff is larger than 2000 chars, modlistDiff will be uploaded to mclo.gs to fit non Nitro Discord limits.
+- Fixed config comments hash wasn't updated properly.
+- BCC config integration. Now you can use values from it as placeholders. For example for modpack version.
+  - For usage or more info see config comment of `text.modpack_name`
+- Drag and Drop support. Now files can be dragged and dropped directly from gui.
+  - If dragged and dropped `Avalible log files:`, all logs will be dropped at once.
+- Added requested by Modded Minecraft Discord warning about their logs sharing policy. If discord link is default(moddedmc).
+- Small fixes.
+
 1.2.6:
 - Done a lot of work to prevent posting screenshot of GUI instead of generated msg:
   - `Upload all...` and `$SUPPORT_NAME$` of commentLabel are now hyperlinks. Pressing them will result blinking for 3 seconds of according button background with light red.

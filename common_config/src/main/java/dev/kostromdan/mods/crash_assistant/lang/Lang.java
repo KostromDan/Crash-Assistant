@@ -1,6 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.lang;
 
-import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import com.electronwill.nightconfig.core.file.FileConfig;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
 
@@ -25,7 +25,7 @@ public class Lang {
         put("$BCC.modpackName$", null);
     }};
     public HashMap<String, String> lang;
-    public static CommentedFileConfig BCCConfig;
+    public static FileConfig BCCConfig;
 
     public Lang(HashMap<String, String> lang) {
         this.lang = lang;
@@ -65,21 +65,23 @@ public class Lang {
     }
 
     public static String getBCCValue(String key) {
+        Path BCCConfigForgePath = Paths.get("config", "bcc-common.toml");
+        Path BCCConfigFabricPath = Paths.get("config", "bcc.json");
         try {
             if (BCCConfig == null) {
-                Path BCCConfigPath = Paths.get("config","bcc-common.toml");
-                if (!Files.exists(BCCConfigPath)) {
+                if (!Files.exists(BCCConfigForgePath) && !Files.exists(BCCConfigFabricPath)) {
                     JarInJarHelper.LOGGER.error("BCC config file not found");
                     return "<BCC config file not found>";
                 }
-                BCCConfig = CommentedFileConfig.builder(BCCConfigPath).build();
+                BCCConfig = FileConfig.builder(BCCConfigForgePath.toFile().exists() ? BCCConfigForgePath : BCCConfigFabricPath).build();
                 BCCConfig.load();
             }
         } catch (Exception e) {
-            JarInJarHelper.LOGGER.error("Failed to load config/bcc-common.toml:", e);
+            JarInJarHelper.LOGGER.error("Failed to load BCC config:", e);
             BCCConfig = null;
             return "<BCC config parsing error>";
         }
+        key = BCCConfigForgePath.toFile().exists() ? key : key.substring("general.".length());
         String value = BCCConfig.get(key);
         if (value == null) {
             return "<" + key + " not found in BCC config>";

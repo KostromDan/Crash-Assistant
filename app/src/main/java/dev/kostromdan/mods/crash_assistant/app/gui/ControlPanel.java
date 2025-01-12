@@ -16,7 +16,7 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 public class ControlPanel {
-    public static boolean modListDiffShown = false;
+    public static boolean stopMovingToTop = false;
     private final JPanel panel;
     private final FileListPanel fileListPanel;
     private final JButton uploadAllButton;
@@ -84,6 +84,7 @@ public class ControlPanel {
     }
 
     public void requestHelp() {
+        stopMovingToTop = true;
         try {
             URI uri = new URL(CrashAssistantConfig.get("general.help_link").toString()).toURI();
             Desktop.getDesktop().browse(uri);
@@ -93,7 +94,7 @@ public class ControlPanel {
     }
 
     private void showModList() {
-        modListDiffShown = true;
+        stopMovingToTop = true;
         JTextPane textPane = new JTextPane();
         textPane.setEditable(false);
         textPane.setContentType("text/html");
@@ -113,6 +114,7 @@ public class ControlPanel {
     }
 
     private void uploadAllFiles() {
+        ControlPanel.stopMovingToTop = true;
         new Thread(() -> {
             uploadAllButton.setEnabled(false);
             if (generatedMsg == null) {

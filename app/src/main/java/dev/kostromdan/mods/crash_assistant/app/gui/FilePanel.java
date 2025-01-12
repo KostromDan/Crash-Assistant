@@ -77,6 +77,7 @@ public class FilePanel {
      * Opens the file using the default application associated with its type.
      */
     private void openFile() {
+        ControlPanel.stopMovingToTop = true;
         try {
             Desktop.getDesktop().open(filePath.toFile());
         } catch (IOException e) {
@@ -89,6 +90,7 @@ public class FilePanel {
      * Opens the file's directory in the system file explorer and selects the file.
      */
     private void showInExplorer() {
+        ControlPanel.stopMovingToTop = true;
         try {
             if (System.getProperty("os.name").startsWith("Windows")) {
                 new ProcessBuilder("explorer.exe", "/select,", filePath.toAbsolutePath().toString()).start();
@@ -131,6 +133,7 @@ public class FilePanel {
     }
 
     public void uploadFile(boolean fromButton) {
+        ControlPanel.stopMovingToTop = true;
         new Thread(() -> {
             if (uploadedLink == null) {
                 lastError = null;

@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import gs.mclo.api.MclogsClient;
@@ -35,7 +36,7 @@ public class CrashAssistantGUI {
         JLabel titleLabel = new JLabel(titleText, SwingConstants.LEFT);
         titleLabel.setFont(titleLabel.getFont().deriveFont(16f));
 
-        String commentText = LanguageProvider.get("gui.comment_under_title",new HashSet<>() {{
+        String commentText = LanguageProvider.get("gui.comment_under_title", new HashSet<>() {{
             add("$SUPPORT_NAME$");
             add("$LANG.gui.upload_all_comment$");
         }});
@@ -82,6 +83,7 @@ public class CrashAssistantGUI {
         for (Map.Entry<String, Path> entry : availableLogs.entrySet()) {
             fileListPanel.addFile(entry.getKey(), entry.getValue());
         }
+        DragAndDrop.enableDragAndDrop(fileListPanel.getScrollPane(), fileListPanel.fileListPanelFilesDragAndDrop);
 
         frame.setSize(Math.max(Math.max(fileListPanel.getFileListPanel().getPreferredSize().width + 12, controlPanel.getPanel().getPreferredSize().width) + 26, labelPanel.getPreferredSize().width + 20),
                 Math.min(heightWithoutScrollPane + fileListPanel.getFileListPanel().getPreferredSize().height + 39, 700));

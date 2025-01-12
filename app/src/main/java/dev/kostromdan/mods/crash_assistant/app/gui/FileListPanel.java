@@ -3,11 +3,15 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 
 import javax.swing.*;
+import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 
 public class FileListPanel {
     public final LinkedHashSet<FilePanel> filePanelList = new LinkedHashSet<>();
+    public final List<File> fileListPanelFilesDragAndDrop = new ArrayList<>();
     private final JPanel fileListPanel;
     private final JScrollPane scrollPane;
 
@@ -32,6 +36,7 @@ public class FileListPanel {
         FilePanel filePanel = new FilePanel(fileName, file);
         filePanelList.add(filePanel);
         fileListPanel.add(filePanel.getPanel());
+        fileListPanelFilesDragAndDrop.add(file.toFile());
         fileListPanel.revalidate();
     }
 }

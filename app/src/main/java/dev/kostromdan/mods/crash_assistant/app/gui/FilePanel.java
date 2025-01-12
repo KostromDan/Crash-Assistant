@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
+import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import gs.mclo.api.response.UploadLogResponse;
 
@@ -12,6 +13,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 public class FilePanel {
@@ -32,6 +34,7 @@ public class FilePanel {
 
         panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        DragAndDrop.enableDragAndDrop(panel, Collections.singletonList(filePath.toFile()));
 
         JLabel fileNameLabel = new JLabel(fileName);
         panel.add(fileNameLabel, BorderLayout.CENTER);

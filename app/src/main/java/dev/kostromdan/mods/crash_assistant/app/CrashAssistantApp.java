@@ -9,6 +9,7 @@ import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
@@ -119,6 +120,24 @@ public class CrashAssistantApp {
 
         FileUtils.addIfExistsAndModified(availableLogs, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt"));
         FileUtils.addIfExistsAndModified(availableLogs, "CurseForge: launcher_log.txt", Paths.get("../../Install", "launcher_log.txt"));
+        FileUtils.addIfExistsAndModified(availableLogs, "FTB Electron App: ftb-app-electron.log", Paths.get("../../logs", "ftb-app-electron.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "Prism Launcher: PrismLauncher-0.log", Paths.get("../../../logs", "PrismLauncher-0.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "GDLauncher: main.log", Paths.get("../../../../", "main.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "MultiMC: MultiMC-0.log", Paths.get("../../../", "MultiMC-0.log"));
+
+        Path modrinthLauncherLogs = Paths.get("../../launcher_logs");
+        if (modrinthLauncherLogs.toFile().exists()) {
+            try {
+                Files.list(modrinthLauncherLogs).forEach(path -> {
+                    String fileName = path.getFileName().toString();
+                    if (fileName.endsWith(".log")) {
+                        FileUtils.addIfExistsAndModified(availableLogs, "Modrinth: " + fileName, path);
+                    }
+                });
+            } catch (IOException ignored) {
+            }
+        }
+
         String appdata = System.getenv("APPDATA");
         if (appdata != null) {
             FileUtils.addIfExistsAndModified(availableLogs, "AtLauncher: atlauncher.log", Paths.get(appdata, "AtLauncher", "logs", "atlauncher.log"));

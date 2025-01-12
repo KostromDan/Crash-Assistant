@@ -1,11 +1,13 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
+import gs.mclo.api.response.UploadLogResponse;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -13,6 +15,7 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.net.URI;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class ControlPanel {
@@ -165,7 +168,19 @@ public class ControlPanel {
                     generatedMsg += panel.getFileName() + ": <" + panel.getUploadedLink() + ">\n";
                 }
                 generatedMsg += "\n";
-                generatedMsg += ModListUtils.generateDiffMsg();
+                String modlistDIff = ModListUtils.generateDiffMsg();
+                if (generatedMsg.length() + modlistDIff.length() >= 2000) {
+                    try {
+                        String link = uploadModlistDiff(modlistDIff);
+                        generatedMsg += modlistDIff.split("\n", 2)[0] + "\n";
+                        generatedMsg += "Due to big size of mod list diff, it was uploaded to: <" + link + ">";
+                    } catch (ExecutionException | InterruptedException | UploadException e) {
+                        CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
+                        generatedMsg += modlistDIff;
+                    }
+                } else {
+                    generatedMsg += modlistDIff;
+                }
             }
             ClipboardUtils.copy(generatedMsg);
             uploadAllButton.setText(LanguageProvider.get("gui.copied"));
@@ -193,12 +208,24 @@ public class ControlPanel {
                     buttonToHighlight = uploadAllButton;
                 } else if ("SUPPORT_NAME".equals(description)) {
                     buttonToHighlight = requestHelpButton;
-                }else{
+                } else {
                     CrashAssistantApp.LOGGER.error("Unsupported hyperlink event: " + description);
                     return;
                 }
                 CrashAssistantGUI.highlightButton(buttonToHighlight, new Color(255, 100, 100), 3000);
             }
         };
+    }
+
+    public String uploadModlistDiff(String diff) throws ExecutionException, InterruptedException, UploadException {
+        UploadLogResponse response = CrashAssistantGUI.MCLogsClient.uploadLog(diff).get();
+        response.setClient(CrashAssistantGUI.MCLogsClient);
+
+        if (response.isSuccess()) {
+            return response.getUrl();
+        } else {
+            throw new UploadException("An error occurred when uploading modlist diff: " + response.getError());
+        }
+
     }
 }

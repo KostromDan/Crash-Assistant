@@ -16,9 +16,9 @@ Use gradle `build` task of root project. Compiled jars can be found in: `build\l
 * `crash_assistant-fabric-<version>.jar)` fabric mod.
 * `crash_assistant-forge-<version>.jar)` forge mod.
 
-To debug GUI in dev env run `main()` of [CrashAssistantApp](app/src/main/java/dev/kostromdan/mods/crash_assistant/app/CrashAssistantApp.java)
+To debug the GUI in the development environment, run `main()` of [CrashAssistantApp](app/src/main/java/dev/kostromdan/mods/crash_assistant/app/CrashAssistantApp.java)
 
-Don't try to use loom `runClient()` functions, they are broken from the moment of mod creation, due to complicated structure of mod.
+Don't try to use loom `runClient()` functions, as they are broken from the moment of mod creation, due to complicated structure of mod.
 
 For localization go [lang](common_config/src/main/resources/lang)
 

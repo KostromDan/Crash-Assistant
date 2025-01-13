@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.loading_utils;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Core;
@@ -50,7 +51,8 @@ public interface JarInJarHelper {
                     "-parentPID", Objects.toString(ProcessHandle.current().pid()),
                     "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
-                    "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class)
+                    "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
+                    "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class)
             );
             Process crashAssistantAppProcess = crashAssistantAppProcessBuilder.start();
             Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");

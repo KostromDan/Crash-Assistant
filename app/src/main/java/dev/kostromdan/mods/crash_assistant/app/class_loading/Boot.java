@@ -10,8 +10,7 @@ public class Boot {
     public static String log4jApi = null;
     public static String log4jCore = null;
     public static String googleGson = null;
-    public static String nightConfigCore = null;
-    public static String nightConfigToml = null;
+    public static String commonIo = null;
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         for (int i = 0; i < args.length; i++) {
@@ -21,6 +20,8 @@ public class Boot {
                 log4jCore = args[i + 1];
             } else if ("-googleGson".equals(args[i]) && i + 1 < args.length) {
                 googleGson = args[i + 1];
+            } else if ("-commonIo".equals(args[i]) && i + 1 < args.length) {
+                commonIo = args[i + 1];
             }
         }
 
@@ -34,6 +35,7 @@ public class Boot {
         CrashAssistantAgent.appendJarFile(log4jApi);
         CrashAssistantAgent.appendJarFile(log4jCore);
         CrashAssistantAgent.appendJarFile(googleGson);
+        CrashAssistantAgent.appendJarFile(commonIo);
 
         Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
         Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);
@@ -50,6 +52,9 @@ public class Boot {
         }
         if (googleGson == null) {
             missingParameters.add("-googleGson");
+        }
+        if (commonIo == null) {
+            missingParameters.add("-commonIo");
         }
         return missingParameters;
     }

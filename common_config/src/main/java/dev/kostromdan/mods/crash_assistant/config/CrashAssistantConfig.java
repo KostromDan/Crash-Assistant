@@ -53,6 +53,10 @@ public class CrashAssistantConfig {
         addOption("general.show_dont_send_screenshot_of_gui_notice",
                 "Append comment text with notice about sending screenshot of this gui tells nothing to modpack creators.",
                 true);
+        addOption("general.generated_msg_includes_info_why_split",
+                "Crash Assistant splits the log into a head and tail of 25,000 lines each if the log exceeds mclo.gs limits (10 MB or 25,000 lines).\n" +
+                        "Add an explanation at the bottom of the generated message about why log was split.",
+                true);
 
         ArrayList<String> defaultBlacklistedLogs = new ArrayList<>();
         defaultBlacklistedLogs.add("CrashAssistant: latest.log");

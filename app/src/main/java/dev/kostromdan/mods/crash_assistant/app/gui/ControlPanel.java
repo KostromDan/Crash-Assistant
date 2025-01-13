@@ -13,10 +13,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class ControlPanel {
     public static boolean stopMovingToTop = false;
@@ -156,6 +159,8 @@ public class ControlPanel {
                                     JOptionPane.ERROR_MESSAGE
                             );
                             uploadAllButton.setText(LanguageProvider.get("gui.error"));
+                            CrashAssistantGUI.highlightButton(uploadAllButton, new Color(255, 100, 100), 2600);
+
                             new java.util.Timer().schedule(
                                     new java.util.TimerTask() {
                                         @Override
@@ -183,20 +188,54 @@ public class ControlPanel {
                     }
                 }
                 generatedMsg = LanguageProvider.get("text.modpack_name") + " crashed!\n";
+                boolean kubeJSPosted = false;
+                List<FilePanel> kubeJSPanelList = new ArrayList<>();
                 for (FilePanel panel : fileListPanel.filePanelList) {
+                    if (!panel.getFileName().startsWith("KubeJS: ")) {
+                        continue;
+                    }
+                    if (panel.getUploadedLinkLastLines() != null) {
+                        kubeJSPanelList.clear();
+                        break;
+                    }
+                    kubeJSPanelList.add(panel);
+                }
+                boolean containsTooBigLog = false;
+                for (FilePanel panel : fileListPanel.filePanelList) {
+                    if (panel.getFileName().startsWith("KubeJS: ")) {
+                        if (kubeJSPosted) continue;
+
+                        if (!kubeJSPanelList.isEmpty()) {
+                            kubeJSPosted = true;
+                            generatedMsg += "KubeJS: ";
+                            generatedMsg += kubeJSPanelList.stream()
+                                    .map(kubeJSPanel -> "[" + kubeJSPanel.getFilePath().getFileName() + "](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
+                                    .collect(Collectors.joining(" / "));
+                            generatedMsg += "\n";
+                            continue;
+                        }
+                    }
                     if (panel.getUploadedLinkLastLines() == null) {
                         generatedMsg += panel.getFileName() + ": [link](<" + panel.getUploadedLinkFirstLines() + ">)\n";
                     } else {
+                        containsTooBigLog = true;
                         long size = panel.getFilePath().toFile().length();
+                        List<String> tooBigReasons = new ArrayList<>();
+                        if (size > 10 * 1024 * 1024) tooBigReasons.add("~" + size / (1024 * 1024) + "MB");
+                        if (panel.getCountedLines() > 25000)
+                            tooBigReasons.add((panel.isLineCountInterrupted() ? "over " : "~") + panel.getCountedLines() / 1000 + "k lines");
                         generatedMsg += panel.getFileName() + ": ";
                         generatedMsg += "[head](<" + panel.getUploadedLinkFirstLines() + ">) / ";
-                        generatedMsg += "[tail](<" + panel.getUploadedLinkLastLines() + ">) (" + ((size > 10 * 1024 * 1024) ? "over " + size / (1024 * 1024) + "MB" : "over 25k lines") + ")\n";
+                        generatedMsg += "[tail](<" + panel.getUploadedLinkLastLines() + ">) " +
+                                (tooBigReasons.isEmpty() ? "" : "(" + String.join(" & ", tooBigReasons) + ")") + "\n";
 
                     }
                 }
                 generatedMsg += "\n";
                 String modlistDIff = ModListUtils.generateDiffMsg();
-                if (generatedMsg.length() + modlistDIff.length() >= 2000) {
+                String containsTooBigLogMsg = containsTooBigLog && (boolean) CrashAssistantConfig.get("general.generated_msg_includes_info_why_split") ?
+                        "\n\n*Splitting the log into `head` / `tail` occurs when the log exceeds mclo.gs limits (10 MB or 25k lines).*" : "";
+                if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 2000) {
                     try {
                         String link = uploadModlistDiff(modlistDIff);
                         generatedMsg += modlistDIff.split("\n", 2)[0] + "\n";
@@ -207,6 +246,9 @@ public class ControlPanel {
                     }
                 } else {
                     generatedMsg += modlistDIff;
+                }
+                if (containsTooBigLog) {
+                    generatedMsg += containsTooBigLogMsg;
                 }
             }
             ClipboardUtils.copy(generatedMsg);

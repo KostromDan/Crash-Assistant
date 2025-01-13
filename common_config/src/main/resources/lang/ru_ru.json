@@ -16,6 +16,7 @@
   "gui.copied": "Скопировано!",
   "gui.error": "Ошибка!",
   "gui.uploading": "Загружаем...",
+  "gui.preprocessing": "Пре-обрабатываем...",
   "gui.upload_all_button": "Загрузить все и скопировать сообщение с ссылками на все файлы и различием списка модов",
   "gui.upload_all_button_moddedmc_warning": "Сообщение, генерируемое этой кнопкой, не подходит для Discord-сервера Modded Minecraft из-за их политики обмена логами.\nПожалуйста, загружайте логи как вложения Discord.\nВы можете сделать это, перетащив(drag and drop) \"$LANG.gui.file_list_label$\" в чат Discord.\nКроме того, предоставьте информацию о том, как и при каких обстоятельствах произошел краш.\nЕсли вы все же хотите сгенерировать сообщение, нажмите эту кнопку еще раз, но НЕ отправляйте его на сервер Modded Minecraft Discord!",
   "gui.upload_all_button_moddedmc_warning_title": "Политика обмена логами в Modded Minecraft Discord",

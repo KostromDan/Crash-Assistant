@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -14,6 +15,8 @@ import java.util.List;
 public class LogProcessor {
     final static int maxUploadLines = 25000;
     final static int maxUploadLength = 10485760;
+    int countedLines = 0;
+    boolean lineCountInterrupted = false;
     List<String> firstLines;
     List<String> lastLines;
     Path logPath;
@@ -28,19 +31,27 @@ public class LogProcessor {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(this.logPath.toFile()))) {
             String line;
-            int count = 0;
             int length = 0;
 
-            while ((line = reader.readLine()) != null && count < maxUploadLines && length < maxUploadLength) {
+            while ((line = reader.readLine()) != null && countedLines < maxUploadLines && length < maxUploadLength) {
                 if (line.isEmpty()) {
                     continue;
                 }
                 firstLines.add(line);
                 length += line.length() + 1;
-                count++;
+                countedLines++;
             }
             if (line == null) {
                 return;
+            } else {
+                long timeCountStarted = Instant.now().toEpochMilli();
+                while (reader.readLine() != null) {
+                    countedLines++;
+                    if(countedLines % 100 == 0 && Instant.now().toEpochMilli() - timeCountStarted > 1000){
+                        lineCountInterrupted = true;
+                        break;
+                    }
+                }
             }
         }
         lastLines = new LinkedList<>();
@@ -72,5 +83,13 @@ public class LogProcessor {
 
     public String getLastLinesString() {
         return lastLines == null ? null : String.join("\n", lastLines);
+    }
+
+    public int getCountedLines() {
+        return countedLines;
+    }
+
+    public boolean isLineCountInterrupted() {
+        return lineCountInterrupted;
     }
 }

@@ -28,6 +28,8 @@ public class FilePanel {
     private final String fileName;
     private String uploadedLinkFirstLines = null;
     private String uploadedLinkLastLines = null;
+    private int countedLines;
+    private boolean lineCountInterrupted = false;
     private Exception lastError = null;
 
     public FilePanel(String fileName, Path filePath) {
@@ -125,8 +127,17 @@ public class FilePanel {
     public String getUploadedLinkFirstLines() {
         return uploadedLinkFirstLines;
     }
+
     public String getUploadedLinkLastLines() {
         return uploadedLinkLastLines;
+    }
+
+    public int getCountedLines() {
+        return countedLines;
+    }
+
+    public boolean isLineCountInterrupted() {
+        return lineCountInterrupted;
     }
 
     public Path getFilePath() {
@@ -151,9 +162,14 @@ public class FilePanel {
                 uploadButton.setText(LanguageProvider.get("gui.uploading"));
 
                 try {
+                    String oldText = uploadButton.getText();
+                    uploadButton.setText(LanguageProvider.get("gui.preprocessing"));
                     LogProcessor logProcessor = new LogProcessor(filePath);
                     logProcessor.processLogFile();
+                    uploadButton.setText(oldText);
                     CompletableFuture<UploadLogResponse> completableResponseFirstLines = CrashAssistantGUI.MCLogsClient.uploadLog(logProcessor.getFirstLinesString());
+                    countedLines = logProcessor.getCountedLines();
+                    lineCountInterrupted = logProcessor.isLineCountInterrupted();
 
                     if (logProcessor.getLastLinesString() != null) {
                         CompletableFuture<UploadLogResponse> completableResponseLastLines = CrashAssistantGUI.MCLogsClient.uploadLog(logProcessor.getLastLinesString());
@@ -169,7 +185,6 @@ public class FilePanel {
                     responseFirstLines.setClient(CrashAssistantGUI.MCLogsClient);
 
 
-
                     if (responseFirstLines.isSuccess()) {
                         uploadedLinkFirstLines = responseFirstLines.getUrl();
                     } else {
@@ -180,6 +195,7 @@ public class FilePanel {
                         lastError = e;
                         CrashAssistantApp.LOGGER.info("Failed to upload file \"" + filePath + "\": ", e);
                         uploadButton.setText(LanguageProvider.get("gui.error"));
+                        CrashAssistantGUI.highlightButton(uploadButton, new Color(255, 100, 100), 2600);
                         if (fromButton) {
                             JOptionPane.showMessageDialog(
                                     panel,

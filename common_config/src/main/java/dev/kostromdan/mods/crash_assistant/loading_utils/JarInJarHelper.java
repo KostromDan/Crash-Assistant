@@ -48,6 +48,7 @@ public interface JarInJarHelper {
                     "-Xms8m",
                     "-Xmx256m",
                     "-jar", extractedJarPath.toAbsolutePath().toString(),
+                    "-processJar", extractedJarPath.toAbsolutePath().toString(),
                     "-parentPID", Objects.toString(ProcessHandle.current().pid()),
                     "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),

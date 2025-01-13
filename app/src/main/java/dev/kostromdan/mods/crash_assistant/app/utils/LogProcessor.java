@@ -3,44 +3,74 @@ package dev.kostromdan.mods.crash_assistant.app.utils;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class LogProcessor {
+    final static int maxUploadLines = 25000;
+    final static int maxUploadLength = 10485760;
+    List<String> firstLines;
+    List<String> lastLines;
+    Path logPath;
 
-    public static void processLogFile(String filePath) throws IOException {
-        int numLines = 25000;
-        int maxLinesLength = 10485760;
-        List<String> firstLines = new ArrayList<>(numLines);
-        List<String> lastLines = new LinkedList<>();
+    public LogProcessor(Path logPath) {
+        this.firstLines = new ArrayList<>(maxUploadLines);
+        this.lastLines = null;
+        this.logPath = logPath;
+    }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+    public void processLogFile() throws IOException {
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(this.logPath.toFile()))) {
             String line;
             int count = 0;
             int length = 0;
 
-            while ((line = reader.readLine()) != null && count < numLines && length < maxLinesLength) {
+            while ((line = reader.readLine()) != null && count < maxUploadLines && length < maxUploadLength) {
+                if (line.isEmpty()) {
+                    continue;
+                }
                 firstLines.add(line);
-                length += line.length();
+                length += line.length() + 1;
                 count++;
             }
+            if (line == null) {
+                return;
+            }
         }
-
-        try (ReversedLinesFileReader reversedReader = new ReversedLinesFileReader(
-                new File(filePath), StandardCharsets.UTF_8)) {
+        lastLines = new LinkedList<>();
+        try (ReversedLinesFileReader reversedReader = ReversedLinesFileReader.builder()
+                .setPath(this.logPath)
+                .setCharset(StandardCharsets.UTF_8)
+                .get()) {
             String line;
             int count = 0;
             int length = 0;
-            while ((line = reversedReader.readLine()) != null && count < numLines && length < maxLinesLength) {
+            while ((line = reversedReader.readLine()) != null && count < maxUploadLines && length < maxUploadLength) {
+                if (line.isEmpty()) {
+                    continue;
+                }
                 lastLines.add(0, line);
-                length += line.length();
+                length += line.length() + 1;
                 count++;
             }
+            if (length > maxUploadLength) {
+                lastLines.remove(0);
+            }
         }
+    }
+
+    public String getFirstLinesString() {
+        return String.join("\n", firstLines);
+
+    }
+
+    public String getLastLinesString() {
+        return lastLines == null ? null : String.join("\n", lastLines);
     }
 }

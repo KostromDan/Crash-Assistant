@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
+import dev.kostromdan.mods.crash_assistant.app.utils.LogProcessor;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import gs.mclo.api.response.UploadLogResponse;
 
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class FilePanel {
@@ -24,7 +26,8 @@ public class FilePanel {
     private final JButton browserButton;
     private final Path filePath;
     private final String fileName;
-    private String uploadedLink = null;
+    private String uploadedLinkFirstLines = null;
+    private String uploadedLinkLastLines = null;
     private Exception lastError = null;
 
     public FilePanel(String fileName, Path filePath) {
@@ -108,7 +111,7 @@ public class FilePanel {
 
     private void openInBrowser() {
         try {
-            Desktop.getDesktop().browse(new URL(uploadedLink).toURI());
+            Desktop.getDesktop().browse(new URL(uploadedLinkFirstLines).toURI());
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to open in link browser: ", e);
         }
@@ -119,8 +122,11 @@ public class FilePanel {
         return fileName;
     }
 
-    public String getUploadedLink() {
-        return uploadedLink;
+    public String getUploadedLinkFirstLines() {
+        return uploadedLinkFirstLines;
+    }
+    public String getUploadedLinkLastLines() {
+        return uploadedLinkLastLines;
     }
 
     public Path getFilePath() {
@@ -138,20 +144,36 @@ public class FilePanel {
     public void uploadFile(boolean fromButton) {
         ControlPanel.stopMovingToTop = true;
         new Thread(() -> {
-            if (uploadedLink == null) {
+            if (uploadedLinkFirstLines == null) {
                 lastError = null;
                 uploadButton.setEnabled(false);
                 uploadButton.setPreferredSize(new Dimension(uploadButton.getMinimumSize().width, 25));
                 uploadButton.setText(LanguageProvider.get("gui.uploading"));
 
                 try {
-                    UploadLogResponse response = CrashAssistantGUI.MCLogsClient.uploadLog(filePath).get();
-                    response.setClient(CrashAssistantGUI.MCLogsClient);
+                    LogProcessor logProcessor = new LogProcessor(filePath);
+                    logProcessor.processLogFile();
+                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = CrashAssistantGUI.MCLogsClient.uploadLog(logProcessor.getFirstLinesString());
 
-                    if (response.isSuccess()) {
-                        uploadedLink = response.getUrl();
+                    if (logProcessor.getLastLinesString() != null) {
+                        CompletableFuture<UploadLogResponse> completableResponseLastLines = CrashAssistantGUI.MCLogsClient.uploadLog(logProcessor.getLastLinesString());
+                        UploadLogResponse responseLastLines = completableResponseLastLines.get();
+                        responseLastLines.setClient(CrashAssistantGUI.MCLogsClient);
+                        if (responseLastLines.isSuccess()) {
+                            uploadedLinkLastLines = responseLastLines.getUrl();
+                        } else {
+                            throw new UploadException("An error occurred when uploading file: " + responseLastLines.getError());
+                        }
+                    }
+                    UploadLogResponse responseFirstLines = completableResponseFirstLines.get();
+                    responseFirstLines.setClient(CrashAssistantGUI.MCLogsClient);
+
+
+
+                    if (responseFirstLines.isSuccess()) {
+                        uploadedLinkFirstLines = responseFirstLines.getUrl();
                     } else {
-                        throw new UploadException("An error occurred when uploading file: " + response.getError());
+                        throw new UploadException("An error occurred when uploading file: " + responseFirstLines.getError());
                     }
                 } catch (IOException | ExecutionException | InterruptedException | UploadException e) {
                     {
@@ -181,7 +203,7 @@ public class FilePanel {
                 }
             }
             if (fromButton) {
-                ClipboardUtils.copy(uploadedLink);
+                ClipboardUtils.copy(uploadedLinkFirstLines);
 
                 transformCopyLinkButton();
 

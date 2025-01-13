@@ -168,7 +168,7 @@ public class ControlPanel {
                             );
                             return;
                         }
-                        if (filePanel.getUploadedLink() != null) {
+                        if (filePanel.getUploadedLinkFirstLines() != null) {
                             successCounter++;
                         }
                         if (successCounter == fileListPanel.filePanelList.size()) {
@@ -184,7 +184,15 @@ public class ControlPanel {
                 }
                 generatedMsg = LanguageProvider.get("text.modpack_name") + " crashed!\n";
                 for (FilePanel panel : fileListPanel.filePanelList) {
-                    generatedMsg += panel.getFileName() + ": <" + panel.getUploadedLink() + ">\n";
+                    if (panel.getUploadedLinkLastLines() == null) {
+                        generatedMsg += panel.getFileName() + ": [link](<" + panel.getUploadedLinkFirstLines() + ">)\n";
+                    } else {
+                        long size = panel.getFilePath().toFile().length();
+                        generatedMsg += panel.getFileName() + ": ";
+                        generatedMsg += "[head](<" + panel.getUploadedLinkFirstLines() + ">) / ";
+                        generatedMsg += "[tail](<" + panel.getUploadedLinkLastLines() + ">) (" + ((size > 10 * 1024 * 1024) ? "over " + size / (1024 * 1024) + "MB" : "over 25k lines") + ")\n";
+
+                    }
                 }
                 generatedMsg += "\n";
                 String modlistDIff = ModListUtils.generateDiffMsg();
@@ -192,7 +200,7 @@ public class ControlPanel {
                     try {
                         String link = uploadModlistDiff(modlistDIff);
                         generatedMsg += modlistDIff.split("\n", 2)[0] + "\n";
-                        generatedMsg += "Due to big size of mod list diff, it was uploaded to: <" + link + ">";
+                        generatedMsg += "Due to big size of mod list diff, it was uploaded to: [link](<" + link + ">)";
                     } catch (ExecutionException | InterruptedException | UploadException e) {
                         CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
                         generatedMsg += modlistDIff;

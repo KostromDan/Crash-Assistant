@@ -17,7 +17,7 @@
   "gui.copied": "Copied!",
   "gui.error": "Error!",
   "gui.uploading": "Uploading...",
-  "gui.preprocessing": "Pre-processing...",
+  "gui.preprocessing": "Preprocessing...",
   "gui.upload_all_button": "Upload all and copy message with links to all files and mod list diff",
   "gui.upload_all_button_moddedmc_warning": "The message generated from this button is not appropriate for the Modded Minecraft Discord due to their logs sharing policy.\nPlease upload logs as Discord attachments.\nYou can do this by dragging and dropping the \"$LANG.gui.file_list_label$\" onto the Discord chat.\nAdditionally, provide some information about how the crash occurred.\nIf you still want the generated message, press this button again, but DO NOT send it to the Modded Minecraft Discord!",
   "gui.upload_all_button_moddedmc_warning_title": "Modded Minecraft Discord logs sharing policy",

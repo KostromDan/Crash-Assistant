@@ -135,15 +135,6 @@ public class CrashAssistantGUI {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 String description = e.getDescription();
 
-                if ("LANG.gui.github_gist_link".equals(description)) {
-                    try {
-                        Desktop.getDesktop().browse(new URL("https://gist.github.com/").toURI());
-                    } catch (Exception exception) {
-                        CrashAssistantApp.LOGGER.error("Failed to open in link browser: ", exception);
-                    }
-                    return;
-                }
-
                 JComponent componentToHighlight;
                 if ("LANG.gui.upload_all_comment".equals(description)) {
                     componentToHighlight = controlPanel.uploadAllButton;

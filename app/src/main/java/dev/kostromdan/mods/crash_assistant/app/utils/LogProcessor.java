@@ -55,10 +55,7 @@ public class LogProcessor {
             }
         }
         lastLines = new LinkedList<>();
-        try (ReversedLinesFileReader reversedReader = ReversedLinesFileReader.builder()
-                .setPath(this.logPath)
-                .setCharset(StandardCharsets.UTF_8)
-                .get()) {
+        try (ReversedLinesFileReader reversedReader = createReversedLinesFileReader()) {
             String line;
             int count = 0;
             int length = 0;
@@ -75,6 +72,21 @@ public class LogProcessor {
             }
         }
     }
+
+    /**
+     * Different versions of common-io having different implementations, so we have to deal with it.
+     */
+    private ReversedLinesFileReader createReversedLinesFileReader() throws IOException {
+        try {
+            return ReversedLinesFileReader.builder()
+                    .setPath(this.logPath)
+                    .setCharset(StandardCharsets.UTF_8)
+                    .get();
+        } catch (NoSuchMethodError e) {
+            return new ReversedLinesFileReader(logPath.toFile());
+        }
+    }
+
 
     public String getFirstLinesString() {
         return String.join("\n", firstLines);

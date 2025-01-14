@@ -78,7 +78,7 @@ public class CrashAssistantConfig {
                 "You don't need to modify jar. You can change it in config/crash_assistant/lang. For more info read README.md file located where.");
         addOption("text.support_name",
                 "$SUPPORT_NAME$ in lang files will be replaced with this value.\n" +
-                        "For example this placeHolder used in: \"gui.request_help_button\": \"request help in $SUPPORT_NAME$\"",
+                        "For example this placeHolder used in: \"gui.request_help_button\": \"Request help in the $SUPPORT_NAME$\"",
                 "Modded Minecraft Discord");
         addOption("text.support_place",
                 "$SUPPORT_PLACE$ in lang files will be replaced with this value.",

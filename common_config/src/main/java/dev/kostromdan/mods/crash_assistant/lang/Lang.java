@@ -19,40 +19,12 @@ public class Lang {
         put("$SUPPORT_NAME$", "text.support_name");
         put("$MODPACK_NAME$", "text.modpack_name");
         put("$SUPPORT_PLACE$", "text.support_place");
-        put("$LANG.gui.upload_all_comment$", null);
-        put("$LANG.gui.file_list_label$", null);
-        put("$BCC.modpackVersion$", null);
-        put("$BCC.modpackName$", null);
     }};
     public HashMap<String, String> lang;
     public static FileConfig BCCConfig;
 
     public Lang(HashMap<String, String> lang) {
         this.lang = lang;
-    }
-
-    private static String applyPlaceHolders(String value, HashSet<String> placeHoldersSurroundedWithHref) {
-        for (Map.Entry<String, String> entry : PlaceHolderToConfigMap.entrySet()) {
-            if (!value.contains(entry.getKey())) {
-                continue;
-            }
-            String placeholder = entry.getKey();
-            String configValue;
-            if (placeholder.startsWith("$LANG.")) {
-                configValue = LanguageProvider.get(placeholder.substring(6, placeholder.length() - 1));
-            } else if (placeholder.startsWith("$BCC.")) {
-                String bccConfigKey = "general." + placeholder.substring(5, placeholder.length() - 1);
-                configValue = getBCCValue(bccConfigKey);
-            } else {
-                configValue = CrashAssistantConfig.get(entry.getValue());
-            }
-            if (placeHoldersSurroundedWithHref.contains(placeholder)) {
-                configValue = "<a href='" + placeholder.substring(1, placeholder.length() - 1) + "'>" + configValue + "</a>";
-            }
-            String escapedPlaceholder = Pattern.quote(placeholder);
-            value = value.replaceAll(escapedPlaceholder, Matcher.quoteReplacement(configValue));
-        }
-        return value;
     }
 
     public String get(String key) {
@@ -62,6 +34,44 @@ public class Lang {
     public String get(String key, HashSet<String> placeHoldersSurroundedWithHref) {
         String value = lang.getOrDefault(key, LanguageProvider.languages.get("en_us").lang.get(key));
         return applyPlaceHolders(value, placeHoldersSurroundedWithHref);
+    }
+
+    private static String applyPlaceHolders(String value, HashSet<String> placeHoldersSurroundedWithHref) {
+        if (!value.contains("$")) {
+            return value;
+        }
+        for (Map.Entry<String, String> entry : PlaceHolderToConfigMap.entrySet()) {
+            if (!value.contains(entry.getKey())) {
+                continue;
+            }
+            String placeholder = entry.getKey();
+            String configValue = CrashAssistantConfig.get(entry.getValue());
+            value = replacePlaceHolder(value, placeholder, configValue, placeHoldersSurroundedWithHref);
+        }
+        while (value.contains("$LANG.")) {
+            int placeHolderStart = value.indexOf("$LANG.");
+            int placeHolderEnd = value.indexOf("$", placeHolderStart + 6) + 1;
+            String placeholder = value.substring(placeHolderStart, placeHolderEnd);
+            String langKey = placeholder.substring(6, placeholder.length() - 1);
+            value = replacePlaceHolder(value, placeholder, LanguageProvider.get(langKey), placeHoldersSurroundedWithHref);
+        }
+        while (value.contains("$BCC.")) {
+            int placeHolderStart = value.indexOf("$BCC.");
+            int placeHolderEnd = value.indexOf("$", placeHolderStart + 5) + 1;
+            String placeholder = value.substring(placeHolderStart, placeHolderEnd);
+            String configKey = placeholder.substring(5, placeholder.length() - 1);
+            value = replacePlaceHolder(value, placeholder, getBCCValue(configKey), placeHoldersSurroundedWithHref);
+        }
+        return value;
+    }
+
+    public static String replacePlaceHolder(String value, String placeholder, String configValue, HashSet<String> placeHoldersSurroundedWithHref) {
+        if (placeHoldersSurroundedWithHref.contains(placeholder)) {
+            configValue = "<a href='" + placeholder.substring(1, placeholder.length() - 1) + "'>" + configValue + "</a>";
+        }
+        String escapedPlaceholder = Pattern.quote(placeholder);
+        value = value.replaceAll(escapedPlaceholder, Matcher.quoteReplacement(configValue));
+        return value;
     }
 
     public static String getBCCValue(String key) {
@@ -81,7 +91,7 @@ public class Lang {
             BCCConfig = null;
             return "<BCC config parsing error>";
         }
-        key = BCCConfigForgePath.toFile().exists() ? key : key.substring("general.".length());
+        key = BCCConfigForgePath.toFile().exists() ? "general." + key : key;
         String value = BCCConfig.get(key);
         if (value == null) {
             return "<" + key + " not found in BCC config>";

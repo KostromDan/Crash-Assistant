@@ -11,10 +11,13 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
+import java.net.URL;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Timer;
+import java.util.TimerTask;
 
 public class CrashAssistantGUI {
     public static final MclogsClient MCLogsClient = new MclogsClient("CrashAssistant");
@@ -131,6 +134,15 @@ public class CrashAssistantGUI {
         return e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 String description = e.getDescription();
+
+                if ("LANG.gui.github_gist_link".equals(description)) {
+                    try {
+                        Desktop.getDesktop().browse(new URL("https://gist.github.com/").toURI());
+                    } catch (Exception exception) {
+                        CrashAssistantApp.LOGGER.error("Failed to open in link browser: ", exception);
+                    }
+                    return;
+                }
 
                 JComponent componentToHighlight;
                 if ("LANG.gui.upload_all_comment".equals(description)) {

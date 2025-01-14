@@ -12,6 +12,7 @@ import java.util.List;
 public class FileListPanel {
     public final LinkedHashSet<FilePanel> filePanelList = new LinkedHashSet<>();
     public final List<File> fileListPanelFilesDragAndDrop = new ArrayList<>();
+    public static JDialog currentLogSelectionDialog = null;
     private final JPanel fileListPanel;
     private final JScrollPane scrollPane;
 

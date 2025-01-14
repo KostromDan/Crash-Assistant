@@ -14,7 +14,9 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.List;
+import java.util.Timer;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -112,8 +114,15 @@ public class FilePanel {
     }
 
     private void openInBrowser() {
+        String linkToCopy = uploadedLinkFirstLines;
+        if (uploadedLinkLastLines != null) {
+            linkToCopy = showLogPartSelectionDialog(LanguageProvider.get("gui.split_log_dialog_action_browser"));
+        }
+        if (linkToCopy == null) {
+            return;
+        }
         try {
-            Desktop.getDesktop().browse(new URL(uploadedLinkFirstLines).toURI());
+            Desktop.getDesktop().browse(new URL(linkToCopy).toURI());
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to open in link browser: ", e);
         }
@@ -205,8 +214,8 @@ public class FilePanel {
                                     JOptionPane.ERROR_MESSAGE
                             );
                         }
-                        new java.util.Timer().schedule(
-                                new java.util.TimerTask() {
+                        new Timer().schedule(
+                                new TimerTask() {
                                     @Override
                                     public void run() {
                                         uploadButton.setText(LanguageProvider.get("gui.upload_and_copy_link_button"));
@@ -219,17 +228,23 @@ public class FilePanel {
                     }
                 }
             }
+            String linkToCopy = uploadedLinkFirstLines;
             if (fromButton) {
-                ClipboardUtils.copy(uploadedLinkFirstLines);
+                if (uploadedLinkLastLines != null) {
+                    linkToCopy = showLogPartSelectionDialog(LanguageProvider.get("gui.split_log_dialog_action_copy"));
+                }
+                if (linkToCopy != null) ClipboardUtils.copy(linkToCopy);
 
                 transformCopyLinkButton();
 
-                uploadButton.setText(LanguageProvider.get("gui.copied"));
-                CrashAssistantGUI.highlightButton(uploadButton, new Color(100, 255, 100), 2600);
-                uploadButton.setEnabled(false);
+                if (linkToCopy != null) {
+                    uploadButton.setText(LanguageProvider.get("gui.copied"));
+                    CrashAssistantGUI.highlightButton(uploadButton, new Color(100, 255, 100), 2600);
+                    uploadButton.setEnabled(false);
+                }
             }
-            new java.util.Timer().schedule(
-                    new java.util.TimerTask() {
+            new Timer().schedule(
+                    new TimerTask() {
                         @Override
                         public void run() {
                             uploadButton.setText(LanguageProvider.get("gui.copy_link_button"));
@@ -237,7 +252,7 @@ public class FilePanel {
                             uploadButton.setEnabled(true);
                         }
                     },
-                    fromButton ? 3000 : 0
+                    fromButton && linkToCopy != null ? 3000 : 0
             );
         }).start();
     }
@@ -248,5 +263,76 @@ public class FilePanel {
         uploadButton.setText(LanguageProvider.get("gui.upload_and_copy_link_button"));
         uploadButton.setPreferredSize(new Dimension(uploadButton.getMinimumSize().width - browserButton.getMinimumSize().width - 5, uploadButton.getMinimumSize().height));
         uploadButton.setText(oldText);
+    }
+
+    public String getTooBigReasons() {
+        long size = getFilePath().toFile().length();
+        List<String> tooBigReasons = new ArrayList<>();
+        if (size > 10 * 1024 * 1024) tooBigReasons.add("~" + size / (1024 * 1024) + "MB");
+        if (getCountedLines() > 25000)
+            tooBigReasons.add((isLineCountInterrupted() ? "over " : "~") + getCountedLines() / 1000 + "k lines");
+        return tooBigReasons.isEmpty() ? "" : "(" + String.join(" & ", tooBigReasons) + ")";
+    }
+
+    public String getMessageWithBothLinks() {
+        return getFileName() + ": " + "[head](<" + getUploadedLinkFirstLines() + ">) / " +
+                "[tail](<" + getUploadedLinkLastLines() + ">) " + getTooBigReasons() + "\n";
+    }
+
+    public String showLogPartSelectionDialog(String action) {
+        JEditorPane logSelectionPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.copy_split_log_dialog_text", new HashSet<>() {{
+            add("$LANG.gui.github_gist_link$");
+        }}).replace("$LOG_TOO_BIG_REASON$", getTooBigReasons()).replace("$FILE_NAME$", fileName).replace("$ACTION$", action));
+        Object[] options = {
+                LanguageProvider.get("gui.split_log_dialog_msg_with_both"),
+                LanguageProvider.get("gui.split_log_dialog_head"),
+                LanguageProvider.get("gui.split_log_dialog_tail")
+        };
+        JOptionPane optionPane;
+        if (action.equals(LanguageProvider.get("gui.split_log_dialog_action_copy"))) {
+            optionPane = new JOptionPane(
+                    logSelectionPane,
+                    JOptionPane.QUESTION_MESSAGE,
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    null,
+                    options
+            );
+        } else {
+            optionPane = new JOptionPane(
+                    logSelectionPane,
+                    JOptionPane.QUESTION_MESSAGE,
+                    JOptionPane.YES_NO_OPTION,
+                    null,
+                    Arrays.copyOfRange(options, 1, 3)
+            );
+        }
+        synchronized (FileListPanel.class) {
+            if (FileListPanel.currentLogSelectionDialog != null) return null;
+            FileListPanel.currentLogSelectionDialog = optionPane.createDialog(
+                    panel,
+                    LanguageProvider.get("gui.copy_split_log_dialog_title")
+            );
+        }
+        FileListPanel.currentLogSelectionDialog.setVisible(true);
+
+
+        Object selectedValue;
+        while ((selectedValue = optionPane.getValue()) == JOptionPane.UNINITIALIZED_VALUE) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ignored) {
+            }
+        }
+        if (selectedValue == null) {
+
+        } else if (selectedValue.equals(options[0])) {
+            selectedValue = getMessageWithBothLinks();
+        } else if (selectedValue.equals(options[1])) {
+            selectedValue = uploadedLinkFirstLines;
+        } else if (selectedValue.equals(options[2])) {
+            selectedValue = uploadedLinkLastLines;
+        }
+        FileListPanel.currentLogSelectionDialog = null;
+        return (String) selectedValue;
     }
 }

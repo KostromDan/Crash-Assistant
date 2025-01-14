@@ -219,15 +219,7 @@ public class ControlPanel {
                         generatedMsg += panel.getFileName() + ": [link](<" + panel.getUploadedLinkFirstLines() + ">)\n";
                     } else {
                         containsTooBigLog = true;
-                        long size = panel.getFilePath().toFile().length();
-                        List<String> tooBigReasons = new ArrayList<>();
-                        if (size > 10 * 1024 * 1024) tooBigReasons.add("~" + size / (1024 * 1024) + "MB");
-                        if (panel.getCountedLines() > 25000)
-                            tooBigReasons.add((panel.isLineCountInterrupted() ? "over " : "~") + panel.getCountedLines() / 1000 + "k lines");
-                        generatedMsg += panel.getFileName() + ": ";
-                        generatedMsg += "[head](<" + panel.getUploadedLinkFirstLines() + ">) / ";
-                        generatedMsg += "[tail](<" + panel.getUploadedLinkLastLines() + ">) " +
-                                (tooBigReasons.isEmpty() ? "" : "(" + String.join(" & ", tooBigReasons) + ")") + "\n";
+                        generatedMsg += panel.getMessageWithBothLinks();
 
                     }
                 }

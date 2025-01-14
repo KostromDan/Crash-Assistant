@@ -234,12 +234,12 @@ public class ControlPanel {
                 generatedMsg += "\n";
                 String modlistDIff = ModListUtils.generateDiffMsg();
                 String containsTooBigLogMsg = containsTooBigLog && (boolean) CrashAssistantConfig.get("general.generated_msg_includes_info_why_split") ?
-                        "\n\n*Splitting the log into `head` / `tail` occurs when the log exceeds mclo.gs limits (10 MB or 25k lines).*" : "";
+                        "\n*Splitting the log into head / tail occurs when the log exceeds mclo.gs limits (10 MB or 25k lines).*" : "";
                 if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 2000) {
                     try {
                         String link = uploadModlistDiff(modlistDIff);
                         generatedMsg += modlistDIff.split("\n", 2)[0] + "\n";
-                        generatedMsg += "Due to big size of mod list diff, it was uploaded to: [link](<" + link + ">)";
+                        generatedMsg += "Due to big size of mod list diff, it was uploaded to: [link](<" + link + ">)\n";
                     } catch (ExecutionException | InterruptedException | UploadException e) {
                         CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
                         generatedMsg += modlistDIff;

@@ -171,8 +171,9 @@ public class FilePanel {
                     countedLines = logProcessor.getCountedLines();
                     lineCountInterrupted = logProcessor.isLineCountInterrupted();
 
-                    if (logProcessor.getLastLinesString() != null) {
-                        CompletableFuture<UploadLogResponse> completableResponseLastLines = CrashAssistantGUI.MCLogsClient.uploadLog(logProcessor.getLastLinesString());
+                    String lastLines = logProcessor.getLastLinesString();
+                    if (lastLines != null) {
+                        CompletableFuture<UploadLogResponse> completableResponseLastLines = CrashAssistantGUI.MCLogsClient.uploadLog(lastLines);
                         UploadLogResponse responseLastLines = completableResponseLastLines.get();
                         responseLastLines.setClient(CrashAssistantGUI.MCLogsClient);
                         if (responseLastLines.isSuccess()) {

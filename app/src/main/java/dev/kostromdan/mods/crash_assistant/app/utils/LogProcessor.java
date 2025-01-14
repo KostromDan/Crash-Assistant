@@ -45,9 +45,10 @@ public class LogProcessor {
                 return;
             } else {
                 long timeCountStarted = Instant.now().toEpochMilli();
+                long timeDIff;
                 while (reader.readLine() != null) {
                     countedLines++;
-                    if(countedLines % 100 == 0 && Instant.now().toEpochMilli() - timeCountStarted > 1000){
+                    if (countedLines % 100 == 0 && ((timeDIff = Instant.now().toEpochMilli() - timeCountStarted) >= 3000 || (countedLines >= 100000 && timeDIff >= 1000))) {
                         lineCountInterrupted = true;
                         break;
                     }

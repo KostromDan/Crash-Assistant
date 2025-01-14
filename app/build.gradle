@@ -24,7 +24,10 @@ dependencies {
 jar {
     manifest {
         attributes(
-                'Main-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.Boot'
+                'Main-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.Boot',
+                'Launcher-Agent-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
+                'Agent-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
+                'Premain-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent'
         )
     }
 }

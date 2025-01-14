@@ -12,7 +12,6 @@ public class Boot {
     public static String log4jCore = null;
     public static String googleGson = null;
     public static String commonIo = null;
-    public static String processJar = null;
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         for (int i = 0; i < args.length; i++) {
@@ -24,8 +23,6 @@ public class Boot {
                 googleGson = args[i + 1];
             } else if ("-commonIo".equals(args[i]) && i + 1 < args.length) {
                 commonIo = args[i + 1];
-            } else if ("-processJar".equals(args[i]) && i + 1 < args.length) {
-                processJar = args[i + 1];
             }
         }
 
@@ -36,14 +33,12 @@ public class Boot {
             System.exit(-1);
         }
 
-        CrashAssistantClassLoader classLoader = new CrashAssistantClassLoader(List.of());
-        classLoader.addJar(new File(processJar).toURI().toURL());
-        classLoader.addJar(new File(log4jApi).toURI().toURL());
-        classLoader.addJar(new File(log4jCore).toURI().toURL());
-        classLoader.addJar(new File(googleGson).toURI().toURL());
-        classLoader.addJar(new File(commonIo).toURI().toURL());
+        CrashAssistantAgent.appendJarFile(log4jApi);
+        CrashAssistantAgent.appendJarFile(log4jCore);
+        CrashAssistantAgent.appendJarFile(googleGson);
+        CrashAssistantAgent.appendJarFile(commonIo);
 
-        Class<?> crashAssistantAppClass = classLoader.loadClass("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
+        Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
         Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);
         mainMethod.invoke(null, (Object) args);
     }
@@ -54,7 +49,6 @@ public class Boot {
         if (log4jCore == null) missingParameters.add("-log4jCore");
         if (googleGson == null) missingParameters.add("-googleGson");
         if (commonIo == null) missingParameters.add("-commonIo");
-        if (processJar == null) missingParameters.add("-processJar");
         return missingParameters;
     }
 }

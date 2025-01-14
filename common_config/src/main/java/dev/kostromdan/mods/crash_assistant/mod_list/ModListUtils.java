@@ -24,9 +24,9 @@ public class ModListUtils {
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    public static HashSet<String> getCurrentModList() {
+    public static TreeSet<String> getCurrentModList() {
         try {
-            HashSet<String> filenames = new HashSet<>();
+            TreeSet<String> filenames = new TreeSet<>();
             if (!Files.exists(MODS_FOLDER)) {
                 return filenames;
             }
@@ -39,7 +39,7 @@ public class ModListUtils {
         } catch (Exception e) {
             LOGGER.error("Error while getting current mod list: ", e);
         }
-        return new HashSet<>();
+        return new TreeSet<>();
     }
 
     public static HashSet<String> getSavedModList() {
@@ -69,7 +69,7 @@ public class ModListUtils {
     }
 
     public static ModListDiff getDiff() {
-        HashSet<String> currentModList = getCurrentModList();
+        TreeSet<String> currentModList = getCurrentModList();
         HashSet<String> savedModList = getSavedModList();
 
         return new ModListDiff(

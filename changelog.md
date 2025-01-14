@@ -1,3 +1,12 @@
+1.2.10:
+- Too big logs, which exceeding mclo.gs limits will be split into 2 parts: first and last lines containing 25k lines or 10MB.
+- Significantly improved generated message formatting.
+- Major log reading performance improvement. No more stuck on uploading even supermassive logs(tested on 10GB logs).
+- modlist.json now is sorted by alphabet.
+- Increased xmx to 512mb to prevent potential issues (No impact on RAM consumption on awaiting crash stage).
+- Improved some formulations in config comments.
+- Improved lang placeholders applying logic & performance.
+
 1.2.7:
 - Reduced memory usage of app for ~3mb.
 - Add support of another launcher launcherlogs:

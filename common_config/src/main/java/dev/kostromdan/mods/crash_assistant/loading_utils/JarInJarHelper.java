@@ -14,10 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public interface JarInJarHelper {
     Logger LOGGER = LogManager.getLogger("CrashAssistantJarInJarHelper");
@@ -64,6 +61,22 @@ public interface JarInJarHelper {
 
         } catch (Exception e) {
             LOGGER.error("Error while launching GUI: ", e);
+        }
+    }
+
+    static void checkDuplicatedCrashAssistantMod() {
+        try {
+            List<String> mods = Files.list(Paths.get("mods"))
+                    .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().startsWith("crash_assistant-"))
+                    .map(path -> path.getFileName().toString())
+                    .toList();
+            if (mods.size() > 1) {
+                LOGGER.error("Found more than one mod starting with \"crash_assistant-\":\n" +
+                        String.join("\n", mods) +
+                        "\nAssuming Crash Assistant is duplicated. Duplicated coremods can produce wired issues.");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error while checking duplicated mods", e);
         }
     }
 

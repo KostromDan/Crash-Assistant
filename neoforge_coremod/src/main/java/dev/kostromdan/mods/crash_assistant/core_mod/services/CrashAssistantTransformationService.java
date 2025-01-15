@@ -28,6 +28,7 @@ public class CrashAssistantTransformationService implements ITransformationServi
     public void initialize(IEnvironment environment) {
         String launchTarget = environment.getProperty(IEnvironment.Keys.LAUNCHTARGET.get()).orElse("unknown");
         JarInJarHelper.launchCrashAssistantApp(launchTarget);
+        JarInJarHelper.checkDuplicatedCrashAssistantMod();
     }
 
     @Override

@@ -26,7 +26,7 @@ public class ModListUtils {
 
     public static TreeSet<String> getCurrentModList() {
         try {
-            TreeSet<String> filenames = new TreeSet<>();
+            TreeSet<String> filenames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
             if (!Files.exists(MODS_FOLDER)) {
                 return filenames;
             }
@@ -69,15 +69,19 @@ public class ModListUtils {
     }
 
     public static ModListDiff getDiff() {
-        TreeSet<String> currentModList = getCurrentModList();
+        HashSet<String> currentModList = new HashSet<>(getCurrentModList()); // We want to have O(1) contains()
         HashSet<String> savedModList = getSavedModList();
 
         return new ModListDiff(
                 // Added mods: present in current but not in saved
-                currentModList.stream().filter(mod -> !savedModList.contains(mod)).collect(Collectors.toCollection(TreeSet::new)),
+                currentModList.stream()
+                        .filter(mod -> !savedModList.contains(mod))
+                        .collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER))),
 
                 // Removed mods: present in saved but not in current
-                savedModList.stream().filter(mod -> !currentModList.contains(mod)).collect(Collectors.toCollection(TreeSet::new))
+                savedModList.stream()
+                        .filter(mod -> !currentModList.contains(mod))
+                        .collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)))
         );
     }
 

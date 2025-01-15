@@ -1,26 +1,17 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
-import dev.kostromdan.mods.crash_assistant.app.utils.CrashReportsHelper;
-import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
-import dev.kostromdan.mods.crash_assistant.app.utils.HsErrHelper;
-import dev.kostromdan.mods.crash_assistant.app.utils.LogsComparator;
-import dev.kostromdan.mods.crash_assistant.app.utils.PIDHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class CrashAssistantApp {
@@ -59,20 +50,6 @@ public class CrashAssistantApp {
         while (true) {
             try {
                 if (!PIDHelper.isProcessAlive(parentPID)) {
-                    LOGGER.info("PID \"{}\" is not alive. Minecraft JVM appears to have stopped.", parentPID);
-                    onMinecraftFinished();
-                    return;
-                }
-
-                HashSet<Path> newCrashReports = CrashReportsHelper.scanForNewCrashReports();
-                if (!newCrashReports.isEmpty()) {
-                    LOGGER.info("Detected new crash report(s), awaiting for {} PID finished.", parentPID);
-                    while (ProcessHandle.of(parentPID).isPresent()) {
-                        if (checkLoadingErrorScreen()) {
-                            return;
-                        }
-                        TimeUnit.MILLISECONDS.sleep(100);
-                    }
                     LOGGER.info("PID \"{}\" is not alive. Minecraft JVM appears to have stopped.", parentPID);
                     onMinecraftFinished();
                     return;
@@ -125,22 +102,18 @@ public class CrashAssistantApp {
         FileUtils.addIfExistsAndModified(availableLogs, "GDLauncher: main.log", Paths.get("../../../../", "main.log"));
         FileUtils.addIfExistsAndModified(availableLogs, "MultiMC: MultiMC-0.log", Paths.get("../../../", "MultiMC-0.log"));
 
-        Path modrinthLauncherLogs = Paths.get("../../launcher_logs");
-        if (modrinthLauncherLogs.toFile().exists()) {
-            try {
-                Files.list(modrinthLauncherLogs).forEach(path -> {
-                    String fileName = path.getFileName().toString();
-                    if (fileName.endsWith(".log")) {
-                        FileUtils.addIfExistsAndModified(availableLogs, "Modrinth: " + fileName, path);
-                    }
-                });
-            } catch (IOException ignored) {
-            }
-        }
+        FileUtils.getModifiedFiles(Paths.get("../../launcher_logs"), ".log").forEach(path -> {
+            FileUtils.addIfExistsAndModified(availableLogs, "Modrinth: " + path.getFileName().toString(), path);
+        });
+
 
         String appdata = System.getenv("APPDATA");
         if (appdata != null) {
             FileUtils.addIfExistsAndModified(availableLogs, "AtLauncher: atlauncher.log", Paths.get(appdata, "AtLauncher", "logs", "atlauncher.log"));
+
+            FileUtils.getModifiedFiles(Paths.get(appdata, ".tlauncher", "logs", "tlauncher"), ".log").forEach(path -> {
+                FileUtils.addIfExistsAndModified(availableLogs, "TLauncher: " + path.getFileName().toString(), path);
+            });
         }
 
         Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(parentPID);

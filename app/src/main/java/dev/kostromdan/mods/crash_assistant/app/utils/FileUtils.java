@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashSet;
 import java.util.Map;
 
 public interface FileUtils {
@@ -67,6 +68,22 @@ public interface FileUtils {
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while deleting tmp files: ", e);
         }
+    }
+
+    static HashSet<Path> getModifiedFiles(Path dir, String extension) {
+        HashSet<Path> filesFound = new HashSet<>();
+        if (dir.toFile().exists()) {
+            try {
+                Files.list(dir).forEach(path -> {
+                    String fileName = path.getFileName().toString();
+                    if (fileName.endsWith(extension) && path.toFile().lastModified() >= CrashAssistantApp.parentStarted) {
+                        filesFound.add(path);
+                    }
+                });
+            } catch (IOException ignored) {
+            }
+        }
+        return filesFound;
     }
 
 }

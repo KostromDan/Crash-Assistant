@@ -149,7 +149,7 @@ public class ControlPanel {
                 synchronized (ControlPanel.class) {
                     dialog.setVisible(true);
                     if (isLinkToModdedMC)
-                        CrashAssistantGUI.highlightButton(fileListPanel.getScrollPane(), new Color(255, 100, 100), 3500);
+                        CrashAssistantGUI.highlightButton(fileListPanel.getScrollPane(), new Color(100, 100, 255), 3500);
                 }
             }).start();
 

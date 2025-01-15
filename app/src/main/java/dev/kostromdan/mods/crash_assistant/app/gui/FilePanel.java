@@ -161,12 +161,15 @@ public class FilePanel {
         uploadFile(true);
     }
 
-    public void uploadFile(boolean fromButton) {
+    public synchronized void uploadFile(boolean fromButton) {
         ControlPanel.stopMovingToTop = true;
+        if(!uploadButton.isEnabled()) {
+            return;
+        }
+        uploadButton.setEnabled(false);
         new Thread(() -> {
             if (uploadedLinkFirstLines == null) {
                 lastError = null;
-                uploadButton.setEnabled(false);
                 uploadButton.setPreferredSize(new Dimension(uploadButton.getMinimumSize().width, 25));
                 uploadButton.setText(LanguageProvider.get("gui.uploading"));
 

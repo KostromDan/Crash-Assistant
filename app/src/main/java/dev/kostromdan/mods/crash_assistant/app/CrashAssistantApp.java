@@ -112,7 +112,7 @@ public class CrashAssistantApp {
             FileUtils.addIfExistsAndModified(availableLogs, "AtLauncher: atlauncher.log", Paths.get(appdata, "AtLauncher", "logs", "atlauncher.log"));
 
             FileUtils.getModifiedFiles(Paths.get(appdata, ".tlauncher", "logs", "tlauncher"), ".log").forEach(path -> {
-                FileUtils.addIfExistsAndModified(availableLogs, "TLauncher: " + path.getFileName().toString(), path);
+                FileUtils.addIfExistsAndModified(availableLogs, "TLauncher: " + path.getFileName().toString(), path); // To notify modpack creators about TLauncher usage.
             });
         }
 

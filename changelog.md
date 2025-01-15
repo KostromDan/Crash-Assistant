@@ -1,3 +1,17 @@
+1.2.12:
+- Added checking duplicated mod. Since forge doesn't do this for coremods.
+- Fixed alphabet sorting of mod list from prev update was CASE_SENSITIVE.
+- Improved placeholders logic.
+- Added `generated_message.text_under_crashed` config option.
+- Added `generated_message.warning_after_upload_all_button_press` config option.
+- Moved `generated_msg_includes_info_why_split` config option from `general` to `generated_message`. Option in `general` will void.
+- Mod list diff will save only `.jar` and `.zip` extensions.
+- Added another launcher launcherlog support.
+- Removed some useless code.
+- Fixed rare bug with buttons sizes.
+- Changed highlight color from red to blue, so it still requests attention, but looks less aggressive.
+- Upload all button after BetterMC Discord warning starts uploading immediately, without second press.
+
 1.2.11:
 - Simplified & improved Split logs dialog formulations.
 - Improved ModdedMC Discord warning.

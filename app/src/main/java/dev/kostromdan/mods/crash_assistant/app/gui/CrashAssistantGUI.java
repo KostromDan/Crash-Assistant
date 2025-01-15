@@ -11,7 +11,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
-import java.net.URL;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.HashSet;
@@ -143,8 +142,15 @@ public class CrashAssistantGUI {
                     if (ControlPanel.dialog != null) {
                         ControlPanel.dialog.dispose();
                     }
-                } else if ("SUPPORT_NAME".equals(description)) {
+                } else if ("CONFIG.text.support_name".equals(description)) {
                     componentToHighlight = controlPanel.requestHelpButton;
+                } else if (e.getURL() != null) {
+                    try {
+                        Desktop.getDesktop().browse(e.getURL().toURI());
+                    } catch (Exception exception) {
+                        CrashAssistantApp.LOGGER.error("Failed to open in link browser: ", exception);
+                    }
+                    return;
                 } else {
                     CrashAssistantApp.LOGGER.error("Unsupported hyperlink event: " + description);
                     return;

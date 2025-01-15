@@ -43,7 +43,7 @@ public class CrashAssistantGUI {
         titleLabel.setFont(titleLabel.getFont().deriveFont(16f));
 
         String commentText = LanguageProvider.get("gui.comment_under_title", new HashSet<>() {{
-            add("$SUPPORT_NAME$");
+            add("$CONFIG.text.support_name$");
             add("$LANG.gui.upload_all_comment$");
         }});
         if (CrashAssistantConfig.get("general.show_dont_send_screenshot_of_gui_notice")) {

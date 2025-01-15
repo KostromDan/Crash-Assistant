@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 import gs.mclo.api.response.UploadLogResponse;
@@ -13,10 +14,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Timer;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -162,8 +162,8 @@ public class ControlPanel {
                             uploadAllButton.setText(LanguageProvider.get("gui.error"));
                             CrashAssistantGUI.highlightButton(uploadAllButton, new Color(255, 100, 100), 2600);
 
-                            new java.util.Timer().schedule(
-                                    new java.util.TimerTask() {
+                            new Timer().schedule(
+                                    new TimerTask() {
                                         @Override
                                         public void run() {
                                             uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
@@ -188,7 +188,10 @@ public class ControlPanel {
 
                     }
                 }
-                generatedMsg = LanguageProvider.get("text.modpack_name") + " crashed!\n";
+                generatedMsg = CrashAssistantConfig.get("text.modpack_name", true) + " crashed!\n";
+                if (!CrashAssistantConfig.get("generated_message.text_under_crashed").toString().isEmpty()) {
+                    generatedMsg += CrashAssistantConfig.get("generated_message.text_under_crashed", true) + "\n";
+                }
                 boolean kubeJSPosted = false;
                 List<FilePanel> kubeJSPanelList = new ArrayList<>();
                 for (FilePanel panel : fileListPanel.filePanelList) {
@@ -226,7 +229,7 @@ public class ControlPanel {
                 }
                 generatedMsg += "\n";
                 String modlistDIff = ModListUtils.generateDiffMsg();
-                String containsTooBigLogMsg = containsTooBigLog && (boolean) CrashAssistantConfig.get("general.generated_msg_includes_info_why_split") ?
+                String containsTooBigLogMsg = containsTooBigLog && (boolean) CrashAssistantConfig.get("generated_msg_includes_info_why_split") ?
                         "\n*Splitting the log into head / tail occurs when the log exceeds mclo.gs limits (10 MB or 25k lines).*" : "";
                 if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 2000) {
                     try {
@@ -247,8 +250,8 @@ public class ControlPanel {
             ClipboardUtils.copy(generatedMsg);
             uploadAllButton.setText(LanguageProvider.get("gui.copied"));
             CrashAssistantGUI.highlightButton(uploadAllButton, new Color(100, 255, 100), 2600);
-            new java.util.Timer().schedule(
-                    new java.util.TimerTask() {
+            new Timer().schedule(
+                    new TimerTask() {
                         @Override
                         public void run() {
                             uploadAllButton.setText(LanguageProvider.get("gui.upload_all_finished_button"));

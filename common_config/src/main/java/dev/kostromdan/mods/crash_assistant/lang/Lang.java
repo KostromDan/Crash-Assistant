@@ -15,11 +15,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Lang {
-    public static final LinkedHashMap<String, String> PlaceHolderToConfigMap = new LinkedHashMap<>() {{
-        put("$SUPPORT_NAME$", "text.support_name");
-        put("$MODPACK_NAME$", "text.modpack_name");
-        put("$SUPPORT_PLACE$", "text.support_place");
-    }};
     public HashMap<String, String> lang;
     public static FileConfig BCCConfig;
 
@@ -36,17 +31,16 @@ public class Lang {
         return applyPlaceHolders(value, placeHoldersSurroundedWithHref);
     }
 
-    private static String applyPlaceHolders(String value, HashSet<String> placeHoldersSurroundedWithHref) {
+    public static String applyPlaceHolders(String value, HashSet<String> placeHoldersSurroundedWithHref) {
         if (!value.contains("$")) {
             return value;
         }
-        for (Map.Entry<String, String> entry : PlaceHolderToConfigMap.entrySet()) {
-            if (!value.contains(entry.getKey())) {
-                continue;
-            }
-            String placeholder = entry.getKey();
-            String configValue = CrashAssistantConfig.get(entry.getValue());
-            value = replacePlaceHolder(value, placeholder, configValue, placeHoldersSurroundedWithHref);
+        while (value.contains("$CONFIG.")) {
+            int placeHolderStart = value.indexOf("$CONFIG.");
+            int placeHolderEnd = value.indexOf("$", placeHolderStart + 8) + 1;
+            String placeholder = value.substring(placeHolderStart, placeHolderEnd);
+            String configKey = placeholder.substring(8, placeholder.length() - 1);
+            value = replacePlaceHolder(value, placeholder, CrashAssistantConfig.get(configKey), placeHoldersSurroundedWithHref);
         }
         while (value.contains("$LANG.")) {
             int placeHolderStart = value.indexOf("$LANG.");

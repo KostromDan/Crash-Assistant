@@ -242,7 +242,7 @@ public class ControlPanel {
                 }
                 generatedMsg += "\n";
                 String modlistDIff = ModListUtils.generateDiffMsg();
-                String containsTooBigLogMsg = containsTooBigLog && (boolean) CrashAssistantConfig.get("generated_msg_includes_info_why_split") ?
+                String containsTooBigLogMsg = containsTooBigLog && (boolean) CrashAssistantConfig.get("generated_message.generated_msg_includes_info_why_split") ?
                         "\n*Splitting the log into head / tail occurs when the log exceeds mclo.gs limits (10 MB or 25k lines).*" : "";
                 if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 2000) {
                     try {

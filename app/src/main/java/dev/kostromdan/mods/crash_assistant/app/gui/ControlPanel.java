@@ -5,7 +5,6 @@ import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 import gs.mclo.api.response.UploadLogResponse;
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
 
 public class ControlPanel {
     public static boolean stopMovingToTop = false;
-    private static boolean moddedMinecraftWarningShown = false;
+    private static boolean uploadAllButtonWarningShown = false;
     private static JPanel panel;
     public static JDialog dialog;
     private final FileListPanel fileListPanel;
@@ -123,27 +122,41 @@ public class ControlPanel {
 
     private void uploadAllFiles() {
         stopMovingToTop = true;
-        if (!moddedMinecraftWarningShown && Objects.equals(CrashAssistantConfig.get("general.help_link"), "https://discord.gg/moddedmc")) {
-            JEditorPane commentPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.upload_all_button_moddedmc_warning", new HashSet<>() {{
-                add("$LANG.gui.file_list_label$");
-            }}));
-            JOptionPane optionPane = new JOptionPane(
-                    commentPane,
-                    JOptionPane.WARNING_MESSAGE,
-                    JOptionPane.DEFAULT_OPTION
-            );
-            dialog = optionPane.createDialog(
-                    panel,
-                    LanguageProvider.get("gui.upload_all_button_moddedmc_warning_title")
-            );
-            moddedMinecraftWarningShown = true;
-            dialog.setVisible(true);
-            CrashAssistantGUI.highlightButton(fileListPanel.getScrollPane(), new Color(255, 100, 100), 3000);
-            return;
+        uploadAllButton.setEnabled(false);
+        final boolean isLinkToModdedMC = Objects.equals(CrashAssistantConfig.get("general.help_link"), "https://discord.gg/moddedmc");
+        String warningMsg = CrashAssistantConfig.get("generated_message.warning_after_upload_all_button_press", true);
+        final boolean showWarning = isLinkToModdedMC || !warningMsg.isEmpty();
+        if (!uploadAllButtonWarningShown && showWarning) {
+            new Thread(() -> {
+                JEditorPane commentPane;
+                if (isLinkToModdedMC) {
+                    commentPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.upload_all_button_moddedmc_warning", new HashSet<>() {{
+                        add("$LANG.gui.file_list_label$");
+                    }}));
+                } else {
+                    commentPane = CrashAssistantGUI.getEditorPane(warningMsg);
+                }
+                JOptionPane optionPane = new JOptionPane(
+                        commentPane,
+                        isLinkToModdedMC ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE,
+                        JOptionPane.DEFAULT_OPTION
+                );
+                dialog = optionPane.createDialog(
+                        panel,
+                        isLinkToModdedMC ? LanguageProvider.get("gui.upload_all_button_moddedmc_warning_title") : LanguageProvider.get("gui.upload_all_button_warning_title")
+                );
+                uploadAllButtonWarningShown = true;
+                synchronized (ControlPanel.class) {
+                    dialog.setVisible(true);
+                    if (isLinkToModdedMC)
+                        CrashAssistantGUI.highlightButton(fileListPanel.getScrollPane(), new Color(255, 100, 100), 3500);
+                }
+            }).start();
+
         }
         new Thread(() -> {
-            uploadAllButton.setEnabled(false);
-            if (generatedMsg == null) {
+            final boolean generatedMsgWasNull = generatedMsg == null;
+            if (generatedMsgWasNull) {
                 uploadAllButton.setText(LanguageProvider.get("gui.uploading"));
                 for (FilePanel panel : fileListPanel.filePanelList) {
                     panel.uploadFile(false);
@@ -247,19 +260,33 @@ public class ControlPanel {
                     generatedMsg += containsTooBigLogMsg;
                 }
             }
-            ClipboardUtils.copy(generatedMsg);
-            uploadAllButton.setText(LanguageProvider.get("gui.copied"));
-            CrashAssistantGUI.highlightButton(uploadAllButton, new Color(100, 255, 100), 2600);
-            new Timer().schedule(
-                    new TimerTask() {
-                        @Override
-                        public void run() {
-                            uploadAllButton.setText(LanguageProvider.get("gui.upload_all_finished_button"));
-                            uploadAllButton.setEnabled(true);
+            synchronized (ControlPanel.class) {
+                int buttonHighLightTime = 3000;
+                if (generatedMsgWasNull) {
+                    if (isLinkToModdedMC) {
+                        try {
+                            Thread.sleep(2500);
+                        } catch (InterruptedException ignored) {
                         }
-                    },
-                    3000
-            );
+                    }
+                    if (showWarning) {
+                        buttonHighLightTime = 4500;
+                    }
+                }
+                ClipboardUtils.copy(generatedMsg);
+                uploadAllButton.setText(LanguageProvider.get("gui.copied"));
+                CrashAssistantGUI.highlightButton(uploadAllButton, new Color(100, 255, 100), buttonHighLightTime - 400);
+                new Timer().schedule(
+                        new TimerTask() {
+                            @Override
+                            public void run() {
+                                uploadAllButton.setText(LanguageProvider.get("gui.upload_all_finished_button"));
+                                uploadAllButton.setEnabled(true);
+                            }
+                        },
+                        buttonHighLightTime
+                );
+            }
         }).start();
     }
 

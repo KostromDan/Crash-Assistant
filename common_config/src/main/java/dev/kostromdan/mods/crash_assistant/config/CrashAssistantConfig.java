@@ -68,6 +68,13 @@ public class CrashAssistantConfig {
                         "   * some form, which users should fill out.\n" +
                         "   * additional information like Minecraft version, etc.",
                 "");
+        addOption("generated_message.warning_after_upload_all_button_press",
+                "Warning: if \"general.help_link\" is default (equals https://discord.gg/moddedmc), this value will be ignored and custom hardcoded message used due to request of ModdedMC discord administration.\n" +
+                        "Leave empty to prevent showing this warning message.\n" +
+                        "With this option you can notify user about something related with posting generated message.\n" +
+                        "For example if they need to fill some option from \"generated_message.text_under_crashed\", etc.\n" +
+                        "Supports html formatting, placeholders.",
+                "");
         addOption("generated_message.generated_msg_includes_info_why_split",
                 "Crash Assistant splits the log into a head and tail of 25,000 lines each if the log exceeds mclo.gs limits (10 MB or 25,000 lines).\n" +
                         "Add an explanation at the bottom of the generated message about why log was split.",

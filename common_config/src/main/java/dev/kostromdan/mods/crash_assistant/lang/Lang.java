@@ -9,8 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,36 +34,26 @@ public class Lang {
         if (!value.contains("$")) {
             return value;
         }
-        while (value.contains("$CONFIG.")) {
-            int placeHolderStart = value.indexOf("$CONFIG.");
-            int placeHolderEnd = value.indexOf("$", placeHolderStart + 8) + 1;
-            String placeholder = value.substring(placeHolderStart, placeHolderEnd);
-            String configKey = placeholder.substring(8, placeholder.length() - 1);
-            value = replacePlaceHolder(value, placeholder, CrashAssistantConfig.get(configKey), placeHoldersSurroundedWithHref);
-        }
-        while (value.contains("$LANG.")) {
-            int placeHolderStart = value.indexOf("$LANG.");
-            int placeHolderEnd = value.indexOf("$", placeHolderStart + 6) + 1;
-            String placeholder = value.substring(placeHolderStart, placeHolderEnd);
-            String langKey = placeholder.substring(6, placeholder.length() - 1);
-            value = replacePlaceHolder(value, placeholder, LanguageProvider.get(langKey), placeHoldersSurroundedWithHref);
-        }
-        while (value.contains("$BCC.")) {
-            int placeHolderStart = value.indexOf("$BCC.");
-            int placeHolderEnd = value.indexOf("$", placeHolderStart + 5) + 1;
-            String placeholder = value.substring(placeHolderStart, placeHolderEnd);
-            String configKey = placeholder.substring(5, placeholder.length() - 1);
-            value = replacePlaceHolder(value, placeholder, getBCCValue(configKey), placeHoldersSurroundedWithHref);
-        }
+        value = applyPlaceHolder("$CONFIG.", value, CrashAssistantConfig::get, placeHoldersSurroundedWithHref);
+        value = applyPlaceHolder("$LANG.", value, LanguageProvider::get, placeHoldersSurroundedWithHref);
+        value = applyPlaceHolder("$BCC.", value, Lang::getBCCValue, placeHoldersSurroundedWithHref);
         return value;
     }
 
-    public static String replacePlaceHolder(String value, String placeholder, String configValue, HashSet<String> placeHoldersSurroundedWithHref) {
-        if (placeHoldersSurroundedWithHref.contains(placeholder)) {
-            configValue = "<a href='" + placeholder.substring(1, placeholder.length() - 1) + "'>" + configValue + "</a>";
+    private static String applyPlaceHolder(String placeHolderStart, String value, Function<String, String> configGetFunction, HashSet<String> placeHoldersSurroundedWithHref) {
+        while (value.contains(placeHolderStart)) {
+            int placeHolderStartLength = placeHolderStart.length();
+            int placeHolderStartIndex = value.indexOf(placeHolderStart);
+            int placeHolderEndIndex = value.indexOf("$", placeHolderStartIndex + placeHolderStartLength) + 1;
+            String placeholder = value.substring(placeHolderStartIndex, placeHolderEndIndex);
+            String configKey = placeholder.substring(placeHolderStartLength, placeholder.length() - 1);
+
+            String configValue = configGetFunction.apply(configKey);
+            if (placeHoldersSurroundedWithHref.contains(placeholder)) {
+                configValue = "<a href='" + placeholder.substring(1, placeholder.length() - 1) + "'>" + configValue + "</a>";
+            }
+            value = value.replaceAll(Pattern.quote(placeholder), Matcher.quoteReplacement(configValue));
         }
-        String escapedPlaceholder = Pattern.quote(placeholder);
-        value = value.replaceAll(escapedPlaceholder, Matcher.quoteReplacement(configValue));
         return value;
     }
 

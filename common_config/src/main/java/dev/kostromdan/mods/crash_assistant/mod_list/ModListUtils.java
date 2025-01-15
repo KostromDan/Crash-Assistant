@@ -31,8 +31,9 @@ public class ModListUtils {
                 return filenames;
             }
             Files.list(MODS_FOLDER).forEach(path -> {
-                if (Files.isRegularFile(path)) {
-                    filenames.add(path.getFileName().toString());
+                String filename = path.getFileName().toString();
+                if (Files.isRegularFile(path) && (filename.endsWith(".jar") || filename.endsWith(".zip"))) {
+                    filenames.add(filename);
                 }
             });
             return filenames;

@@ -1,3 +1,8 @@
+1.2.11:
+- Simplified & improved Split logs dialog formulations.
+- Improved ModdedMC Discord warning.
+- Highlight available logs label after ModdedMC Discord warning closed.
+
 1.2.10:
 - Too big logs, which exceeding mclo.gs limits will be split into 2 parts: first and last lines containing 25k lines or 10MB.
 - Significantly improved generated message formatting.

@@ -138,6 +138,7 @@ public class ControlPanel {
             );
             moddedMinecraftWarningShown = true;
             dialog.setVisible(true);
+            CrashAssistantGUI.highlightButton(fileListPanel.getScrollPane(), new Color(255, 100, 100), 3000);
             return;
         }
         new Thread(() -> {

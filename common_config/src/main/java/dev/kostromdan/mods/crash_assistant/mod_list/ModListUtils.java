@@ -103,7 +103,7 @@ public class ModListUtils {
 
     public static String generateDiffMsg(boolean asHtmlWithColor) {
         String generatedMsg = "";
-        if (CrashAssistantConfig.get("modpack_modlist.enabled")) {
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             ModListDiff diff = ModListUtils.getDiff();
 
             String currentUsername = "";

@@ -41,7 +41,7 @@ public class ControlPanel {
         JPanel labelButtonPanel = new JPanel();
         labelButtonPanel.setLayout(new BoxLayout(labelButtonPanel, BoxLayout.X_AXIS));
 
-        if (CrashAssistantConfig.get("modpack_modlist.enabled")) {
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             ModListDiff diff = ModListUtils.getDiff();
             String labelMsg;
             JButton showModListButton = new JButton(LanguageProvider.get("gui.show_modlist_diff_button"));
@@ -247,7 +247,7 @@ public class ControlPanel {
                 }
                 generatedMsg += "\n";
                 String modlistDIff = ModListUtils.generateDiffMsg();
-                String containsTooBigLogMsg = containsTooBigLog && (boolean) CrashAssistantConfig.get("generated_message.generated_msg_includes_info_why_split") && !CrashAssistantGUI.isLinkToModdedMC() ?
+                String containsTooBigLogMsg = containsTooBigLog && CrashAssistantConfig.getBoolean("generated_message.generated_msg_includes_info_why_split") && !CrashAssistantGUI.isLinkToModdedMC() ?
                         "\n*Splitting the log into head / tail occurs when the log exceeds mclo.gs limits (10 MB or 25k lines).*" : "";
                 if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 2000) {
                     try {

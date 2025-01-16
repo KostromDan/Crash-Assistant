@@ -26,11 +26,11 @@ public class TitleScreenMixin {
         if (CrashAssistant.clientLoaded) return;
         CrashAssistant.clientLoaded = true;
 
-        if (CrashAssistantConfig.get("modpack_modlist.enabled")) {
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             if (CrashAssistantConfig.getModpackCreators().isEmpty()) {
                 CrashAssistantConfig.addModpackCreator(CrashAssistant.playerNickname);
             }
-            if ((boolean) CrashAssistantConfig.get("modpack_modlist.auto_update") &&
+            if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update") &&
                     CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname)) {
                 ModListUtils.saveCurrentModList();
             }

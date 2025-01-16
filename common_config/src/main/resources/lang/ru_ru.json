@@ -50,5 +50,9 @@
   "commands.crash_command_validation_failed_to_crash": "Ошибка проверки команды!\nНедопустимая цель для краша:",
   "commands.crash_command_applying_args": "Применение аргументов команды...",
   "commands.crash_command_crashing": "Крашим!",
-  "commands.crash_command_done": "Готово!"
+  "commands.crash_command_done": "Готово!",
+  "text.greeting1": "Благодарим за установку ",
+  "text.greeting2": "!\nЕсли мод установлен в сборку модов,\nвам следует настроить его в ",
+  "text.greeting3": "\nЭто сообщение больше не появится.",
+  "text.opens_url": "Открыть страницу мода на GitHub"
 }

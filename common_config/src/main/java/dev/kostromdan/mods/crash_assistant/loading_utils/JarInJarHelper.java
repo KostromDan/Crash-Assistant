@@ -97,7 +97,7 @@ public interface JarInJarHelper {
                     Files.deleteIfExists(processInfoPath);
                 } catch (IOException e) {
                     if (Files.exists(processInfoPath)) {
-                        if (CrashAssistantConfig.get("general.kill_old_app")) {
+                        if (CrashAssistantConfig.getBoolean("general.kill_old_app")) {
                             Long minecraft_pid = Long.parseLong(processInfo.split("_")[0]);
                             Long start_time = Long.parseLong(processInfo.split("_")[1]);
                             Long app_pid;

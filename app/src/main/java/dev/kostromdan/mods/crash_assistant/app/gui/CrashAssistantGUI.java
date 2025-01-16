@@ -43,7 +43,7 @@ public class CrashAssistantGUI {
             add("$CONFIG.text.support_name$");
             add("$LANG.gui.upload_all_comment$");
         }});
-        if (CrashAssistantConfig.get("general.show_dont_send_screenshot_of_gui_notice")) {
+        if (CrashAssistantConfig.getBoolean("general.show_dont_send_screenshot_of_gui_notice")) {
             String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
             commentText += "\n<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
         }

@@ -57,7 +57,7 @@ public class CrashAssistantCommands {
 //                        .then(LiteralArgumentBuilder.literal("release")
 //                                .executes(CrashAssistantCommands::releaseIntegratedServer)))
                 .then(LiteralArgumentBuilder.literal("crash")
-                        .requires(c -> CrashAssistantConfig.get("crash_command.enabled"))
+                        .requires(c -> CrashAssistantConfig.getBoolean("crash_command.enabled"))
                         .then(RequiredArgumentBuilder.argument("to_crash", StringArgumentType.string())
                                 .suggests(new CrashAssistantCommands.CrashCommandsSuggestionProvider<>())
                                 .executes(CrashAssistantCommands::crash)
@@ -92,7 +92,7 @@ public class CrashAssistantCommands {
 
     public static boolean checkModlistFeatureEnabled() {
         LanguageProvider.updateLang();
-        if (CrashAssistantConfig.get("modpack_modlist.enabled")) {
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             return true;
         }
         MutableComponent msg = Component.empty();
@@ -114,7 +114,7 @@ public class CrashAssistantCommands {
         if (CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname)) {
             ModListUtils.saveCurrentModList();
             msg.append(Component.literal(LanguageProvider.get("commands.modlist_overwritten_success")));
-            if (CrashAssistantConfig.get("modpack_modlist.auto_update")) {
+            if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update")) {
                 msg.append(Component.literal(LanguageProvider.get("commands.modlist_auto_update_msg"))
                         .withStyle(style -> style.withColor(ChatFormatting.WHITE)));
             } else {

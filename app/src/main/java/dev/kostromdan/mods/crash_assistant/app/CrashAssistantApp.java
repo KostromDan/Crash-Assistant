@@ -83,7 +83,7 @@ public class CrashAssistantApp {
 
         if (loadingErrorFML.toFile().exists()) {
             LOGGER.info("Detected FML error modloading screen.");
-            if (CrashAssistantConfig.get("general.show_on_fml_error_screen")) {
+            if (CrashAssistantConfig.getBoolean("general.show_on_fml_error_screen")) {
                 onMinecraftFinished();
             }
             return true;

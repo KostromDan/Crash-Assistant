@@ -51,5 +51,9 @@
   "commands.crash_command_validation_failed_to_crash": "Validation of command failed!\nIllegal crash target:",
   "commands.crash_command_applying_args": "Applying command arguments...",
   "commands.crash_command_crashing": "Crashing!",
-  "commands.crash_command_done": "Done!"
+  "commands.crash_command_done": "Done!",
+  "text.greeting1": "Thanks for installing ",
+  "text.greeting2": " mod!\nIf mod is installed into a modpack,\nyou should configure it in ",
+  "text.greeting3": "\nThis message will no longer appear.",
+  "text.opens_url": "Open the mod's GitHub page"
 }

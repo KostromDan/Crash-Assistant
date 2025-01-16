@@ -92,6 +92,10 @@ public class CrashAssistantConfig {
                         "MOD_LOADING - will crash game on load of this mod. Can be used to show FML error screen. Crash report generated.\n" +
                         "GAME_STARTED - will crash game on first tick of TitleScreen. Crash report generated.",
                 "NONE");
+        addOption("debug.shown_greeting",
+                "You don't need to touch this option.\n" +
+                        "On first world join of modpack creator if set to false shows greeting, then self enables.",
+                false);
 
         config.setComment("text", "Here you can change text of lang placeHolders.\n" +
                 "Also you can change any text in lang files.\n" +
@@ -248,13 +252,17 @@ public class CrashAssistantConfig {
         });
     }
 
-    public static <T> T get(String path) {
+    public static synchronized  <T> T get(String path) {
         final AtomicReference<T> result = new AtomicReference<>();
         executeWithLock(() -> {
             update();
             result.set(config.get(path));
         });
         return result.get();
+    }
+
+    public static boolean getBoolean(String path) {
+        return get(path);
     }
 
     public static String get(String path, boolean applyPlaceHolders) {

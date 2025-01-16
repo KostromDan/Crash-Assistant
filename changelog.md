@@ -1,3 +1,13 @@
+1.2.13:
+- Removed ModdedMC Discord waning since it ignored by most of the users.
+- Fixed stuck on Upload All Button press if available logs are empty.
+- Added in generated message information about `CurseForge: skip launcher` used.
+- Added new config option `general.upload_to`: supports `mclo.gs` / `gnome.bot`
+  - Logs still always uploaded to mclo.gs, but setting to `gnome.bot` will open log where.
+- Improved config.
+- Added greeting msg with suggestion to configure mod, shown one time for modpack creator, who installed the mod.
+- Small fixes.
+
 1.2.12:
 - Added checking duplicated mod. Since forge doesn't do this for coremods.
 - Fixed alphabet sorting of mod list from prev update was CASE_SENSITIVE.

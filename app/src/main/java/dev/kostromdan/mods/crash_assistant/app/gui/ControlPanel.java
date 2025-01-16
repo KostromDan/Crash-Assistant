@@ -13,9 +13,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.List;
 import java.util.Timer;
-import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -123,33 +126,22 @@ public class ControlPanel {
     private void uploadAllFiles() {
         stopMovingToTop = true;
         uploadAllButton.setEnabled(false);
-        final boolean isLinkToModdedMC = Objects.equals(CrashAssistantConfig.get("general.help_link"), "https://discord.gg/moddedmc");
         String warningMsg = CrashAssistantConfig.get("generated_message.warning_after_upload_all_button_press", true);
-        final boolean showWarning = isLinkToModdedMC || !warningMsg.isEmpty();
-        if (!uploadAllButtonWarningShown && showWarning) {
+        if (!uploadAllButtonWarningShown && !warningMsg.isEmpty()) {
             new Thread(() -> {
-                JEditorPane commentPane;
-                if (isLinkToModdedMC) {
-                    commentPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.upload_all_button_moddedmc_warning", new HashSet<>() {{
-                        add("$LANG.gui.file_list_label$");
-                    }}));
-                } else {
-                    commentPane = CrashAssistantGUI.getEditorPane(warningMsg);
-                }
+                JEditorPane commentPane = CrashAssistantGUI.getEditorPane(warningMsg);
                 JOptionPane optionPane = new JOptionPane(
                         commentPane,
-                        isLinkToModdedMC ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE,
+                        JOptionPane.INFORMATION_MESSAGE,
                         JOptionPane.DEFAULT_OPTION
                 );
                 dialog = optionPane.createDialog(
                         panel,
-                        isLinkToModdedMC ? LanguageProvider.get("gui.upload_all_button_moddedmc_warning_title") : LanguageProvider.get("gui.upload_all_button_warning_title")
+                        LanguageProvider.get("gui.upload_all_button_warning_title")
                 );
                 uploadAllButtonWarningShown = true;
                 synchronized (ControlPanel.class) {
                     dialog.setVisible(true);
-                    if (isLinkToModdedMC)
-                        CrashAssistantGUI.highlightButton(fileListPanel.getScrollPane(), new Color(100, 100, 255), 3500);
                 }
             }).start();
 
@@ -163,6 +155,9 @@ public class ControlPanel {
                 }
                 outerLoop:
                 while (true) {
+                    if (fileListPanel.filePanelList.isEmpty()){
+                        break;
+                    }
                     int successCounter = 0;
                     for (FilePanel filePanel : fileListPanel.filePanelList) {
                         if (filePanel.getLastError() != null) {
@@ -233,16 +228,26 @@ public class ControlPanel {
                         }
                     }
                     if (panel.getUploadedLinkLastLines() == null) {
-                        generatedMsg += panel.getFileName() + ": [link](<" + panel.getUploadedLinkFirstLines() + ">)\n";
+                        generatedMsg += panel.getFileName() + ": [" + (panel.isLinkToGnome() ? "gnome.bot" : "mclo.gs") + "](<" + panel.getUploadedLinkFirstLines() + ">)\n";
                     } else {
                         containsTooBigLog = true;
                         generatedMsg += panel.getMessageWithBothLinks();
 
                     }
                 }
+                if(CrashAssistantApp.launcherLogsCount==0){
+                    try{
+                        Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
+                        List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).toList();
+                        if(curseForgeDirContents.contains("instances")&&curseForgeDirContents.contains("install")){
+                            generatedMsg += "CurseForge: skip launcher\n";
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
                 generatedMsg += "\n";
                 String modlistDIff = ModListUtils.generateDiffMsg();
-                String containsTooBigLogMsg = containsTooBigLog && (boolean) CrashAssistantConfig.get("generated_message.generated_msg_includes_info_why_split") ?
+                String containsTooBigLogMsg = containsTooBigLog && (boolean) CrashAssistantConfig.get("generated_message.generated_msg_includes_info_why_split") && !CrashAssistantGUI.isLinkToModdedMC() ?
                         "\n*Splitting the log into head / tail occurs when the log exceeds mclo.gs limits (10 MB or 25k lines).*" : "";
                 if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 2000) {
                     try {
@@ -262,16 +267,8 @@ public class ControlPanel {
             }
             synchronized (ControlPanel.class) {
                 int buttonHighLightTime = 3000;
-                if (generatedMsgWasNull) {
-                    if (isLinkToModdedMC) {
-                        try {
-                            Thread.sleep(2500);
-                        } catch (InterruptedException ignored) {
-                        }
-                    }
-                    if (showWarning) {
-                        buttonHighLightTime = 4500;
-                    }
+                if (generatedMsgWasNull && !warningMsg.isEmpty()) {
+                    buttonHighLightTime = 4500;
                 }
                 ClipboardUtils.copy(generatedMsg);
                 uploadAllButton.setText(LanguageProvider.get("gui.copied"));

@@ -27,6 +27,7 @@ public class CrashAssistantApp {
     public static long parentPID;
     public static long parentStarted;
     public static boolean crashed_with_report = false;
+    public static int launcherLogsCount = 0;
 
 
     public static void main(String[] args) {
@@ -103,6 +104,7 @@ public class CrashAssistantApp {
 
         FileUtils.addIfExistsAndModified(availableLogs, "CrashAssistant: latest.log", Paths.get("local", "crash_assistant", "logs", "latest.log"));
 
+        launcherLogsCount = availableLogs.size();
         FileUtils.addIfExistsAndModified(availableLogs, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt"));
         FileUtils.addIfExistsAndModified(availableLogs, "CurseForge: launcher_log.txt", Paths.get("../../Install", "launcher_log.txt"));
         FileUtils.addIfExistsAndModified(availableLogs, "FTB Electron App: ftb-app-electron.log", Paths.get("../../logs", "ftb-app-electron.log"));
@@ -123,6 +125,8 @@ public class CrashAssistantApp {
                 FileUtils.addIfExistsAndModified(availableLogs, "TLauncher: " + path.getFileName().toString(), path); // To notify modpack creators about TLauncher usage.
             });
         }
+
+        launcherLogsCount = availableLogs.size() - launcherLogsCount;
 
         Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(parentPID);
         if (hsErrLog.isPresent()) {

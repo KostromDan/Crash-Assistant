@@ -13,10 +13,8 @@ import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Timer;
-import java.util.TimerTask;
 
 public class CrashAssistantGUI {
     public static final MclogsClient MCLogsClient = new MclogsClient("CrashAssistant");
@@ -177,6 +175,11 @@ public class CrashAssistantGUI {
         pane.addHyperlinkListener(getHyperlinkListener());
         pane.setAlignmentX(Component.LEFT_ALIGNMENT);
         return pane;
+    }
+
+    public static boolean isLinkToModdedMC(){
+        return Objects.equals(CrashAssistantConfig.get("general.help_link"), "https://discord.gg/moddedmc");
+
     }
 }
 

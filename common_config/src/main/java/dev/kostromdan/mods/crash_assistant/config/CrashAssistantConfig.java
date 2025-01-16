@@ -42,6 +42,11 @@ public class CrashAssistantConfig {
         addOption("general.help_link",
                 "Link which will be opened in browser on request_help_button pressed.",
                 "https://discord.gg/moddedmc");
+        addOption("general.upload_to",
+                "Anyways log will be uploaded to mclo.gs, but with this option you can wrap link to gnome.bot for better formatting.\n" +
+                        "Supported values: mclo.gs / gnome.bot\n" +
+                        "Warning: if \"general.help_link\" is default (equals https://discord.gg/moddedmc), this value will be ignored and gnome.bot used due to request of ModdedMC discord administration.",
+                "mclo.gs");
         addOption("general.show_on_fml_error_screen",
                 "Show gui on minecraft crashed on modloading and FML error screen displayed.",
                 true);
@@ -69,11 +74,10 @@ public class CrashAssistantConfig {
                         "   * additional information like Minecraft version, etc.",
                 "");
         addOption("generated_message.warning_after_upload_all_button_press",
-                "Warning: if \"general.help_link\" is default (equals https://discord.gg/moddedmc), this value will be ignored and custom hardcoded message used due to request of ModdedMC discord administration.\n" +
-                        "Leave empty to prevent showing this warning message.\n" +
-                        "With this option you can notify user about something related with posting generated message.\n" +
-                        "For example if they need to fill some option from \"generated_message.text_under_crashed\", etc.\n" +
-                        "Supports html formatting, placeholders.",
+                "With this option you can notify user about something related with posting generated message.\n" +
+                        "For example if they need to fill some option from \"text_under_crashed\", etc.\n" +
+                        "Supports html formatting, placeholders.\n" +
+                        "Leave empty to prevent showing this warning message.",
                 "");
         addOption("generated_message.generated_msg_includes_info_why_split",
                 "Crash Assistant splits the log into a head and tail of 25,000 lines each if the log exceeds mclo.gs limits (10 MB or 25,000 lines).\n" +

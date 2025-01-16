@@ -14,20 +14,25 @@ public interface LibrariesJarLocator {
         }
 
         pathString = pathString.substring(0, jarIndex + 4);
-        if (pathString.startsWith("/")) {
-            pathString = pathString.substring(1);
-        }
 
         Path path;
         try {
             path = Paths.get(pathString);
         } catch (Exception e) {
-            throw new JarLocatingException("Failed converting pathString got from `" + cls + "' to Paths.get(pathString); pathString: `" + pathString + "`");
+            try {
+                if (pathString.startsWith("/")) {
+                    pathString = pathString.substring(1);
+                }
+                path = Paths.get(pathString);
+            } catch (Exception e2) {
+                throw new JarLocatingException("Failed converting pathString got from `" + cls + "' to Paths.get(pathString); pathString: `" + pathString + "`");
+            }
         }
 
         if (!Files.exists(path)) {
             throw new JarLocatingException("Successfully parsed '.jar' path of `" + cls + "',but it does not exist; path: `" + path + "`; pathString: `" + pathString + "`");
         }
+
         return path.toAbsolutePath().toString();
     }
 }

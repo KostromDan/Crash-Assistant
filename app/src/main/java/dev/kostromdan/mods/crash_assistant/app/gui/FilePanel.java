@@ -264,7 +264,7 @@ public class FilePanel {
 
     private String transformLink(String link) {
         String uploadTo = CrashAssistantConfig.get("general.upload_to");
-        if (CrashAssistantGUI.isLinkToModdedMC() || Objects.equals(uploadTo, "gnome.bot")) {
+        if (CrashAssistantGUI.isLinkToModdedMC() || Objects.equals(uploadTo, "gnomebot.dev")) {
             String id = link.substring(link.lastIndexOf("/") + 1);
             link = "https://gnomebot.dev/paste/mclogs/" + id;
             isLinkToGnome=true;

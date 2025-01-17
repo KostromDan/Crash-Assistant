@@ -3,12 +3,12 @@ package dev.kostromdan.mods.crash_assistant.app;
 import dev.kostromdan.mods.crash_assistant.app.utils.CrashReportsHelper;
 import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.HsErrHelper;
-import dev.kostromdan.mods.crash_assistant.app.utils.LogsComparator;
 import dev.kostromdan.mods.crash_assistant.app.utils.PIDHelper;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
@@ -16,10 +16,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 public class CrashAssistantApp {
@@ -93,40 +92,10 @@ public class CrashAssistantApp {
 
     private static void onMinecraftFinished() {
         boolean crashed = false;
-        SortedMap<String, Path> availableLogs = new TreeMap<>(new LogsComparator());
+        LinkedHashMap<String, Path> availableLogs = new LinkedHashMap<>();
 
         FileUtils.addIfExistsAndModified(availableLogs, Paths.get("logs", "latest.log"));
         FileUtils.addIfExistsAndModified(availableLogs, Paths.get("logs", "debug.log"));
-
-        FileUtils.addIfExistsAndModified(availableLogs, "KubeJS: client.log", Paths.get("logs", "kubejs", "client.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "KubeJS: server.log", Paths.get("logs", "kubejs", "server.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "KubeJS: startup.log", Paths.get("logs", "kubejs", "startup.log"));
-
-        FileUtils.addIfExistsAndModified(availableLogs, "CrashAssistant: latest.log", Paths.get("local", "crash_assistant", "logs", "latest.log"));
-
-        launcherLogsCount = availableLogs.size();
-        FileUtils.addIfExistsAndModified(availableLogs, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt"));
-        FileUtils.addIfExistsAndModified(availableLogs, "CurseForge: launcher_log.txt", Paths.get("../../Install", "launcher_log.txt"));
-        FileUtils.addIfExistsAndModified(availableLogs, "FTB Electron App: ftb-app-electron.log", Paths.get("../../logs", "ftb-app-electron.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "Prism Launcher: PrismLauncher-0.log", Paths.get("../../../logs", "PrismLauncher-0.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "GDLauncher: main.log", Paths.get("../../../../", "main.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "MultiMC: MultiMC-0.log", Paths.get("../../../", "MultiMC-0.log"));
-
-        FileUtils.getModifiedFiles(Paths.get("../../launcher_logs"), ".log").forEach(path -> {
-            FileUtils.addIfExistsAndModified(availableLogs, "Modrinth: " + path.getFileName().toString(), path);
-        });
-
-
-        String appdata = System.getenv("APPDATA");
-        if (appdata != null) {
-            FileUtils.addIfExistsAndModified(availableLogs, "AtLauncher: atlauncher.log", Paths.get(appdata, "AtLauncher", "logs", "atlauncher.log"));
-
-            FileUtils.getModifiedFiles(Paths.get(appdata, ".tlauncher", "logs", "tlauncher"), ".log").forEach(path -> {
-                FileUtils.addIfExistsAndModified(availableLogs, "TLauncher: " + path.getFileName().toString(), path); // To notify modpack creators about TLauncher usage.
-            });
-        }
-
-        launcherLogsCount = availableLogs.size() - launcherLogsCount;
 
         Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(parentPID);
         if (hsErrLog.isPresent()) {
@@ -143,6 +112,50 @@ public class CrashAssistantApp {
                 availableLogs.put(path.getFileName().toString(), path);
             }
         }
+
+
+        launcherLogsCount = availableLogs.size();
+        FileUtils.addIfExistsAndModified(availableLogs, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt"));
+        FileUtils.addIfExistsAndModified(availableLogs, "CurseForge: launcher_log.txt", Paths.get("../../Install", "launcher_log.txt"));
+        FileUtils.addIfExistsAndModified(availableLogs, "FTB Electron App: ftb-app-electron.log", Paths.get("../../logs", "ftb-app-electron.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "Prism Launcher: PrismLauncher-0.log", Paths.get("../../../logs", "PrismLauncher-0.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "GDLauncher: main.log", Paths.get("../../../../", "main.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "MultiMC: MultiMC-0.log", Paths.get("../../../", "MultiMC-0.log"));
+
+        FileUtils.getModifiedFiles(Paths.get("../../launcher_logs"), ".log").forEach(path -> {
+            FileUtils.addIfExistsAndModified(availableLogs, "Modrinth: " + path.getFileName().toString(), path);
+        });
+
+        String appdata = System.getenv("APPDATA");
+        if (appdata != null) {
+            FileUtils.addIfExistsAndModified(availableLogs, "AtLauncher: atlauncher.log", Paths.get(appdata, "AtLauncher", "logs", "atlauncher.log"));
+
+            FileUtils.getModifiedFiles(Paths.get(appdata, ".tlauncher", "logs", "tlauncher"), ".log").forEach(path -> {
+                FileUtils.addIfExistsAndModified(availableLogs, "TLauncher: " + path.getFileName().toString(), path); // To notify modpack creators about TLauncher usage.
+            });
+        }
+
+        launcherLogsCount = availableLogs.size() - launcherLogsCount;
+
+
+        FileUtils.addIfExistsAndModified(availableLogs, "KubeJS: client.log", Paths.get("logs", "kubejs", "client.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "KubeJS: server.log", Paths.get("logs", "kubejs", "server.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "KubeJS: startup.log", Paths.get("logs", "kubejs", "startup.log"));
+
+        FileUtils.addIfExistsAndModified(availableLogs, Paths.get("logs", "crafttweaker.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, Paths.get("logs", "rei.log"));
+        Path reiIssuesPath = Paths.get("logs", "rei-issues.log");
+        try {
+            if (reiIssuesPath.toFile().exists() && Files.size(reiIssuesPath) != 0) {
+                FileUtils.addIfExistsAndModified(availableLogs, reiIssuesPath);
+            }
+        } catch (IOException ignored) {
+
+        }
+
+
+        FileUtils.addIfExistsAndModified(availableLogs, "CrashAssistant: latest.log", Paths.get("local", "crash_assistant", "logs", "latest.log"));
+
 
         String normalStopFileName = "normal_stop_pid" + parentPID + ".tmp";
         Path normalStopFilePath = Paths.get("local", "crash_assistant", normalStopFileName);

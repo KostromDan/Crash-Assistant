@@ -43,9 +43,9 @@ public class CrashAssistantConfig {
                 "Link which will be opened in browser on request_help_button pressed.",
                 "https://discord.gg/moddedmc");
         addOption("general.upload_to",
-                "Anyways log will be uploaded to mclo.gs, but with this option you can wrap link to gnome.bot for better formatting.\n" +
-                        "Supported values: mclo.gs / gnome.bot\n" +
-                        "Warning: if \"general.help_link\" is default (equals https://discord.gg/moddedmc), this value will be ignored and gnome.bot used due to request of ModdedMC discord administration.",
+                "Anyways log will be uploaded to mclo.gs, but with this option you can wrap link to gnomebot.dev for better formatting.\n" +
+                        "Supported values: mclo.gs / gnomebot.dev\n" +
+                        "Warning: if \"general.help_link\" is default (equals https://discord.gg/moddedmc), this value will be ignored and gnomebot.dev used due to request of ModdedMC discord administration.",
                 "mclo.gs");
         addOption("general.show_on_fml_error_screen",
                 "Show gui on minecraft crashed on modloading and FML error screen displayed.",

@@ -228,7 +228,7 @@ public class ControlPanel {
                         }
                     }
                     if (panel.getUploadedLinkLastLines() == null) {
-                        generatedMsg += panel.getFileName() + ": [" + (panel.isLinkToGnome() ? "gnome.bot" : "mclo.gs") + "](<" + panel.getUploadedLinkFirstLines() + ">)\n";
+                        generatedMsg += panel.getFileName() + ": [" + (panel.isLinkToGnome() ? "gnomebot.dev" : "mclo.gs") + "](<" + panel.getUploadedLinkFirstLines() + ">)\n";
                     } else {
                         containsTooBigLog = true;
                         generatedMsg += panel.getMessageWithBothLinks();

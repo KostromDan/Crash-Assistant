@@ -1,3 +1,9 @@
+1.2.15:
+- Fixed `gnomebot.dev` setting wasn't applied to mod list diff.
+- Added setting for modpacks created for non-English-speaking audience to generate message on their language.
+- Fixed some grammar in eng lang.
+- Small fixes.
+
 1.2.14:
 - Fixed gui not starting on Apple.
 - Replaced gnome.bot -> gnomebot.dev in strings. Idk from where I took first value.

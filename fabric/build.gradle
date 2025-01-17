@@ -68,7 +68,7 @@ processResources {
 //        displayName = tasks.remapJar.archiveFile.get().asFile.name
 //        version = mod_version
 //        changelog = file('../changelog.md').text
-//        releaseType = "beta"
+//        releaseType = release_type
 //
 //        mainPublication tasks.remapJar
 //

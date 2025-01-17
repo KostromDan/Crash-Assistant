@@ -1,9 +1,18 @@
+1.2.14:
+- Fixed gui not starting on Apple.
+- Replaced gnome.bot -> gnomebot.dev in strings. Idk from where I took first value.
+- Added support of crafttweaker and rei logs.
+- Improved logs adding.
+
+1.2.14alpha:
+- Attempt to fix gui not starting on Apple.
+
 1.2.13:
 - Removed ModdedMC Discord waning since it ignored by most of the users.
 - Fixed stuck on Upload All Button press if available logs are empty.
 - Added in generated message information about `CurseForge: skip launcher` used.
-- Added new config option `general.upload_to`: supports `mclo.gs` / `gnome.bot`
-  - Logs still always uploaded to mclo.gs, but setting to `gnome.bot` will open log where.
+- Added new config option `general.upload_to`: supports `mclo.gs` / `gnomebot.dev`
+    - Logs still always uploaded to mclo.gs, but setting to `gnomebot.dev` will open log where.
 - Improved config.
 - Added greeting msg with suggestion to configure mod, shown one time for modpack creator, who installed the mod.
 - Small fixes.
@@ -39,25 +48,25 @@
 1.2.7:
 - Reduced memory usage of app for ~3mb.
 - Add support of another launcher launcherlogs:
-  - FTB Electron App
-  - Prism Launcher
-  - GDLauncher
-  - MultiMC
-  - Modrinth
+    - FTB Electron App
+    - Prism Launcher
+    - GDLauncher
+    - MultiMC
+    - Modrinth
 - If generatedMsg + modlistDiff is larger than 2000 chars, modlistDiff will be uploaded to mclo.gs to fit non Nitro Discord limits.
 - Fixed config comments hash wasn't updated properly.
 - BCC config integration. Now you can use values from it as placeholders. For example for modpack version.
-  - For usage or more info see config comment of `text.modpack_name`
+    - For usage or more info see config comment of `text.modpack_name`
 - Drag and Drop support. Now files can be dragged and dropped directly from gui.
-  - If dragged and dropped `Avalible log files:`, all logs will be dropped at once.
+    - If dragged and dropped `Avalible log files:`, all logs will be dropped at once.
 - Added requested by Modded Minecraft Discord warning about their logs sharing policy. If discord link is default(moddedmc).
 - Small fixes.
 
 1.2.6:
 - Done a lot of work to prevent posting screenshot of GUI instead of generated msg:
-  - `Upload all...` and `$CONFIG.text.support_name$` of commentLabel are now hyperlinks. Pressing them will result blinking for 3 seconds of according button background with light red.
-  - Then upload finished: `Copied!` button background will blink with light green for 3 seconds to request user attention.
-  - Added under comment label optional bold red text `Please read the text above carefully. Screenshot of this GUI, tells us nothing!`. You can disable this with new config option.
+    - `Upload all...` and `$CONFIG.text.support_name$` of commentLabel are now hyperlinks. Pressing them will result blinking for 3 seconds of according button background with light red.
+    - Then upload finished: `Copied!` button background will blink with light green for 3 seconds to request user attention.
+    - Added under comment label optional bold red text `Please read the text above carefully. Screenshot of this GUI, tells us nothing!`. You can disable this with new config option.
 - Improved and simplified Environment check to prevent potential issues.
 - Small fixes.
 
@@ -75,9 +84,9 @@
 1.2.3:
 - Marked fabric mod as compatible with Quilt.
 - Added args for '/crash_assistant crash' command:
-  - --withThreadDump
-  - --withHeapDump
-  - --GCBeforeHeapDump
+    - --withThreadDump
+    - --withHeapDump
+    - --GCBeforeHeapDump
 - Added `no_crash` for `/crash_assistant crash` command if needed just to get thread dump or heap dump without crashing.
 - Fixed incorrect width if comment label is wider than other widgets.
 - Old CrashAssistantApp logs now deleted.

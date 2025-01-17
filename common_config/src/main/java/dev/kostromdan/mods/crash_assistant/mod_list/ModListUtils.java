@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -118,24 +119,24 @@ public class ModListUtils {
             }
             List<String> modpackCreators = CrashAssistantConfig.getModpackCreators();
             if (modpackCreators.contains(currentUsername) || modpackCreators.isEmpty()) {
-                generatedMsg += getFormattedString(asHtmlWithColor, "Modlist changes beyond the latest successful launch:");
+                generatedMsg += getFormattedString(asHtmlWithColor, LanguageProvider.getMsgLang("msg.modlist_changes_latest_launch"));
             } else {
-                generatedMsg += getFormattedString(asHtmlWithColor, "Modlist changes beyond the modpack:");
+                generatedMsg += getFormattedString(asHtmlWithColor, LanguageProvider.getMsgLang("msg.modlist_changes_modpack"));
             }
 
             if (diff.addedMods().isEmpty() && diff.removedMods().isEmpty()) {
-                generatedMsg += getFormattedString(asHtmlWithColor, "Modpack modlist wasn't modified.", "color: orange;");
+                generatedMsg += getFormattedString(asHtmlWithColor, LanguageProvider.getMsgLang("msg.modlist_unmodified"), "color: orange;");
             } else {
-                generatedMsg += getFormattedString(asHtmlWithColor, "Added mods:");
+                generatedMsg += getFormattedString(asHtmlWithColor, LanguageProvider.getMsgLang("msg.added_mods"));
                 if (diff.addedMods().isEmpty()) {
-                    generatedMsg += getFormattedString(asHtmlWithColor, "Mods weren't added.", "color: orange;");
+                    generatedMsg += getFormattedString(asHtmlWithColor, LanguageProvider.getMsgLang("msg.no_added_mods"), "color: orange;");
                 } else {
                     generatedMsg += diff.addedMods().stream().map(x -> getFormattedString(asHtmlWithColor, x, "color: green;")).collect(Collectors.joining(""));
                 }
                 generatedMsg += getFormattedString(asHtmlWithColor, "");
-                generatedMsg += getFormattedString(asHtmlWithColor, "Removed mods:");
+                generatedMsg += getFormattedString(asHtmlWithColor, LanguageProvider.getMsgLang("msg.removed_mods"));
                 if (diff.removedMods().isEmpty()) {
-                    generatedMsg += getFormattedString(asHtmlWithColor, "Mods weren't removed.", "color: orange;");
+                    generatedMsg += getFormattedString(asHtmlWithColor, LanguageProvider.getMsgLang("msg.no_removed_mods"), "color: orange;");
                 } else {
                     generatedMsg += diff.removedMods().stream().map(x -> getFormattedString(asHtmlWithColor, x, "color: red;")).collect(Collectors.joining(""));
                 }
@@ -146,4 +147,5 @@ public class ModListUtils {
         }
         return generatedMsg;
     }
+
 }

@@ -5,7 +5,6 @@ import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.LogProcessor;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import gs.mclo.api.response.UploadLogResponse;
 
@@ -33,7 +32,6 @@ public class FilePanel {
     private String uploadedLinkLastLines = null;
     private int countedLines;
     private boolean lineCountInterrupted = false;
-    private boolean isLinkToGnome = false;
     private Exception lastError = null;
 
     public FilePanel(String fileName, Path filePath) {
@@ -191,7 +189,7 @@ public class FilePanel {
                         UploadLogResponse responseLastLines = completableResponseLastLines.get();
                         responseLastLines.setClient(CrashAssistantGUI.MCLogsClient);
                         if (responseLastLines.isSuccess()) {
-                            uploadedLinkLastLines = transformLink(responseLastLines.getUrl());
+                            uploadedLinkLastLines = CrashAssistantGUI.transformLink(responseLastLines.getUrl());
                         } else {
                             throw new UploadException("An error occurred when uploading file: " + responseLastLines.getError());
                         }
@@ -201,7 +199,7 @@ public class FilePanel {
 
 
                     if (responseFirstLines.isSuccess()) {
-                        uploadedLinkFirstLines = transformLink(responseFirstLines.getUrl());
+                        uploadedLinkFirstLines = CrashAssistantGUI.transformLink(responseFirstLines.getUrl());
                     } else {
                         throw new UploadException("An error occurred when uploading file: " + responseFirstLines.getError());
                     }
@@ -262,16 +260,6 @@ public class FilePanel {
         }).start();
     }
 
-    private String transformLink(String link) {
-        String uploadTo = CrashAssistantConfig.get("general.upload_to");
-        if (CrashAssistantGUI.isLinkToModdedMC() || Objects.equals(uploadTo, "gnomebot.dev")) {
-            String id = link.substring(link.lastIndexOf("/") + 1);
-            link = "https://gnomebot.dev/paste/mclogs/" + id;
-            isLinkToGnome=true;
-        }
-        return link;
-    }
-
     private void transformCopyLinkButton() {
         String oldText = uploadButton.getText();
         browserButton.setVisible(true);
@@ -290,8 +278,8 @@ public class FilePanel {
     }
 
     public String getMessageWithBothLinks() {
-        return getFileName() + ": " + "[head](<" + getUploadedLinkFirstLines() + ">) / " +
-                "[tail](<" + getUploadedLinkLastLines() + ">) " + getTooBigReasons() + "\n";
+        return getFileName() + ": " + "[" + LanguageProvider.getMsgLang("msg.head") + "](<" + getUploadedLinkFirstLines() + ">) / " +
+                "[" + LanguageProvider.getMsgLang("msg.tail") + "](<" + getUploadedLinkLastLines() + ">) " + getTooBigReasons() + "\n";
     }
 
     public String showLogPartSelectionDialog(String action) {
@@ -347,9 +335,5 @@ public class FilePanel {
         }
         FileListPanel.currentLogSelectionDialog = null;
         return (String) selectedValue;
-    }
-
-    public boolean isLinkToGnome() {
-        return isLinkToGnome;
     }
 }

@@ -13,8 +13,8 @@ import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.*;
 import java.util.Timer;
+import java.util.*;
 
 public class CrashAssistantGUI {
     public static final MclogsClient MCLogsClient = new MclogsClient("CrashAssistant");
@@ -177,9 +177,24 @@ public class CrashAssistantGUI {
         return pane;
     }
 
-    public static boolean isLinkToModdedMC(){
+    public static boolean isLinkToModdedMC() {
         return Objects.equals(CrashAssistantConfig.get("general.help_link"), "https://discord.gg/moddedmc");
+    }
 
+    public static boolean isUploadingToGnome() {
+        return isLinkToModdedMC() || Objects.equals(CrashAssistantConfig.get("general.upload_to"), "gnomebot.dev");
+    }
+
+    public static String getUploadToLink() {
+        return isUploadingToGnome() ? "gnomebot.dev" : "mclo.gs";
+    }
+
+    public static String transformLink(String link) {
+        if (isUploadingToGnome()) {
+            String id = link.substring(link.lastIndexOf("/") + 1);
+            link = "https://gnomebot.dev/paste/mclogs/" + id;
+        }
+        return link;
     }
 }
 

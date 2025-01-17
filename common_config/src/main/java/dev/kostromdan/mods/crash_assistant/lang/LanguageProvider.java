@@ -20,6 +20,7 @@ public class LanguageProvider {
     public static Path LANG_PATH = Paths.get("config", "crash_assistant", "lang");
     public static HashMap<String, Lang> languages = new HashMap<>();
     public static String currentLangName;
+    public static String msgLangName;
 
     static {
         updateLang();
@@ -28,6 +29,13 @@ public class LanguageProvider {
 
     public static String get(String key) {
         return languages.getOrDefault(currentLangName, languages.get("en_us")).get(key);
+    }
+
+    public static String getMsgLang(String key){
+        if (msgLangName == null) {
+            msgLangName = CrashAssistantConfig.get("generated_message.generated_msg_lang");
+        }
+        return languages.getOrDefault(msgLangName, languages.get("en_us")).get(key);
     }
 
     public static String get(String key,HashSet<String> placeHoldersSurroundedWithHref) {

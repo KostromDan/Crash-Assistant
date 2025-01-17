@@ -55,5 +55,18 @@
   "text.greeting1": "Thanks for installing ",
   "text.greeting2": " mod!\nIf mod is installed into a modpack,\nyou should configure it in ",
   "text.greeting3": "\nThis message will no longer appear.",
-  "text.opens_url": "Open the mod's GitHub page"
+  "text.opens_url": "Open the mod's GitHub page",
+  "msg.modlist_changes_latest_launch": "Modlist changes beyond the latest successful launch:",
+  "msg.modlist_changes_modpack": "Modlist changes beyond the modpack:",
+  "msg.modlist_unmodified": "Modpack modlist wasn't modified.",
+  "msg.added_mods": "Added mods:",
+  "msg.no_added_mods": "Mods weren't added.",
+  "msg.removed_mods": "Removed mods:",
+  "msg.no_removed_mods": "Mods weren't removed.",
+  "msg.skip_launcher": "CurseForge: skip launcher",
+  "msg.log_was_split": "Splitting the log into head / tail occurs when the log exceeds mclo.gs limits (10 MB or 25k lines).",
+  "msg.big_size_diff_uploaded": "Due to big size of mod list diff, it was uploaded to",
+  "msg.crashed": "crashed",
+  "msg.head": "head",
+  "msg.tail": "tail"
 }

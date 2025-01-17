@@ -16,9 +16,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -155,7 +156,7 @@ public class ControlPanel {
                 }
                 outerLoop:
                 while (true) {
-                    if (fileListPanel.filePanelList.isEmpty()){
+                    if (fileListPanel.filePanelList.isEmpty()) {
                         break;
                     }
                     int successCounter = 0;
@@ -163,8 +164,8 @@ public class ControlPanel {
                         if (filePanel.getLastError() != null) {
                             JOptionPane.showMessageDialog(
                                     panel,
-                                    "Failed to upload file \"" + filePanel.getFilePath() + "\": " + filePanel.getLastError(),
-                                    "Failed to upload file!",
+                                    LanguageProvider.get("gui.failed_to_upload_file") + " \"" + filePanel.getFilePath() + "\": " + filePanel.getLastError(),
+                                    LanguageProvider.get("gui.failed_to_upload_file") + "!",
                                     JOptionPane.ERROR_MESSAGE
                             );
                             uploadAllButton.setText(LanguageProvider.get("gui.error"));
@@ -196,7 +197,7 @@ public class ControlPanel {
 
                     }
                 }
-                generatedMsg = CrashAssistantConfig.get("text.modpack_name", true) + " crashed!\n";
+                generatedMsg = CrashAssistantConfig.get("text.modpack_name", true) + " " + LanguageProvider.getMsgLang("msg.crashed") + "!\n";
                 if (!CrashAssistantConfig.get("generated_message.text_under_crashed").toString().isEmpty()) {
                     generatedMsg += CrashAssistantConfig.get("generated_message.text_under_crashed", true) + "\n";
                 }
@@ -228,19 +229,19 @@ public class ControlPanel {
                         }
                     }
                     if (panel.getUploadedLinkLastLines() == null) {
-                        generatedMsg += panel.getFileName() + ": [" + (panel.isLinkToGnome() ? "gnomebot.dev" : "mclo.gs") + "](<" + panel.getUploadedLinkFirstLines() + ">)\n";
+                        generatedMsg += panel.getFileName() + ": [" + CrashAssistantGUI.getUploadToLink() + "](<" + panel.getUploadedLinkFirstLines() + ">)\n";
                     } else {
                         containsTooBigLog = true;
                         generatedMsg += panel.getMessageWithBothLinks();
 
                     }
                 }
-                if(CrashAssistantApp.launcherLogsCount==0){
-                    try{
+                if (CrashAssistantApp.launcherLogsCount == 0) {
+                    try {
                         Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
                         List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).toList();
-                        if(curseForgeDirContents.contains("instances")&&curseForgeDirContents.contains("install")){
-                            generatedMsg += "CurseForge: skip launcher\n";
+                        if (curseForgeDirContents.contains("instances") && curseForgeDirContents.contains("install")) {
+                            generatedMsg += LanguageProvider.getMsgLang("msg.skip_launcher") + "\n";
                         }
                     } catch (Exception ignored) {
                     }
@@ -248,12 +249,12 @@ public class ControlPanel {
                 generatedMsg += "\n";
                 String modlistDIff = ModListUtils.generateDiffMsg();
                 String containsTooBigLogMsg = containsTooBigLog && CrashAssistantConfig.getBoolean("generated_message.generated_msg_includes_info_why_split") && !CrashAssistantGUI.isLinkToModdedMC() ?
-                        "\n*Splitting the log into head / tail occurs when the log exceeds mclo.gs limits (10 MB or 25k lines).*" : "";
+                        "\n*" + LanguageProvider.getMsgLang("msg.log_was_split") + "*" : "";
                 if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 2000) {
                     try {
                         String link = uploadModlistDiff(modlistDIff);
                         generatedMsg += modlistDIff.split("\n", 2)[0] + "\n";
-                        generatedMsg += "Due to big size of mod list diff, it was uploaded to: [link](<" + link + ">)\n";
+                        generatedMsg += LanguageProvider.getMsgLang("msg.big_size_diff_uploaded") + ": [" + CrashAssistantGUI.getUploadToLink() + "](<" + link + ">)\n";
                     } catch (ExecutionException | InterruptedException | UploadException e) {
                         CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
                         generatedMsg += modlistDIff;
@@ -292,7 +293,7 @@ public class ControlPanel {
         response.setClient(CrashAssistantGUI.MCLogsClient);
 
         if (response.isSuccess()) {
-            return response.getUrl();
+            return CrashAssistantGUI.transformLink(response.getUrl());
         } else {
             throw new UploadException("An error occurred when uploading modlist diff: " + response.getError());
         }

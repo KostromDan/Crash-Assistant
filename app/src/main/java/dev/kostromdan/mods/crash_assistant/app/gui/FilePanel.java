@@ -19,6 +19,7 @@ import java.util.Timer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 public class FilePanel {
     private final JPanel panel;
@@ -268,22 +269,26 @@ public class FilePanel {
         uploadButton.setText(oldText);
     }
 
-    public String getTooBigReasons() {
+    public String getTooBigReasons(boolean forMsg) {
+        Function<String, String> langFunc = forMsg ? LanguageProvider::getMsgLang : LanguageProvider::get;
         long size = getFilePath().toFile().length();
         List<String> tooBigReasons = new ArrayList<>();
-        if (size > 10 * 1024 * 1024) tooBigReasons.add("~" + size / (1024 * 1024) + "MB");
+        if (size > 10 * 1024 * 1024)
+            tooBigReasons.add("~" + size / (1024 * 1024) + langFunc.apply("msg.mb"));
         if (getCountedLines() > 25000)
-            tooBigReasons.add((isLineCountInterrupted() ? "over " : "~") + getCountedLines() / 1000 + "k lines");
+            tooBigReasons.add((isLineCountInterrupted() ? langFunc.apply("msg.over") + " " : "~") +
+                    getCountedLines() / 1000 + langFunc.apply("msg.k_lines"));
         return tooBigReasons.isEmpty() ? "" : "(" + String.join(" & ", tooBigReasons) + ")";
     }
 
-    public String getMessageWithBothLinks() {
-        return getFileName() + ": " + "[" + LanguageProvider.getMsgLang("msg.head") + "](<" + getUploadedLinkFirstLines() + ">) / " +
-                "[" + LanguageProvider.getMsgLang("msg.tail") + "](<" + getUploadedLinkLastLines() + ">) " + getTooBigReasons() + "\n";
+    public String getMessageWithBothLinks(boolean forMsg) {
+        Function<String, String> langFunc = forMsg ? LanguageProvider::getMsgLang : LanguageProvider::get;
+        return getFileName() + ": " + "[" + langFunc.apply("gui.split_log_dialog_head").toLowerCase() + "](<" + getUploadedLinkFirstLines() + ">) / " +
+                "[" + langFunc.apply("gui.split_log_dialog_tail").toLowerCase() + "](<" + getUploadedLinkLastLines() + ">) " + getTooBigReasons(forMsg) + "\n";
     }
 
     public String showLogPartSelectionDialog(String action) {
-        JEditorPane logSelectionPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.copy_split_log_dialog_text").replace("$LOG_TOO_BIG_REASON$", getTooBigReasons()).replace("$FILE_NAME$", fileName).replace("$ACTION$", action));
+        JEditorPane logSelectionPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.copy_split_log_dialog_text").replace("$LOG_TOO_BIG_REASON$", getTooBigReasons(false)).replace("$FILE_NAME$", fileName).replace("$ACTION$", action));
         Object[] options = {
                 LanguageProvider.get("gui.split_log_dialog_msg_with_both"),
                 LanguageProvider.get("gui.split_log_dialog_head"),
@@ -327,7 +332,7 @@ public class FilePanel {
         if (selectedValue == null) {
 
         } else if (selectedValue.equals(options[0])) {
-            selectedValue = getMessageWithBothLinks();
+            selectedValue = getMessageWithBothLinks(false);
         } else if (selectedValue.equals(options[1])) {
             selectedValue = uploadedLinkFirstLines;
         } else if (selectedValue.equals(options[2])) {

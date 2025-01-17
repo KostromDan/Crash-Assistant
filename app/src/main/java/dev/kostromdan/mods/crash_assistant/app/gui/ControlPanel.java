@@ -232,7 +232,7 @@ public class ControlPanel {
                         generatedMsg += panel.getFileName() + ": [" + CrashAssistantGUI.getUploadToLink() + "](<" + panel.getUploadedLinkFirstLines() + ">)\n";
                     } else {
                         containsTooBigLog = true;
-                        generatedMsg += panel.getMessageWithBothLinks();
+                        generatedMsg += panel.getMessageWithBothLinks(true);
 
                     }
                 }

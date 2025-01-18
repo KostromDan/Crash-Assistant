@@ -100,12 +100,12 @@ public class ControlPanel {
             stopMovingToTop = true;
             String link = CrashAssistantConfig.get("general.help_link");
             URI uri = new URI(link);
-            String creatorWarning = "";
             if (!TrustedDomainsHelper.isTrustedTopDomain(uri)) {
+                String creatorWarning = "";
                 if (CrashAssistantConfig.getModpackCreators().contains(ModListUtils.getCurrentUsername())) {
                     creatorWarning = "\n\n<b>The next text is seen only by modpack creators</b>:\n" +
                             "If you think your domain(" + TrustedDomainsHelper.getTopDomainName(uri) + ") should be in trusted domains,\n" +
-                            "please contact us on <a href =https://github.com/KostromDan/Crash-Assistant>GitHub</a>.";
+                            "please contact us on <a href =https://github.com/KostromDan/Crash-Assistant/blob/1.19.2%2B/app/src/main/java/dev/kostromdan/mods/crash_assistant/app/utils/TrustedDomainsHelper.java>GitHub</a>.";
                 }
                 int result = JOptionPane.showConfirmDialog(
                         null,

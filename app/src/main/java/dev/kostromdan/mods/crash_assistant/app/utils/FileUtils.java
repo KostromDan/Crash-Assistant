@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
@@ -68,6 +69,14 @@ public interface FileUtils {
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while deleting tmp files: ", e);
         }
+    }
+
+    static void removeOldLogsFolder() {
+        try {
+            org.apache.commons.io.FileUtils.deleteDirectory(Paths.get("local", "crash_assistant", "logs").toFile());
+        } catch (Exception ignored) {
+        }
+
     }
 
     static HashSet<Path> getModifiedFiles(Path dir, String extension) {

@@ -51,6 +51,8 @@ public class CrashAssistantApp {
         }
 
         FileUtils.removeTmpFiles(Paths.get("local", "crash_assistant"));
+        FileUtils.removeOldLogsFolder();
+
         CrashReportsHelper.cacheKnownCrashReports();
         HsErrHelper.removeHsErrLog(parentPID);
 
@@ -155,7 +157,7 @@ public class CrashAssistantApp {
         }
 
 
-        FileUtils.addIfExistsAndModified(availableLogs, "CrashAssistant: latest.log", Paths.get("local", "crash_assistant", "logs", "latest.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "CrashAssistant: latest.log", Paths.get("logs", "crash_assistant", "latest.log"));
 
 
         String normalStopFileName = "normal_stop_pid" + parentPID + ".tmp";

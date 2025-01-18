@@ -7,8 +7,8 @@
             </PatternLayout>
         </Console>
 
-        <RollingFile name="FileLogger" fileName="local/crash_assistant/logs/latest.log"
-                     filePattern="local/crash_assistant/logs/crash_assistant_app_%d{yyyy-MM-dd_HH-mm-ss}.log.gz">
+        <RollingFile name="FileLogger" fileName="logs/crash_assistant/latest.log"
+                     filePattern="logs/crash_assistant/crash_assistant_app_%d{yyyy-MM-dd_HH-mm-ss}.log.gz">
             <PatternLayout>
                 <Pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%level] [%logger{36}]: %msg%n</Pattern>
             </PatternLayout>
@@ -17,7 +17,7 @@
                 <SizeBasedTriggeringPolicy size="10MB"/>
             </Policies>
             <DefaultRolloverStrategy max="15">
-                <Delete basePath="local/crash_assistant/logs" maxDepth="1">
+                <Delete basePath="logs/crash_assistant" maxDepth="1">
                     <IfFileName glob="*.log.gz"/>
                     <IfLastModified age="7d"/>
                 </Delete>

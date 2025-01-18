@@ -24,7 +24,7 @@ public class CrashAssistantConfig {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static CommentedFileConfig config;
-    private static HashSet<String> usedOptions = new HashSet<>();
+    private static final HashSet<String> usedOptions = new HashSet<>();
     private static long lastConfigUpdate;
 
     static {
@@ -89,19 +89,6 @@ public class CrashAssistantConfig {
                         "Add an explanation at the bottom of the generated message about why log was split.",
                 true);
 
-        config.setComment("debug", "Here you can configure debug options for easier configuration of the mod.");
-        addOption("debug.crash_game_on_event",
-                "Setting this value to one of listed here, will crash the game in order to show/debug gui.\n" +
-                        "NONE - default value, no crash. You can always crash game by holding vanilla F3+C keybind or '/crash_assistant crash' command\n" +
-                        "MIXIN_SETUP - will crash game on Mixin setup. Crash report not generated.\n" +
-                        "MOD_LOADING - will crash game on load of this mod. Can be used to show FML error screen. Crash report generated.\n" +
-                        "GAME_STARTED - will crash game on first tick of TitleScreen. Crash report generated.",
-                "NONE");
-        addOption("debug.shown_greeting",
-                "You don't need to touch this option.\n" +
-                        "On first world join of modpack creator if set to false shows greeting, then self enables.",
-                false);
-
         config.setComment("text", "Here you can change text of lang placeHolders.\n" +
                 "Also you can change any text in lang files.\n" +
                 "You don't need to modify jar. You can change it in config/crash_assistant/lang. For more info read README.md file located where.");
@@ -145,6 +132,11 @@ public class CrashAssistantConfig {
                         "Set to <= 0 to disable the confirmation.",
                 10);
 
+        addOption("greeting.shown_greeting",
+                "You don't need to touch this option.\n" +
+                        "On first world join of modpack creator if set to false shows greeting, then self enables.",
+                false);
+
 
         HashSet<String> toRemove = new HashSet<>();
         config.valueMap().forEach((key, value) -> {
@@ -156,6 +148,9 @@ public class CrashAssistantConfig {
                     }
                 });
             }
+            if (!usedOptions.contains(key)) {
+                toRemove.add(key);
+            }
         });
         toRemove.forEach(key -> {
             config.remove(key);
@@ -165,6 +160,7 @@ public class CrashAssistantConfig {
 
     private static <T> void addOption(String path, String comment, T defaultValue) {
         usedOptions.add(path);
+        usedOptions.add(path.split("\\.")[0]);
         config.setComment(path, comment);
         if (!config.contains(path)) {
             config.set(path, defaultValue);

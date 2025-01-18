@@ -12,10 +12,10 @@ import net.minecraft.network.chat.MutableComponent;
 
 public class CrashAssistantEvents {
     public static void onGameJoin() {
-        if (!CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname) || CrashAssistantConfig.getBoolean("debug.shown_greeting")) {
+        if (!CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname) || CrashAssistantConfig.getBoolean("greeting.shown_greeting")) {
             return;
         }
-        CrashAssistantConfig.set("debug.shown_greeting", true);
+        CrashAssistantConfig.set("greeting.shown_greeting", true);
         LanguageProvider.updateLang();
         MutableComponent msg = Component.literal(LanguageProvider.get("text.greeting1"));
         msg.append(Component.literal("Crash Assistant")

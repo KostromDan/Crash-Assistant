@@ -33,7 +33,7 @@ public class CrashAssistantApp {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             LOGGER.error("Uncaught exception in \"{}\" thread:", thread.getName(), throwable);
         });
-        LOGGER.info("CrashAssistantApp running: JVM args {}", ManagementFactory.getRuntimeMXBean().getInputArguments());
+        LOGGER.info("CrashAssistantApp running: JVM args: {}", ManagementFactory.getRuntimeMXBean().getInputArguments());
         LOGGER.info("CrashAssistantApp running: program args: [{}]", String.join(", ", args));
 
         parentPID = -1;
@@ -54,6 +54,7 @@ public class CrashAssistantApp {
         CrashReportsHelper.cacheKnownCrashReports();
         HsErrHelper.removeHsErrLog(parentPID);
 
+        LOGGER.info("CrashAssistantApp started successfully. Waiting for PID " + parentPID + " to stop.");
 
         while (true) {
             try {

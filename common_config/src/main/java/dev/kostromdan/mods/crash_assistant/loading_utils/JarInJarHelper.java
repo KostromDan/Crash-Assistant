@@ -52,6 +52,7 @@ public interface JarInJarHelper {
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class)
             );
             Process crashAssistantAppProcess = crashAssistantAppProcessBuilder.start();
+            ChildProcessLogger.captureOutput(crashAssistantAppProcess);
             Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");
             try {
                 Files.write(currentProcessDataPath, Long.toString(crashAssistantAppProcess.pid()).getBytes());

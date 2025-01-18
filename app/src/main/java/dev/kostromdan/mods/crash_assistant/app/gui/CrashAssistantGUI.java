@@ -97,6 +97,8 @@ public class CrashAssistantGUI {
                 }
             }
         }, 0, 50);
+        CrashAssistantApp.GUIStartTime = Instant.now().toEpochMilli() - CrashAssistantApp.GUIStartTime;
+        CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime/1000f + " seconds.");
     }
 
     public static void highlightButton(JComponent button, Color color, long time) {

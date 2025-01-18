@@ -3,7 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app;
 import dev.kostromdan.mods.crash_assistant.app.utils.CrashReportsHelper;
 import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.HsErrHelper;
-import dev.kostromdan.mods.crash_assistant.app.utils.PIDHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.ProcessHelper;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 public class CrashAssistantApp {
     public static final Logger LOGGER = LogManager.getLogger(CrashAssistantApp.class);
+    public static long GUIStartTime = -1;
     public static long parentPID;
     public static long parentStarted;
     public static boolean crashed_with_report = false;
@@ -44,11 +45,7 @@ public class CrashAssistantApp {
             }
         }
 
-        parentStarted = 0;
-        if (parentPID != -1) {
-            Optional<Instant> time = PIDHelper.findProcessByPID(parentPID).info().startInstant();
-            time.ifPresent(instant -> parentStarted = instant.toEpochMilli());
-        }
+        parentStarted = ProcessHelper.getStartTime(parentPID);
 
         FileUtils.removeTmpFiles(Paths.get("local", "crash_assistant"));
         FileUtils.removeOldLogsFolder();
@@ -60,8 +57,8 @@ public class CrashAssistantApp {
 
         while (true) {
             try {
-                if (!PIDHelper.isProcessAlive(parentPID)) {
-                    LOGGER.info("PID \"{}\" is not alive. Minecraft JVM appears to have stopped.", parentPID);
+                if (parentStarted == -1 || parentStarted != ProcessHelper.getStartTime(parentPID)) {
+                    LOGGER.info("PID \"{}\" is not alive or reused by another process. Minecraft JVM appears to have stopped.", parentPID);
                     onMinecraftFinished();
                     return;
                 }
@@ -94,6 +91,7 @@ public class CrashAssistantApp {
     }
 
     private static void onMinecraftFinished() {
+        GUIStartTime = Instant.now().toEpochMilli();
         boolean crashed = false;
         LinkedHashMap<String, Path> availableLogs = new LinkedHashMap<>();
 
@@ -124,6 +122,7 @@ public class CrashAssistantApp {
         FileUtils.addIfExistsAndModified(availableLogs, "Prism Launcher: PrismLauncher-0.log", Paths.get("../../../logs", "PrismLauncher-0.log"));
         FileUtils.addIfExistsAndModified(availableLogs, "GDLauncher: main.log", Paths.get("../../../../", "main.log"));
         FileUtils.addIfExistsAndModified(availableLogs, "MultiMC: MultiMC-0.log", Paths.get("../../../", "MultiMC-0.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "PolyMC: PolyMC-0.log", Paths.get("../../../", "PolyMC-0.log"));
 
         FileUtils.getModifiedFiles(Paths.get("../../launcher_logs"), ".log").forEach(path -> {
             FileUtils.addIfExistsAndModified(availableLogs, "Modrinth: " + path.getFileName().toString(), path);

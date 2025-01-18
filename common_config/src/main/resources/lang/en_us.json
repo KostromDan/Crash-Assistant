@@ -31,6 +31,8 @@
   "gui.request_help_button": "Request help in the $CONFIG.text.support_name$",
   "gui.failed_to_upload_file": "Failed to upload file",
   "gui.browser_button_tooltip": "Open link in browser",
+  "gui.untrusted_domain_title": "Untrusted domain of the link",
+  "gui.untrusted_domain_question": "Do you want to open this link?",
   "commands.mod_config_tooltip": "Click to open config",
   "commands.nickname_tooltip": "Click to copy nick",
   "commands.modlist_disabled_error_msg": "Mod list feature is disabled! You can enable it in ",

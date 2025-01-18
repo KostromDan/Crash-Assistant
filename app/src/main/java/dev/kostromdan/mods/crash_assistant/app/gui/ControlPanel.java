@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
+import dev.kostromdan.mods.crash_assistant.app.utils.TrustedDomainsHelper;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiff;
@@ -12,7 +13,6 @@ import gs.mclo.api.response.UploadLogResponse;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,6 +84,7 @@ public class ControlPanel {
 
         requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));
         requestHelpButton.addActionListener(e -> requestHelp());
+        requestHelpButton.setToolTipText(CrashAssistantConfig.get("general.help_link"));
         gbc.gridy = 1;
         bottomPanel.add(requestHelpButton, gbc);
 
@@ -95,14 +96,35 @@ public class ControlPanel {
     }
 
     public void requestHelp() {
-        stopMovingToTop = true;
         try {
-            URI uri = new URL(CrashAssistantConfig.get("general.help_link").toString()).toURI();
+            stopMovingToTop = true;
+            String link = CrashAssistantConfig.get("general.help_link");
+            URI uri = new URI(link);
+            String creatorWarning = "";
+            if (!TrustedDomainsHelper.isTrustedTopDomain(uri)) {
+                if (CrashAssistantConfig.getModpackCreators().contains(ModListUtils.getCurrentUsername())) {
+                    creatorWarning = "\n\n<b>The next text is seen only by modpack creators</b>:\n" +
+                            "If you think your domain(" + TrustedDomainsHelper.getTopDomainName(uri) + ") should be in trusted domains,\n" +
+                            "please contact us on <a href =https://github.com/KostromDan/Crash-Assistant>GitHub</a>.";
+                }
+                int result = JOptionPane.showConfirmDialog(
+                        null,
+                        CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.untrusted_domain_question") + "\n<a href =" + link + ">" + link + "</a>"+creatorWarning),
+                        LanguageProvider.get("gui.untrusted_domain_title"),
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                );
+                if (result != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+
             Desktop.getDesktop().browse(uri);
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to open help_link in browser: ", e);
         }
     }
+
 
     private void showModList() {
         stopMovingToTop = true;

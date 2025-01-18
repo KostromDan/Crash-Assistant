@@ -30,6 +30,8 @@
   "gui.request_help_button": "Попросить помощи в $CONFIG.text.support_name$",
   "gui.failed_to_upload_file": "Не удалось загрузить файл",
   "gui.browser_button_tooltip": "Открыть ссылку в браузере",
+  "gui.untrusted_domain_title": "Недоверенный домен ссылки",
+  "gui.untrusted_domain_question": "Хотите ли вы открыть данную ссылку?",
   "commands.mod_config_tooltip": "Нажмите, чтобы открыть конфиг",
   "commands.nickname_tooltip": "Нажмите, чтобы скопировать ник",
   "commands.modlist_disabled_error_msg": "Функция 'modpack_modlist' отключена! Вы можете включить её в ",

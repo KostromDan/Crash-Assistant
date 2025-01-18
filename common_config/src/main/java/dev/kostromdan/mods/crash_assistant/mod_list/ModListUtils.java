@@ -24,6 +24,8 @@ public class ModListUtils {
     private static final Path MODS_FOLDER = Paths.get("mods");
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    public static String currentUsername = "";
+
 
     public static TreeSet<String> getCurrentModList() {
         try {
@@ -107,18 +109,11 @@ public class ModListUtils {
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             ModListDiff diff = ModListUtils.getDiff();
 
-            String currentUsername = "";
-            if (Files.exists(USERNAME_FILE)) {
-                try {
-                    currentUsername = new String(Files.readAllBytes(USERNAME_FILE));
-                } catch (Exception ignored) {
-                }
-            }
             if (asHtmlWithColor) {
                 generatedMsg += "<html><body style='font-family: Arial; font-size: 12px;'>";
             }
             List<String> modpackCreators = CrashAssistantConfig.getModpackCreators();
-            if (modpackCreators.contains(currentUsername) || modpackCreators.isEmpty()) {
+            if (modpackCreators.contains(getCurrentUsername()) || modpackCreators.isEmpty()) {
                 generatedMsg += getFormattedString(asHtmlWithColor, LanguageProvider.getMsgLang("msg.modlist_changes_latest_launch"));
             } else {
                 generatedMsg += getFormattedString(asHtmlWithColor, LanguageProvider.getMsgLang("msg.modlist_changes_modpack"));
@@ -146,6 +141,16 @@ public class ModListUtils {
             }
         }
         return generatedMsg;
+    }
+
+    public static String getCurrentUsername(){
+        if (currentUsername.isEmpty() &&Files.exists(ModListUtils.USERNAME_FILE)) {
+            try {
+                currentUsername = new String(Files.readAllBytes(ModListUtils.USERNAME_FILE));
+            } catch (Exception ignored) {
+            }
+        }
+        return currentUsername;
     }
 
 }

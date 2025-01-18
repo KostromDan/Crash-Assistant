@@ -1,3 +1,8 @@
+1.2.16:
+- Moved CrashAssistantApp logs from `local/crash_assistant/logs/` to `logs/crash_assistant`. Old folder will be deleted.
+- Added CrashAssistantApp output logging to Minecraft log during start of CrashAssistantApp.
+- Small fixes.
+
 1.2.15:
 - Fixed `gnomebot.dev` setting wasn't applied to mod list diff.
 - Added setting for modpacks created for non-English-speaking audience to generate message on their language.

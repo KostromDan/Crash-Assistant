@@ -19,6 +19,7 @@ public class TrustedDomainsHelper {
         add("discord.co");
         add("minecraftforge.net");
         add("neoforged.net");
+        add("github.com");
     }};
 
 

@@ -7,6 +7,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ChildProcessLogger extends Thread {
     private final InputStream is;
@@ -73,5 +75,15 @@ public class ChildProcessLogger extends Thread {
         out.anotherChildProcessLogger = err;
         err.start();
         out.start();
+        new Timer().schedule( // If for some reason app Process not started successfully and not stopped with err, we should stop loggers to not waste game with our threads. Should never happen.
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        err.interrupt();
+                        out.interrupt();
+                    }
+                },
+                3000
+        );
     }
 }

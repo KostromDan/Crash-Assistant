@@ -60,7 +60,7 @@
   "text.opens_url": "Open the mod's GitHub page",
   "msg.modlist_changes_latest_launch": "Mod list changes beyond the latest successful launch:",
   "msg.modlist_changes_modpack": "Mod list changes beyond the modpack:",
-  "msg.modlist_unmodified": "Modpack mod list wasn't modified.",
+  "msg.modlist_unmodified": "Mod list wasn't modified.",
   "msg.added_mods": "Added mods:",
   "msg.no_added_mods": "Mods weren't added.",
   "msg.removed_mods": "Removed mods:",

@@ -68,7 +68,7 @@ public interface JarInJarHelper {
     static void checkDuplicatedCrashAssistantMod() {
         try {
             List<String> mods = Files.list(Paths.get("mods"))
-                    .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().startsWith("crash_assistant-"))
+                    .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().startsWith("crash_assistant-") && path.getFileName().toString().endsWith(".jar"))
                     .map(path -> path.getFileName().toString())
                     .toList();
             if (mods.size() > 1) {

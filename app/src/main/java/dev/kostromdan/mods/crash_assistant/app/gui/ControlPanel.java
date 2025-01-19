@@ -272,7 +272,7 @@ public class ControlPanel {
                 String modlistDIff = ModListUtils.generateDiffMsg();
                 String containsTooBigLogMsg = containsTooBigLog && CrashAssistantConfig.getBoolean("generated_message.generated_msg_includes_info_why_split") && !CrashAssistantGUI.isLinkToModdedMC() ?
                         "\n*" + LanguageProvider.getMsgLang("msg.log_was_split") + "*" : "";
-                if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 2000) {
+                if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 1650) {
                     try {
                         String link = uploadModlistDiff(modlistDIff);
                         generatedMsg += modlistDIff.split("\n", 2)[0] + "\n";

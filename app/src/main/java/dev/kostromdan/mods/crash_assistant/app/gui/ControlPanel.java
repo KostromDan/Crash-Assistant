@@ -109,7 +109,7 @@ public class ControlPanel {
                 }
                 int result = JOptionPane.showConfirmDialog(
                         null,
-                        CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.untrusted_domain_question") + "\n<a href =" + link + ">" + link + "</a>"+creatorWarning),
+                        CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.untrusted_domain_question") + "\n<a href =" + link + ">" + link + "</a>" + creatorWarning),
                         LanguageProvider.get("gui.untrusted_domain_title"),
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.WARNING_MESSAGE
@@ -149,29 +149,8 @@ public class ControlPanel {
     private void uploadAllFiles() {
         stopMovingToTop = true;
         uploadAllButton.setEnabled(false);
-        String warningMsg = CrashAssistantConfig.get("generated_message.warning_after_upload_all_button_press", true);
-        if (!uploadAllButtonWarningShown && !warningMsg.isEmpty()) {
-            new Thread(() -> {
-                JEditorPane commentPane = CrashAssistantGUI.getEditorPane(warningMsg);
-                JOptionPane optionPane = new JOptionPane(
-                        commentPane,
-                        JOptionPane.INFORMATION_MESSAGE,
-                        JOptionPane.DEFAULT_OPTION
-                );
-                dialog = optionPane.createDialog(
-                        panel,
-                        LanguageProvider.get("gui.upload_all_button_warning_title")
-                );
-                uploadAllButtonWarningShown = true;
-                synchronized (ControlPanel.class) {
-                    dialog.setVisible(true);
-                }
-            }).start();
-
-        }
         new Thread(() -> {
-            final boolean generatedMsgWasNull = generatedMsg == null;
-            if (generatedMsgWasNull) {
+            if (generatedMsg == null) {
                 uploadAllButton.setText(LanguageProvider.get("gui.uploading"));
                 for (FilePanel panel : fileListPanel.filePanelList) {
                     panel.uploadFile(false);
@@ -288,26 +267,43 @@ public class ControlPanel {
                     generatedMsg += containsTooBigLogMsg;
                 }
             }
-            synchronized (ControlPanel.class) {
-                int buttonHighLightTime = 3000;
-                if (generatedMsgWasNull && !warningMsg.isEmpty()) {
-                    buttonHighLightTime = 4500;
-                }
+
+            String warningMsg = CrashAssistantConfig.get("generated_message.warning_after_upload_all_button_press", true);
+            ClipboardUtils.copy(generatedMsg);
+            int buttonHighLightTime = 3000;
+            if (!uploadAllButtonWarningShown && !warningMsg.isEmpty()) {
+                buttonHighLightTime = 4500;
+                showUploadAllButtonWarning(warningMsg);
                 ClipboardUtils.copy(generatedMsg);
-                uploadAllButton.setText(LanguageProvider.get("gui.copied"));
-                CrashAssistantGUI.highlightButton(uploadAllButton, new Color(100, 255, 100), buttonHighLightTime - 400);
-                new Timer().schedule(
-                        new TimerTask() {
-                            @Override
-                            public void run() {
-                                uploadAllButton.setText(LanguageProvider.get("gui.upload_all_finished_button"));
-                                uploadAllButton.setEnabled(true);
-                            }
-                        },
-                        buttonHighLightTime
-                );
             }
+            uploadAllButton.setText(LanguageProvider.get("gui.copied"));
+            CrashAssistantGUI.highlightButton(uploadAllButton, new Color(100, 255, 100), buttonHighLightTime - 400);
+            new Timer().schedule(
+                    new TimerTask() {
+                        @Override
+                        public void run() {
+                            uploadAllButton.setText(LanguageProvider.get("gui.upload_all_finished_button"));
+                            uploadAllButton.setEnabled(true);
+                        }
+                    },
+                    buttonHighLightTime
+            );
         }).start();
+    }
+
+    public static void showUploadAllButtonWarning(String warningMsg) {
+        JEditorPane commentPane = CrashAssistantGUI.getEditorPane(warningMsg);
+        JOptionPane optionPane = new JOptionPane(
+                commentPane,
+                JOptionPane.INFORMATION_MESSAGE,
+                JOptionPane.DEFAULT_OPTION
+        );
+        dialog = optionPane.createDialog(
+                panel,
+                LanguageProvider.get("gui.upload_all_button_warning_title")
+        );
+        uploadAllButtonWarningShown = true;
+        dialog.setVisible(true);
     }
 
     public String uploadModlistDiff(String diff) throws ExecutionException, InterruptedException, UploadException {

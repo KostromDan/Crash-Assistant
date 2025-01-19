@@ -40,7 +40,8 @@ public class CrashAssistantConfig {
         usedOptions.clear();
         config.setComment("general", "General settings of Crash Assistant mod.");
         addOption("general.help_link",
-                "Link which will be opened in browser on request_help_button pressed.",
+                "Link which will be opened in browser on request_help_button pressed.\n" +
+                        "Must start with 'https://' or 'www.'",
                 "https://discord.gg/moddedmc");
         addOption("general.upload_to",
                 "Anyways log will be uploaded to mclo.gs, but with this option you can wrap link to gnomebot.dev for better formatting.\n" +
@@ -92,6 +93,12 @@ public class CrashAssistantConfig {
         config.setComment("text", "Here you can change text of lang placeHolders.\n" +
                 "Also you can change any text in lang files.\n" +
                 "You don't need to modify jar. You can change it in config/crash_assistant/lang. For more info read README.md file located where.");
+        addOption("text.comment_start_formulation",
+                "With this you can change formulation of first sentence of comment under title.\n" +
+                        "CANT_RESOLVE - \"If you can't resolve the problem by reading logs, join the $CONFIG.text.support_name$.\"\n" +
+                        "PLS_REPORT - \"If you want to report the problem or need help, join the $CONFIG.text.support_name$.\"\n" +
+                        "For modpacks, the second option is recommended; the first is intended for individual mod downloads.",
+                "CANT_RESOLVE");
         addOption("text.support_name",
                 "$CONFIG.text.support_name$ in lang files will be replaced with this value.\n" +
                         "For example this placeHolder used in: \"gui.request_help_button\": \"Request help in the $CONFIG.text.support_name$\"",

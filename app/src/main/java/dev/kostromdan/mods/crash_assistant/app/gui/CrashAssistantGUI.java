@@ -39,10 +39,15 @@ public class CrashAssistantGUI {
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         titleLabel.setFont(titleLabel.getFont().deriveFont(16f));
 
-        String commentText = LanguageProvider.get("gui.comment_under_title", new HashSet<>() {{
+        HashSet<String> hrefOptions = new HashSet<>() {{
             add("$CONFIG.text.support_name$");
             add("$LANG.gui.upload_all_comment$");
-        }});
+        }};
+
+        String firstLinesOfComment = Objects.equals(CrashAssistantConfig.get("text.comment_start_formulation"), "CANT_RESOLVE") ?
+                LanguageProvider.get("gui.comment_under_title_cant_resolve", hrefOptions) : LanguageProvider.get("gui.comment_under_title_pls_report", hrefOptions);
+
+        String commentText = firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions);
         if (CrashAssistantConfig.getBoolean("general.show_dont_send_screenshot_of_gui_notice")) {
             String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
             commentText += "\n<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
@@ -98,7 +103,7 @@ public class CrashAssistantGUI {
             }
         }, 0, 50);
         CrashAssistantApp.GUIStartTime = Instant.now().toEpochMilli() - CrashAssistantApp.GUIStartTime;
-        CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime/1000f + " seconds.");
+        CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
     }
 
     public static void highlightButton(JComponent button, Color color, long time) {

@@ -40,7 +40,7 @@ public interface FileUtils {
             }
             try {
                 if (Files.size(path) == 0) {
-                    CrashAssistantApp.LOGGER.info("File \"" + path + "\" is empty.");
+                    CrashAssistantApp.LOGGER.warn("File \"" + path + "\" is empty.");
                     return;
                 }
             } catch (IOException e) {

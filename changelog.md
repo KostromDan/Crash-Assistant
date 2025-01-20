@@ -1,3 +1,23 @@
+1.2.17:
+- Fixed app process won't finish / start GUI if Minecraft PID was reused immediately by another process. Mostly Linux problem. Maybe super rare Windows, but I haven't seen a single case.
+- Added PolyMC launcherlog support.
+- Added logging for GUI start time.
+- Removed `debug.crash_game_on_event`, since we have crash command.
+- Moved `shown_greeting` config option from `debug` to `greeting`. Don't be afraid if you receive it again.
+- Added confirmation if help_link domain is not in trusted domains list.
+- Added link to tooltip of request_help_button.
+- Add extension `.jar` check then checking duplicated coremods.
+- Reduce limit, then modlist diff uploaded to 1650, to give user 350 chars for feedback.
+- Made universal formulation for mod list diff to fit both head formulations.
+- Show upload all button warning after uploading (was before).
+- Improved logger of app.
+- Stop child process loggers after 3 seconds if app and not started successfully, and not crashed. Should never happen.
+- Added `text.comment_start_formulation` config option.
+- Improved general.help_link comment.
+- Change info to warn if log file is empty.
+- Replaced BetterMC discord link to mod loader Discord link.
+- Small fixes.
+
 1.2.16:
 - Moved CrashAssistantApp logs from `local/crash_assistant/logs/` to `logs/crash_assistant`. Old folder will be deleted.
 - Added CrashAssistantApp output logging to Minecraft log during start of CrashAssistantApp.

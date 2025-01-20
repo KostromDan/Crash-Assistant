@@ -4,7 +4,7 @@
 - Added quilt discord.
 - Significantly improved generated message formatting.
 - Removed `generated_message.generated_msg_includes_info_why_split` config option.
-
+ 
 1.2.17:
 - Fixed app process won't finish / start GUI if Minecraft PID was reused immediately by another process. Mostly Linux problem. Maybe super rare Windows, but I haven't seen a single case.
 - Added PolyMC launcherlog support.

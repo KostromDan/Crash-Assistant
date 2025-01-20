@@ -1,9 +1,9 @@
 {
   "gui.title_crashed_with_report": "Упс, $CONFIG.text.modpack_name$ крашнулся!",
   "gui.title_crashed_without_report": "Упс, $CONFIG.text.modpack_name$ крашнулся без отчёта о сбое!",
-  "gui.comment_under_title": "Отправьте сгенерированное сообщение с помощью кнопки \"$LANG.gui.upload_all_comment$\" в $CONFIG.text.support_place$.\nТак-же предоставьте информацию о том как и при каких обстоятельствах произошёл краш.",
-  "gui.comment_under_title_cant_resolve": "Если не удается разобраться с проблемой по логам, подключитесь к $CONFIG.text.support_name$.",
-  "gui.comment_under_title_pls_report": "Чтобы сообщить о проблеме или получить помощь, подключитесь к $CONFIG.text.support_name$.",
+  "gui.comment_under_title": "Отправьте сгенерированное сообщение с помощью кнопки \"$LANG.gui.upload_all_comment$\" в $CONFIG.text.support_place$.\nТакже предоставьте информацию о том как и при каких обстоятельствах произошёл краш.",
+  "gui.comment_under_title_cant_resolve": "Если не удается разобраться с проблемой по логам, присоединитесь к $CONFIG.text.support_name$.",
+  "gui.comment_under_title_pls_report": "Чтобы сообщить о проблеме или получить помощь, присоединитесь к $CONFIG.text.support_name$.",
   "gui.comment_under_title_screenshot_notice": "Пожалуйста прочтите текст выше внимательно. Скриншот этого GUI не скажет нам ничего!",
   "gui.upload_all_comment": "Загрузить все...",
   "gui.file_list_label": "Доступные файлы логов:",

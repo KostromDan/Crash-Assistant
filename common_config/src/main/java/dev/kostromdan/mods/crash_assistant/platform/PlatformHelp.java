@@ -5,11 +5,11 @@ import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import java.util.Objects;
 
 public enum PlatformHelp {
-    FORGE("https://discord.minecraftforge.net", "Minecraft Forge Discord", "#player-support"),
-    NEOFORGE("https://discord.neoforged.net", "NeoForge Discord", "#user_support"),
-    FABRIC("https://discord.gg/v6v4pMv", "Fabric Discord", "#player-support"),
-    QUILT("https://discord.quiltmc.org/", "QuiltMC Discord", "#quilt-player-support"),
-    UNKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help");
+    FORGE("https://discord.minecraftforge.net", "Minecraft Forge Discord", "#player-support channel"),
+    NEOFORGE("https://discord.neoforged.net", "NeoForge Discord", "#user_support channel"),
+    FABRIC("https://discord.gg/v6v4pMv", "Fabric Discord", "#player-support channel"),
+    QUILT("https://discord.quiltmc.org/", "QuiltMC Discord", "#player-support channel"),
+    UNKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help channel"),;
 
     private final String helpLink;
     private final String helpName;

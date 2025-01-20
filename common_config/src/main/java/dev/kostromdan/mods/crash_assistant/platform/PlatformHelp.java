@@ -9,12 +9,12 @@ public enum PlatformHelp {
     NEOFORGE("https://discord.neoforged.net", "NeoForge Discord", "#user_support"),
     FABRIC("https://discord.gg/v6v4pMv", "Fabric Discord", "#player-support"),
     QUILT("https://discord.quiltmc.org/", "QuiltMC Discord", "#quilt-player-support"),
-    UNCKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help");
+    UNKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help");
 
     private final String helpLink;
     private final String helpName;
     private final String helpChannel;
-    public static PlatformHelp platform = UNCKNOWN;
+    public static PlatformHelp platform = UNKNOWN;
 
     PlatformHelp(String helpLink, String helpName, String helpChannel) {
         this.helpLink = helpLink;

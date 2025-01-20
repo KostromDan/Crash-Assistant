@@ -19,7 +19,7 @@ import java.util.*;
 public interface JarInJarHelper {
     Logger LOGGER = LogManager.getLogger("CrashAssistantJarInJarHelper");
 
-    static void launchCrashAssistantApp(String launchTarget) {
+    static void launchCrashAssistantApp(String launchTarget, String platform) {
         if (!launchTarget.toLowerCase().contains("client")) {
             LOGGER.warn("launchTarget: " + launchTarget + ". Crash Assistant is client only mod. Mod will do nothing!");
             return;
@@ -46,6 +46,7 @@ public interface JarInJarHelper {
                     "-Xmx512m",
                     "-jar", extractedJarPath.toAbsolutePath().toString(),
                     "-parentPID", Objects.toString(ProcessHandle.current().pid()),
+                    "-platform", platform,
                     "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),

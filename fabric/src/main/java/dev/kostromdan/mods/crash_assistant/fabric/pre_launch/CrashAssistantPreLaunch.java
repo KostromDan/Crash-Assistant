@@ -12,6 +12,6 @@ public class CrashAssistantPreLaunch implements PreLaunchEntrypoint {
     @Override
     public void onPreLaunch() {
         String launchTarget = FabricLoader.getInstance().getEnvironmentType().toString();
-        JarInJarHelper.launchCrashAssistantApp(launchTarget);
+        JarInJarHelper.launchCrashAssistantApp(launchTarget, "FABRIC");
     }
 }

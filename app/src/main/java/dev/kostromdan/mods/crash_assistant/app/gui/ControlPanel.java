@@ -84,7 +84,7 @@ public class ControlPanel {
 
         requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));
         requestHelpButton.addActionListener(e -> requestHelp());
-        requestHelpButton.setToolTipText(CrashAssistantConfig.get("general.help_link"));
+        requestHelpButton.setToolTipText(CrashAssistantGUI.getActualLink());
         gbc.gridy = 1;
         bottomPanel.add(requestHelpButton, gbc);
 
@@ -98,7 +98,7 @@ public class ControlPanel {
     public void requestHelp() {
         try {
             stopMovingToTop = true;
-            String link = CrashAssistantConfig.get("general.help_link");
+            String link = CrashAssistantGUI.getActualLink();
             URI uri = new URI(link);
             if (!TrustedDomainsHelper.isTrustedTopDomain(uri)) {
                 String creatorWarning = "";
@@ -249,7 +249,7 @@ public class ControlPanel {
                 }
                 generatedMsg += "\n";
                 String modlistDIff = ModListUtils.generateDiffMsg();
-                String containsTooBigLogMsg = containsTooBigLog && CrashAssistantConfig.getBoolean("generated_message.generated_msg_includes_info_why_split") && !CrashAssistantGUI.isLinkToModdedMC() ?
+                String containsTooBigLogMsg = containsTooBigLog && CrashAssistantConfig.getBoolean("generated_message.generated_msg_includes_info_why_split")?
                         "\n*" + LanguageProvider.getMsgLang("msg.log_was_split") + "*" : "";
                 if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 1650) {
                     try {

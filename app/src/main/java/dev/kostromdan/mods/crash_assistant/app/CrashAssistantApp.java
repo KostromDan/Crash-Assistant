@@ -26,6 +26,7 @@ public class CrashAssistantApp {
     public static long GUIStartTime = -1;
     public static long parentPID;
     public static long parentStarted;
+    public static String platform= "UNKNOWN";
     public static boolean crashed_with_report = false;
     public static int launcherLogsCount = 0;
 
@@ -42,6 +43,9 @@ public class CrashAssistantApp {
             if ("-parentPID".equals(args[i]) && i + 1 < args.length) {
                 parentPID = Long.parseLong(args[i + 1]);
                 LOGGER.info("Parent PID: {}", parentPID);
+            } else if ("-platform".equals(args[i]) && i + 1 < args.length) {
+                platform = args[i + 1];
+                LOGGER.info("Platform: {}", platform);
             }
         }
 

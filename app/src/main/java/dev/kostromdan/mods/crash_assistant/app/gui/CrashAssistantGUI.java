@@ -184,12 +184,22 @@ public class CrashAssistantGUI {
         return pane;
     }
 
-    public static boolean isLinkToModdedMC() {
-        return Objects.equals(CrashAssistantConfig.get("general.help_link"), "https://discord.gg/moddedmc");
+    public static boolean isLinkDefault() {
+        return Objects.equals(CrashAssistantConfig.get("general.help_link"), "CHANGE_ME");
+    }
+
+    public static String getActualLink() {
+        if (!isLinkDefault()) return CrashAssistantConfig.get("general.help_link");
+        return switch (CrashAssistantApp.platform) {
+            case "FORGE" -> "https://discord.minecraftforge.net";
+            case "FABRIC" -> "https://discord.gg/v6v4pMv";
+            case "NEOFORGE" -> "https://discord.neoforged.net";
+            default -> "https://discord.gg/moddedmc";
+        };
     }
 
     public static boolean isUploadingToGnome() {
-        return isLinkToModdedMC() || Objects.equals(CrashAssistantConfig.get("general.upload_to"), "gnomebot.dev");
+        return Objects.equals(CrashAssistantConfig.get("general.upload_to"), "gnomebot.dev");
     }
 
     public static String getUploadToLink() {

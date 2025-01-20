@@ -8,7 +8,7 @@ public enum PlatformHelp {
     FORGE("https://discord.minecraftforge.net", "Minecraft Forge Discord", "#player-support"),
     NEOFORGE("https://discord.neoforged.net", "NeoForge Discord", "#user_support"),
     FABRIC("https://discord.gg/v6v4pMv", "Fabric Discord", "#player-support"),
-    QUILT("https://discord.quiltmc.org/", "Minecraft Forge Discord", "#quilt-player-support"),
+    QUILT("https://discord.quiltmc.org/", "QuiltMC Discord", "#quilt-player-support"),
     UNCKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help");
 
     private final String helpLink;

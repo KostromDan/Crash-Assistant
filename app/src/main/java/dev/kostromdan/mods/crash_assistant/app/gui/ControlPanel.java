@@ -199,7 +199,7 @@ public class ControlPanel {
 
                     }
                 }
-                generatedMsg = CrashAssistantConfig.get("text.modpack_name", true) + " " + LanguageProvider.getMsgLang("msg.crashed") + "!\n";
+                generatedMsg = CrashAssistantConfig.get("text.modpack_name", true) + " " + LanguageProvider.getMsgLang("msg.crashed").replace("$UPLOAD_TO$", CrashAssistantGUI.getUploadToLink()) + "\n";
                 if (!CrashAssistantConfig.get("generated_message.text_under_crashed").toString().isEmpty()) {
                     generatedMsg += CrashAssistantConfig.get("generated_message.text_under_crashed", true) + "\n";
                 }
@@ -215,7 +215,6 @@ public class ControlPanel {
                     }
                     kubeJSPanelList.add(panel);
                 }
-                boolean containsTooBigLog = false;
                 for (FilePanel panel : fileListPanel.filePanelList) {
                     if (panel.getFileName().startsWith("KubeJS: ")) {
                         if (kubeJSPosted) continue;
@@ -231,9 +230,11 @@ public class ControlPanel {
                         }
                     }
                     if (panel.getUploadedLinkLastLines() == null) {
-                        generatedMsg += panel.getFileName() + ": [`" + CrashAssistantGUI.getUploadToLink() + "`](<" + panel.getUploadedLinkFirstLines() + ">)\n";
+                        String[] splitLog = panel.getFileName().split(":");
+                        String fileName = (splitLog.length == 2 ? splitLog[1] : splitLog[0]).trim();
+                        String fileParentName = splitLog.length == 2 ? splitLog[0] + ": " : "";
+                        generatedMsg += fileParentName + "[`" + fileName + "`](<" + panel.getUploadedLinkFirstLines() + ">)\n";
                     } else {
-                        containsTooBigLog = true;
                         generatedMsg += panel.getMessageWithBothLinks(true);
 
                     }
@@ -250,22 +251,17 @@ public class ControlPanel {
                 }
                 generatedMsg += "\n";
                 String modlistDIff = ModListUtils.generateDiffMsg();
-                String containsTooBigLogMsg = containsTooBigLog && CrashAssistantConfig.getBoolean("generated_message.generated_msg_includes_info_why_split")?
-                        "\n*" + LanguageProvider.getMsgLang("msg.log_was_split") + "*" : "";
-                if (generatedMsg.length() + modlistDIff.length() + containsTooBigLogMsg.length() >= 1650) {
+                if (generatedMsg.length() + modlistDIff.length() >= 1650) {
                     try {
                         String link = uploadModlistDiff(modlistDIff);
                         generatedMsg += modlistDIff.split("\n", 2)[0] + "\n";
-                        generatedMsg += LanguageProvider.getMsgLang("msg.big_size_diff_uploaded") + ": [`" + CrashAssistantGUI.getUploadToLink() + "`](<" + link + ">)\n";
+                        generatedMsg += LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_0") + "[`" + LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_1") + "`](<" + link + ">)" + LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_2") + "\n";
                     } catch (ExecutionException | InterruptedException | UploadException e) {
                         CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
                         generatedMsg += modlistDIff;
                     }
                 } else {
                     generatedMsg += modlistDIff;
-                }
-                if (containsTooBigLog) {
-                    generatedMsg += containsTooBigLogMsg;
                 }
             }
 

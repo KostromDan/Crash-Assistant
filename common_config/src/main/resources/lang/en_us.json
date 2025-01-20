@@ -68,9 +68,10 @@
   "msg.removed_mods": "Removed mods:",
   "msg.no_removed_mods": "Mods weren't removed.",
   "msg.skip_launcher": "CurseForge: skip launcher",
-  "msg.log_was_split": "Splitting the log into head / tail occurs when the log exceeds mclo.gs limits (10 MB or 25k lines).",
-  "msg.big_size_diff_uploaded": "Due to big size of mod list diff, it was uploaded to",
-  "msg.crashed": "crashed",
+  "msg.big_size_diff_uploaded_0": "The ",
+  "msg.big_size_diff_uploaded_1": "mod list diff",
+  "msg.big_size_diff_uploaded_2": " was uploaded due to it's large size.",
+  "msg.crashed": "crashed. The logs have been uploaded to `$UPLOAD_TO$`:",
   "msg.over": "over",
   "msg.mb": "MB",
   "msg.k_lines": "k lines"

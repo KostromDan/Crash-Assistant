@@ -3,12 +3,14 @@ package dev.kostromdan.mods.crash_assistant.lang;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,8 +49,13 @@ public class Lang {
             int placeHolderEndIndex = value.indexOf("$", placeHolderStartIndex + placeHolderStartLength) + 1;
             String placeholder = value.substring(placeHolderStartIndex, placeHolderEndIndex);
             String configKey = placeholder.substring(placeHolderStartLength, placeholder.length() - 1);
+            String configValue;
+            if (placeHolderStart.equals("$CONFIG.") && (configKey.equals("text.support_place") || configKey.equals("text.support_name"))) {
+                configValue = configKey.equals("text.support_place") ? PlatformHelp.getActualHelpChannel() : PlatformHelp.getActualHelpName();
+            } else {
+                configValue = configGetFunction.apply(configKey);
+            }
 
-            String configValue = configGetFunction.apply(configKey);
             if (placeHoldersSurroundedWithHref.contains(placeholder)) {
                 configValue = "<a href='" + placeholder.substring(1, placeholder.length() - 1) + "'>" + configValue + "</a>";
             }

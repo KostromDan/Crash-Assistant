@@ -40,7 +40,7 @@ public class CrashAssistantConfig {
     private static void setupDefaultValues() {
         usedOptions.clear();
         config.setComment("general", "General settings of Crash Assistant mod.");
-        if(Objects.equals(config.get("general.help_link"), "https://discord.gg/moddedmc")) {
+        if (Objects.equals(config.get("general.help_link"), "https://discord.gg/moddedmc")) {
             config.remove("general.help_link");
         }
         addOption("general.help_link",
@@ -79,16 +79,16 @@ public class CrashAssistantConfig {
                         "PLS_REPORT - \"If you want to report the problem or need help, join the $CONFIG.text.support_name$.\"\n" +
                         "For modpacks, the second option is recommended; the first is intended for individual mod downloads.",
                 "CANT_RESOLVE");
-        if(Objects.equals(config.get("text.support_name"), "Modded Minecraft Discord")) {
+        if (Objects.equals(config.get("text.support_name"), "Modded Minecraft Discord") || Objects.equals(config.get("text.support_name"), "mod loader Discord")) {
             config.remove("text.support_name");
         }
         addOption("text.support_name",
                 "$CONFIG.text.support_name$ in lang files will be replaced with this value.\n" +
                         "For example this placeHolder used in: \"Request help in the $CONFIG.text.support_name$\"",
-                "mod loader Discord");
+                "example Discord");
         addOption("text.support_place",
                 "$CONFIG.text.support_place$ in lang files will be replaced with this value.",
-                "#player_support channel");
+                "#example channel");
         addOption("text.modpack_name",
                 "$CONFIG.text.modpack_name$ in lang files will be replaced with this value.\n" +
                         "For example this placeHolder used in: \"Oops, $CONFIG.text.modpack_name$ crashed!\"\n" +

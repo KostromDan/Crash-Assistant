@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.HsErrHelper;
 import dev.kostromdan.mods.crash_assistant.app.utils.ProcessHelper;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,7 +27,6 @@ public class CrashAssistantApp {
     public static long GUIStartTime = -1;
     public static long parentPID;
     public static long parentStarted;
-    public static String platform= "UNKNOWN";
     public static boolean crashed_with_report = false;
     public static int launcherLogsCount = 0;
 
@@ -44,8 +44,8 @@ public class CrashAssistantApp {
                 parentPID = Long.parseLong(args[i + 1]);
                 LOGGER.info("Parent PID: {}", parentPID);
             } else if ("-platform".equals(args[i]) && i + 1 < args.length) {
-                platform = args[i + 1];
-                LOGGER.info("Platform: {}", platform);
+                PlatformHelp.platform = Enum.valueOf(PlatformHelp.class, args[i + 1]);
+                LOGGER.info("Platform: {}", PlatformHelp.platform);
             }
         }
 

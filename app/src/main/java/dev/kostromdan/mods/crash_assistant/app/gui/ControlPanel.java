@@ -8,6 +8,7 @@ import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import gs.mclo.api.response.UploadLogResponse;
 
 import javax.swing.*;
@@ -84,7 +85,7 @@ public class ControlPanel {
 
         requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));
         requestHelpButton.addActionListener(e -> requestHelp());
-        requestHelpButton.setToolTipText(CrashAssistantGUI.getActualLink());
+        requestHelpButton.setToolTipText(PlatformHelp.getActualHelpLink());
         gbc.gridy = 1;
         bottomPanel.add(requestHelpButton, gbc);
 
@@ -98,7 +99,7 @@ public class ControlPanel {
     public void requestHelp() {
         try {
             stopMovingToTop = true;
-            String link = CrashAssistantGUI.getActualLink();
+            String link = PlatformHelp.getActualHelpLink();
             URI uri = new URI(link);
             if (!TrustedDomainsHelper.isTrustedTopDomain(uri)) {
                 String creatorWarning = "";
@@ -223,14 +224,14 @@ public class ControlPanel {
                             kubeJSPosted = true;
                             generatedMsg += "KubeJS: ";
                             generatedMsg += kubeJSPanelList.stream()
-                                    .map(kubeJSPanel -> "[" + kubeJSPanel.getFilePath().getFileName() + "](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
+                                    .map(kubeJSPanel -> "[`" + kubeJSPanel.getFilePath().getFileName() + "`](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
                                     .collect(Collectors.joining(" / "));
                             generatedMsg += "\n";
                             continue;
                         }
                     }
                     if (panel.getUploadedLinkLastLines() == null) {
-                        generatedMsg += panel.getFileName() + ": [" + CrashAssistantGUI.getUploadToLink() + "](<" + panel.getUploadedLinkFirstLines() + ">)\n";
+                        generatedMsg += panel.getFileName() + ": [`" + CrashAssistantGUI.getUploadToLink() + "`](<" + panel.getUploadedLinkFirstLines() + ">)\n";
                     } else {
                         containsTooBigLog = true;
                         generatedMsg += panel.getMessageWithBothLinks(true);
@@ -255,7 +256,7 @@ public class ControlPanel {
                     try {
                         String link = uploadModlistDiff(modlistDIff);
                         generatedMsg += modlistDIff.split("\n", 2)[0] + "\n";
-                        generatedMsg += LanguageProvider.getMsgLang("msg.big_size_diff_uploaded") + ": [" + CrashAssistantGUI.getUploadToLink() + "](<" + link + ">)\n";
+                        generatedMsg += LanguageProvider.getMsgLang("msg.big_size_diff_uploaded") + ": [`" + CrashAssistantGUI.getUploadToLink() + "`](<" + link + ">)\n";
                     } catch (ExecutionException | InterruptedException | UploadException e) {
                         CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
                         generatedMsg += modlistDIff;

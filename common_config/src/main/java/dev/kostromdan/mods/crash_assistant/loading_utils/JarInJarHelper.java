@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.loading_utils;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +20,7 @@ import java.util.*;
 public interface JarInJarHelper {
     Logger LOGGER = LogManager.getLogger("CrashAssistantJarInJarHelper");
 
-    static void launchCrashAssistantApp(String launchTarget, String platform) {
+    static void launchCrashAssistantApp(String launchTarget) {
         if (!launchTarget.toLowerCase().contains("client")) {
             LOGGER.warn("launchTarget: " + launchTarget + ". Crash Assistant is client only mod. Mod will do nothing!");
             return;
@@ -46,7 +47,7 @@ public interface JarInJarHelper {
                     "-Xmx512m",
                     "-jar", extractedJarPath.toAbsolutePath().toString(),
                     "-parentPID", Objects.toString(ProcessHandle.current().pid()),
-                    "-platform", platform,
+                    "-platform", PlatformHelp.platform.toString(),
                     "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),

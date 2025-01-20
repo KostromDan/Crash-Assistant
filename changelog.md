@@ -1,3 +1,8 @@
+1.2.18:
+- Link description in generated message surrounded by `` for better looking.
+- Universal formulations of default discord names, channels was replaced to actual values.
+- Added quilt discord.
+
 1.2.17:
 - Fixed app process won't finish / start GUI if Minecraft PID was reused immediately by another process. Mostly Linux problem. Maybe super rare Windows, but I haven't seen a single case.
 - Added PolyMC launcherlog support.

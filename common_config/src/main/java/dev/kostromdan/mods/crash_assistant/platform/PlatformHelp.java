@@ -22,32 +22,20 @@ public enum PlatformHelp {
         this.helpChannel = helpChannel;
     }
 
-    public String getHelpLink() {
-        return helpLink;
-    }
-
-    public String getHelpName() {
-        return helpName;
-    }
-
-    public String getHelpChannel() {
-        return helpChannel;
-    }
-
     public static boolean isLinkDefault() {
         return Objects.equals(CrashAssistantConfig.get("general.help_link"), "CHANGE_ME");
     }
 
     public static String getActualHelpLink() {
         if (!isLinkDefault()) return CrashAssistantConfig.get("general.help_link");
-        return platform.getHelpLink();
+        return platform.helpLink;
     }
     public static String getActualHelpName() {
         if (!isLinkDefault()) return CrashAssistantConfig.get("text.support_name");
-        return platform.getHelpName();
+        return platform.helpName;
     }
     public static String getActualHelpChannel() {
         if (!isLinkDefault()) return CrashAssistantConfig.get("text.support_place");
-        return platform.getHelpChannel();
+        return platform.helpChannel;
     }
 }

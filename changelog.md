@@ -1,3 +1,6 @@
+1.2.19:
+- Added `modpack_modlist.add_resourcepacks` config option.
+
 1.2.18:
 - Link description in generated message surrounded by `` for better looking.
 - Universal formulations of default discord names, channels was replaced to actual values.

@@ -22,6 +22,7 @@ public class ModListUtils {
     public static final Logger LOGGER = LogManager.getLogger();
     public static final Path USERNAME_FILE = Paths.get("local", "crash_assistant", "username.info");
     private static final Path MODS_FOLDER = Paths.get("mods");
+    private static final Path RESOURCEPACKS_FOLDER = Paths.get("resourcepacks");
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     public static String currentUsername = "";
@@ -30,15 +31,22 @@ public class ModListUtils {
     public static TreeSet<String> getCurrentModList() {
         try {
             TreeSet<String> filenames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-            if (!Files.exists(MODS_FOLDER)) {
-                return filenames;
+            if (Files.exists(MODS_FOLDER)) {
+                Files.list(MODS_FOLDER).forEach(path -> {
+                    String filename = path.getFileName().toString();
+                    if (Files.isRegularFile(path) && filename.endsWith(".jar")) {
+                        filenames.add(filename);
+                    }
+                });
             }
-            Files.list(MODS_FOLDER).forEach(path -> {
-                String filename = path.getFileName().toString();
-                if (Files.isRegularFile(path) && (filename.endsWith(".jar") || filename.endsWith(".zip"))) {
-                    filenames.add(filename);
-                }
-            });
+            if (Files.exists(RESOURCEPACKS_FOLDER) && CrashAssistantConfig.getBoolean("modpack_modlist.add_resourcepacks")) {
+                Files.list(RESOURCEPACKS_FOLDER).forEach(path -> {
+                    String filename = path.getFileName().toString();
+                    if (Files.isDirectory(path) || filename.endsWith(".zip")) {
+                        filenames.add(filename+" (resourcepack)");
+                    }
+                });
+            }
             return filenames;
         } catch (Exception e) {
             LOGGER.error("Error while getting current mod list: ", e);
@@ -143,8 +151,8 @@ public class ModListUtils {
         return generatedMsg;
     }
 
-    public static String getCurrentUsername(){
-        if (currentUsername.isEmpty() &&Files.exists(ModListUtils.USERNAME_FILE)) {
+    public static String getCurrentUsername() {
+        if (currentUsername.isEmpty() && Files.exists(ModListUtils.USERNAME_FILE)) {
             try {
                 currentUsername = new String(Files.readAllBytes(ModListUtils.USERNAME_FILE));
             } catch (Exception ignored) {

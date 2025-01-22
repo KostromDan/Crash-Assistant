@@ -131,6 +131,10 @@ public class CrashAssistantConfig {
                         "So you won't forget to save it before publishing.\n" +
                         "If you want to save manually: disable this and use '/crash_assistant modlist save' command.",
                 true);
+        addOption("modpack_modlist.add_resourcepacks",
+                "If enabled, will add resourcepacks to modlist.json\n" +
+                        "After filename where will be ' (resourcepack)' suffix.",
+                false);
 
         config.setComment("crash_command", "Settings of '/crash_assistant crash' command feature.");
         addOption("crash_command.enabled",

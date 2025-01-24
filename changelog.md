@@ -1,3 +1,8 @@
+1.2.21:
+- Removed `text.comment_start_formulation` config option.
+  - Now if `help_link` equals `CHANGE_ME`, will be used `CANT_RESOLVE`, else `PLS_REPORT`.
+- 
+
 1.2.20:
 - If link is `CHANGE_ME`, `gnomebot.dev` for `general.upload_to` will be used.
 - Improved config descriptions.

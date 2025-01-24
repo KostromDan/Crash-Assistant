@@ -74,12 +74,6 @@ public class CrashAssistantConfig {
         config.setComment("text", "Here you can change text of lang placeHolders.\n" +
                 "Also you can change any text in lang files.\n" +
                 "You don't need to modify jar. You can change it in config/crash_assistant/lang. For more info read README.md file located where.");
-        addOption("text.comment_start_formulation",
-                "With this you can change formulation of first sentence of comment under title.\n" +
-                        "CANT_RESOLVE - \"If you can't resolve the problem by reading logs, join the $CONFIG.text.support_name$.\"\n" +
-                        "PLS_REPORT - \"If you want to report the problem or need help, join the $CONFIG.text.support_name$.\"\n" +
-                        "For modpacks, the second option is recommended; the first is intended for individual mod downloads.",
-                "CANT_RESOLVE");
         if (Objects.equals(config.get("text.support_name"), "Modded Minecraft Discord") || Objects.equals(config.get("text.support_name"), "mod loader Discord")) {
             config.remove("text.support_name");
         }

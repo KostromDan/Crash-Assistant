@@ -45,7 +45,7 @@ public class CrashAssistantGUI {
             add("$LANG.gui.upload_all_comment$");
         }};
 
-        String firstLinesOfComment = Objects.equals(CrashAssistantConfig.get("text.comment_start_formulation"), "CANT_RESOLVE") ?
+        String firstLinesOfComment = PlatformHelp.isLinkDefault() ?
                 LanguageProvider.get("gui.comment_under_title_cant_resolve", hrefOptions) : LanguageProvider.get("gui.comment_under_title_pls_report", hrefOptions);
 
         String commentText = firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions);

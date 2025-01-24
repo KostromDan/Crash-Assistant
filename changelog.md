@@ -1,3 +1,8 @@
+1.2.20:
+- If link is `CHANGE_ME`, `gnomebot.dev` for `general.upload_to` will be used.
+- Improved config descriptions.
+- Fixed I cherry-picked one commit by mistake from NeoForge, so we directed Forge users to NeoForge discord.
+
 1.2.19:
 - Added `modpack_modlist.add_resourcepacks` config option.
 

@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import gs.mclo.api.MclogsClient;
 
 import javax.swing.*;
@@ -185,7 +186,7 @@ public class CrashAssistantGUI {
     }
 
     public static boolean isUploadingToGnome() {
-        return Objects.equals(CrashAssistantConfig.get("general.upload_to"), "gnomebot.dev");
+        return Objects.equals(CrashAssistantConfig.get("general.upload_to"), "gnomebot.dev") || PlatformHelp.isLinkDefault();
     }
 
     public static String getUploadToLink() {

@@ -45,11 +45,12 @@ public class CrashAssistantConfig {
         }
         addOption("general.help_link",
                 "Link which will be opened in browser on request_help_button pressed.\n" +
-                        "If equals CHANGE_ME, will open Fabric/MinecraftForge/NeoForge discord link.\n" +
+                        "If equals CHANGE_ME, will open Forge/NeoForge/Fabric/Quilt discord link. Names of communities/channels also will be used not from config, but according to this link.\n" +
                         "Must start with 'https://' or 'www.'",
                 "CHANGE_ME");
         addOption("general.upload_to",
                 "Anyways log will be uploaded to mclo.gs, but with this option you can wrap link to gnomebot.dev for better formatting.\n" +
+                        "If help_link equals 'CHANGE_ME', this value will be ignored and gnomebot.dev used.\n" +
                         "Supported values: mclo.gs / gnomebot.dev",
                 "gnomebot.dev");
         addOption("general.show_on_fml_error_screen",

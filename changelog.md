@@ -4,6 +4,7 @@
   - Now if `help_link` equals `CHANGE_ME`, will be used `CANT_RESOLVE`, else `PLS_REPORT`.
 - If diff is longer 15 lines, it will be uploaded. (3 for forge discord).
 - Fixed on IOS Discord links were unclickable.
+- Added mods.toml to forge coremod, to be compatible with 3-rd party services needing it.
 
 1.2.20:
 - If link is `CHANGE_ME`, `gnomebot.dev` for `general.upload_to` will be used.

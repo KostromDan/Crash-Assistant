@@ -1,7 +1,9 @@
-1.2.21:
+1.3.0:
+- Added Updated mods block. Now updated mods will be displayed in independent block with just version diff.
 - Removed `text.comment_start_formulation` config option.
   - Now if `help_link` equals `CHANGE_ME`, will be used `CANT_RESOLVE`, else `PLS_REPORT`.
-- 
+- If diff is longer 15 lines, it will be uploaded. (3 for forge discord).
+- Fixed on IOS Discord links were unclickable.
 
 1.2.20:
 - If link is `CHANGE_ME`, `gnomebot.dev` for `general.upload_to` will be used.

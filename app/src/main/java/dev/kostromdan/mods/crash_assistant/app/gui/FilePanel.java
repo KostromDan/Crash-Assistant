@@ -283,8 +283,8 @@ public class FilePanel {
 
     public String getMessageWithBothLinks(boolean forMsg) {
         Function<String, String> langFunc = forMsg ? LanguageProvider::getMsgLang : LanguageProvider::get;
-        return "[`" + getFileName() + " " + langFunc.apply("gui.split_log_dialog_head").toLowerCase() + "`](<" + getUploadedLinkFirstLines() + ">) / " +
-                "[`" + langFunc.apply("gui.split_log_dialog_tail").toLowerCase() + "`](<" + getUploadedLinkLastLines() + ">) " + getTooBigReasons(forMsg) + "\n";
+        return "[" + getFileName() + " " + langFunc.apply("gui.split_log_dialog_head").toLowerCase() + "](<" + getUploadedLinkFirstLines() + ">) / " +
+                "[" + langFunc.apply("gui.split_log_dialog_tail").toLowerCase() + "](<" + getUploadedLinkLastLines() + ">) " + getTooBigReasons(forMsg) + "\n";
     }
 
     public String showLogPartSelectionDialog(String action) {

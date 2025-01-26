@@ -34,6 +34,7 @@ public class ControlPanel {
     public final JButton uploadAllButton;
     public final JButton requestHelpButton;
     private String generatedMsg = null;
+    private ModListDiff modListDiff;
 
     public ControlPanel(FileListPanel fileListPanel) {
         this.fileListPanel = fileListPanel;
@@ -44,18 +45,19 @@ public class ControlPanel {
         labelButtonPanel.setLayout(new BoxLayout(labelButtonPanel, BoxLayout.X_AXIS));
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-            ModListDiff diff = ModListUtils.getDiff();
+            modListDiff = ModListDiff.getDiff();
             String labelMsg;
             JButton showModListButton = new JButton(LanguageProvider.get("gui.show_modlist_diff_button"));
-            if (diff.addedMods().isEmpty() && diff.removedMods().isEmpty()) {
+            if (modListDiff.getAddedMods().isEmpty() && modListDiff.getRemovedMods().isEmpty()) {
                 labelMsg = LanguageProvider.get("gui.modlist_not_changed_label") + ":";
                 showModListButton.setEnabled(false);
                 showModListButton.setToolTipText(LanguageProvider.get("gui.modlist_not_changed_label"));
             } else {
                 labelMsg = "<html><div style='white-space:nowrap;'>"
                         + LanguageProvider.get("gui.modlist_changed_label")
-                        .replace("$ADDED_MODS_COUNT$", "<span style='color:green;'>" + diff.addedMods().size() + "</span>")
-                        .replace("$REMOVED_MODS_COUNT$", "<span style='color:red;'>" + diff.removedMods().size() + "</span>")
+                        .replace("$ADDED_MODS_COUNT$", "<span style='color:green;'>" + modListDiff.getAddedMods().size() + "</span>")
+                        .replace("$REMOVED_MODS_COUNT$", "<span style='color:red;'>" + modListDiff.getRemovedMods().size() + "</span>")
+                        .replace("$UPDATED_MODS_COUNT$", "<span style='color:blue;'>" + modListDiff.getUpdatedMods().size() + "</span>")
                         + "</div></html>";
             }
 
@@ -132,12 +134,12 @@ public class ControlPanel {
         JTextPane textPane = new JTextPane();
         textPane.setEditable(false);
         textPane.setContentType("text/html");
-        textPane.setText(ModListUtils.generateDiffMsg(true));
+        textPane.setText(modListDiff.generateDiffMsg(false).toHtml());
         textPane.setCaretPosition(0);
 
         JScrollPane scrollPane = new JScrollPane(textPane);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setPreferredSize(new Dimension(Math.min(scrollPane.getPreferredSize().width, 700), 300));
+        scrollPane.setPreferredSize(new Dimension(Math.min(scrollPane.getPreferredSize().width + 15, 700), 300));
 
         JOptionPane.showMessageDialog(
                 null,
@@ -223,7 +225,7 @@ public class ControlPanel {
                             kubeJSPosted = true;
                             generatedMsg += "KubeJS: ";
                             generatedMsg += kubeJSPanelList.stream()
-                                    .map(kubeJSPanel -> "[`" + kubeJSPanel.getFilePath().getFileName() + "`](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
+                                    .map(kubeJSPanel -> "[" + kubeJSPanel.getFilePath().getFileName() + "](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
                                     .collect(Collectors.joining(" / "));
                             generatedMsg += "\n";
                             continue;
@@ -233,7 +235,7 @@ public class ControlPanel {
                         String[] splitLog = panel.getFileName().split(":");
                         String fileName = (splitLog.length == 2 ? splitLog[1] : splitLog[0]).trim();
                         String fileParentName = splitLog.length == 2 ? splitLog[0] + ": " : "";
-                        generatedMsg += fileParentName + "[`" + fileName + "`](<" + panel.getUploadedLinkFirstLines() + ">)\n";
+                        generatedMsg += fileParentName + "[" + fileName + "](<" + panel.getUploadedLinkFirstLines() + ">)\n";
                     } else {
                         generatedMsg += panel.getMessageWithBothLinks(true);
 
@@ -250,12 +252,14 @@ public class ControlPanel {
                     }
                 }
                 generatedMsg += "\n";
-                String modlistDIff = ModListUtils.generateDiffMsg();
-                if (generatedMsg.length() + modlistDIff.length() >= 1650) {
+                String modlistDIff = modListDiff.generateDiffMsg(true).toText();
+                int lineCount = modlistDIff.length() - modlistDIff.replace("\n", "").length();
+                if (generatedMsg.length() + modlistDIff.length() >= 1650 || lineCount > 15 ||
+                        (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.FORGE && lineCount >= 3)) {
                     try {
                         String link = uploadModlistDiff(modlistDIff);
                         generatedMsg += modlistDIff.split("\n", 2)[0] + "\n";
-                        generatedMsg += LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_0") + "[`" + LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_1") + "`](<" + link + ">)" + LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_2") + "\n";
+                        generatedMsg += LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_0") + "[" + LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_1") + "](<" + link + ">)" + LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_2") + "\n";
                     } catch (ExecutionException | InterruptedException | UploadException e) {
                         CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
                         generatedMsg += modlistDIff;

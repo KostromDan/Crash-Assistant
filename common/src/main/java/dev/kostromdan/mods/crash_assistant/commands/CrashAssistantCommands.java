@@ -13,6 +13,7 @@ import dev.kostromdan.mods.crash_assistant.CrashAssistant;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiff;
+import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiffStringBuilder;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.utils.HeapDumper;
 import dev.kostromdan.mods.crash_assistant.utils.ManualCrashThrower;
@@ -84,6 +85,15 @@ public class CrashAssistantCommands {
                 );
     }
 
+    public static Component getCopyDiffComponent(ModListDiffStringBuilder diff) {
+        return Component.literal("[" + LanguageProvider.get("commands.diff_copy") + "]")
+                .withStyle(style -> style
+                        .withColor(ChatFormatting.YELLOW)
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, diff.toText()))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(LanguageProvider.get("commands.diff_tooltip"))))
+                );
+    }
+
     public static void sendClientMsg(Component message) {
         Minecraft.getInstance().execute(() -> {
             Minecraft.getInstance().gui.getChat().addMessage(message);
@@ -136,29 +146,12 @@ public class CrashAssistantCommands {
     }
 
     public static int showDiff(CommandContext<?> context) {
-        MutableComponent msg = Component.empty();
-
         if (!checkModlistFeatureEnabled()) {
             return 0;
         }
-
-        ModListDiff diff = ModListUtils.getDiff();
-
-        msg.append(Component.literal(LanguageProvider.get("commands.added_mods_header")).withStyle(style -> style.withColor(ChatFormatting.DARK_GREEN)));
-        if (!diff.addedMods().isEmpty()) {
-            msg.append(Component.literal(String.join("\n", diff.addedMods())).withStyle(style -> style.withColor(ChatFormatting.GREEN)));
-        } else {
-            msg.append(Component.literal(LanguageProvider.get("commands.added_mods_not_found")).withStyle(style -> style.withColor(ChatFormatting.YELLOW)));
-        }
-        msg.append(Component.literal("\n"));
-
-        msg.append(Component.literal(LanguageProvider.get("commands.removed_mods_header")).withStyle(style -> style.withColor(ChatFormatting.DARK_RED)));
-        if (!diff.removedMods().isEmpty()) {
-            msg.append(Component.literal(String.join("\n", diff.removedMods())).withStyle(style -> style.withColor(ChatFormatting.RED)));
-        } else {
-            msg.append(Component.literal(LanguageProvider.get("commands.removed_mods_not_found")).withStyle(style -> style.withColor(ChatFormatting.YELLOW)));
-        }
-
+        ModListDiff diff = ModListDiff.getDiff();
+        MutableComponent msg = new ComponentModListDiffStringBuilder(diff.generateDiffMsg(false)).toComponent();
+        msg.append(getCopyDiffComponent(diff.generateDiffMsg(true)));
         sendClientMsg(msg);
         return 0;
     }
@@ -306,6 +299,28 @@ public class CrashAssistantCommands {
                 builder.suggest(crashCommand);
             }
             return builder.buildFuture();
+        }
+    }
+
+    public static class ComponentModListDiffStringBuilder extends ModListDiffStringBuilder {
+        ComponentModListDiffStringBuilder(ModListDiffStringBuilder modListDiffStringBuilder) {
+            this.sb = modListDiffStringBuilder.sb;
+        }
+
+        public MutableComponent toComponent() {
+            MutableComponent msg = Component.empty();
+            for (ColoredString cs : sb) {
+                if (cs.color().isEmpty()) {
+                    msg.append(cs.text());
+                } else {
+                    msg.append(Component.literal(cs.text()).withStyle(
+                            style -> style.withColor(Enum.valueOf(ChatFormatting.class, cs.color().toUpperCase()))));
+                }
+                if (cs.endsWithNewLine()) {
+                    msg.append("\n");
+                }
+            }
+            return msg;
         }
     }
 }

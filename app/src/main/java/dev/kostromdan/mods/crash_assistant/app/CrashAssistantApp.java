@@ -122,22 +122,22 @@ public class CrashAssistantApp {
         launcherLogsCount = availableLogs.size();
         FileUtils.addIfExistsAndModified(availableLogs, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt"));
         FileUtils.addIfExistsAndModified(availableLogs, "CurseForge: launcher_log.txt", Paths.get("../../Install", "launcher_log.txt"));
-        FileUtils.addIfExistsAndModified(availableLogs, "FTB Electron App: ftb-app-electron.log", Paths.get("../../logs", "ftb-app-electron.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "Prism Launcher: PrismLauncher-0.log", Paths.get("../../../logs", "PrismLauncher-0.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "ftb-app-electron.log", Paths.get("../../logs", "ftb-app-electron.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "PrismLauncher-0.log", Paths.get("../../../logs", "PrismLauncher-0.log"));
         FileUtils.addIfExistsAndModified(availableLogs, "GDLauncher: main.log", Paths.get("../../../../", "main.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "MultiMC: MultiMC-0.log", Paths.get("../../../", "MultiMC-0.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "PolyMC: PolyMC-0.log", Paths.get("../../../", "PolyMC-0.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "MultiMC-0.log", Paths.get("../../../", "MultiMC-0.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, "PolyMC-0.log", Paths.get("../../../", "PolyMC-0.log"));
 
         FileUtils.getModifiedFiles(Paths.get("../../launcher_logs"), ".log").forEach(path -> {
-            FileUtils.addIfExistsAndModified(availableLogs, "Modrinth: " + path.getFileName().toString(), path);
+            FileUtils.addIfExistsAndModified(availableLogs, path.getFileName().toString(), path);
         });
 
         String appdata = System.getenv("APPDATA");
         if (appdata != null) {
-            FileUtils.addIfExistsAndModified(availableLogs, "AtLauncher: atlauncher.log", Paths.get(appdata, "AtLauncher", "logs", "atlauncher.log"));
+            FileUtils.addIfExistsAndModified(availableLogs, "atlauncher.log", Paths.get(appdata, "AtLauncher", "logs", "atlauncher.log"));
 
             FileUtils.getModifiedFiles(Paths.get(appdata, ".tlauncher", "logs", "tlauncher"), ".log").forEach(path -> {
-                FileUtils.addIfExistsAndModified(availableLogs, "TLauncher: " + path.getFileName().toString(), path); // To notify modpack creators about TLauncher usage.
+                FileUtils.addIfExistsAndModified(availableLogs, path.getFileName().toString(), path); // To notify modpack creators about TLauncher usage.
             });
         }
 

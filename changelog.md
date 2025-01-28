@@ -1,3 +1,7 @@
+1.3.1:
+- Fixed if mods were only updated, mod list diff msg was empty.
+- Removed prefix if launcherlog filename already includes launcher name.
+
 1.3.0:
 - Added Updated mods block. Now updated mods will be displayed in independent block with just version diff.
 - Removed `text.comment_start_formulation` config option.

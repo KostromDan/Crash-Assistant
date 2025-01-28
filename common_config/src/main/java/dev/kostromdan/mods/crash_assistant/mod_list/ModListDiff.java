@@ -63,6 +63,10 @@ public class ModListDiff {
         return new ModListDiff(ModListUtils.getSavedModList(), ModListUtils.getCurrentModList());
     }
 
+    public boolean isEmpty() {
+        return addedMods.isEmpty() && removedMods.isEmpty() && updatedMods.isEmpty();
+    }
+
     public ModListDiffStringBuilder generateDiffMsg(boolean forMsg) {
         Function<String, String> langFunc = forMsg ? LanguageProvider::getMsgLang : LanguageProvider::get;
         ModListDiffStringBuilder sb = new ModListDiffStringBuilder();
@@ -79,7 +83,7 @@ public class ModListDiff {
                 sb.append(langFunc.apply("msg.modlist_changes_modpack"));
             }
 
-            if (getAddedMods().isEmpty() && getRemovedMods().isEmpty()) {
+            if (isEmpty()) {
                 sb.append(langFunc.apply("msg.modlist_unmodified"), "blue");
             } else {
                 if (!getAddedMods().isEmpty()) {

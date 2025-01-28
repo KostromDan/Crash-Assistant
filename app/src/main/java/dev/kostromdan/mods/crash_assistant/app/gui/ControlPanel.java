@@ -48,7 +48,7 @@ public class ControlPanel {
             modListDiff = ModListDiff.getDiff();
             String labelMsg;
             JButton showModListButton = new JButton(LanguageProvider.get("gui.show_modlist_diff_button"));
-            if (modListDiff.getAddedMods().isEmpty() && modListDiff.getRemovedMods().isEmpty()) {
+            if (modListDiff.isEmpty()) {
                 labelMsg = LanguageProvider.get("gui.modlist_not_changed_label") + ":";
                 showModListButton.setEnabled(false);
                 showModListButton.setToolTipText(LanguageProvider.get("gui.modlist_not_changed_label"));

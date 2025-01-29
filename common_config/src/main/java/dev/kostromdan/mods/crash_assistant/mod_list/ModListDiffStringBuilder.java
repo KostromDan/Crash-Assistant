@@ -1,7 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.mod_list;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class ModListDiffStringBuilder {
@@ -48,6 +47,31 @@ public class ModListDiffStringBuilder {
         }
         result.append("</body></html>");
         return result.toString();
+    }
+
+    public String toAnsi() {
+        StringBuilder result = new StringBuilder();
+        result.append(ModListDiff.getFilePrefix());
+        result.append(ModListDiff.getFirstString(true, false, null));
+        result.append("\n```ansi\n");
+        boolean first = true;
+        for (ColoredString cs : sb) {
+            if (first) {
+                first = false;
+                continue;
+            }
+            if (!cs.color.isEmpty()) {
+                result.append(Enum.valueOf(AnsiColor.class, cs.color.toUpperCase()).getColorPrefix());
+                result.append(cs.text());
+                result.append(AnsiColor.postfix);
+            } else {
+                result.append(cs.text());
+            }
+            if (cs.endsWithNewLine()) {
+                result.append("\n");
+            }
+        }
+        return result.toString().trim() + "\n```";
     }
 
     public record ColoredString(String text, String color, boolean endsWithNewLine) {

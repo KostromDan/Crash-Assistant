@@ -6,7 +6,9 @@ import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.TrustedDomainsHelper;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.mod_list.AnsiColor;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiff;
+import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiffStringBuilder;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import gs.mclo.api.response.UploadLogResponse;
@@ -201,9 +203,10 @@ public class ControlPanel {
 
                     }
                 }
-                generatedMsg = CrashAssistantConfig.get("text.modpack_name", true) + " " + LanguageProvider.getMsgLang("msg.crashed").replace("$UPLOAD_TO$", CrashAssistantGUI.getUploadToLink()) + "\n";
+                StringBuilder sb = new StringBuilder();
+                sb.append(CrashAssistantConfig.get("text.modpack_name", true)).append(" ").append(LanguageProvider.getMsgLang("msg.crashed").replace("$UPLOAD_TO$", CrashAssistantGUI.getUploadToLink())).append("\n");
                 if (!CrashAssistantConfig.get("generated_message.text_under_crashed").toString().isEmpty()) {
-                    generatedMsg += CrashAssistantConfig.get("generated_message.text_under_crashed", true) + "\n";
+                    sb.append(CrashAssistantConfig.get("generated_message.text_under_crashed", true)).append("\n");
                 }
                 boolean kubeJSPosted = false;
                 List<FilePanel> kubeJSPanelList = new ArrayList<>();
@@ -223,11 +226,11 @@ public class ControlPanel {
 
                         if (!kubeJSPanelList.isEmpty()) {
                             kubeJSPosted = true;
-                            generatedMsg += "KubeJS: ";
-                            generatedMsg += kubeJSPanelList.stream()
+                            sb.append(ModListDiff.getFilePrefix()).append("KubeJS: ");
+                            sb.append(kubeJSPanelList.stream()
                                     .map(kubeJSPanel -> "[" + kubeJSPanel.getFilePath().getFileName() + "](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
-                                    .collect(Collectors.joining(" / "));
-                            generatedMsg += "\n";
+                                    .collect(Collectors.joining(" / ")));
+                            sb.append("\n");
                             continue;
                         }
                     }
@@ -235,9 +238,9 @@ public class ControlPanel {
                         String[] splitLog = panel.getFileName().split(":");
                         String fileName = (splitLog.length == 2 ? splitLog[1] : splitLog[0]).trim();
                         String fileParentName = splitLog.length == 2 ? splitLog[0] + ": " : "";
-                        generatedMsg += fileParentName + "[" + fileName + "](<" + panel.getUploadedLinkFirstLines() + ">)\n";
+                        sb.append(ModListDiff.getFilePrefix()).append(fileParentName).append("[").append(fileName).append("](<").append(panel.getUploadedLinkFirstLines()).append(">)\n");
                     } else {
-                        generatedMsg += panel.getMessageWithBothLinks(true);
+                        sb.append(ModListDiff.getFilePrefix()).append(panel.getMessageWithBothLinks(true));
 
                     }
                 }
@@ -246,27 +249,38 @@ public class ControlPanel {
                         Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
                         List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).toList();
                         if (curseForgeDirContents.contains("instances") && curseForgeDirContents.contains("install")) {
-                            generatedMsg += LanguageProvider.getMsgLang("msg.skip_launcher") + "\n";
+                            sb.append(ModListDiff.getFilePrefix()).append(LanguageProvider.getMsgLang("msg.skip_launcher")).append("\n");
                         }
                     } catch (Exception ignored) {
                     }
                 }
-                generatedMsg += "\n";
-                String modlistDIff = modListDiff.generateDiffMsg(true).toText();
-                int lineCount = modlistDIff.length() - modlistDIff.replace("\n", "").length();
-                if (generatedMsg.length() + modlistDIff.length() >= 1650 || lineCount > 15 ||
-                        (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.FORGE && lineCount >= 3)) {
-                    try {
-                        String link = uploadModlistDiff(modlistDIff);
-                        generatedMsg += modlistDIff.split("\n", 2)[0] + "\n";
-                        generatedMsg += LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_0") + "[" + LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_1") + "](<" + link + ">)" + LanguageProvider.getMsgLang("msg.big_size_diff_uploaded_2") + "\n";
-                    } catch (ExecutionException | InterruptedException | UploadException e) {
-                        CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
-                        generatedMsg += modlistDIff;
+                if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
+                    sb.append("\n");
+                    ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
+                    String modlistDIff = diffStringBuilder.toText();
+                    String modListDiffAnsi = diffStringBuilder.toAnsi();
+                    int lineCount = modlistDIff.length() - modlistDIff.replace("\n", "").length();
+                    if (sb.length() + modListDiffAnsi.length() >= 1650 || lineCount > 15 ||
+                            (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.FORGE && lineCount > 3)) {
+                        try {
+                            String link = uploadModlistDiff(modlistDIff);
+                            sb.append(ModListDiff.getFilePrefix());
+                            sb.append(ModListDiff.getFirstString(true, true, link));
+                            sb.append("\n```ansi\n");
+                            sb.append(LanguageProvider.getMsgLang("gui.modlist_changed_label_msg")
+                                    .replace("$ADDED_MODS_COUNT$", AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + AnsiColor.postfix)
+                                    .replace("$REMOVED_MODS_COUNT$", AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + AnsiColor.postfix)
+                                    .replace("$UPDATED_MODS_COUNT$", AnsiColor.BLUE.getColorPrefix() + modListDiff.getUpdatedMods().size() + AnsiColor.postfix));
+                            sb.append("\n```");
+                        } catch (ExecutionException | InterruptedException | UploadException e) {
+                            CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
+                            sb.append(modListDiffAnsi);
+                        }
+                    } else {
+                        sb.append(modListDiffAnsi);
                     }
-                } else {
-                    generatedMsg += modlistDIff;
                 }
+                generatedMsg = sb.toString();
             }
 
             String warningMsg = CrashAssistantConfig.get("generated_message.warning_after_upload_all_button_press", true);

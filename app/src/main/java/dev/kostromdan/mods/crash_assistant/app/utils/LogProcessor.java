@@ -3,8 +3,9 @@ package dev.kostromdan.mods.crash_assistant.app.utils;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -29,7 +30,7 @@ public class LogProcessor {
 
     public void processLogFile() throws IOException {
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(this.logPath.toFile()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(this.logPath.toFile()), StandardCharsets.UTF_8))) {
             String line;
             int length = 0;
 
@@ -84,7 +85,7 @@ public class LogProcessor {
                     .setCharset(StandardCharsets.UTF_8)
                     .get();
         } catch (NoSuchMethodError e) {
-            return new ReversedLinesFileReader(logPath.toFile());
+            return new ReversedLinesFileReader(logPath.toFile(), StandardCharsets.UTF_8);
         }
     }
 

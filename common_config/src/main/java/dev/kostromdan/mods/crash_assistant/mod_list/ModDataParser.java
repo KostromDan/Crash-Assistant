@@ -37,8 +37,8 @@ public class ModDataParser {
                         return new Mod(jarPath.getFileName().toString(), modId, version);
                     }
 
-                } catch (Exception ignored) {
-                    JarInJarHelper.LOGGER.error(ignored);
+                } catch (Exception e) {
+                    JarInJarHelper.LOGGER.error(e);
                 }
             }
             fabric:
@@ -53,8 +53,8 @@ public class ModDataParser {
                     String version = config.get("version");
                     return new Mod(jarPath.getFileName().toString(), modId, version);
                 }
-            } catch (Exception ignored) {
-                JarInJarHelper.LOGGER.error(ignored);
+            } catch (Exception e) {
+                JarInJarHelper.LOGGER.error(e);
             }
 
         } catch (Exception ignored) {

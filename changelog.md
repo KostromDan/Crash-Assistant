@@ -1,3 +1,10 @@
+1.3.2:
+- Complete redesign of generated msg:
+  - Now Discord msg colored.
+  - Added config option enabled by default `generated_message.h3_prefix`: will make logs links in msg bigger, to be pleasant for mobile users.
+  - If diff is too big and uploaded, will print colored count of each added/removed/updated mods.
+- Fixed potential issues.
+
 1.3.1:
 - Fixed if mods were only updated, mod list diff msg was empty.
 - Removed prefix if launcherlog filename already includes launcher name.

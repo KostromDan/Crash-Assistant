@@ -73,8 +73,4 @@ public class ModDataParser {
         }
         return null;
     }
-
-    public static void main(String[] args) {
-        System.out.println(parseModData(Paths.get("C:\\Users\\Kostr\\curseforge\\minecraft\\Instances\\SteamPunk [LPS]\\mods\\bclib-3.0.14.jar")));
-    }
 }

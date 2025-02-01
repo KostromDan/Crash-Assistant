@@ -68,9 +68,6 @@
   "msg.modlist_first_launch": "Первый запуск с Crash Assistant. Различия не были сохранены.",
   "msg.skip_launcher": "CurseForge: пропустить лаунчер",
   "msg.crashed": "крашнулся. Логи были загружены на `$UPLOAD_TO$`:",
-  "msg.big_size_diff_uploaded_0": "",
-  "msg.big_size_diff_uploaded_1": "Различия в списке модов",
-  "msg.big_size_diff_uploaded_2": " были загружены.",
   "msg.over": "более",
   "msg.mb": "МБ",
   "msg.k_lines": " тыс. строк"

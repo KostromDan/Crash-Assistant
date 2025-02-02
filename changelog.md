@@ -1,3 +1,9 @@
+1.3.3:
+- Added locating of terminated by Windows processes.
+- Now Crash Assistant starts as independent process instead of child process.
+Since all child processes being terminated on parent process termination by Windows.
+- Removed ChildProcessLoggers.
+
 1.3.2:
 - Complete redesign of generated msg:
   - Now Discord msg colored.

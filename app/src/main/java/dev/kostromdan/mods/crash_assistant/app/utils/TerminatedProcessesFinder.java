@@ -39,8 +39,8 @@ public interface TerminatedProcessesFinder {
                         + command
                         + "\n \nIf no java.exe (or related JVM processes) are listed below, you can disregard this message.\n" +
                         "To get more information about such errors:\n" +
-                        "1) open Windows Event Viewer (search \"Event Viewer\" in Windows search bar).\n" +
-                        "2) Click \"Application\".\n" +
+                        "1) Open Windows Event Viewer (Win+R -> eventvwr.msc -> Enter).\n" +
+                        "2) Click \"Windows Logs\" -> \"Application\".\n" +
                         "3) Look for the latest Error you have.\n \n "
                         + fileContents;
 

@@ -52,11 +52,11 @@ public class CrashAssistantCommands {
                         ).then(LiteralArgumentBuilder.literal("diff")
                                 .executes(CrashAssistantCommands::showDiff)
                         ))
-//                .then(LiteralArgumentBuilder.literal("deadlock_integrated_server")
-//                        .then(LiteralArgumentBuilder.literal("start")
-//                                .executes(CrashAssistantCommands::deadlockIntegratedServer))
-//                        .then(LiteralArgumentBuilder.literal("release")
-//                                .executes(CrashAssistantCommands::releaseIntegratedServer)))
+                .then(LiteralArgumentBuilder.literal("deadlock_integrated_server")
+                        .then(LiteralArgumentBuilder.literal("start")
+                                .executes(CrashAssistantCommands::deadlockIntegratedServer))
+                        .then(LiteralArgumentBuilder.literal("release")
+                                .executes(CrashAssistantCommands::releaseIntegratedServer)))
                 .then(LiteralArgumentBuilder.literal("crash")
                         .requires(c -> CrashAssistantConfig.getBoolean("crash_command.enabled"))
                         .then(RequiredArgumentBuilder.argument("to_crash", StringArgumentType.string())
@@ -160,11 +160,6 @@ public class CrashAssistantCommands {
         Minecraft.getInstance().getSingleplayerServer().execute(() -> {
             isDeadLocked = true;
             while (isDeadLocked) {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
             }
         });
         return 0;

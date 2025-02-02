@@ -1,30 +1,28 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
-import dev.kostromdan.mods.crash_assistant.app.utils.CrashReportsHelper;
-import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
-import dev.kostromdan.mods.crash_assistant.app.utils.HsErrHelper;
-import dev.kostromdan.mods.crash_assistant.app.utils.ProcessHelper;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
+import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.swing.*;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class CrashAssistantApp {
     public static final Logger LOGGER = LogManager.getLogger(CrashAssistantApp.class);
     public static long GUIStartTime = -1;
+    public static boolean GUIStartedLaunching = false;
+    public static boolean GUIInitialisationFinished = false;
     public static long parentPID;
     public static long parentStarted;
     public static boolean crashed_with_report = false;
@@ -35,8 +33,8 @@ public class CrashAssistantApp {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             LOGGER.error("Uncaught exception in \"{}\" thread:", thread.getName(), throwable);
         });
-        LOGGER.info("CrashAssistantApp running: JVM args: {}", ManagementFactory.getRuntimeMXBean().getInputArguments());
-        LOGGER.info("CrashAssistantApp running: program args: [{}]", String.join(", ", args));
+        LOGGER.info("CrashAssistantApp running: JVM args: {}", Boot.JVM_ARGS);
+        LOGGER.info("CrashAssistantApp running: program args: {}", Boot.APP_ARGS);
 
         parentPID = -1;
         for (int i = 0; i < args.length; i++) {
@@ -50,6 +48,13 @@ public class CrashAssistantApp {
         }
 
         parentStarted = ProcessHelper.getStartTime(parentPID);
+
+        String currentProcessData = Objects.toString(parentPID) + "_" + Objects.toString(Instant.ofEpochMilli(parentStarted).getEpochSecond());
+        Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");
+        try {
+            Files.write(currentProcessDataPath, Long.toString(ProcessHandle.current().pid()).getBytes());
+        } catch (IOException ignored) {
+        }
 
         FileUtils.removeTmpFiles(Paths.get("local", "crash_assistant"));
         FileUtils.removeOldLogsFolder();
@@ -106,7 +111,7 @@ public class CrashAssistantApp {
         if (hsErrLog.isPresent()) {
             crashed = true;
             crashed_with_report = true;
-            availableLogs.put(hsErrLog.get().getFileName().toString(), hsErrLog.get());
+            FileUtils.addIfExistsAndModified(availableLogs, hsErrLog.get());
         }
 
         HashSet<Path> newCrashReports = CrashReportsHelper.scanForNewCrashReports();
@@ -114,7 +119,7 @@ public class CrashAssistantApp {
             crashed = true;
             crashed_with_report = true;
             for (Path path : newCrashReports) {
-                availableLogs.put(path.getFileName().toString(), path);
+                FileUtils.addIfExistsAndModified(availableLogs, path);
             }
         }
 
@@ -140,7 +145,6 @@ public class CrashAssistantApp {
                 FileUtils.addIfExistsAndModified(availableLogs, path.getFileName().toString(), path); // To notify modpack creators about TLauncher usage.
             });
         }
-
         launcherLogsCount = availableLogs.size() - launcherLogsCount;
 
 
@@ -169,6 +173,8 @@ public class CrashAssistantApp {
             crashed = true;
         }
 
+        startLocatingTerminatedProcesses(availableLogs);
+
         if (crashed) {
             if (!crashed_with_report) {
                 LOGGER.info("Seems like Minecraft crashed without any crash report. Starting Crash Assistant app.");
@@ -178,7 +184,7 @@ public class CrashAssistantApp {
             }
             onMinecraftCrashed(availableLogs);
         } else {
-            LOGGER.info("Seems like Minecraft finished normally. Exiting Crash Assistant app.");
+            LOGGER.info("Seems like Minecraft finished normally. Trying to locate terminated processes and Exiting Crash Assistant app.");
         }
 
     }
@@ -189,6 +195,7 @@ public class CrashAssistantApp {
 
 
     public static void startApp(Map<String, Path> availableLogs) {
+        GUIStartedLaunching = true;
         try {
             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
             Constructor<?> constructor = clazz.getConstructor(Map.class);
@@ -196,5 +203,45 @@ public class CrashAssistantApp {
         } catch (Exception e) {
             LOGGER.error("Exception while starting gui:", e);
         }
+    }
+
+    public static void startLocatingTerminatedProcesses(Map<String, Path> availableLogs) {
+        new Thread(() -> {
+            long startTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() < startTime + 5000) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                Path terminatedProcessesPath = Paths.get(TerminatedProcessesFinder.getTerminatedByWinProcessLogs());
+                if (terminatedProcessesPath.toFile().isFile()) {
+                    LOGGER.info("Time to locate terminated process: " + (System.currentTimeMillis() - startTime));
+                    if (!GUIStartedLaunching) {
+                        FileUtils.addIfExistsAndModified(availableLogs, terminatedProcessesPath);
+                        onMinecraftCrashed(availableLogs);
+                    } else {
+                        startTime = System.currentTimeMillis();
+                        while (true) {
+                            if (System.currentTimeMillis() >= startTime + 5000) System.exit(-1);
+                            if (!GUIInitialisationFinished) {
+                                try {
+                                    Thread.sleep(50);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                continue;
+                            }
+                            SwingUtilities.invokeLater(() -> {
+                                CrashAssistantGUI.fileListPanel.addFile(terminatedProcessesPath.getFileName().toString(), terminatedProcessesPath);
+                                CrashAssistantGUI.resize();
+                            });
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+        }).start();
     }
 }

@@ -87,6 +87,17 @@ public class ControlPanel {
         gbc.gridy = 0;
         bottomPanel.add(uploadAllButton, gbc);
 
+        uploadAllButton.setEnabled(false);
+        new Timer().schedule(
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        uploadAllButton.setEnabled(true);
+                    }
+                },
+                2000
+        );
+
         requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));
         requestHelpButton.addActionListener(e -> requestHelp());
         requestHelpButton.setToolTipText(PlatformHelp.getActualHelpLink());

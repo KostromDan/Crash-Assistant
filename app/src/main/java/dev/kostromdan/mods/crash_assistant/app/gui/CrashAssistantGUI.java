@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
+import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
@@ -12,6 +13,8 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Timer;
@@ -19,16 +22,28 @@ import java.util.*;
 
 public class CrashAssistantGUI {
     public static final MclogsClient MCLogsClient = new MclogsClient("CrashAssistant");
-    private final JFrame frame;
-    private static FileListPanel fileListPanel;
+    private static JFrame frame = null;
+    public static FileListPanel fileListPanel;
     private static ControlPanel controlPanel;
+    private static JPanel labelPanel;
     private static HashSet<JComponent> highlightedButtons = new HashSet<>();
+    private static Integer heightWithoutScrollPane = null;
 
 
     public CrashAssistantGUI(Map<String, Path> availableLogs) {
         LanguageProvider.updateLang();
         frame = new JFrame(LanguageProvider.get("gui.window_name"));
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener( new WindowAdapter()
+        {
+            public void windowClosing(WindowEvent e)
+            {
+                synchronized (TerminatedProcessesFinder.class) {
+                    CrashAssistantApp.LOGGER.info("Crash Assistant closed.");
+                    System.exit(0);
+                }
+            }
+        });
 
         frame.setSize(500, 400);
         frame.setLayout(new BorderLayout());
@@ -56,7 +71,7 @@ public class CrashAssistantGUI {
 
         JEditorPane commentPane = getEditorPane(commentText);
 
-        JPanel labelPanel = new JPanel();
+        labelPanel = new JPanel();
         labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.Y_AXIS));
         labelPanel.add(titleLabel);
         if (!commentText.isEmpty()) {
@@ -71,16 +86,14 @@ public class CrashAssistantGUI {
         controlPanel = new ControlPanel(fileListPanel);
         frame.add(controlPanel.getPanel(), BorderLayout.SOUTH);
 
-        int heightWithoutScrollPane = frame.getPreferredSize().height;
+        heightWithoutScrollPane = frame.getPreferredSize().height;
 
         for (Map.Entry<String, Path> entry : availableLogs.entrySet()) {
             fileListPanel.addFile(entry.getKey(), entry.getValue());
         }
         DragAndDrop.enableDragAndDrop(fileListPanel.getScrollPane(), fileListPanel.fileListPanelFilesDragAndDrop);
 
-        frame.setSize(Math.max(Math.max(fileListPanel.getFileListPanel().getPreferredSize().width + 12, controlPanel.getPanel().getPreferredSize().width) + 26, labelPanel.getPreferredSize().width + 20),
-                Math.min(heightWithoutScrollPane + fileListPanel.getFileListPanel().getPreferredSize().height + 39, 700));
-        frame.setMinimumSize(new Dimension(frame.getSize().width, heightWithoutScrollPane + 73));
+        resize();
 
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -104,7 +117,14 @@ public class CrashAssistantGUI {
             }
         }, 0, 50);
         CrashAssistantApp.GUIStartTime = Instant.now().toEpochMilli() - CrashAssistantApp.GUIStartTime;
+        CrashAssistantApp.GUIInitialisationFinished = true;
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
+    }
+
+    public static void resize() {
+        frame.setSize(Math.max(Math.max(fileListPanel.getFileListPanel().getPreferredSize().width + 12, controlPanel.getPanel().getPreferredSize().width) + 26, labelPanel.getPreferredSize().width + 20),
+                Math.min(heightWithoutScrollPane + fileListPanel.getFileListPanel().getPreferredSize().height + 39, 700));
+        frame.setMinimumSize(new Dimension(frame.getSize().width, heightWithoutScrollPane + 73));
     }
 
     public static void highlightButton(JComponent button, Color color, long time) {

@@ -1,21 +1,28 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
-import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
-import dev.kostromdan.mods.crash_assistant.app.utils.*;
+import dev.kostromdan.mods.crash_assistant.app.utils.CrashReportsHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
+import dev.kostromdan.mods.crash_assistant.app.utils.HsErrHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.ProcessHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class CrashAssistantApp {
@@ -232,10 +239,13 @@ public class CrashAssistantApp {
                                 }
                                 continue;
                             }
-                            SwingUtilities.invokeLater(() -> {
-                                CrashAssistantGUI.fileListPanel.addFile(terminatedProcessesPath.getFileName().toString(), terminatedProcessesPath);
-                                CrashAssistantGUI.resize();
-                            });
+                            try {
+                                Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
+                                Method method = clazz.getMethod("addLogFileLater", Path.class);
+                                method.invoke(null, terminatedProcessesPath);
+                            } catch (Exception e) {
+                                LOGGER.error("Exception adding file to gui later:", e);
+                            }
                             break;
                         }
                     }

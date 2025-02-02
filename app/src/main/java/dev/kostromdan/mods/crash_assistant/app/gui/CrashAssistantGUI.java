@@ -220,6 +220,13 @@ public class CrashAssistantGUI {
         }
         return link;
     }
+
+    public static void addLogFileLater(Path terminatedProcessesPath){
+        SwingUtilities.invokeLater(() -> {
+            CrashAssistantGUI.fileListPanel.addFile(terminatedProcessesPath.getFileName().toString(), terminatedProcessesPath);
+            CrashAssistantGUI.resize();
+        });
+    }
 }
 
 

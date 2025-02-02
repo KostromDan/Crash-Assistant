@@ -1,3 +1,6 @@
+1.3.4:
+- A little improved Event Viewer guide.
+
 1.3.3:
 - Added locating of terminated by Windows processes.
 - Now Crash Assistant starts as independent process instead of child process.

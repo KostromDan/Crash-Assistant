@@ -4,11 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.Map;
@@ -76,7 +72,10 @@ public interface FileUtils {
             org.apache.commons.io.FileUtils.deleteDirectory(Paths.get("local", "crash_assistant", "logs").toFile());
         } catch (Exception ignored) {
         }
-
+        try {
+            Files.delete(Paths.get("logs", "crash_assistant", "latest.log")); // renamed to crash_assistant_app.log
+        } catch (Exception ignored) {
+        }
     }
 
     static HashSet<Path> getModifiedFiles(Path dir, String extension) {

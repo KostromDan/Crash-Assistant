@@ -74,7 +74,7 @@ public class ModListDiff {
     }
 
     public static String getFirstString(boolean forMsg, boolean isMd, String link) {
-        Function<String, String> langFunc = forMsg ? LanguageProvider::getMsgLang : LanguageProvider::get;
+        Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
         StringBuilder sb = new StringBuilder();
         String secondPart;
         if (isMd) sb.append("[");
@@ -93,7 +93,7 @@ public class ModListDiff {
     }
 
     public ModListDiffStringBuilder generateDiffMsg(boolean forMsg) {
-        Function<String, String> langFunc = forMsg ? LanguageProvider::getMsgLang : LanguageProvider::get;
+        Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
         ModListDiffStringBuilder sb = new ModListDiffStringBuilder();
         if (!CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) return sb;
 

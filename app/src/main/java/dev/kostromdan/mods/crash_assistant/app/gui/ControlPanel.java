@@ -214,84 +214,7 @@ public class ControlPanel {
 
                     }
                 }
-                StringBuilder sb = new StringBuilder();
-                sb.append(CrashAssistantConfig.get("text.modpack_name", true)).append(" ").append(LanguageProvider.getMsgLang("msg.crashed").replace("$UPLOAD_TO$", CrashAssistantGUI.getUploadToLink())).append("\n");
-                if (!CrashAssistantConfig.get("generated_message.text_under_crashed").toString().isEmpty()) {
-                    sb.append(CrashAssistantConfig.get("generated_message.text_under_crashed", true)).append("\n");
-                }
-                boolean kubeJSPosted = false;
-                List<FilePanel> kubeJSPanelList = new ArrayList<>();
-                for (FilePanel panel : fileListPanel.filePanelList) {
-                    if (!panel.getFileName().startsWith("KubeJS: ")) {
-                        continue;
-                    }
-                    if (panel.getUploadedLinkLastLines() != null) {
-                        kubeJSPanelList.clear();
-                        break;
-                    }
-                    kubeJSPanelList.add(panel);
-                }
-                for (FilePanel panel : fileListPanel.filePanelList) {
-                    if (panel.getFileName().startsWith("KubeJS: ")) {
-                        if (kubeJSPosted) continue;
-
-                        if (!kubeJSPanelList.isEmpty()) {
-                            kubeJSPosted = true;
-                            sb.append(ModListDiff.getFilePrefix()).append("KubeJS: ");
-                            sb.append(kubeJSPanelList.stream()
-                                    .map(kubeJSPanel -> "[" + kubeJSPanel.getFilePath().getFileName() + "](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
-                                    .collect(Collectors.joining(" / ")));
-                            sb.append("\n");
-                            continue;
-                        }
-                    }
-                    if (panel.getUploadedLinkLastLines() == null) {
-                        String[] splitLog = panel.getFileName().split(":");
-                        String fileName = (splitLog.length == 2 ? splitLog[1] : splitLog[0]).trim();
-                        String fileParentName = splitLog.length == 2 ? splitLog[0] + ": " : "";
-                        sb.append(ModListDiff.getFilePrefix()).append(fileParentName).append("[").append(fileName).append("](<").append(panel.getUploadedLinkFirstLines()).append(">)\n");
-                    } else {
-                        sb.append(ModListDiff.getFilePrefix()).append(panel.getMessageWithBothLinks(true));
-
-                    }
-                }
-                if (CrashAssistantApp.launcherLogsCount == 0) {
-                    try {
-                        Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
-                        List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).toList();
-                        if (curseForgeDirContents.contains("instances") && curseForgeDirContents.contains("install")) {
-                            sb.append(ModListDiff.getFilePrefix()).append(LanguageProvider.getMsgLang("msg.skip_launcher")).append("\n");
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-                if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-                    sb.append("\n");
-                    ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
-                    String modlistDIff = diffStringBuilder.toText();
-                    String modListDiffAnsi = diffStringBuilder.toAnsi();
-                    int lineCount = modlistDIff.length() - modlistDIff.replace("\n", "").length();
-                    if (sb.length() + modListDiffAnsi.length() >= 1650 || lineCount > 15 ||
-                            (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.FORGE && lineCount > 3)) {
-                        try {
-                            String link = uploadModlistDiff(modlistDIff);
-                            sb.append(ModListDiff.getFilePrefix());
-                            sb.append(ModListDiff.getFirstString(true, true, link));
-                            sb.append("\n```ansi\n");
-                            sb.append(LanguageProvider.getMsgLang("gui.modlist_changed_label_msg")
-                                    .replace("$ADDED_MODS_COUNT$", AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + AnsiColor.postfix)
-                                    .replace("$REMOVED_MODS_COUNT$", AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + AnsiColor.postfix)
-                                    .replace("$UPDATED_MODS_COUNT$", AnsiColor.BLUE.getColorPrefix() + modListDiff.getUpdatedMods().size() + AnsiColor.postfix));
-                            sb.append("\n```");
-                        } catch (ExecutionException | InterruptedException | UploadException e) {
-                            CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
-                            sb.append(modListDiffAnsi);
-                        }
-                    } else {
-                        sb.append(modListDiffAnsi);
-                    }
-                }
-                generatedMsg = sb.toString();
+                generateMsg();
             }
 
             String warningMsg = CrashAssistantConfig.get("generated_message.warning_after_upload_all_button_press", true);
@@ -317,6 +240,87 @@ public class ControlPanel {
         }).start();
     }
 
+    public void generateMsg() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(CrashAssistantGUI.getTitleCrashedText(true)).append(LanguageProvider.getMsgLang("msg.crashed").replace("$UPLOAD_TO$", CrashAssistantGUI.getUploadToLink())).append("\n");
+        if (!CrashAssistantConfig.get("generated_message.text_under_crashed").toString().isEmpty()) {
+            sb.append(CrashAssistantConfig.get("generated_message.text_under_crashed", true)).append("\n");
+        }
+        boolean kubeJSPosted = false;
+        List<FilePanel> kubeJSPanelList = new ArrayList<>();
+        for (FilePanel panel : fileListPanel.filePanelList) {
+            if (!panel.getFileName().startsWith("KubeJS: ")) {
+                continue;
+            }
+            if (panel.getUploadedLinkLastLines() != null) {
+                kubeJSPanelList.clear();
+                break;
+            }
+            kubeJSPanelList.add(panel);
+        }
+        for (FilePanel panel : fileListPanel.filePanelList) {
+            if (panel.getFileName().startsWith("KubeJS: ")) {
+                if (kubeJSPosted) continue;
+
+                if (!kubeJSPanelList.isEmpty()) {
+                    kubeJSPosted = true;
+                    sb.append(ModListDiff.getFilePrefix()).append("KubeJS: ");
+                    sb.append(kubeJSPanelList.stream()
+                            .map(kubeJSPanel -> "[" + kubeJSPanel.getFilePath().getFileName() + "](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
+                            .collect(Collectors.joining(" / ")));
+                    sb.append("\n");
+                    continue;
+                }
+            }
+            if (panel.getUploadedLinkLastLines() == null) {
+                String[] splitLog = panel.getFileName().split(":");
+                String fileName = (splitLog.length == 2 ? splitLog[1] : splitLog[0]).trim();
+                String fileParentName = splitLog.length == 2 ? splitLog[0] + ": " : "";
+                sb.append(ModListDiff.getFilePrefix()).append(fileParentName).append("[").append(fileName).append("](<").append(panel.getUploadedLinkFirstLines()).append(">)\n");
+            } else {
+                sb.append(ModListDiff.getFilePrefix()).append(panel.getMessageWithBothLinks(true));
+
+            }
+        }
+        if (CrashAssistantApp.launcherLogsCount == 0) {
+            try {
+                Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
+                List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).toList();
+                if (curseForgeDirContents.contains("instances") && curseForgeDirContents.contains("install")) {
+                    sb.append(ModListDiff.getFilePrefix()).append(LanguageProvider.getMsgLang("msg.skip_launcher")).append("\n");
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
+            sb.append("\n");
+            ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
+            String modlistDIff = diffStringBuilder.toText();
+            String modListDiffAnsi = diffStringBuilder.toAnsi();
+            int lineCount = modlistDIff.length() - modlistDIff.replace("\n", "").length();
+            if (sb.length() + modListDiffAnsi.length() >= 1650 || lineCount > 15 ||
+                    (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.FORGE && lineCount > 3)) {
+                try {
+                    String link = uploadModlistDiff(modlistDIff);
+                    sb.append(ModListDiff.getFilePrefix());
+                    sb.append(ModListDiff.getFirstString(true, true, link));
+                    sb.append("\n```ansi\n");
+                    sb.append(LanguageProvider.getMsgLang("gui.modlist_changed_label_msg")
+                            .replace("$ADDED_MODS_COUNT$", AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + AnsiColor.postfix)
+                            .replace("$REMOVED_MODS_COUNT$", AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + AnsiColor.postfix)
+                            .replace("$UPDATED_MODS_COUNT$", AnsiColor.BLUE.getColorPrefix() + modListDiff.getUpdatedMods().size() + AnsiColor.postfix));
+                    sb.append("\n```");
+                } catch (ExecutionException | InterruptedException | UploadException e) {
+                    CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
+                    sb.append(modListDiffAnsi);
+                }
+            } else {
+                sb.append(modListDiffAnsi);
+            }
+        }
+        generatedMsg = sb.toString();
+    }
+
     public static void showUploadAllButtonWarning(String warningMsg) {
         JEditorPane commentPane = CrashAssistantGUI.getEditorPane(warningMsg);
         JOptionPane optionPane = new JOptionPane(
@@ -332,7 +336,7 @@ public class ControlPanel {
         dialog.setVisible(true);
     }
 
-    public String uploadModlistDiff(String diff) throws ExecutionException, InterruptedException, UploadException {
+    public static String uploadModlistDiff(String diff) throws ExecutionException, InterruptedException, UploadException {
         UploadLogResponse response = CrashAssistantGUI.MCLogsClient.uploadLog(diff).get();
         response.setClient(CrashAssistantGUI.MCLogsClient);
 
@@ -341,6 +345,5 @@ public class ControlPanel {
         } else {
             throw new UploadException("An error occurred when uploading modlist diff: " + response.getError());
         }
-
     }
 }

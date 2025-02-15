@@ -1,7 +1,7 @@
 {
-  "gui.window_name": "崩溃助手",
-  "gui.title_crashed_with_report": "糟糕，$CONFIG.text.modpack_name$ 崩溃了！",
-  "gui.title_crashed_without_report": "糟糕，$CONFIG.text.modpack_name$ 崩溃且未生成崩溃报告！",
+  "gui.oops": "糟糕，",
+  "gui.title_crashed_with_report": "$CONFIG.text.modpack_name$ 崩溃了",
+  "gui.title_crashed_without_report": "$CONFIG.text.modpack_name$ 崩溃且未生成崩溃报告",
   "gui.comment_under_title": "请将「$LANG.gui.upload_all_comment$」按钮生成的信息上传至 $CONFIG.text.support_place$。\n并补充说明崩溃发生时的具体情况。",
   "gui.comment_under_title_cant_resolve": "若无法通过日志自行排查问题，请加入 $CONFIG.text.support_name$。",
   "gui.comment_under_title_pls_report": "如需报告问题或寻求帮助，请加入 $CONFIG.text.support_name$。",
@@ -68,7 +68,7 @@
   "msg.updated_mods": "更新模组：",
   "msg.modlist_first_launch": "首次使用崩溃助手模组，差异数据未保存。",
   "msg.skip_launcher": "CurseForge：跳过启动器",
-  "msg.crashed": "崩溃。日志已上传至 `$UPLOAD_TO$`：",
+  "msg.crashed": "。日志已上传至 `$UPLOAD_TO$`：",
   "msg.over": "超过",
   "msg.mb": "MB",
   "msg.k_lines": "千行"

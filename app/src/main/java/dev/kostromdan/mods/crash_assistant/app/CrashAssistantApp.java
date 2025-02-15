@@ -171,7 +171,7 @@ public class CrashAssistantApp {
         }
 
 
-        FileUtils.addIfExistsAndModified(availableLogs, "CrashAssistant: latest.log", Paths.get("logs", "crash_assistant", "latest.log"));
+        FileUtils.addIfExistsAndModified(availableLogs, Paths.get("logs", "crash_assistant", "crash_assistant_app.log"));
 
 
         String normalStopFileName = "normal_stop_pid" + parentPID + ".tmp";

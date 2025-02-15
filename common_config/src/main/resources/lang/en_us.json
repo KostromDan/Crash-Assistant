@@ -1,7 +1,8 @@
 {
   "gui.window_name": "Crash Assistant",
-  "gui.title_crashed_with_report": "Oops, $CONFIG.text.modpack_name$ crashed!",
-  "gui.title_crashed_without_report": "Oops, $CONFIG.text.modpack_name$ crashed without a crash report!",
+  "gui.oops": "Oops, ",
+  "gui.title_crashed_with_report": "$CONFIG.text.modpack_name$ crashed",
+  "gui.title_crashed_without_report": "$CONFIG.text.modpack_name$ crashed without a crash report",
   "gui.comment_under_title": "Post the generated message from the \"$LANG.gui.upload_all_comment$\" button in $CONFIG.text.support_place$.\nAdditionally, provide some details about how the crash happened.",
   "gui.comment_under_title_cant_resolve": "If you can't resolve the problem by reading logs, join the $CONFIG.text.support_name$.",
   "gui.comment_under_title_pls_report": "If you want to report the problem or need help, join the $CONFIG.text.support_name$.",
@@ -68,7 +69,7 @@
   "msg.updated_mods": "Updated mods:",
   "msg.modlist_first_launch": "First launch with Crash Assistant mod. Diff wasn't saved.",
   "msg.skip_launcher": "CurseForge: skip launcher",
-  "msg.crashed": "crashed. The logs have been uploaded to `$UPLOAD_TO$`:",
+  "msg.crashed": ". The logs have been uploaded to `$UPLOAD_TO$`:",
   "msg.over": "over",
   "msg.mb": "MB",
   "msg.k_lines": "k lines"

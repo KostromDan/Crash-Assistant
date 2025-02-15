@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 public class LanguageProvider {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -139,5 +140,9 @@ public class LanguageProvider {
             LOGGER.error("Failed to list lang files in " + LANG_PATH.getFileName().toString(), e);
         }
         return langFilesInConfigNames;
+    }
+
+    public static Function<String,String> getLangFunction(boolean forMsg) {
+        return forMsg ? LanguageProvider::getMsgLang : LanguageProvider::get;
     }
 }

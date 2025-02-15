@@ -270,7 +270,7 @@ public class FilePanel {
     }
 
     public String getTooBigReasons(boolean forMsg) {
-        Function<String, String> langFunc = forMsg ? LanguageProvider::getMsgLang : LanguageProvider::get;
+        Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
         long size = getFilePath().toFile().length();
         List<String> tooBigReasons = new ArrayList<>();
         if (size > 10 * 1024 * 1024)
@@ -282,7 +282,7 @@ public class FilePanel {
     }
 
     public String getMessageWithBothLinks(boolean forMsg) {
-        Function<String, String> langFunc = forMsg ? LanguageProvider::getMsgLang : LanguageProvider::get;
+        Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
         return "[" + getFileName() + " " + langFunc.apply("gui.split_log_dialog_head").toLowerCase() + "](<" + getUploadedLinkFirstLines() + ">) / " +
                 "[" + langFunc.apply("gui.split_log_dialog_tail").toLowerCase() + "](<" + getUploadedLinkLastLines() + ">) " + getTooBigReasons(forMsg) + "\n";
     }

@@ -16,6 +16,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -66,10 +67,14 @@ public class CrashAssistantConfig {
                 "Append comment text with notice about sending screenshot of this gui tells nothing to modpack creators.",
                 true);
         ArrayList<String> defaultBlacklistedLogs = new ArrayList<>();
-        defaultBlacklistedLogs.add("CrashAssistant: latest.log");
         addOption("general.blacklisted_logs",
                 "List of blacklisted log files. This files won't show in GUI logs list.",
                 defaultBlacklistedLogs);
+        List<String> blacklistedLogs = config.get("general.blacklisted_logs");
+        if (blacklistedLogs.contains("CrashAssistant: latest.log")) {
+            blacklistedLogs.remove("CrashAssistant: latest.log");
+            config.set("general.blacklisted_logs", blacklistedLogs);
+        }
 
         config.setComment("text", "Here you can change text of lang placeHolders.\n" +
                 "Also you can change any text in lang files.\n" +

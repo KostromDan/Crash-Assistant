@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Timer;
 import java.util.*;
+import java.util.function.Function;
 
 public class CrashAssistantGUI {
     public static final MclogsClient MCLogsClient = new MclogsClient("CrashAssistant");
@@ -34,10 +35,8 @@ public class CrashAssistantGUI {
         LanguageProvider.updateLang();
         frame = new JFrame(LanguageProvider.get("gui.window_name"));
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        frame.addWindowListener( new WindowAdapter()
-        {
-            public void windowClosing(WindowEvent e)
-            {
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
                 synchronized (TerminatedProcessesFinder.class) {
                     CrashAssistantApp.LOGGER.info("Crash Assistant closed.");
                     System.exit(0);
@@ -48,9 +47,7 @@ public class CrashAssistantGUI {
         frame.setSize(500, 400);
         frame.setLayout(new BorderLayout());
 
-        String titleText = CrashAssistantApp.crashed_with_report ?
-                LanguageProvider.get("gui.title_crashed_with_report") :
-                LanguageProvider.get("gui.title_crashed_without_report");
+        String titleText = LanguageProvider.get("gui.oops") + getTitleCrashedText(false) + "!";
         JLabel titleLabel = new JLabel(titleText, SwingConstants.LEFT);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         titleLabel.setFont(titleLabel.getFont().deriveFont(16f));
@@ -221,11 +218,18 @@ public class CrashAssistantGUI {
         return link;
     }
 
-    public static void addLogFileLater(Path terminatedProcessesPath){
+    public static void addLogFileLater(Path terminatedProcessesPath) {
         SwingUtilities.invokeLater(() -> {
             CrashAssistantGUI.fileListPanel.addFile(terminatedProcessesPath.getFileName().toString(), terminatedProcessesPath);
             CrashAssistantGUI.resize();
         });
+    }
+
+    public static String getTitleCrashedText(boolean forMsg) {
+        Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
+        return CrashAssistantApp.crashed_with_report ?
+                langFunc.apply("gui.title_crashed_with_report") :
+                langFunc.apply("gui.title_crashed_without_report");
     }
 }
 

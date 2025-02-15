@@ -332,7 +332,7 @@ public class FilePanel {
         if (selectedValue == null) {
 
         } else if (selectedValue.equals(options[0])) {
-            selectedValue = getMessageWithBothLinks(false);
+            selectedValue = getMessageWithBothLinks(true);
         } else if (selectedValue.equals(options[1])) {
             selectedValue = uploadedLinkFirstLines;
         } else if (selectedValue.equals(options[2])) {

@@ -10,7 +10,7 @@
   "gui.file_list_label": "可用日志文件：",
   "gui.open_button": "打开",
   "gui.show_in_explorer_button": "在资源管理器中显示",
-  "gui.upload_and_copy_link_button": "上传并复制链接",
+  "gui.upload_and_copy_link_button": "   上传并复制链接   ",
   "gui.copy_split_log_dialog_text": "文件 $FILE_NAME$ $LOG_TOO_BIG_REASON$ 的大小已超过 mclo.gs 的限制。\n为避免因日志尾部截断导致关键信息丢失，\n我们已将其分割为头部和尾部两部分（各25千行或10MB）。\n\n\n<b>您希望$ACTION$哪部分的日志链接？</b>",
   "gui.copy_split_log_dialog_title": "日志分段选择",
   "gui.split_log_dialog_action_copy": "复制",

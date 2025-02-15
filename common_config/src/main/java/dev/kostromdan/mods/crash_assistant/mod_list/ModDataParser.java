@@ -5,7 +5,10 @@ import com.electronwill.nightconfig.core.file.FileConfig;
 import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
 
 import java.io.InputStream;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -23,9 +26,7 @@ public class ModDataParser {
             for (String path : tomlPaths) {
                 try {
                     Path modsTomlPath = zipFs.getPath(path);
-                    if (!Files.exists(modsTomlPath)) {
-                        continue;
-                    }
+                    if (!Files.exists(modsTomlPath)) continue;
                     try (FileConfig config = FileConfig.builder(modsTomlPath).build()) {
                         config.load();
                         Config mods = (Config) ((ArrayList) config.get("mods")).get(0);
@@ -38,15 +39,13 @@ public class ModDataParser {
                     }
 
                 } catch (Exception e) {
-                    JarInJarHelper.LOGGER.error(e);
+                    JarInJarHelper.LOGGER.error("Error while trying to parse " + path + " of " + jarPath.getFileName().toString(), e);
                 }
             }
             fabric:
             try {
                 Path jsonPath = zipFs.getPath("fabric.mod.json");
-                if (!Files.exists(jsonPath)) {
-                    break fabric;
-                }
+                if (!Files.exists(jsonPath)) break fabric;
                 try (FileConfig config = FileConfig.builder(jsonPath).build()) {
                     config.load();
                     String modId = config.get("id");
@@ -54,9 +53,8 @@ public class ModDataParser {
                     return new Mod(jarPath.getFileName().toString(), modId, version);
                 }
             } catch (Exception e) {
-                JarInJarHelper.LOGGER.error(e);
+                JarInJarHelper.LOGGER.error("Error while trying to parse fabric.mod.json of " + jarPath.getFileName().toString(), e);
             }
-
         } catch (Exception ignored) {
         }
         return new Mod(jarPath.getFileName().toString(), null, null);

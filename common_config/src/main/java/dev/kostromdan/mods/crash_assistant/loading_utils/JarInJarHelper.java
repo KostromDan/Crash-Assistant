@@ -8,6 +8,7 @@ import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Core;
+import oshi.hardware.CentralProcessor;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -47,7 +48,8 @@ public interface JarInJarHelper {
                     "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
-                    "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class)
+                    "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
+                    "-oshiCore", LibrariesJarLocator.getLibraryJarPath(CentralProcessor.class)
             );
             crashAssistantAppProcessBuilder.start();
         } catch (Exception e) {

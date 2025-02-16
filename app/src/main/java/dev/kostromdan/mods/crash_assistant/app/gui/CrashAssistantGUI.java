@@ -66,7 +66,7 @@ public class CrashAssistantGUI {
             commentText += "\n<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
         }
 
-        JEditorPane commentPane = getEditorPane(commentText);
+        JEditorPane commentPane = getEditorPane(commentText, false);
 
         labelPanel = new JPanel();
         labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.Y_AXIS));
@@ -183,11 +183,11 @@ public class CrashAssistantGUI {
         };
     }
 
-    public static JEditorPane getEditorPane(String text) {
+    public static JEditorPane getEditorPane(String text, boolean wrap) {
         JEditorPane pane = new JEditorPane();
         pane.setEditable(false);
         pane.setContentType("text/html");
-        pane.setText("<html><div style='white-space:nowrap;'>" + text.replaceAll("\n", "<br>") + "</div></html>");
+        pane.setText("<html><div " + (wrap ? "" : "style='white-space:nowrap;'") + ">" + text.replaceAll("\n", "<br>") + "</div></html>");
 
         Font defaultFont = UIManager.getFont("Label.font");
         String bodyRule = "body { font-family: " + defaultFont.getFamily() + "; " +

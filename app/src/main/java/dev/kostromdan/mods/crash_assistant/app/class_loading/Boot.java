@@ -14,6 +14,7 @@ public class Boot {
     public static String log4jCore = null;
     public static String googleGson = null;
     public static String commonIo = null;
+    public static String oshiCore = null;
     public static String jarPath = null;
     public static boolean recursiveStart = false;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -31,6 +32,8 @@ public class Boot {
                 googleGson = args[i + 1];
             } else if ("-commonIo".equals(args[i]) && i + 1 < args.length) {
                 commonIo = args[i + 1];
+            } else if ("-oshiCore".equals(args[i]) && i + 1 < args.length) {
+                oshiCore = args[i + 1];
             } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
                 jarPath = args[i + 1];
             } else if ("-recursiveStart".equals(args[i])) {
@@ -78,6 +81,7 @@ public class Boot {
         if (log4jCore == null) missingParameters.add("-log4jCore");
         if (googleGson == null) missingParameters.add("-googleGson");
         if (commonIo == null) missingParameters.add("-commonIo");
+        if (oshiCore == null) missingParameters.add("-oshiCore");
         if (jarPath == null) missingParameters.add("-jarPath");
         return missingParameters;
     }

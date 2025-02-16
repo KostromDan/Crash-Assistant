@@ -125,7 +125,7 @@ public class ControlPanel {
                 }
                 int result = JOptionPane.showConfirmDialog(
                         null,
-                        CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.untrusted_domain_question") + "\n<a href =" + link + ">" + link + "</a>" + creatorWarning),
+                        CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.untrusted_domain_question") + "\n<a href =" + link + ">" + link + "</a>" + creatorWarning, false),
                         LanguageProvider.get("gui.untrusted_domain_title"),
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.WARNING_MESSAGE
@@ -329,7 +329,7 @@ public class ControlPanel {
     }
 
     public static void showUploadAllButtonWarning(String warningMsg) {
-        JEditorPane commentPane = CrashAssistantGUI.getEditorPane(warningMsg);
+        JEditorPane commentPane = CrashAssistantGUI.getEditorPane(warningMsg, false);
         JOptionPane optionPane = new JOptionPane(
                 commentPane,
                 JOptionPane.INFORMATION_MESSAGE,

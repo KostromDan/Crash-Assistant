@@ -23,6 +23,7 @@ dependencies {
     implementation 'com.electronwill.night-config:json:3.6.4'
     implementation 'commons-io:commons-io:2.15.1'
     implementation 'gs.mclo:api:4.0.1'
+    implementation 'com.github.oshi:oshi-core:5.8.5'
 
     implementation project(path: ':common_config')
 }
@@ -45,6 +46,7 @@ shadowJar {
         exclude(dependency('org.apache.logging.log4j:.*'))
         exclude(dependency('com.google.code.gson:.*'))
         exclude(dependency('commons-io:commons-io:2.15.1'))
+        exclude(dependency('com.github.oshi:oshi-core:5.8.5'))
     }
 }
 

@@ -1,11 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
-import dev.kostromdan.mods.crash_assistant.app.utils.CrashReportsHelper;
-import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
-import dev.kostromdan.mods.crash_assistant.app.utils.HsErrHelper;
-import dev.kostromdan.mods.crash_assistant.app.utils.ProcessHelper;
-import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
+import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;

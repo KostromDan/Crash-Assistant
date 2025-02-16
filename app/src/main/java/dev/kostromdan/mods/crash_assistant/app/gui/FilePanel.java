@@ -288,7 +288,7 @@ public class FilePanel {
     }
 
     public String showLogPartSelectionDialog(String action) {
-        JEditorPane logSelectionPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.copy_split_log_dialog_text").replace("$LOG_TOO_BIG_REASON$", getTooBigReasons(false)).replace("$FILE_NAME$", fileName).replace("$ACTION$", action));
+        JEditorPane logSelectionPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.copy_split_log_dialog_text").replace("$LOG_TOO_BIG_REASON$", getTooBigReasons(false)).replace("$FILE_NAME$", fileName).replace("$ACTION$", action), false);
         Object[] options = {
                 LanguageProvider.get("gui.split_log_dialog_msg_with_both"),
                 LanguageProvider.get("gui.split_log_dialog_head"),

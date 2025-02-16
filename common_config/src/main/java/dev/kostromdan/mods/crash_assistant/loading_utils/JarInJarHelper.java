@@ -2,6 +2,8 @@ package dev.kostromdan.mods.crash_assistant.loading_utils;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import com.sun.jna.Platform;
+import com.sun.jna.platform.DesktopWindow;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.commons.io.input.ReversedLinesFileReader;
@@ -49,7 +51,9 @@ public interface JarInJarHelper {
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    "-oshiCore", LibrariesJarLocator.getLibraryJarPath(CentralProcessor.class)
+                    "-oshiCore", LibrariesJarLocator.getLibraryJarPath(CentralProcessor.class),
+                    "-jna", LibrariesJarLocator.getLibraryJarPath(Platform.class),
+                    "-jnaPlatform", LibrariesJarLocator.getLibraryJarPath(DesktopWindow.class)
             );
             crashAssistantAppProcessBuilder.start();
         } catch (Exception e) {

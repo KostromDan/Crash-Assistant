@@ -15,6 +15,8 @@ public class Boot {
     public static String googleGson = null;
     public static String commonIo = null;
     public static String oshiCore = null;
+    public static String jna = null;
+    public static String jnaPlatform = null;
     public static String jarPath = null;
     public static boolean recursiveStart = false;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -34,6 +36,10 @@ public class Boot {
                 commonIo = args[i + 1];
             } else if ("-oshiCore".equals(args[i]) && i + 1 < args.length) {
                 oshiCore = args[i + 1];
+            } else if ("-jna".equals(args[i]) && i + 1 < args.length) {
+                jna = args[i + 1];
+            }else if ("-jnaPlatform".equals(args[i]) && i + 1 < args.length) {
+                jnaPlatform = args[i + 1];
             } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
                 jarPath = args[i + 1];
             } else if ("-recursiveStart".equals(args[i])) {
@@ -69,6 +75,9 @@ public class Boot {
         CrashAssistantAgent.appendJarFile(log4jCore);
         CrashAssistantAgent.appendJarFile(googleGson);
         CrashAssistantAgent.appendJarFile(commonIo);
+        CrashAssistantAgent.appendJarFile(oshiCore);
+        CrashAssistantAgent.appendJarFile(jna);
+        CrashAssistantAgent.appendJarFile(jnaPlatform);
 
         Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
         Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);
@@ -82,6 +91,8 @@ public class Boot {
         if (googleGson == null) missingParameters.add("-googleGson");
         if (commonIo == null) missingParameters.add("-commonIo");
         if (oshiCore == null) missingParameters.add("-oshiCore");
+        if (jna == null) missingParameters.add("-jna");
+        if (jnaPlatform == null) missingParameters.add("-jnaPlatform");
         if (jarPath == null) missingParameters.add("-jarPath");
         return missingParameters;
     }

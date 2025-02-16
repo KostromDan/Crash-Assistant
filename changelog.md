@@ -1,3 +1,6 @@
+1.3.7:
+- Implemented affected processors check by rather simpler way. This fixed all the issues.
+
 1.3.6:
 - Fixed jna wasn't blacklisted from fatjar and wasn't passed to app.
 - Fixed oshi wasn't loaded properly. So Intel check wasn't worked.

@@ -2,16 +2,6 @@ package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import oshi.SystemInfo;
-import oshi.hardware.CentralProcessor;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import oshi.SystemInfo;
-import oshi.hardware.CentralProcessor;
 
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -41,7 +31,6 @@ public interface IntelCorruptedProcessorChecker {
     }
 
     private static String extractModel(String cpuName) {
-        CrashAssistantApp.LOGGER.info(cpuName);
         var matcher = Pattern.compile("i[579]-\\d+[a-z]*", Pattern.CASE_INSENSITIVE)
                 .matcher(cpuName);
         return matcher.find() ? matcher.group().toLowerCase() : null;

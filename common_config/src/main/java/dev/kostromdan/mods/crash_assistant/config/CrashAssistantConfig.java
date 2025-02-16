@@ -152,6 +152,14 @@ public class CrashAssistantConfig {
                         "Set to <= 0 to disable the confirmation.",
                 10);
 
+        config.setComment("intel_corrupted", "Settings of notifying about intel corrupted processors.");
+        addOption("intel_corrupted.enabled",
+                "Enable feature.",
+                true);
+        addOption("intel_corrupted.show_gif",
+                "Show funny related gif in warning message.",
+                true);
+
         addOption("greeting.shown_greeting",
                 "You don't need to touch this option.\n" +
                         "On first world join of modpack creator if set to false shows greeting, then self enables.",

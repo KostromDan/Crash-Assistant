@@ -1,7 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import oshi.SystemInfo;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -17,11 +17,7 @@ public interface IntelCorruptedProcessorChecker {
 
     static boolean isAffectedProcessor() {
         try {
-            String model = extractModel(new SystemInfo()
-                    .getHardware()
-                    .getProcessor()
-                    .getProcessorIdentifier()
-                    .getName());
+            String model = extractModel(Boot.processor);
 
             return model != null && AFFECTED_MODELS.contains(model);
         } catch (Exception e) {

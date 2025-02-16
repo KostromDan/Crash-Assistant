@@ -1,3 +1,7 @@
+1.3.6:
+- Fixed jna wasn't blacklisted from fatjar and wasn't passed to app.
+- Fixed oshi wasn't loaded properly. So Intel check wasn't worked.
+
 1.3.5:
 - Update zh_cn lang.
 - Renamed latest.log to crash_assistant_app.log to prevent confusion.

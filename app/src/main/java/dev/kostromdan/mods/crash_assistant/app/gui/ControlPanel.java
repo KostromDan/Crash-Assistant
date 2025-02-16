@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
+import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
 import dev.kostromdan.mods.crash_assistant.app.utils.TrustedDomainsHelper;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
@@ -292,6 +293,15 @@ public class ControlPanel {
             } catch (Exception ignored) {
             }
         }
+        try {
+            if (CrashAssistantConfig.getBoolean("generated_message.intel_corrupted_notification") && IntelCorruptedProcessorChecker.isAffectedProcessor()) {
+                String model = IntelCorruptedProcessorChecker.extractModel();
+                logs.add("[" + model + LanguageProvider.getMsgLang("msg.intel_corrupted_notification") + "](<" + IntelAffectedWarning.help_url + ">)");
+            }
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error while checking IntelCorruptedProcessor", e);
+        }
+
         sb.append(ModListDiff.getFilePrefix());
         if (CrashAssistantConfig.getBoolean("generated_message.one_line_logs")) {
             sb.append(String.join("   |   ", logs));

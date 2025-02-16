@@ -17,8 +17,7 @@ public interface IntelCorruptedProcessorChecker {
 
     static boolean isAffectedProcessor() {
         try {
-            String model = extractModel(Boot.processor);
-
+            String model = extractModel();
             return model != null && AFFECTED_MODELS.contains(model);
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while checking processor", e);
@@ -26,9 +25,9 @@ public interface IntelCorruptedProcessorChecker {
         }
     }
 
-    private static String extractModel(String cpuName) {
+    static String extractModel() {
         var matcher = Pattern.compile("i[579]-\\d+[a-z]*", Pattern.CASE_INSENSITIVE)
-                .matcher(cpuName);
+                .matcher(Boot.processor);
         return matcher.find() ? matcher.group().toLowerCase() : null;
     }
 }

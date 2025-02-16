@@ -103,6 +103,9 @@ public class CrashAssistantConfig {
         addOption("generated_message.one_line_logs",
                 "Replaces \"\\n\" separator between logs to \"   |   \" to make message vertically smaller.",
                 true);
+        addOption("generated_message.intel_corrupted_notification",
+                "Adds line in log list about this Intel processor can be corrupted.",
+                true);
         addOption("generated_message.generated_msg_lang",
                 "If the modpack is created for a non-English-speaking audience, сhange this to the language the modpack is designed for.\n" +
                         "This lang will be used only for generating message by \"Upload all...\" button." +

@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 
 import javax.swing.*;
@@ -17,6 +18,7 @@ public class IntelAffectedWarning {
     public static void showIfAffected(boolean debug) {
         if (!CrashAssistantConfig.getBoolean("intel_corrupted.enabled")) return;
         if (!IntelCorruptedProcessorChecker.isAffectedProcessor() && !debug) return;
+        if (Objects.equals(CrashAssistantLocalConfig.get("intel_corrupted.dont_show_again"), true)) return;
         boolean showGif = CrashAssistantConfig.getBoolean("intel_corrupted.show_gif");
 
         ControlPanel.stopMovingToTop = true;
@@ -81,6 +83,9 @@ public class IntelAffectedWarning {
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(buttonPanel, BorderLayout.CENTER);
         JCheckBox dontShowAgainCheck = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+        dontShowAgainCheck.addActionListener(e -> {
+            CrashAssistantLocalConfig.set("intel_corrupted.dont_show_again", dontShowAgainCheck.isSelected());
+        });
         bottomPanel.add(dontShowAgainCheck, BorderLayout.WEST);
 
         gbc.gridx = colIndex;

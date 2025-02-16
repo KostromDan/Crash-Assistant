@@ -1,3 +1,15 @@
+1.3.5:
+- Update zh_cn lang.
+- Renamed latest.log to crash_assistant_app.log to prevent confusion.
+- Removed crash_assistant_app.log from blacklisted by default logs, since it can contain useful information.
+- Added `crashed without a crash report.` to generated msg.
+- Added `generated_message.one_line_logs` config option.
+  - Replaces "\n" separator between logs to "   |   " to make message vertically smaller. Enabled by default.
+- Added waning screen about processors affected by critical Intel Chip Bug.
+  - Config option `intel_corrupted.enabled`
+  - Config option `intel_corrupted.show_gif`. Show funny related gif in warning message.
+- Very many small fixes.
+
 1.3.4:
 - A little improved Event Viewer guide.
 

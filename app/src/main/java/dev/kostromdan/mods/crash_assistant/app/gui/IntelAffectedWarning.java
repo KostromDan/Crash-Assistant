@@ -99,7 +99,7 @@ public class IntelAffectedWarning {
 
         dialog.setContentPane(mainPanel);
         dialog.pack();
-        dialog.setSize(800 - (showGif ? 0 : gif.getIconWidth()), dialog.getPreferredSize().height + (showGif ? 0 : 50));
+        dialog.setSize(800 - (showGif ? 0 : gif.getIconWidth()), Math.max(dialog.getPreferredSize().height,gif.getIconHeight()));
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
     }

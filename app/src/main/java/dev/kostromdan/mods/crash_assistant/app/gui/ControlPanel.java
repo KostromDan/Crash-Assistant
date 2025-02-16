@@ -258,17 +258,18 @@ public class ControlPanel {
             }
             kubeJSPanelList.add(panel);
         }
+        List<String> logs = new ArrayList<>();
         for (FilePanel panel : fileListPanel.filePanelList) {
             if (panel.getFileName().startsWith("KubeJS: ")) {
                 if (kubeJSPosted) continue;
 
                 if (!kubeJSPanelList.isEmpty()) {
                     kubeJSPosted = true;
-                    sb.append(ModListDiff.getFilePrefix()).append("KubeJS: ");
-                    sb.append(kubeJSPanelList.stream()
-                            .map(kubeJSPanel -> "[" + kubeJSPanel.getFilePath().getFileName() + "](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
-                            .collect(Collectors.joining(" / ")));
-                    sb.append("\n");
+                    logs.add("KubeJS: " +
+                            kubeJSPanelList.stream()
+                                    .map(kubeJSPanel -> "[" + kubeJSPanel.getFilePath().getFileName() + "](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
+                                    .collect(Collectors.joining(" / "))
+                    );
                     continue;
                 }
             }
@@ -276,10 +277,9 @@ public class ControlPanel {
                 String[] splitLog = panel.getFileName().split(":");
                 String fileName = (splitLog.length == 2 ? splitLog[1] : splitLog[0]).trim();
                 String fileParentName = splitLog.length == 2 ? splitLog[0] + ": " : "";
-                sb.append(ModListDiff.getFilePrefix()).append(fileParentName).append("[").append(fileName).append("](<").append(panel.getUploadedLinkFirstLines()).append(">)\n");
+                logs.add(fileParentName + "[" + fileName + "](<" + panel.getUploadedLinkFirstLines() + ">)");
             } else {
-                sb.append(ModListDiff.getFilePrefix()).append(panel.getMessageWithBothLinks(true));
-
+                logs.add(panel.getMessageWithBothLinks(true));
             }
         }
         if (CrashAssistantApp.launcherLogsCount == 0) {
@@ -287,11 +287,18 @@ public class ControlPanel {
                 Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
                 List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).toList();
                 if (curseForgeDirContents.contains("instances") && curseForgeDirContents.contains("install")) {
-                    sb.append(ModListDiff.getFilePrefix()).append(LanguageProvider.getMsgLang("msg.skip_launcher")).append("\n");
+                    logs.add(LanguageProvider.getMsgLang("msg.skip_launcher"));
                 }
             } catch (Exception ignored) {
             }
         }
+        sb.append(ModListDiff.getFilePrefix());
+        if (CrashAssistantConfig.getBoolean("generated_message.one_line_logs")) {
+            sb.append(String.join("   |   ", logs));
+        } else {
+            sb.append(String.join("\n" + ModListDiff.getFilePrefix(), logs));
+        }
+        sb.append("\n");
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             sb.append("\n");
             ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);

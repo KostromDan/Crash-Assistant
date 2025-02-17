@@ -1,3 +1,9 @@
+1.3.8:
+- Localisation to Intel processors warn.
+- Added notification about Intel processors in generated msg.
+- Don't show again checkbox for Intel processors warning.
+- Improved window size calculation of Intel processors warning.
+
 1.3.7:
 - Implemented affected processors check by rather simpler way. This fixed all the issues.
 

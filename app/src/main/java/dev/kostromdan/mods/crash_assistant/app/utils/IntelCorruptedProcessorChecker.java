@@ -26,6 +26,9 @@ public interface IntelCorruptedProcessorChecker {
     }
 
     static String extractModel() {
+        if (Boot.processor == null) {
+            return null;
+        }
         var matcher = Pattern.compile("i[579]-\\d+[a-z]*", Pattern.CASE_INSENSITIVE)
                 .matcher(Boot.processor);
         return matcher.find() ? matcher.group().toLowerCase() : null;

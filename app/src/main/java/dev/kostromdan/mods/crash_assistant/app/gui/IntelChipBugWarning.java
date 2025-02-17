@@ -11,7 +11,7 @@ import java.awt.*;
 import java.net.URI;
 import java.util.Objects;
 
-public class IntelAffectedWarning {
+public class IntelChipBugWarning {
     public static final String help_url = "https://www.zdnet.com/article/intel-chip-bug-faq-which-pcs-are-affected-how-to-get-the-patch-and-everything-else-you-need-to-know/";
 
 
@@ -34,7 +34,7 @@ public class IntelAffectedWarning {
 
         int colIndex = 0;
 
-        ImageIcon gif = new ImageIcon(Objects.requireNonNull(IntelAffectedWarning.class.getResource("/assets/intel_bug.gif")));
+        ImageIcon gif = new ImageIcon(Objects.requireNonNull(IntelChipBugWarning.class.getResource("/assets/intel_bug.gif")));
         if (showGif) {
             JLabel gifLabel = new JLabel(gif);
             gifLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
@@ -106,6 +106,6 @@ public class IntelAffectedWarning {
 
 
     public static void main(String[] args) {
-        IntelAffectedWarning.showIfAffected(true);
+        IntelChipBugWarning.showIfAffected(true);
     }
 }

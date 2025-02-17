@@ -114,7 +114,7 @@ public class CrashAssistantGUI {
         CrashAssistantApp.GUIStartTime = Instant.now().toEpochMilli() - CrashAssistantApp.GUIStartTime;
         CrashAssistantApp.GUIInitialisationFinished = true;
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
-        IntelAffectedWarning.showIfAffected(false);
+        IntelChipBugWarning.showIfAffected(false);
     }
 
     public static void resize() {

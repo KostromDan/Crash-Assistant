@@ -1,3 +1,12 @@
+1.3.9:
+- Parsing mod data async. To prevent GUI starting too long if mod list is too big.
+- Added logging of time for parsing mod data.
+- Optimised ModDataParser.
+- Fixed some potential issues.
+- Moved MCLogs init from startup to then needed. Since it took a lot of time. To improve startup speed.
+- Fix error msg in dev env.
+- Improved formulations of Intel bug warn.
+
 1.3.8:
 - Localisation to Intel processors warn.
 - Added notification about Intel processors in generated msg.

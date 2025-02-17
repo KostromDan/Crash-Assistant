@@ -6,7 +6,6 @@ import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
-import gs.mclo.api.MclogsClient;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -22,7 +21,6 @@ import java.util.*;
 import java.util.function.Function;
 
 public class CrashAssistantGUI {
-    public static final MclogsClient MCLogsClient = new MclogsClient("CrashAssistant");
     private static JFrame frame = null;
     public static FileListPanel fileListPanel;
     private static ControlPanel controlPanel;

@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.LogProcessor;
+import dev.kostromdan.mods.crash_assistant.app.utils.McLogsApiProvider;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import gs.mclo.api.response.UploadLogResponse;
 
@@ -180,15 +181,15 @@ public class FilePanel {
                     LogProcessor logProcessor = new LogProcessor(filePath);
                     logProcessor.processLogFile();
                     uploadButton.setText(oldText);
-                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = CrashAssistantGUI.MCLogsClient.uploadLog(logProcessor.getFirstLinesString());
+                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = McLogsApiProvider.getMcLogsClient().uploadLog(logProcessor.getFirstLinesString());
                     countedLines = logProcessor.getCountedLines();
                     lineCountInterrupted = logProcessor.isLineCountInterrupted();
 
                     String lastLines = logProcessor.getLastLinesString();
                     if (lastLines != null) {
-                        CompletableFuture<UploadLogResponse> completableResponseLastLines = CrashAssistantGUI.MCLogsClient.uploadLog(lastLines);
+                        CompletableFuture<UploadLogResponse> completableResponseLastLines = McLogsApiProvider.getMcLogsClient().uploadLog(lastLines);
                         UploadLogResponse responseLastLines = completableResponseLastLines.get();
-                        responseLastLines.setClient(CrashAssistantGUI.MCLogsClient);
+                        responseLastLines.setClient(McLogsApiProvider.getMcLogsClient());
                         if (responseLastLines.isSuccess()) {
                             uploadedLinkLastLines = CrashAssistantGUI.transformLink(responseLastLines.getUrl());
                         } else {
@@ -196,7 +197,7 @@ public class FilePanel {
                         }
                     }
                     UploadLogResponse responseFirstLines = completableResponseFirstLines.get();
-                    responseFirstLines.setClient(CrashAssistantGUI.MCLogsClient);
+                    responseFirstLines.setClient(McLogsApiProvider.getMcLogsClient());
 
 
                     if (responseFirstLines.isSuccess()) {

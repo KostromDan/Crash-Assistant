@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
+import dev.kostromdan.mods.crash_assistant.app.utils.McLogsApiProvider;
 import dev.kostromdan.mods.crash_assistant.app.utils.TrustedDomainsHelper;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
@@ -354,8 +355,8 @@ public class ControlPanel {
     }
 
     public static String uploadModlistDiff(String diff) throws ExecutionException, InterruptedException, UploadException {
-        UploadLogResponse response = CrashAssistantGUI.MCLogsClient.uploadLog(diff).get();
-        response.setClient(CrashAssistantGUI.MCLogsClient);
+        UploadLogResponse response = McLogsApiProvider.getMcLogsClient().uploadLog(diff).get();
+        response.setClient(McLogsApiProvider.getMcLogsClient());
 
         if (response.isSuccess()) {
             return CrashAssistantGUI.transformLink(response.getUrl());

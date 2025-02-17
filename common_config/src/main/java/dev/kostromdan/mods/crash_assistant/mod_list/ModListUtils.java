@@ -8,7 +8,12 @@ import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class ModListUtils {
     public static final Logger LOGGER = LogManager.getLogger();
@@ -21,24 +26,34 @@ public class ModListUtils {
 
     public static LinkedHashSet<Mod> getCurrentModList() {
         try {
-            LinkedHashSet<Mod> filenames = new LinkedHashSet<>();
+            LinkedHashSet<Mod> currentMods = new LinkedHashSet<>();
             if (Files.exists(MODS_FOLDER)) {
-                Files.list(MODS_FOLDER).sorted(new PathComparator()).forEach(path -> {
-                    String filename = path.getFileName().toString();
-                    if (Files.isRegularFile(path) && filename.endsWith(".jar")) {
-                        filenames.add(ModDataParser.parseModData(path));
-                    }
-                });
+                long start = System.currentTimeMillis();
+
+                ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+                List<Future<Mod>> futures = new ArrayList<>();
+
+                Files.list(MODS_FOLDER)
+                        .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".jar"))
+                        .sorted(new PathComparator())
+                        .forEach(path -> futures.add(executor.submit(() -> ModDataParser.parseModData(path))));
+
+                for (Future<Mod> future : futures) {
+                    currentMods.add(future.get());
+                }
+
+                executor.shutdown();
+                LOGGER.info("Analysed " + currentMods.size() + " mods in " + (System.currentTimeMillis() - start) + " ms");
             }
             if (Files.exists(RESOURCEPACKS_FOLDER) && CrashAssistantConfig.getBoolean("modpack_modlist.add_resourcepacks")) {
                 Files.list(RESOURCEPACKS_FOLDER).sorted(new PathComparator()).forEach(path -> {
                     String filename = path.getFileName().toString();
                     if (Files.isDirectory(path) || filename.endsWith(".zip")) {
-                        filenames.add(new Mod(filename + " (resourcepack)", null, null));
+                        currentMods.add(new Mod(filename + " (resourcepack)", null, null));
                     }
                 });
             }
-            return filenames;
+            return currentMods;
         } catch (Exception e) {
             LOGGER.error("Error while getting current mod list: ", e);
         }

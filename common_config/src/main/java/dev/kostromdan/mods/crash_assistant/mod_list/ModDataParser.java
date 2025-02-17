@@ -5,14 +5,15 @@ import com.electronwill.nightconfig.core.file.FileConfig;
 import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
 
 import java.io.InputStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public class ModDataParser {
@@ -22,35 +23,48 @@ public class ModDataParser {
     }};
 
     public static Mod parseModData(Path jarPath) {
-        try (FileSystem zipFs = FileSystems.newFileSystem(jarPath)) {
-            for (String path : tomlPaths) {
+        try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+            for (String resourcePath : tomlPaths) {
+                JarEntry entry = jarFile.getJarEntry(resourcePath);
+                if (entry == null) continue;
                 try {
-                    Path modsTomlPath = zipFs.getPath(path);
-                    if (!Files.exists(modsTomlPath)) continue;
-                    try (FileConfig config = FileConfig.builder(modsTomlPath).build()) {
+                    Path temp = Files.createTempFile("moddata", ".toml");
+                    try (InputStream is = jarFile.getInputStream(entry)) {
+                        Files.copy(is, temp, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    try (FileConfig config = FileConfig.builder(temp).build()) {
                         config.load();
-                        Config mods = (Config) ((ArrayList) config.get("mods")).get(0);
+                        ArrayList<Object> modsList = config.get("mods");
+                        if (modsList == null || modsList.isEmpty()) continue;
+                        Config mods = (Config) modsList.getFirst();
                         String modId = mods.get("modId");
                         String version = mods.get("version");
                         if (Objects.equals(version, "${file.jarVersion}")) {
-                            version = parseVersionFromManifest(zipFs);
+                            version = parseVersionFromManifest(jarFile);
                         }
                         return new Mod(jarPath.getFileName().toString(), modId, version);
+                    } finally {
+                        Files.deleteIfExists(temp);
                     }
-
                 } catch (Exception e) {
-                    JarInJarHelper.LOGGER.error("Error while trying to parse " + path + " of " + jarPath.getFileName().toString(), e);
+                    JarInJarHelper.LOGGER.error("Error while trying to parse " + resourcePath + " of " + jarPath.getFileName().toString(), e);
                 }
             }
-            fabric:
             try {
-                Path jsonPath = zipFs.getPath("fabric.mod.json");
-                if (!Files.exists(jsonPath)) break fabric;
-                try (FileConfig config = FileConfig.builder(jsonPath).build()) {
-                    config.load();
-                    String modId = config.get("id");
-                    String version = config.get("version");
-                    return new Mod(jarPath.getFileName().toString(), modId, version);
+                JarEntry jsonEntry = jarFile.getJarEntry("fabric.mod.json");
+                if (jsonEntry != null) {
+                    Path temp = Files.createTempFile("moddata", ".json");
+                    try (InputStream is = jarFile.getInputStream(jsonEntry)) {
+                        Files.copy(is, temp, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    try (FileConfig config = FileConfig.builder(temp).build()) {
+                        config.load();
+                        String modId = config.get("id");
+                        String version = config.get("version");
+                        return new Mod(jarPath.getFileName().toString(), modId, version);
+                    } finally {
+                        Files.deleteIfExists(temp);
+                    }
                 }
             } catch (Exception e) {
                 JarInJarHelper.LOGGER.error("Error while trying to parse fabric.mod.json of " + jarPath.getFileName().toString(), e);
@@ -60,11 +74,10 @@ public class ModDataParser {
         return new Mod(jarPath.getFileName().toString(), null, null);
     }
 
-    private static String parseVersionFromManifest(FileSystem fs) {
-        Path manifestPath = fs.getPath("META-INF/MANIFEST.MF");
-
-        if (!Files.exists(manifestPath)) return null;
-        try (InputStream is = Files.newInputStream(manifestPath)) {
+    private static String parseVersionFromManifest(JarFile jarFile) {
+        JarEntry manifestEntry = jarFile.getJarEntry("META-INF/MANIFEST.MF");
+        if (manifestEntry == null) return null;
+        try (InputStream is = jarFile.getInputStream(manifestEntry)) {
             Manifest manifest = new Manifest(is);
             return manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         } catch (Exception ignored) {

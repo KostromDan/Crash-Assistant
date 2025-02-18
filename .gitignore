@@ -25,3 +25,4 @@ local
 *.architectury-transformer
 /config/
 /logs/
+win_event*.txt

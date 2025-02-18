@@ -9,11 +9,12 @@ import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URI;
+import java.net.URL;
 import java.util.Objects;
 
 public class IntelChipBugWarning {
     public static final String help_url = "https://www.zdnet.com/article/intel-chip-bug-faq-which-pcs-are-affected-how-to-get-the-patch-and-everything-else-you-need-to-know/";
-
+    public static final String gif_url = "https://kostromdan.github.io/Crash-Assistant/assets/intel_bug.gif";
 
     public static void showIfAffected(boolean debug) {
         if (!CrashAssistantConfig.getBoolean("intel_corrupted.enabled")) return;
@@ -33,10 +34,11 @@ public class IntelChipBugWarning {
         gbc.insets = new Insets(3, 3, 3, 3);
 
         int colIndex = 0;
+        JLabel gifLabel = null;
 
-        ImageIcon gif = new ImageIcon(Objects.requireNonNull(IntelChipBugWarning.class.getResource("/assets/intel_bug.gif")));
         if (showGif) {
-            JLabel gifLabel = new JLabel(gif);
+            gifLabel = new JLabel("gif is loading", SwingConstants.CENTER);
+            gifLabel.setPreferredSize(new Dimension(211, 374));
             gifLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
             gbc.gridx = 0;
@@ -49,13 +51,32 @@ public class IntelChipBugWarning {
             mainPanel.add(gifLabel, gbc);
 
             colIndex = 1;
+
+            final JLabel finalGifLabel = gifLabel;
+            new SwingWorker<ImageIcon, Void>() {
+                @Override
+                protected ImageIcon doInBackground() throws Exception {
+                    URL url = new URL(gif_url);
+                    return new ImageIcon(url);
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        ImageIcon loadedIcon = get();
+                        finalGifLabel.setText(null);
+                        finalGifLabel.setIcon(loadedIcon);
+                    } catch (Exception e) {
+                        CrashAssistantApp.LOGGER.error("Error loading gif from URL: ", e);
+                        finalGifLabel.setText("Failed to load gif");
+                    }
+                }
+            }.execute();
         }
 
-        JEditorPane textPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.intel_corrupted_msg").replace("$HELP_URL$", help_url),
-                true
-        );
+        JEditorPane textPane = CrashAssistantGUI.getEditorPane(
+                LanguageProvider.get("gui.intel_corrupted_msg").replace("$HELP_URL$", help_url), true);
         textPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-
 
         gbc.gridx = colIndex;
         gbc.gridy = 0;
@@ -83,9 +104,9 @@ public class IntelChipBugWarning {
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(buttonPanel, BorderLayout.CENTER);
         JCheckBox dontShowAgainCheck = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
-        dontShowAgainCheck.addActionListener(e -> {
-            CrashAssistantLocalConfig.set("intel_corrupted.dont_show_again", dontShowAgainCheck.isSelected());
-        });
+        dontShowAgainCheck.addActionListener(e ->
+                CrashAssistantLocalConfig.set("intel_corrupted.dont_show_again", dontShowAgainCheck.isSelected())
+        );
         bottomPanel.add(dontShowAgainCheck, BorderLayout.WEST);
 
         gbc.gridx = colIndex;
@@ -99,13 +120,14 @@ public class IntelChipBugWarning {
 
         dialog.setContentPane(mainPanel);
         dialog.pack();
-        dialog.setSize(800 - (showGif ? 0 : gif.getIconWidth()), Math.max(dialog.getPreferredSize().height,gif.getIconHeight()));
+        dialog.setSize(800 - (showGif ? 0 : 211), Math.max(dialog.getPreferredSize().height, 374));
         dialog.setLocationRelativeTo(null);
+        dialog.setAlwaysOnTop(true);
         dialog.setVisible(true);
     }
 
-
     public static void main(String[] args) {
+        System.out.println("Intel Chip Bug Warning");
         IntelChipBugWarning.showIfAffected(true);
     }
 }

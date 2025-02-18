@@ -44,3 +44,13 @@ Coremod includes 2 services:
   * `app` should be launched as soon as possible after game start to be able to help players even with coremod/mixin/hs_err crashes. So we launch it from static block of ITransformationService, the first point, we can launch it from forge mod.
 * [CrashAssistantDependencyLocator.java](neoforge_coremod/src/main/java/dev/kostromdan/mods/crash_assistant/core_mod/services/CrashAssistantDependencyLocator.java)
   * We want to have singlefile mod, not `forge_mod.jar` and `forge_coremod.jar`. Since forge doesn't load jar in jar mods from coremods, we should do it by ourselves.
+
+
+## Partners
+YourKit supports open source projects with innovative and intelligent tools
+for monitoring and profiling Java and .NET applications.
+YourKit is the creator of [YourKit Java Profiler](https://www.yourkit.com/java/profiler/),
+[YourKit .NET Profiler](https://www.yourkit.com/.net/profiler/),
+and [YourKit YouMonitor](https://www.yourkit.com/youmonitor/).
+
+[![YourKit](https://www.yourkit.com/images/yklogo.png)](https://www.yourkit.com)

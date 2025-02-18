@@ -14,7 +14,7 @@ import java.util.Objects;
 
 public class IntelChipBugWarning {
     public static final String help_url = "https://www.zdnet.com/article/intel-chip-bug-faq-which-pcs-are-affected-how-to-get-the-patch-and-everything-else-you-need-to-know/";
-    public static final String gif_url = "https://kostromdan.github.io/Crash-Assistant/assets/intel_bug.gif";
+    public static final String gif_url = "https://kostromdan.github.io/Crash-Assistant/assets/intel_bug.gif?raw=true";
 
     public static void showIfAffected(boolean debug) {
         if (!CrashAssistantConfig.getBoolean("intel_corrupted.enabled")) return;
@@ -35,11 +35,20 @@ public class IntelChipBugWarning {
 
         int colIndex = 0;
         JLabel gifLabel = null;
+        int gifWidth = 211;
+        int gifHeight = 374;
 
         if (showGif) {
-            gifLabel = new JLabel("gif is loading", SwingConstants.CENTER);
-            gifLabel.setPreferredSize(new Dimension(211, 374));
-            gifLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+            JPanel gifPanel = new JPanel(new BorderLayout());
+            gifPanel.setPreferredSize(new Dimension(gifWidth, gifHeight));
+            gifPanel.setMinimumSize(new Dimension(gifWidth, gifHeight));
+            gifPanel.setMaximumSize(new Dimension(gifWidth, gifHeight));
+            gifPanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+
+            gifLabel = new JLabel("GIF", SwingConstants.CENTER);
+            gifLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            gifLabel.setVerticalAlignment(SwingConstants.CENTER);
+            gifPanel.add(gifLabel, BorderLayout.CENTER);
 
             gbc.gridx = 0;
             gbc.gridy = 0;
@@ -48,7 +57,7 @@ public class IntelChipBugWarning {
             gbc.weighty = 1.0;
             gbc.fill = GridBagConstraints.VERTICAL;
             gbc.anchor = GridBagConstraints.CENTER;
-            mainPanel.add(gifLabel, gbc);
+            mainPanel.add(gifPanel, gbc);
 
             colIndex = 1;
 
@@ -57,7 +66,15 @@ public class IntelChipBugWarning {
                 @Override
                 protected ImageIcon doInBackground() throws Exception {
                     URL url = new URL(gif_url);
-                    return new ImageIcon(url);
+                    Image image = Toolkit.getDefaultToolkit().createImage(url);
+                    MediaTracker tracker = new MediaTracker(new JPanel());
+                    tracker.addImage(image, 0);
+                    try {
+                        tracker.waitForAll();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    return new ImageIcon(image);
                 }
 
                 @Override
@@ -120,14 +137,13 @@ public class IntelChipBugWarning {
 
         dialog.setContentPane(mainPanel);
         dialog.pack();
-        dialog.setSize(800 - (showGif ? 0 : 211), Math.max(dialog.getPreferredSize().height, 374));
+        dialog.setSize(800 - (showGif ? 0 : gifWidth), Math.max(dialog.getPreferredSize().height, gifHeight));
         dialog.setLocationRelativeTo(null);
-        dialog.setAlwaysOnTop(true);
+        if (debug) dialog.setAlwaysOnTop(true);
         dialog.setVisible(true);
     }
 
     public static void main(String[] args) {
-        System.out.println("Intel Chip Bug Warning");
         IntelChipBugWarning.showIfAffected(true);
     }
 }

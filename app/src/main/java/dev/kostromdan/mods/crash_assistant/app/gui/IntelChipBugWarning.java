@@ -5,11 +5,9 @@ import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChec
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URI;

@@ -211,9 +211,11 @@ public class CrashAssistantApp {
     public static void startLocatingTerminatedProcesses(Map<String, Path> availableLogs) {
         new Thread(() -> {
             long startTime = System.currentTimeMillis();
+            boolean firstIteration = true;
             while (System.currentTimeMillis() < startTime + 5000) {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(firstIteration ? 3000 : 100);
+                    firstIteration = false;
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -226,7 +228,7 @@ public class CrashAssistantApp {
                     } else {
                         startTime = System.currentTimeMillis();
                         while (true) {
-                            if (System.currentTimeMillis() >= startTime + 5000) System.exit(-1);
+                            if (System.currentTimeMillis() >= startTime + 7000) System.exit(-1);
                             if (!GUIInitialisationFinished) {
                                 try {
                                     Thread.sleep(50);

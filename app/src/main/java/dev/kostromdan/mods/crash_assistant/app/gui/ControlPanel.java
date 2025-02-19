@@ -97,7 +97,7 @@ public class ControlPanel {
                         uploadAllButton.setEnabled(true);
                     }
                 },
-                2000
+                2700
         );
 
         requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));

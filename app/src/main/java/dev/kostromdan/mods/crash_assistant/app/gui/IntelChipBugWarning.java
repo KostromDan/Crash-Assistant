@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChec
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -151,7 +152,7 @@ public class IntelChipBugWarning {
 
         dialog.setContentPane(mainPanel);
         dialog.pack();
-        dialog.setSize(800 - (showGif ? 0 : gifWidth), Math.max(dialog.getPreferredSize().height, gifHeight));
+        dialog.setSize(800 - (showGif ? 0 : gifWidth), Math.max(dialog.getPreferredSize().height, 439));
         dialog.setLocationRelativeTo(null);
         if (debug) dialog.setAlwaysOnTop(true);
         dialog.setVisible(true);

@@ -297,7 +297,7 @@ public class ControlPanel {
         try {
             if (CrashAssistantConfig.getBoolean("generated_message.intel_corrupted_notification") && IntelCorruptedProcessorChecker.isAffectedProcessor()) {
                 String model = IntelCorruptedProcessorChecker.extractModel();
-                logs.add("[" + model + LanguageProvider.getMsgLang("msg.intel_corrupted_notification") + "](<" + IntelChipBugWarning.help_url + ">)");
+                logs.add("[" + model + LanguageProvider.getMsgLang("msg.intel_corrupted_notification") + "](<" + IntelChipBugWarning.HELP_URL + ">)");
             }
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while checking IntelCorruptedProcessor", e);

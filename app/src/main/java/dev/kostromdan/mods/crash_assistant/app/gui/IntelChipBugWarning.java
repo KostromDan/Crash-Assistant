@@ -8,13 +8,19 @@ import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 public class IntelChipBugWarning {
-    public static final String help_url = "https://www.zdnet.com/article/intel-chip-bug-faq-which-pcs-are-affected-how-to-get-the-patch-and-everything-else-you-need-to-know/";
-    public static final String gif_url = "https://kostromdan.github.io/Crash-Assistant/assets/intel_bug.gif?raw=true";
+    public static final String HELP_URL = "https://www.zdnet.com/article/intel-chip-bug-faq-which-pcs-are-affected-how-to-get-the-patch-and-everything-else-you-need-to-know/";
+    public static final String GIF_URL = "https://kostromdan.github.io/Crash-Assistant/assets/intel_bug.gif?raw=true";
+    public static final Path LOCAL_GIF_PATH = Paths.get("local", "crash_assistant", "intel_bug.gif");
 
     public static void showIfAffected(boolean debug) {
         if (!CrashAssistantConfig.getBoolean("intel_corrupted.enabled")) return;
@@ -65,15 +71,23 @@ public class IntelChipBugWarning {
             new SwingWorker<ImageIcon, Void>() {
                 @Override
                 protected ImageIcon doInBackground() throws Exception {
-                    URL url = new URL(gif_url);
-                    Image image = Toolkit.getDefaultToolkit().createImage(url);
+                    LOCAL_GIF_PATH.getParent().toFile().mkdirs();
+
+                    if (!LOCAL_GIF_PATH.toFile().isFile()) {
+                        try (InputStream in = new URL(GIF_URL).openStream();
+                             FileOutputStream out = new FileOutputStream(LOCAL_GIF_PATH.toFile())) {
+                            byte[] buffer = new byte[1024];
+                            int bytesRead;
+                            while ((bytesRead = in.read(buffer)) != -1) {
+                                out.write(buffer, 0, bytesRead);
+                            }
+                        }
+                    }
+
+                    Image image = Toolkit.getDefaultToolkit().createImage(LOCAL_GIF_PATH.toFile().getAbsolutePath());
                     MediaTracker tracker = new MediaTracker(new JPanel());
                     tracker.addImage(image, 0);
-                    try {
-                        tracker.waitForAll();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
+                    tracker.waitForAll();
                     return new ImageIcon(image);
                 }
 
@@ -84,15 +98,15 @@ public class IntelChipBugWarning {
                         finalGifLabel.setText(null);
                         finalGifLabel.setIcon(loadedIcon);
                     } catch (Exception e) {
-                        CrashAssistantApp.LOGGER.error("Error loading gif from URL: ", e);
-                        finalGifLabel.setText("Failed to load gif");
+                        CrashAssistantApp.LOGGER.error("Error loading GIF: ", e);
+                        finalGifLabel.setText("Failed to load GIF");
                     }
                 }
             }.execute();
         }
 
         JEditorPane textPane = CrashAssistantGUI.getEditorPane(
-                LanguageProvider.get("gui.intel_corrupted_msg").replace("$HELP_URL$", help_url), true);
+                LanguageProvider.get("gui.intel_corrupted_msg").replace("$HELP_URL$", HELP_URL), true);
         textPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
         gbc.gridx = colIndex;
@@ -108,7 +122,7 @@ public class IntelChipBugWarning {
         JButton readMoreButton = new JButton(LanguageProvider.get("gui.intel_corrupted_read_more"));
         readMoreButton.addActionListener(e -> {
             try {
-                Desktop.getDesktop().browse(new URI(help_url));
+                Desktop.getDesktop().browse(new URI(HELP_URL));
             } catch (Exception ex) {
                 CrashAssistantApp.LOGGER.error("Error opening URL: ", ex);
             }

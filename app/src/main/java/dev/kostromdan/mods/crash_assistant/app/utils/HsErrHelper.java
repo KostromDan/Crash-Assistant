@@ -14,6 +14,9 @@ public class HsErrHelper {
      * To not confuse user with incorrect old hs_err log, we remove it before start.
      */
     public static void removeHsErrLog(long pid) {
+        if (pid == -1) {
+            return; // Debug
+        }
         locateHsErrLog(pid).ifPresent(logPath -> {
             try {
                 Files.deleteIfExists(logPath);

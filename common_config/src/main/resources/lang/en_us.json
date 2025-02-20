@@ -41,6 +41,8 @@
   "gui.intel_corrupted_title": "Intel Chip Bug FAQ ($LANG.gui.window_name$)",
   "gui.intel_corrupted_read_more": "Learn more",
   "gui.intel_corrupted_dont_show_again": "Don't show again",
+  "gui.logs_analyser": "Logs Analyser ($LANG.gui.window_name$)",
+  "warnings.atio6axx": "The <strong>atio6axx</strong> \"Problematic frame\" in a <strong>$LOG_FILENAME$</strong> file, is part of the <strong>AMD</strong> driver for the GPU,\nthere's a bad version of the AMD drivers that instantly crashes on an OpenGL task.\nReinstall/Fresh install your drivers from <a href=\"https://www.amd.com/en/support\">https://www.amd.com/en/support</a>\n<strong>IF</strong> you do not have an <strong>AMD GPU</strong>, then you need to set your system to be using that GPU\ninstead of the AMD integrated GPU on the CPU, steps below.\n<a href=\"https://www.xda-developers.com/how-force-app-use-discrete-gpu-windows-11/\">https://www.xda-developers.com/how-force-app-use-discrete-gpu-windows-11/</a>",
   "commands.mod_config_tooltip": "Click to open config",
   "commands.nickname_tooltip": "Click to copy nick",
   "commands.diff_tooltip": "Click to copy mod list diff",

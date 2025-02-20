@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
@@ -115,12 +116,30 @@ public class CrashAssistantGUI {
         CrashAssistantApp.GUIInitialisationFinished = true;
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
         IntelChipBugWarning.showIfAffected(false);
+        showKnownCrashReasonsWarnings();
     }
 
     public static void resize() {
         frame.setSize(Math.max(Math.max(fileListPanel.getFileListPanel().getPreferredSize().width + 12, controlPanel.getPanel().getPreferredSize().width) + 26, labelPanel.getPreferredSize().width + 20),
                 Math.min(heightWithoutScrollPane + fileListPanel.getFileListPanel().getPreferredSize().height + 39, 700));
         frame.setMinimumSize(new Dimension(frame.getSize().width, heightWithoutScrollPane + 73));
+    }
+
+    public static synchronized void showKnownCrashReasonsWarnings() {
+        for (KnownCrashReason crashReason : KnownCrashReason.crashReasons) {
+            if (crashReason.shownWarn) continue;
+            crashReason.shownWarn = true;
+            JOptionPane optionPane = new JOptionPane(
+                    CrashAssistantGUI.getEditorPane(crashReason.msg.replace("$LOG_FILENAME$", crashReason.logPath.getFileName().toString()), false),
+                    JOptionPane.WARNING_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION
+            );
+            JDialog dialog = optionPane.createDialog(
+                    frame,
+                    LanguageProvider.get("gui.logs_analyser")
+            );
+            dialog.setVisible(true);
+        }
     }
 
     public static void highlightButton(JComponent button, Color color, long time) {

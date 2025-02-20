@@ -1,8 +1,10 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -115,6 +117,9 @@ public class CrashAssistantApp {
             crashed = true;
             crashed_with_report = true;
             FileUtils.addIfExistsAndModified(availableLogs, hsErrLog.get());
+            KnownCrashReason.addIfContainsOneOfPatterns(hsErrLog.get(),
+                    LanguageProvider.get("warnings.atio6axx"),
+                    "# Problematic frame:\\R# C  \\[atio6axx\\.dll\\+0x[0-9a-fA-F]+\\]");
         }
 
         HashSet<Path> newCrashReports = CrashReportsHelper.scanForNewCrashReports();

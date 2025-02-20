@@ -40,6 +40,8 @@
   "gui.intel_corrupted_title": "FAQ об ошибке в чипах Intel ($LANG.gui.window_name$)",
   "gui.intel_corrupted_read_more": "Подробнее",
   "gui.intel_corrupted_dont_show_again": "Больше не показывать",
+  "gui.logs_analyser": "Анализатор логов ($LANG.gui.window_name$)",
+  "warnings.atio6axx": "Фрейм <strong>atio6axx</strong> (называемый «Problematic frame») в файле <strong>$LOG_FILENAME$</strong> является частью драйвера GPU от <strong>AMD</strong>,\nсуществует неисправная версия драйверов AMD, которая мгновенно вызывает сбой при выполнении задачи OpenGL.\nПереустановите или выполните чистую установку драйверов с <a href=\"https://www.amd.com/en/support\">https://www.amd.com/en/support</a>\n<strong>Если</strong> у вас нет видеокарты AMD, то необходимо настроить систему так, чтобы использовалась ваша дискретная видеокарта\nвместо встроенной в процессор видеокарты AMD – см. инструкции ниже.\n<a href=\"https://www.xda-developers.com/how-force-app-use-discrete-gpu-windows-11/\">https://www.xda-developers.com/how-force-app-use-discrete-gpu-windows-11/</a>",
   "commands.mod_config_tooltip": "Нажмите, чтобы открыть конфиг",
   "commands.nickname_tooltip": "Нажмите, чтобы скопировать ник",
   "commands.diff_tooltip": "Нажмите, чтобы скопировать различия в списке модов",

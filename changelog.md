@@ -1,3 +1,15 @@
+1.4.0:
+- Load Intel bug GIF asynchronously from github to reduce mod size.
+- Improved Intel bug message.
+- Introducing Logs Analyser. Analysing logs dor most common crash reasons and displaying message with fix.
+  Currently implemented 2 checks:
+  - Problematic frame atio6axx.dll
+  - User done some input on loading, which caused freeze and taskkill.
+- Very many small fixes.
+- License MIT -> LGPL. LGPL feels closer to me than MIT. If you are not familiar with it, main change is:
+  - MIT: "Take my mod and do whatever you want, just mention me."
+  - LGPL: "Use my mod however you like, but if you change it, share the changes licensed under LGPL."
+
 1.3.9:
 - Parsing mod data async. To prevent GUI starting too long if mod list is too big.
 - Added logging of time for parsing mod data.

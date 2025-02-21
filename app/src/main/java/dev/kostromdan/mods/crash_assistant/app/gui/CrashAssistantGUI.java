@@ -125,20 +125,27 @@ public class CrashAssistantGUI {
         frame.setMinimumSize(new Dimension(frame.getSize().width, heightWithoutScrollPane + 73));
     }
 
-    public static synchronized void showKnownCrashReasonsWarnings() {
-        for (KnownCrashReason crashReason : KnownCrashReason.crashReasons) {
-            if (crashReason.shownWarn) continue;
-            crashReason.shownWarn = true;
-            JOptionPane optionPane = new JOptionPane(
-                    CrashAssistantGUI.getEditorPane(crashReason.msg.replace("$LOG_FILENAME$", crashReason.logPath.getFileName().toString()), false),
-                    JOptionPane.WARNING_MESSAGE,
-                    JOptionPane.DEFAULT_OPTION
-            );
-            JDialog dialog = optionPane.createDialog(
-                    frame,
-                    LanguageProvider.get("gui.logs_analyser")
-            );
-            dialog.setVisible(true);
+    public static void showKnownCrashReasonsWarnings() {
+        synchronized (KnownCrashReason.class) {
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    for (KnownCrashReason crashReason : KnownCrashReason.crashReasons) {
+                        if (crashReason.shownWarn) continue;
+                        crashReason.shownWarn = true;
+                        JOptionPane optionPane = new JOptionPane(
+                                CrashAssistantGUI.getEditorPane(crashReason.msg.replace("$LOG_FILENAME$", crashReason.logPath.getFileName().toString()), false),
+                                JOptionPane.WARNING_MESSAGE,
+                                JOptionPane.DEFAULT_OPTION
+                        );
+                        JDialog dialog = optionPane.createDialog(
+                                frame,
+                                LanguageProvider.get("gui.logs_analyser")
+                        );
+                        dialog.setVisible(true);
+                    }
+                });
+            } catch (Exception ignored) {
+            }
         }
     }
 

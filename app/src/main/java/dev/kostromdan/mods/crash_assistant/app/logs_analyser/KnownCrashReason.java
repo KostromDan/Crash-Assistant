@@ -25,8 +25,20 @@ public class KnownCrashReason {
         }
     }
 
+    public static void addIfContainsOneOfPatterns(String logContents, Path logPath, String msg, String... patterns) {
+        if (RegexChecker.logContainsOneOfPatterns(logContents, logPath, patterns)) {
+            crashReasons.add(new KnownCrashReason(logPath, msg));
+        }
+    }
+
     public static void addIfContainsOneOfPatterns(Path logPath, String msg, Collection<String> patterns) {
         if (RegexChecker.logContainsOneOfPatterns(logPath, patterns)) {
+            crashReasons.add(new KnownCrashReason(logPath, msg));
+        }
+    }
+
+    public static void addIfContainsOneOfPatterns(String logContents, Path logPath, String msg, Collection<String> patterns) {
+        if (RegexChecker.logContainsOneOfPatterns(logContents, logPath, patterns)) {
             crashReasons.add(new KnownCrashReason(logPath, msg));
         }
     }

@@ -246,6 +246,8 @@ public class CrashAssistantApp {
                                 Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
                                 Method method = clazz.getMethod("addLogFileLater", Path.class);
                                 method.invoke(null, terminatedProcessesPath);
+                                method = clazz.getMethod("showKnownCrashReasonsWarnings");
+                                method.invoke(null);
                             } catch (Exception e) {
                                 LOGGER.error("Exception adding file to gui later:", e);
                             }

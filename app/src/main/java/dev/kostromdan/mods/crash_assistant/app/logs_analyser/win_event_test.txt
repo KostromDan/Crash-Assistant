@@ -1,0 +1,30 @@
+02.02.2025 20:20:21 1002 Ошибка           Программа javaw.exe версии 17.0.8.0 перестала взаимодействовать с Windows и б
+                                          ыла закрыта. Дополнительные сведения о проблеме см. в журнале проблем на пане
+                                          ли управления "Безопасность и обслуживание".
+20/02/2025 13:46:06 1002 Erreur           Le programme javaw.exe version **.**.**.** a cessé d'interagir avec Windows et
+                                          a été fermé. Pour savoir si vous disposez de plus d'informations sur le
+                                          problème, consultez l'historique des problèmes dans le panneau de
+                                          configuration Sécurité et maintenance.
+20/02/2025 5:48:21 PM 1002 Error            The program javaw.exe version **.**.**.** stopped interacting with Windows
+                                            and was closed. To see if more information about the problem is available,
+                                            check the problem history in the Security and Maintenance control panel.
+18.02.2025 02:41:58 1002 Fehler           Das Programm javaw.exe Version **.**.**.** hat die Interaktion mit Windows
+                                          beendet und wurde geschlossen. Überprüfen Sie den Problemverlauf in der
+                                          Systemsteuerung "Sicherheit und Wartung", um nach weiteren Informationen zum
+                                          Problem zu suchen.
+13/02/2025 2:09:08 p. m. 1002 Error            El programa javaw.exe versión **.**.**.** dejó de interactuar con Windows
+                                               y se cerró. Para ver si hay más información disponible sobre este
+                                               problema, comprueba el historial de problemas en el panel de control de
+                                               Seguridad y mantenimiento.
+
+2025-02-13 17:34:22 1002 Fel              Programmet javaw.exe, version **.**.**.** avslutades eftersom det slutade samver
+                                          ka med Windows. Ytterligare information om problemet kan finnas i problemhist
+                                          oriken i Säkerhet och underhåll på Kontrollpanelen.
+
+25-02-12 20:22:19 1002 오류               프로그램 javaw.exe 버전 **.**.**.**이(가) Windows와의 상호 작용을 중지하고 닫혔습니다. 문제에 대한 추가 정보가 있는지 확
+                                        인하려면 보안 및 유지 관리 제어판에서 문제 기록을 확인하세요.
+
+12-2-2025 20:00:17 1002 Fout             Programma javaw.exe versie **.**.**.** communiceert niet meer met Windows en is g
+                                         esloten. Als u wilt zien of er meer informatie over het probleem beschikbaar i
+                                         s, controleert u de probleemgeschiedenis in het configuratiescherm van Beveili
+                                         ging en onderhoud.

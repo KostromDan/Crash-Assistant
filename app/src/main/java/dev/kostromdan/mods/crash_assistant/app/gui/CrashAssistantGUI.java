@@ -126,6 +126,7 @@ public class CrashAssistantGUI {
     }
 
     public static void showKnownCrashReasonsWarnings() {
+        ControlPanel.stopMovingToTop = true;
         synchronized (KnownCrashReason.class) {
             try {
                 SwingUtilities.invokeAndWait(() -> {

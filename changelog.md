@@ -1,4 +1,7 @@
 1.4.0:
+- Fixed I forgot to remove increased time of locating win_events for debug.
+
+1.4.0:
 - Load Intel bug GIF asynchronously from github to reduce mod size.
 - Improved Intel bug message.
 - Introducing Logs Analyser. Analysing logs dor most common crash reasons and displaying message with fix.

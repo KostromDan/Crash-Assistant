@@ -83,9 +83,10 @@ public class LogProcessor {
             return ReversedLinesFileReader.builder()
                     .setPath(this.logPath)
                     .setCharset(StandardCharsets.UTF_8)
+                    .setBufferSize(1024 * 1024)
                     .get();
         } catch (NoSuchMethodError e) {
-            return new ReversedLinesFileReader(logPath.toFile(), StandardCharsets.UTF_8);
+            return new ReversedLinesFileReader(logPath.toFile(), 1024 * 1024, StandardCharsets.UTF_8);
         }
     }
 

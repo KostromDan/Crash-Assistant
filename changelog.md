@@ -1,3 +1,7 @@
+1.4.3:
+
+- Fixed crash on forge. Caused by empty folder which I forgot to remove.
+
 1.4.2:
 
 - Introducing `problematic_mods_config.json`, where you can configure mods which are incompatible with this modpack.

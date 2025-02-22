@@ -6,6 +6,8 @@ import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 
 import javax.swing.*;
@@ -17,6 +19,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 import java.util.Timer;
 import java.util.*;
 import java.util.function.Function;
@@ -115,6 +118,7 @@ public class CrashAssistantGUI {
         CrashAssistantApp.GUIStartTime = Instant.now().toEpochMilli() - CrashAssistantApp.GUIStartTime;
         CrashAssistantApp.GUIInitialisationFinished = true;
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
+        showCrashAssistantDuplicatedWarning();
         IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         IntelChipBugWarning.showIfAffected(false);
         showKnownCrashReasonsWarnings();
@@ -148,6 +152,33 @@ public class CrashAssistantGUI {
                 });
             } catch (Exception e) {
                 CrashAssistantApp.LOGGER.error("Error while showing known crash reasons warnings: ", e);
+            }
+        }
+    }
+
+    public static void showCrashAssistantDuplicatedWarning() {
+        ControlPanel.stopMovingToTop = true;
+        synchronized (KnownCrashReason.class) {
+            try {
+                if (PlatformHelp.platform != PlatformHelp.FORGE &&
+                        PlatformHelp.platform != PlatformHelp.NEOFORGE) return;
+                List<Mod> mods = JarInJarHelper.checkDuplicatedCrashAssistantMod(false);
+                if (mods.size() < 2) return;
+                SwingUtilities.invokeAndWait(() -> {
+                    JOptionPane optionPane = new JOptionPane(
+                            CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.duplicated_mod_warn") +
+                                    String.join("\n", mods.stream().map(Mod::getJarName).toList()), false),
+                            JOptionPane.WARNING_MESSAGE,
+                            JOptionPane.DEFAULT_OPTION
+                    );
+                    JDialog dialog = optionPane.createDialog(
+                            frame,
+                            LanguageProvider.get("gui.duplicated_mod")
+                    );
+                    dialog.setVisible(true);
+                });
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.error("Error while showing crash assistant duplicated warning: ", e);
             }
         }
     }

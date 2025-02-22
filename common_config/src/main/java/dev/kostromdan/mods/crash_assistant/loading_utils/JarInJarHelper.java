@@ -4,6 +4,8 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.config.ProblematicModsConfig;
+import dev.kostromdan.mods.crash_assistant.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.mod_list.ModDataParser;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
@@ -60,19 +62,31 @@ public interface JarInJarHelper {
     }
 
 
-    static void checkDuplicatedCrashAssistantMod() {
+    static List<Mod> checkDuplicatedCrashAssistantMod(boolean crashIfDuplicated) {
         try {
-            List<String> mods = Files.list(Paths.get("mods"))
-                    .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().startsWith("crash_assistant-") && path.getFileName().toString().endsWith(".jar"))
-                    .map(path -> path.getFileName().toString())
+            List<Mod> mods = Files.list(Paths.get("mods"))
+                    .filter(path -> Files.isRegularFile(path) &&
+                            path.getFileName().toString().startsWith("crash_assistant-") &&
+                            path.getFileName().toString().endsWith(".jar"))
+                    .map(ModDataParser::parseModData)
                     .toList();
-            if (mods.size() > 1) {
+
+            if (mods.size() < 2) return List.of();
+            List<Mod> modsWithSameModId = mods.stream().filter(mod -> Objects.equals(mod.getModId(), "crash_assistant")).toList();
+            String duplicatedMods = String.join("\n", mods.stream().map(Mod::getJarName).toList());
+            if (modsWithSameModId.size() > 1) {
+                LOGGER.error("Found more than one mod with modid \"crash_assistant\". Crash Assistant is duplicated." + (crashIfDuplicated ? " Crashing!" : "") +
+                        "\nDuplicated mods:\n" + duplicatedMods);
+                if (crashIfDuplicated) System.exit(-1);
+            } else {
                 LOGGER.error("Found more than one mod starting with \"crash_assistant-\":\n" +
-                        String.join("\n", mods) +
-                        "\nAssuming Crash Assistant is duplicated. Duplicated coremods can produce wired issues.");
+                        duplicatedMods + "\n" +
+                        "Assuming Crash Assistant is duplicated. Duplicated coremods can produce wired issues.");
             }
+            return mods;
         } catch (Exception e) {
             LOGGER.error("Error while checking duplicated mods", e);
+            return List.of();
         }
     }
 

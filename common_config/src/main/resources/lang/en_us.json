@@ -43,6 +43,8 @@
   "gui.intel_corrupted_dont_show_again": "Don't show again",
   "gui.logs_analyser": "Logs Analyser ($LANG.gui.window_name$)",
   "gui.incompatible_mod": "Incompatible Mod Found ($LANG.gui.window_name$)",
+  "gui.duplicated_mod": "Detected duplicated Crash Assistant mod",
+  "gui.duplicated_mod_warn": "Detected multiple mods with mod_id \"crash_assistant\", leave only one of them:\n",
   "gui.remove_mod": "Remove mod",
   "gui.disable_mod": "Disable mod",
   "gui.ok": "OK",

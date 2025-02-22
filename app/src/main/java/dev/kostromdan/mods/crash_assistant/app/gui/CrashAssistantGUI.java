@@ -115,6 +115,7 @@ public class CrashAssistantGUI {
         CrashAssistantApp.GUIStartTime = Instant.now().toEpochMilli() - CrashAssistantApp.GUIStartTime;
         CrashAssistantApp.GUIInitialisationFinished = true;
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
+        IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         IntelChipBugWarning.showIfAffected(false);
         showKnownCrashReasonsWarnings();
     }
@@ -145,7 +146,8 @@ public class CrashAssistantGUI {
                         dialog.setVisible(true);
                     }
                 });
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.error("Error while showing known crash reasons warnings: ", e);
             }
         }
     }

@@ -1,5 +1,4 @@
 {
-  "gui.window_name": "崩溃助手",
   "gui.oops": "糟糕，",
   "gui.title_crashed_with_report": "$CONFIG.text.modpack_name$ 已崩溃并生成报告",
   "gui.title_crashed_without_report": "$CONFIG.text.modpack_name$ 已崩溃但未生成报告",

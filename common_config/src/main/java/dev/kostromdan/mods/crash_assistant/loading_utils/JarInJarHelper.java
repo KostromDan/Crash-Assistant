@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.loading_utils;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.config.ProblematicModsConfig;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
@@ -52,6 +53,7 @@ public interface JarInJarHelper {
                     "-processor", new SystemInfo().getHardware().getProcessor().getProcessorIdentifier().getName()
             );
             crashAssistantAppProcessBuilder.start();
+            ProblematicModsConfig.crashIfProblematicMod();
         } catch (Exception e) {
             LOGGER.error("Error while launching GUI: ", e);
         }

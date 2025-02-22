@@ -112,7 +112,6 @@ public class FilePanel {
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to show file in explorer: ", e);
         }
-
     }
 
     private void openInBrowser() {

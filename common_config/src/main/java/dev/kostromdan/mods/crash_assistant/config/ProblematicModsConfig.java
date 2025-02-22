@@ -6,6 +6,7 @@ import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -22,7 +23,11 @@ public class ProblematicModsConfig {
      *
      * @return List of ProblematicMod records representing problematic mods
      */
-    public static List<ProblematicMod> getProblematicModFromConfig() {
+    public static List<ProblematicMod> getProblematicModsFromConfig() {
+        try {
+            Files.createDirectories(CONFIG_PATH.getParent());
+        } catch (Exception ignored) {
+        }
         // Build and load the configuration file
         FileConfig config = FileConfig.builder(CONFIG_PATH)
                 .preserveInsertionOrder()
@@ -54,7 +59,7 @@ public class ProblematicModsConfig {
                 boolean shouldCrash = modConfig.getOrElse("should_crash_on_startup", false);
                 boolean displayButtons = modConfig.getOrElse("display_remove_disable_buttons", false);
                 String msg = modConfig.getOrElse("msg", "");
-                problematicMods.add(new ProblematicMod(modid, null, shouldCrash, displayButtons, msg));
+                problematicMods.add(new ProblematicMod(modid, null, shouldCrash, msg));
             } else {
                 JarInJarHelper.LOGGER.warn("Invalid config entry for modid '{}': expected a config object, got {}", modid, value);
             }
@@ -68,7 +73,7 @@ public class ProblematicModsConfig {
      * @return List of ProblematicMod instances for mods currently loaded
      */
     public static List<ProblematicMod> getCurrentProblematicMods() {
-        List<ProblematicMod> problematicMods = ProblematicModsConfig.getProblematicModFromConfig();
+        List<ProblematicMod> problematicMods = ProblematicModsConfig.getProblematicModsFromConfig();
         LinkedHashSet<Mod> currentMods = ModListUtils.getCurrentModList();
 
         Map<String, ProblematicMod> configMap = problematicMods.stream()
@@ -82,7 +87,6 @@ public class ProblematicModsConfig {
                             fromConfig.modid(),
                             mod,
                             fromConfig.should_crash_on_startup(),
-                            fromConfig.display_remove_disable_buttons(),
                             fromConfig.msg()
                     );
                 })
@@ -100,14 +104,13 @@ public class ProblematicModsConfig {
             // Create an example configuration entry
             com.electronwill.nightconfig.core.Config exampleModConfig = com.electronwill.nightconfig.core.Config.inMemory();
             exampleModConfig.set("should_crash_on_startup", true);
-            exampleModConfig.set("display_remove_disable_buttons", true);
             exampleModConfig.set("msg", "Custom msg on crash for this mod id. You can use $JAR_NAME$ placeholder, which will be replaced with jar name. You can use HTML here, it will work.");
             config.set("example_modid", exampleModConfig);
         }
     }
 
     public static void crashIfProblematicMod() {
-        List<ProblematicMod> problematicModsFromConfig = getProblematicModFromConfig();
+        List<ProblematicMod> problematicModsFromConfig = getProblematicModsFromConfig();
         if (problematicModsFromConfig.stream().noneMatch(ProblematicMod::should_crash_on_startup)) return;
 
         List<ProblematicMod> problematicMods = getCurrentProblematicMods();
@@ -131,7 +134,6 @@ public class ProblematicModsConfig {
             String modid,
             Mod currentMod,
             boolean should_crash_on_startup,
-            boolean display_remove_disable_buttons,
             String msg
     ) {
     }

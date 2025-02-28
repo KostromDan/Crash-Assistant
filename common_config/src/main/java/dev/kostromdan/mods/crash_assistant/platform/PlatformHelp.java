@@ -71,4 +71,12 @@ public enum PlatformHelp {
                 }};
         }
     }
+
+    public static boolean isPlatformForgeBased(){
+        return platform == FORGE || platform == NEOFORGE;
+    }
+
+    public static boolean isPlatformFabricBased(){
+        return platform == FABRIC || platform == QUILT;
+    }
 }

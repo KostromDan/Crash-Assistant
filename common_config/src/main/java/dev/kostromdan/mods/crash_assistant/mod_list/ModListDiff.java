@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.mod_list;
 
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 
 import java.util.*;
 import java.util.function.Function;
@@ -24,28 +25,52 @@ public class ModListDiff {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
         updatedMods = new LinkedHashSet<>();
-        HashMap<String, HashSet<Mod>> modIdToMods = new HashMap<>();
+        HashSet<String> updatedModsModIds = new HashSet<>();
 
-        HashSet<Mod> tmpMods = new HashSet<>();
-        tmpMods.addAll(removedMods);
-        tmpMods.addAll(addedMods);
-        for (Mod mod : tmpMods) {
-            if (mod.getModId() != null) {
-                modIdToMods.computeIfAbsent(mod.getModId(), k -> new HashSet<>()).add(mod);
-            }
+        LinkedHashMap<String, Pair<LinkedHashSet<Mod>, LinkedHashSet<Mod>>> modIdToModMap = new LinkedHashMap<>();
+
+        for (Mod mod : saved) {
+            if (mod.getModId() == null) continue;
+            modIdToModMap
+                    .computeIfAbsent(mod.getModId(), k -> new Pair<>(new LinkedHashSet<>(), new LinkedHashSet<>()))
+                    .getFirst()
+                    .add(mod);
         }
 
-        for (Mod mod : (LinkedHashSet<Mod>) removedMods.clone()) {
-            if (mod.getModId() != null) {
-                HashSet<Mod> modsWithSameModId = modIdToMods.get(mod.getModId());
-                modsWithSameModId.remove(mod);
-                for (Mod updatedMod : modsWithSameModId) {
-                    updatedMods.add(new UpdatedPair(mod, updatedMod));
-                    addedMods.remove(updatedMod);
-                    removedMods.remove(mod);
-                }
+        for (Mod mod : current) {
+            if (mod.getModId() == null) continue;
+            modIdToModMap
+                    .computeIfAbsent(mod.getModId(), k -> new Pair<>(new LinkedHashSet<>(), new LinkedHashSet<>()))
+                    .getSecond()
+                    .add(mod);
+        }
+
+        for (var entry : modIdToModMap.entrySet()) {
+            String modId = entry.getKey();
+            var pair = entry.getValue();
+
+            if (pair.getFirst().isEmpty() || pair.getSecond().isEmpty()) {
+                continue;
+            }
+
+            if (PlatformHelp.isPlatformFabricBased()) {
+                leaveOnlyOneWithHighestVersion(pair.getFirst());
+                leaveOnlyOneWithHighestVersion(pair.getSecond());
+            }
+
+            if (pair.getFirst().equals(pair.getSecond())) {
+                continue;
+            }
+            Mod currentSavedMod = pair.getFirst().getFirst();
+            LinkedHashSet<Mod> currentCurrentMods = pair.getSecond();
+
+            for (Mod mod : currentCurrentMods) {
+                updatedMods.add(new UpdatedPair(currentSavedMod, mod));
+                updatedModsModIds.add(modId);
             }
         }
+        addedMods.removeIf(addedMod -> updatedModsModIds.contains(addedMod.getModId()));
+        removedMods.removeIf(removedMod -> updatedModsModIds.contains(removedMod.getModId()));
     }
 
     public LinkedHashSet<Mod> getAddedMods() {
@@ -154,4 +179,21 @@ public class ModListDiff {
         return filePrefix;
     }
 
+    class Pair<F, S> {
+        private final F first;
+        private final S second;
+
+        public Pair(F first, S second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        public F getFirst() {
+            return first;
+        }
+
+        public S getSecond() {
+            return second;
+        }
+    }
 }

@@ -12,7 +12,7 @@
     "sources": "https://github.com/KostromDan/Crash-Assistant",
     "issues": "https://github.com/KostromDan/Crash-Assistant/issues"
   },
-  "license": "MIT",
+  "license": "GNU LGPLv3",
   "icon": "assets/crash_assistant/icon.png",
   "environment": "*",
   "entrypoints": {

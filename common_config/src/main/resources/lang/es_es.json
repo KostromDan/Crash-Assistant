@@ -1,5 +1,4 @@
 {
-  "gui.window_name": "Asistente de Crasheos",
   "gui.oops": "Ups, ",
   "gui.title_crashed_with_report": "$CONFIG.text.modpack_name$ se ha caído",
   "gui.title_crashed_without_report": "$CONFIG.text.modpack_name$ se ha caído sin un informe de crasheo",
@@ -11,7 +10,7 @@
   "gui.file_list_label": "Archivos de registro disponibles:",
   "gui.open_button": "Abrir",
   "gui.show_in_explorer_button": "Mostrar en el explorador",
-  "gui.upload_and_copy_link_button": "Subir y copiar enlace",
+  "gui.upload_and_copy_link_button": "  Subir y copiar enlace  ",
   "gui.copy_split_log_dialog_text": "El tamaño de $FILE_NAME$ $LOG_TOO_BIG_REASON$ excede los límites de mclo.gs.\nPara minimizar el riesgo de perder información importante debido a que el registro se corta al final,\nlo hemos dividido en una cabeza y cola de 25k líneas o 10MB cada una.\n\n\n<b>¿En qué parte del registro te gustaría $ACTION$?</b>",
   "gui.copy_split_log_dialog_title": "Selección de parte del registro",
   "gui.split_log_dialog_action_copy": "copiar",
@@ -51,7 +50,7 @@
   "gui.error_delete_mod_exception": "Error al eliminar el archivo del módulo: %s",
   "gui.error_disable_mod_exception": "Error al deshabilitar el archivo del módulo: %s",
   "gui.error_open_explorer": "Error al abrir el explorador de archivos: %s",
-  "warnings.atio6axx": "El <strong>atio6axx</strong> \"Problema con el frame\" en un archivo <strong>$LOG_FILENAME$</strong> es parte del controlador <strong>AMD</strong> para la GPU,\nexiste una versión defectuosa de los controladores de AMD que provoca un crasheo instantáneo en una tarea OpenGL.\nReinstala/Instala desde cero tus controladores desde <a href=\"https://www.amd.com/en/support\">https://www.amd.com/en/support</a>\n<strong>SI</strong> no tienes una <strong>GPU AMD</strong>, entonces necesitas configurar tu sistema para usar esa GPU\nen lugar de la GPU integrada AMD en el CPU, los pasos están a continuación.\n<a href=\"https://www.xda-developers.com/how-force-app-use-discrete-gpu-windows-11/\">https://www.xda-developers.com/how-force-app-use-discrete-gpu-windows-11/</a>",
+  "warnings.atio6axx": "El <strong>atio6axx</strong> \"Problematic frame\" en un archivo <strong>$LOG_FILENAME$</strong> es parte del controlador <strong>AMD</strong> para la GPU,\nexiste una versión defectuosa de los controladores de AMD que provoca un crasheo instantáneo en una tarea OpenGL.\nReinstala/Instala desde cero tus controladores desde <a href=\"https://www.amd.com/en/support\">https://www.amd.com/en/support</a>\n<strong>SI</strong> no tienes una <strong>GPU AMD</strong>, entonces necesitas configurar tu sistema para usar esa GPU\nen lugar de la GPU integrada AMD en el CPU, los pasos están a continuación.\n<a href=\"https://www.xda-developers.com/how-force-app-use-discrete-gpu-windows-11/\">https://www.xda-developers.com/how-force-app-use-discrete-gpu-windows-11/</a>",
   "warnings.closed_by_windows": "Si este crasheo ocurrió durante la carga del juego o nivel, probablemente fue causado por presionar teclas o hacer clic con el ratón.\nEl error \"El programa javaw.exe versión ... dejó de interactuar con Windows y se cerró\" en\n<strong>$LOG_FILENAME$</strong> significa que el juego se congeló, posiblemente debido a estas acciones.\nPara evitar esto, deja que el juego cargue completamente—<strong style='color: red;'>NO HAGAS CLIC EN NADA</strong>, <strong style='color: red;'>NO PRESIONES NINGUNA TECLA</strong>, o <strong style='color: red;'>NO CLICKEES EN FINALIZAR PROCESO</strong>.\nSi el crasheo ocurrió durante el juego, solo presiona OK e ignora este mensaje.",
   "commands.mod_config_tooltip": "Haz clic para abrir la configuración",
   "commands.nickname_tooltip": "Haz clic para copiar el apodo",

@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.loading_utils;
 
+import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
+
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,5 +36,14 @@ public interface LibrariesJarLocator {
         }
 
         return path.toAbsolutePath().toString();
+    }
+
+    static void setupLoaderJarName(Class cls) {
+        try {
+            PlatformHelp.loaderJarName = Paths.get(getLibraryJarPath(cls)).getFileName().toString();
+            JarInJarHelper.LOGGER.info(PlatformHelp.loaderJarName);
+        } catch (URISyntaxException e) {
+            JarInJarHelper.LOGGER.error("Error while trying to get loader jar path: ", e);
+        }
     }
 }

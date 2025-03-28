@@ -136,6 +136,7 @@ public class CrashAssistantGUI {
             try {
                 SwingUtilities.invokeAndWait(() -> {
                     for (KnownCrashReason crashReason : KnownCrashReason.crashReasons) {
+                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}",crashReason.msg);
                         if (crashReason.shownWarn) continue;
                         crashReason.shownWarn = true;
                         JOptionPane optionPane = new JOptionPane(
@@ -148,6 +149,7 @@ public class CrashAssistantGUI {
                                 LanguageProvider.get("gui.logs_analyser")
                         );
                         dialog.setVisible(true);
+                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason.");
                     }
                 });
             } catch (Exception e) {

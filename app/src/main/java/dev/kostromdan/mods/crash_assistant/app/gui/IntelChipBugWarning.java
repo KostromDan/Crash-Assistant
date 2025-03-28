@@ -29,6 +29,9 @@ public class IntelChipBugWarning {
             if (Objects.equals(CrashAssistantLocalConfig.get("intel_corrupted.dont_show_again"), true)) return;
             boolean showGif = CrashAssistantConfig.getBoolean("intel_corrupted.show_gif");
 
+            CrashAssistantApp.LOGGER.info("Showing IntelChipBugWarning");
+
+
             ControlPanel.stopMovingToTop = true;
 
             JDialog dialog = new JDialog((Frame) null, LanguageProvider.get("gui.intel_corrupted_title"), true);
@@ -157,6 +160,7 @@ public class IntelChipBugWarning {
             if (debug) dialog.setAlwaysOnTop(true);
             dialog.setVisible(true);
         }
+        CrashAssistantApp.LOGGER.info("Shown IntelChipBugWarning");
     }
 
     public static void main(String[] args) {

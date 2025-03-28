@@ -17,6 +17,7 @@ public enum PlatformHelp {
     private final String helpName;
     private final String helpChannel;
     public static PlatformHelp platform = UNKNOWN;
+    public static String loaderJarName = "UNDEFINED";
 
     PlatformHelp(String helpLink, String helpName, String helpChannel) {
         this.helpLink = helpLink;

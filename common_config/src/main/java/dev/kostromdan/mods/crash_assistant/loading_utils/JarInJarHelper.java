@@ -48,6 +48,7 @@ public interface JarInJarHelper {
                     "-jarPath", extractedJarPath.toAbsolutePath().toString(),
                     "-parentPID", Objects.toString(ProcessHandle.current().pid()),
                     "-platform", PlatformHelp.platform.toString(),
+                    "-loaderJarName", PlatformHelp.loaderJarName,
                     "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),

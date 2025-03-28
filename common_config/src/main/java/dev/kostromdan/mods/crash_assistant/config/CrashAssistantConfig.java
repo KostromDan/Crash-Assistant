@@ -145,6 +145,9 @@ public class CrashAssistantConfig {
                 "If enabled, will add resourcepacks to modlist.json\n" +
                         "After filename where will be ' (resourcepack)' suffix.",
                 false);
+        addOption("modpack_modlist.add_modloader_jar_name",
+                "If enabled, will add modloader jar name to modlist, to easily track if user changed version of modloader.",
+                true);
 
         config.setComment("crash_command", "Settings of '/crash_assistant crash' command feature.");
         addOption("crash_command.enabled",

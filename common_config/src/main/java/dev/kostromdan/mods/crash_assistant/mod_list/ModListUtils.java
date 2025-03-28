@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.mod_list;
 
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,6 +28,11 @@ public class ModListUtils {
     public static LinkedHashSet<Mod> getCurrentModList() {
         try {
             LinkedHashSet<Mod> currentMods = new LinkedHashSet<>();
+
+            if (CrashAssistantConfig.getBoolean("modpack_modlist.add_modloader_jar_name")) {
+                currentMods.add(new Mod(PlatformHelp.loaderJarName, PlatformHelp.platform.name().toLowerCase(), PlatformHelp.loaderJarName));
+            }
+            
             if (Files.exists(MODS_FOLDER)) {
                 long start = System.currentTimeMillis();
 

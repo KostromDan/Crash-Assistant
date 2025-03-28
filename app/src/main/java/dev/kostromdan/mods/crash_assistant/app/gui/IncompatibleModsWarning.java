@@ -30,6 +30,8 @@ public class IncompatibleModsWarning {
 
                 SwingUtilities.invokeAndWait(() -> {
                     for (ProblematicModsConfig.ProblematicMod problematicMod : currentProblematicMods) {
+                        CrashAssistantApp.LOGGER.info("Showing IncompatibleModsWarning about {}", problematicMod.currentMod().getJarName());
+
                         String[] options = {
                                 LanguageProvider.get("gui.remove_mod"),
                                 LanguageProvider.get("gui.disable_mod"),
@@ -96,6 +98,7 @@ public class IncompatibleModsWarning {
                                 );
                             }
                         }
+                        CrashAssistantApp.LOGGER.info("Shown IncompatibleModsWarning about {}", problematicMod.currentMod().getJarName());
                     }
                 });
             } catch (Exception e) {

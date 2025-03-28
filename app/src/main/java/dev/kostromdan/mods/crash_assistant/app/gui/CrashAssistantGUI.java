@@ -82,7 +82,7 @@ public class CrashAssistantGUI {
         fileListPanel = new FileListPanel();
         frame.add(fileListPanel.getScrollPane(), BorderLayout.CENTER);
 
-        controlPanel = new ControlPanel(fileListPanel);
+        controlPanel = new ControlPanel(fileListPanel, availableLogs);
         frame.add(controlPanel.getPanel(), BorderLayout.SOUTH);
 
         heightWithoutScrollPane = frame.getPreferredSize().height;

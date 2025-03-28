@@ -148,6 +148,11 @@ public class CrashAssistantConfig {
         addOption("modpack_modlist.add_modloader_jar_name",
                 "If enabled, will add modloader jar name to modlist, to easily track if user changed version of modloader.",
                 true);
+        addOption("modpack_modlist.force_add_full_modlist_as_log",
+                "If enabled, will add modlist.txt, with names of all mods to logs.\n" +
+                        "false - only if general.help_link equals CHANGE_ME, will add modlist.txt to logs.\n" +
+                        "true - anyways will add modlist.txt to logs.",
+                false);
 
         config.setComment("crash_command", "Settings of '/crash_assistant crash' command feature.");
         addOption("crash_command.enabled",

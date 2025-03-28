@@ -8,12 +8,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ModListDiff {
+    private final LinkedHashSet<Mod> currentMods;
     private final LinkedHashSet<Mod> addedMods;
     private final LinkedHashSet<Mod> removedMods;
     private final LinkedHashSet<UpdatedPair> updatedMods;
     private static String filePrefix = null;
 
     public ModListDiff(LinkedHashSet<Mod> saved, LinkedHashSet<Mod> current) {
+        currentMods = current;
+
         // Added mods: present in current but not in saved
         addedMods = current.stream()
                 .filter(mod -> !saved.contains(mod))
@@ -67,6 +70,10 @@ public class ModListDiff {
         }
         addedMods.removeIf(addedMod -> updatedModsModIds.contains(addedMod.getModId()));
         removedMods.removeIf(removedMod -> updatedModsModIds.contains(removedMod.getModId()));
+    }
+
+    public LinkedHashSet<Mod> getCurrentMods() {
+        return currentMods;
     }
 
     public LinkedHashSet<Mod> getAddedMods() {

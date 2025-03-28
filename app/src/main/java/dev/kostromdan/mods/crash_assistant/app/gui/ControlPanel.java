@@ -2,29 +2,24 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
-import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
-import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
-import dev.kostromdan.mods.crash_assistant.app.utils.McLogsApiProvider;
-import dev.kostromdan.mods.crash_assistant.app.utils.TrustedDomainsHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.mod_list.AnsiColor;
-import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiff;
-import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiffStringBuilder;
-import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.mod_list.*;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import gs.mclo.api.response.UploadLogResponse;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedWriter;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -40,7 +35,7 @@ public class ControlPanel {
     private String generatedMsg = null;
     private ModListDiff modListDiff;
 
-    public ControlPanel(FileListPanel fileListPanel) {
+    public ControlPanel(FileListPanel fileListPanel, Map<String, Path> availableLogs) {
         this.fileListPanel = fileListPanel;
 
         panel = new JPanel(new BorderLayout());
@@ -50,6 +45,20 @@ public class ControlPanel {
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             modListDiff = ModListDiff.getDiff();
+
+            if (PlatformHelp.isLinkDefault() || CrashAssistantConfig.getBoolean("modpack_modlist.force_add_full_modlist_as_log")) {
+                Path modListTxtPath = Paths.get("logs", "modlist.txt");
+                try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
+                    for (Mod mod : modListDiff.getCurrentMods()) {
+                        writer.write(mod.getJarName());
+                        writer.newLine();
+                    }
+                    availableLogs.put(modListTxtPath.getFileName().toString(), modListTxtPath);
+                } catch (Exception e) {
+                    CrashAssistantApp.LOGGER.error("Error while saving modlist.txt", e);
+                }
+            }
+
             String labelMsg;
             JButton showModListButton = new JButton(LanguageProvider.get("gui.show_modlist_diff_button"));
             if (modListDiff.isEmpty()) {

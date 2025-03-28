@@ -136,8 +136,8 @@ public class CrashAssistantGUI {
             try {
                 SwingUtilities.invokeAndWait(() -> {
                     for (KnownCrashReason crashReason : KnownCrashReason.crashReasons) {
-                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}",crashReason.msg);
                         if (crashReason.shownWarn) continue;
+                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}",crashReason.msg);
                         crashReason.shownWarn = true;
                         JOptionPane optionPane = new JOptionPane(
                                 CrashAssistantGUI.getEditorPane(crashReason.msg.replace("$LOG_FILENAME$", crashReason.logPath.getFileName().toString()), false),

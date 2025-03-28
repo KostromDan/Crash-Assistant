@@ -50,7 +50,7 @@ public class ControlPanel {
                 Path modListTxtPath = Paths.get("logs", "modlist.txt");
                 try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
                     for (Mod mod : modListDiff.getCurrentMods()) {
-                        writer.write(mod.getJarName());
+                        writer.write(mod.getJarName() + " : " + mod.getModId());
                         writer.newLine();
                     }
                     availableLogs.put(modListTxtPath.getFileName().toString(), modListTxtPath);

@@ -30,9 +30,13 @@ public class ModListUtils {
             LinkedHashSet<Mod> currentMods = new LinkedHashSet<>();
 
             if (CrashAssistantConfig.getBoolean("modpack_modlist.add_modloader_jar_name")) {
-                currentMods.add(new Mod(PlatformHelp.loaderJarName, PlatformHelp.platform.name().toLowerCase(), PlatformHelp.loaderJarName));
+                currentMods.add(new Mod(
+                        PlatformHelp.loaderJarName + " (modloader)",
+                        PlatformHelp.platform.name().toLowerCase(),
+                        PlatformHelp.loaderJarName)
+                );
             }
-            
+
             if (Files.exists(MODS_FOLDER)) {
                 long start = System.currentTimeMillis();
 

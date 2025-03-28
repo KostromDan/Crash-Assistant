@@ -54,6 +54,9 @@ public class ModListDiff {
             if (pair.getFirst().isEmpty() || pair.getSecond().isEmpty()) {
                 continue;
             }
+            if (pair.getFirst().equals(pair.getSecond())) {
+                continue;
+            }
 
             MavenVersionComparator.leaveOnlyOneWithHighestVersion(pair.getFirst());
             MavenVersionComparator.leaveOnlyOneWithHighestVersion(pair.getSecond());
@@ -61,10 +64,11 @@ public class ModListDiff {
             if (pair.getFirst().equals(pair.getSecond())) {
                 continue;
             }
-            Mod currentSavedMod = pair.getFirst().iterator().next();
-            Mod currentCurrentMod = pair.getSecond().iterator().next();
 
-            updatedMods.add(new UpdatedPair(currentSavedMod, currentCurrentMod));
+            Mod savedMod = pair.getFirst().iterator().next();
+            Mod currentMod = pair.getSecond().iterator().next();
+
+            updatedMods.add(new UpdatedPair(savedMod, currentMod));
             updatedModsModIds.add(modId);
 
         }

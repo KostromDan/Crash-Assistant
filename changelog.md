@@ -1,3 +1,15 @@
+1.5.0:
+
+- Added Spanish localization files. Thanks Rener-py for this.
+- Redesign of modlist diff. Should fix all problems with updated mods not working correctly when duplicated mods are present, some another issues.
+- Fixed stupid issue caused incorrect order of parsing mods.toml. Caused rare incorrect version in updated mods.
+- Added option modpack_modlist.add_modloader_jar_name, enabled by default, which will add the modloader jar name to the modlist, making it easier to track if the user changed the modloader version.
+- Added option modpack_modlist.force_add_full_modlist_as_log, which will add the full modlist.txt as a log. Enabled by default for individual downloads and disabled for modpacks; change to true to enable for modpacks.
+- Improved check for duplicated Crash Assistant mod.
+- Fixed issue where I forgot to update the license in mod data.
+- Added some logging.
+- Marked 1.21.5 as incompatible. I will port to 1.22, but 1.21.5 is not mainstream, will never be it and where too much changes. If you need it, feel free to open an issue, maybe I'll change my position. 
+
 1.4.3:
 
 - Fixed crash on forge. Caused by empty folder which I forgot to remove.

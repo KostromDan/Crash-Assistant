@@ -27,38 +27,53 @@ public class ModListDiff {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
         updatedMods = new LinkedHashSet<>();
+        HashSet<String> updatedModsModIds = new HashSet<>();
 
-        LinkedHashMap<String, UpdatedPair> updatedPairCandidates = new LinkedHashMap<>();
+        LinkedHashMap<String, Pair<LinkedHashSet<Mod>, LinkedHashSet<Mod>>> modIdToModMap = new LinkedHashMap<>();
 
         for (Mod mod : saved) {
             if (mod.getModId() == null) continue;
-            updatedPairCandidates
-                    .computeIfAbsent(mod.getModId(), k -> new UpdatedPair(new LinkedHashSet<>(), new LinkedHashSet<>()))
-                    .getOldMods()
+            modIdToModMap
+                    .computeIfAbsent(mod.getModId(), k -> new Pair<>(new LinkedHashSet<>(), new LinkedHashSet<>()))
+                    .getFirst()
                     .add(mod);
         }
 
         for (Mod mod : current) {
             if (mod.getModId() == null) continue;
-            updatedPairCandidates
-                    .computeIfAbsent(mod.getModId(), k -> new UpdatedPair(new LinkedHashSet<>(), new LinkedHashSet<>()))
-                    .getNewMods()
+            modIdToModMap
+                    .computeIfAbsent(mod.getModId(), k -> new Pair<>(new LinkedHashSet<>(), new LinkedHashSet<>()))
+                    .getSecond()
                     .add(mod);
         }
 
-        var iterator = updatedPairCandidates.entrySet().iterator();
-        while (iterator.hasNext()) {
-            var entry = iterator.next();
+        for (var entry : modIdToModMap.entrySet()) {
+            String modId = entry.getKey();
             var pair = entry.getValue();
 
-            if (pair.getOldMods().isEmpty() || pair.getNewMods().isEmpty() ||
-                    pair.getOldMods().equals(pair.getNewMods())) {
-                iterator.remove();
+            if (pair.getFirst().isEmpty() || pair.getSecond().isEmpty()) {
+                continue;
             }
+            if (pair.getFirst().equals(pair.getSecond())) {
+                continue;
+            }
+
+            MavenVersionComparator.leaveOnlyOneWithHighestVersion(pair.getFirst());
+            MavenVersionComparator.leaveOnlyOneWithHighestVersion(pair.getSecond());
+
+            if (pair.getFirst().equals(pair.getSecond())) {
+                continue;
+            }
+
+            Mod savedMod = pair.getFirst().iterator().next();
+            Mod currentMod = pair.getSecond().iterator().next();
+
+            updatedMods.add(new UpdatedPair(savedMod, currentMod));
+            updatedModsModIds.add(modId);
+
         }
-        updatedMods.addAll(updatedPairCandidates.values());
-        addedMods.removeIf(addedMod -> updatedPairCandidates.containsKey(addedMod.getModId()));
-        removedMods.removeIf(removedMod -> updatedPairCandidates.containsKey(removedMod.getModId()));
+        addedMods.removeIf(addedMod -> updatedModsModIds.contains(addedMod.getModId()));
+        removedMods.removeIf(removedMod -> updatedModsModIds.contains(removedMod.getModId()));
     }
 
     public LinkedHashSet<Mod> getCurrentMods() {
@@ -142,38 +157,17 @@ public class ModListDiff {
         }
         if (!getUpdatedMods().isEmpty()) {
             sb.append(langFunc.apply("msg.updated_mods"));
-
-            if(getUpdatedMods().stream().anyMatch(UpdatedPair::isOnlyOneModInEach)){
-                sb.append("format: ", false);
-
-                sb.append("commonPrefix", "blue", false);
-                sb.append("| ", false);
-
-                sb.append("uniquePartFromOld", "red", false);
-                sb.append(" > ", false);
-                sb.append("uniquePartFromNew", "green", false);
-
-                sb.append(" |", false);
-                sb.append("commonSuffix", "blue");
-            }
-
             for (UpdatedPair updatedPair : getUpdatedMods()) {
-                if (updatedPair.isOnlyOneModInEach()){
-                    Mod oldMod = updatedPair.getOldMods().iterator().next();
-                    Mod NewMod = updatedPair.getNewMods().iterator().next();
-                    UpdatedPairDiff diff = UpdatedPairDiff.fromMods(oldMod, NewMod);
-
-                    sb.append(diff.getCommonPrefix(), "blue", false);
-                    sb.append("| ", false);
-
-                    sb.append(diff.getUniquePart1(), "red", false);
+                sb.append(updatedPair.getOldMod().getModId(), "blue", false);
+                sb.append(" (", false);
+                sb.append(updatedPair.getOldMod().getVersion(), "red", false);
+                sb.append(" > ", false);
+                sb.append(updatedPair.getNewMod().getVersion(), "green", false);
+                sb.append(")");
+                if (Objects.equals(updatedPair.getOldMod().getVersion(), updatedPair.getNewMod().getVersion())) {
+                    sb.append(updatedPair.getOldMod().getJarName(), "green", false);
                     sb.append(" > ", false);
-                    sb.append(diff.getUniquePart2(), "green", false);
-
-                    sb.append(" |", false);
-                    sb.append(diff.getCommonSuffix(), "blue");
-                }else {
-
+                    sb.append(updatedPair.getNewMod().getJarName(), "red");
                 }
             }
         }
@@ -190,5 +184,23 @@ public class ModListDiff {
             }
         }
         return filePrefix;
+    }
+
+    class Pair<F, S> {
+        private final F first;
+        private final S second;
+
+        public Pair(F first, S second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        public F getFirst() {
+            return first;
+        }
+
+        public S getSecond() {
+            return second;
+        }
     }
 }

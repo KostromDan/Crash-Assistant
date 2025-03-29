@@ -23,7 +23,7 @@ side = "BOTH"
 [[dependencies.crash_assistant]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.1,)"
+versionRange = "[1.21.1, 1.21.4]"
 ordering = "NONE"
 side = "BOTH"
 

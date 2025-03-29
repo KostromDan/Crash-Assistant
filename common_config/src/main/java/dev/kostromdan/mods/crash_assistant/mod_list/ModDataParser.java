@@ -132,6 +132,8 @@ public class ModDataParser {
                         String version = mods.get("version");
                         if (Objects.equals(version, "${file.jarVersion}")) {
                             version = parseVersionFromManifest(jarFile);
+                        } else if (Objects.equals(version, "${modVersion}")) {
+                            version = null;
                         }
                         if (version == null && modId == null) {
                             throw new Exception("Failed to parse mod data(version AND modId) from " + resourcePath + " of " + jarPath.getFileName());
@@ -147,10 +149,10 @@ public class ModDataParser {
                         Files.deleteIfExists(temp);
                     }
                 } catch (Exception e) {
-                    JarInJarHelper.LOGGER.warn("Error while trying to parse " + resourcePath + " of " + jarPath.getFileName().toString() + ": ",e);
+                    JarInJarHelper.LOGGER.warn("Error while trying to parse " + resourcePath + " of " + jarPath.getFileName().toString() + ": ", e);
                 }
             }
-            if (jarPath.getFileName().toString().startsWith("essential") && jarFile.getJarEntry("essential-loader.properties") != null){
+            if (jarPath.getFileName().toString().startsWith("essential") && jarFile.getJarEntry("essential-loader.properties") != null) {
                 return new Mod(jarPath.getFileName().toString(), "essential-container", null);
             }
         } catch (Exception ignored) {

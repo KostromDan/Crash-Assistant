@@ -25,4 +25,5 @@ local
 *.architectury-transformer
 /config/
 /logs/
+/mods/
 win_event*.txt

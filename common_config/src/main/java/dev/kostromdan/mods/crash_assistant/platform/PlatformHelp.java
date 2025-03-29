@@ -45,31 +45,27 @@ public enum PlatformHelp {
     }
 
     public static List<String> getOrderedInJarPaths() {
-        switch (platform) {
-            case NEOFORGE:
-                new ArrayList<>() {{
-                    add("META-INF/neoforge.mods.toml");
-                    add("META-INF/mods.toml");
-                    add("fabric.mod.json");
-                }};
-            case FABRIC, QUILT:
-                new ArrayList<>() {{
-                    add("fabric.mod.json");
-                    add("META-INF/mods.toml");
-                    add("META-INF/neoforge.mods.toml");
-                }};
-            case FORGE:
-                return new ArrayList<>() {{
-                    add("META-INF/mods.toml");
-                    add("META-INF/neoforge.mods.toml");
-                    add("fabric.mod.json");
-                }};
-            default:
-                return new ArrayList<>() {{
-                    add("META-INF/mods.toml");
-                    add("META-INF/neoforge.mods.toml");
-                    add("fabric.mod.json");
-                }};
-        }
+        return switch (platform) {
+            case NEOFORGE -> new ArrayList<>() {{
+                add("META-INF/neoforge.mods.toml");
+                add("META-INF/mods.toml");
+                add("fabric.mod.json");
+            }};
+            case FABRIC, QUILT -> new ArrayList<>() {{
+                add("fabric.mod.json");
+                add("META-INF/mods.toml");
+                add("META-INF/neoforge.mods.toml");
+            }};
+            case FORGE -> new ArrayList<>() {{
+                add("META-INF/mods.toml");
+                add("META-INF/neoforge.mods.toml");
+                add("fabric.mod.json");
+            }};
+            default -> new ArrayList<>() {{
+                add("META-INF/mods.toml");
+                add("META-INF/neoforge.mods.toml");
+                add("fabric.mod.json");
+            }};
+        };
     }
 }

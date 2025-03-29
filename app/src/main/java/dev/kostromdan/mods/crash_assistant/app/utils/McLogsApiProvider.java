@@ -11,5 +11,4 @@ public class McLogsApiProvider {
         }
         return MCLogsClient;
     }
-
 }

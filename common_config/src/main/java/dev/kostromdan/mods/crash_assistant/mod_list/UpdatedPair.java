@@ -1,19 +1,25 @@
 package dev.kostromdan.mods.crash_assistant.mod_list;
 
+import java.util.LinkedHashSet;
+
 public class UpdatedPair {
-    private final Mod oldMod;
-    private final Mod newMod;
+    private final LinkedHashSet<Mod> oldMods;
+    private final LinkedHashSet<Mod> newMods;
 
-    public UpdatedPair(Mod oldMod, Mod newMod) {
-        this.oldMod = oldMod;
-        this.newMod = newMod;
+    public UpdatedPair(LinkedHashSet<Mod> oldMods, LinkedHashSet<Mod> newMods) {
+        this.oldMods = oldMods;
+        this.newMods = newMods;
     }
 
-    public Mod getOldMod() {
-        return oldMod;
+    public LinkedHashSet<Mod> getOldMods() {
+        return oldMods;
     }
 
-    public Mod getNewMod() {
-        return newMod;
+    public LinkedHashSet<Mod> getNewMods() {
+        return newMods;
+    }
+
+    public boolean isOnlyOneModInEach() {
+        return oldMods.size() == 1 && newMods.size() == 1;
     }
 }

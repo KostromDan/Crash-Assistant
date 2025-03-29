@@ -43,8 +43,16 @@ public class Mod {
             return true;
         }
 
-        String normVersion = version.replaceAll("[+._\\-]", "").toLowerCase();
-        String normJarName = jarName.replaceAll("[+._\\-]", "").toLowerCase();
+        String normVersion = version.toLowerCase()
+                .replaceAll("mc\\d+(\\.\\d+)*", "")
+                .replaceAll("fabric|neo|forge", "")
+                .replaceAll("[+._\\-]", "")
+                .trim();
+        String normJarName = jarName.toLowerCase()
+                .replaceAll("mc\\d+(\\.\\d+)*", "")
+                .replaceAll("fabric|neo|forge", "")
+                .replaceAll("[+._\\-]", "")
+                .trim();;
 
         return !normJarName.contains(normVersion);
     }

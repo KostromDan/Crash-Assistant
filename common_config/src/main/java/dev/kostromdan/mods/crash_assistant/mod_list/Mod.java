@@ -38,6 +38,17 @@ public class Mod {
         return version;
     }
 
+    public boolean isModMessedUpWithVersion() {
+        if (version == null || modId == null) {
+            return true;
+        }
+
+        String normVersion = version.replaceAll("[+._\\-]", "").toLowerCase();
+        String normJarName = jarName.replaceAll("[+._\\-]", "").toLowerCase();
+
+        return !normJarName.contains(normVersion);
+    }
+
     @Override
     public String toString() {
         return "Mod{" +

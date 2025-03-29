@@ -19,7 +19,11 @@ public class UpdatedPair {
         return newMods;
     }
 
-    public boolean isOnlyOneModInEach() {
-        return oldMods.size() == 1 && newMods.size() == 1;
+    public String getModId(){
+        return oldMods.iterator().next().getModId();
+    }
+
+    public boolean isAnyModMessedUpWithVersion(){
+        return oldMods.stream().anyMatch(Mod::isModMessedUpWithVersion) || newMods.stream().anyMatch(Mod::isModMessedUpWithVersion);
     }
 }

@@ -46,4 +46,8 @@ public interface LibrariesJarLocator {
             JarInJarHelper.LOGGER.error("Error while trying to get loader jar path: ", e);
         }
     }
+
+    static void setupLoaderJarName(String version) {
+        PlatformHelp.loaderJarName = version;
+    }
 }

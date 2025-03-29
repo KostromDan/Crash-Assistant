@@ -142,43 +142,43 @@ public class ModListDiff {
         }
         if (!getUpdatedMods().isEmpty()) {
             sb.append(langFunc.apply("msg.updated_mods"));
-
-            if(getUpdatedMods().stream().anyMatch(UpdatedPair::isOnlyOneModInEach)){
-                sb.append("format: ", false);
-
-                sb.append("commonPrefix", "blue", false);
-                sb.append("| ", false);
-
-                sb.append("uniquePartFromOld", "red", false);
-                sb.append(" > ", false);
-                sb.append("uniquePartFromNew", "green", false);
-
-                sb.append(" |", false);
-                sb.append("commonSuffix", "blue");
-            }
-
             for (UpdatedPair updatedPair : getUpdatedMods()) {
-                if (updatedPair.isOnlyOneModInEach()){
-                    Mod oldMod = updatedPair.getOldMods().iterator().next();
-                    Mod NewMod = updatedPair.getNewMods().iterator().next();
-                    UpdatedPairDiff diff = UpdatedPairDiff.fromMods(oldMod, NewMod);
+                if (!updatedPair.isAnyModMessedUpWithVersion()) {
+                    sb.append(updatedPair.getModId(), "blue", false);
+                    sb.append(" (", false);
 
-                    sb.append(diff.getCommonPrefix(), "blue", false);
-                    sb.append("| ", false);
-
-                    sb.append(diff.getUniquePart1(), "red", false);
+                    appendModAttributes(sb, updatedPair.getOldMods(), Mod::getVersion, "red");
                     sb.append(" > ", false);
-                    sb.append(diff.getUniquePart2(), "green", false);
+                    appendModAttributes(sb, updatedPair.getNewMods(), Mod::getVersion, "green");
 
-                    sb.append(" |", false);
-                    sb.append(diff.getCommonSuffix(), "blue");
-                }else {
-
+                    sb.append(")");
+                } else {
+                    appendModAttributes(sb, updatedPair.getOldMods(), Mod::getJarName, "red");
+                    sb.append(" > ", false);
+                    appendModAttributes(sb, updatedPair.getNewMods(), Mod::getJarName, "green");
+                    sb.append("");
                 }
+
             }
         }
-
         return sb;
+    }
+
+    private void appendModAttributes(ModListDiffStringBuilder sb, Collection<Mod> mods, Function<Mod, String> attributeExtractor, String color) {
+        if (mods.size() == 1) {
+            sb.append(attributeExtractor.apply(mods.iterator().next()), color, false);
+        } else {
+            sb.append("(", false);
+            Iterator<Mod> iterator = mods.iterator();
+            while (iterator.hasNext()) {
+                Mod mod = iterator.next();
+                sb.append(attributeExtractor.apply(mod), color, false);
+                if (iterator.hasNext()) {
+                    sb.append(", ", false);
+                }
+            }
+            sb.append(")", false);
+        }
     }
 
     public static String getFilePrefix() {

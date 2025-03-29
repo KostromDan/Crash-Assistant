@@ -107,7 +107,6 @@ public class ModDataParser {
             return cachedMod;
         }
 
-        LinkedHashMap<String, Exception> exceptions = new LinkedHashMap<>();
         try (JarFile jarFile = new JarFile(jarPath.toFile())) {
             for (String resourcePath : inJarPaths) {
                 JarEntry entry = jarFile.getJarEntry(resourcePath);
@@ -148,19 +147,13 @@ public class ModDataParser {
                         Files.deleteIfExists(temp);
                     }
                 } catch (Exception e) {
-                    exceptions.put(resourcePath, e);
+                    JarInJarHelper.LOGGER.warn("Error while trying to parse " + resourcePath + " of " + jarPath.getFileName().toString() + ": ",e);
                 }
             }
             if (jarPath.getFileName().toString().startsWith("essential") && jarFile.getJarEntry("essential-loader.properties") != null){
                 return new Mod(jarPath.getFileName().toString(), "essential-container", null);
             }
         } catch (Exception ignored) {
-        }
-        if (!exceptions.isEmpty()) {
-            JarInJarHelper.LOGGER.warn(exceptions.size() + " errors happened while trying to parse " + jarPath.getFileName().toString() + " mod data:");
-            for (Map.Entry<String, Exception> entry : exceptions.entrySet()) {
-                JarInJarHelper.LOGGER.warn("Error while trying to parse " + entry.getKey() + " of " + jarPath.getFileName().toString() + ": ", entry.getValue());
-            }
         }
         return new Mod(jarPath.getFileName().toString(), null, null);
     }

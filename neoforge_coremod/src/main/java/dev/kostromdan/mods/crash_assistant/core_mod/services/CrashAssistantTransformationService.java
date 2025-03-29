@@ -6,7 +6,6 @@ import cpw.mods.modlauncher.api.ITransformer;
 import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
-import net.neoforged.fml.loading.VersionInfo;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,7 @@ public class CrashAssistantTransformationService implements ITransformationServi
     public void initialize(IEnvironment environment) {
         String launchTarget = environment.getProperty(IEnvironment.Keys.LAUNCHTARGET.get()).orElse("unknown");
         PlatformHelp.platform = PlatformHelp.NEOFORGE;
-        LibrariesJarLocator.setupLoaderJarName(VersionInfo.class);
+        LibrariesJarLocator.setupLoaderJarName(environment.getProperty(IEnvironment.Keys.VERSION.get()).orElse("unknown"));
         JarInJarHelper.launchCrashAssistantApp(launchTarget);
         JarInJarHelper.checkDuplicatedCrashAssistantMod(true);
     }

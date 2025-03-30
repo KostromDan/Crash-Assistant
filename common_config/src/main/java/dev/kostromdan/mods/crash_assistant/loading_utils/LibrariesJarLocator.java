@@ -41,7 +41,6 @@ public interface LibrariesJarLocator {
     static void setupLoaderJarName(Class cls) {
         try {
             PlatformHelp.loaderJarName = Paths.get(getLibraryJarPath(cls)).getFileName().toString();
-//            JarInJarHelper.LOGGER.info(PlatformHelp.loaderJarName);
         } catch (URISyntaxException e) {
             JarInJarHelper.LOGGER.error("Error while trying to get loader jar path: ", e);
         }

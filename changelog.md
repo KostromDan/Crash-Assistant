@@ -2,6 +2,7 @@
 
 - Added Spanish localization files. Thanks Rener-py for this.
 - Redesign of modlist diff. Should fix all problems with updated mods not working correctly when duplicated mods are present, some another issues.
+- Added messed up mods with version handling in updated mods. If it is, jar name will be displayed instead of incorrect version.
 - Fixed stupid issue caused incorrect order of parsing mods.toml. Caused rare incorrect version in updated mods.
 - Added option modpack_modlist.add_modloader_jar_name, enabled by default, which will add the modloader jar name to the modlist, making it easier to track if the user changed the modloader version.
 - Added option modpack_modlist.force_add_full_modlist_as_log, which will add the full modlist.txt as a log. Enabled by default for individual downloads and disabled for modpacks; change to true to enable for modpacks.

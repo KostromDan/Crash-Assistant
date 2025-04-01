@@ -31,8 +31,10 @@ public interface JarInJarHelper {
             LOGGER.warn("launchTarget: " + launchTarget + ". Crash Assistant is client only mod. Mod will do nothing!");
             return;
         }
-        LOGGER.info("Launching CrashAssistantApp");
         try {
+            String crashAssistantJarName = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).getFileName().toString();
+            LOGGER.info("Launching CrashAssistantApp ({})", crashAssistantJarName);
+
             ProcessHandle currentProcess = ProcessHandle.current();
             String currentProcessData = Objects.toString(currentProcess.pid()) + "_"
                     + Objects.toString(currentProcess.info().startInstant().get().getEpochSecond());
@@ -51,6 +53,7 @@ public interface JarInJarHelper {
                     "-parentPID", Objects.toString(ProcessHandle.current().pid()),
                     "-platform", PlatformHelp.platform.toString(),
                     "-loaderJarName", PlatformHelp.loaderJarName,
+                    "-crashAssistantJarName", crashAssistantJarName,
                     "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),

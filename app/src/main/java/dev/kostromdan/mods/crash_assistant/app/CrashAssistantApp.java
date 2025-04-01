@@ -32,6 +32,7 @@ public class CrashAssistantApp {
     public static long parentStarted;
     public static boolean crashed_with_report = false;
     public static int launcherLogsCount = 0;
+    public static String crashAssistantJarName = null;
 
 
     public static void main(String[] args) {
@@ -52,6 +53,9 @@ public class CrashAssistantApp {
             } else if ("-loaderJarName".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.loaderJarName = args[i + 1];
                 LOGGER.info("loaderJarName: {}", PlatformHelp.loaderJarName);
+            } else if ("-crashAssistantJarName".equals(args[i]) && i + 1 < args.length) {
+                crashAssistantJarName = args[i + 1];
+                LOGGER.info("crashAssistantJarName: {}", crashAssistantJarName);
             }
         }
 

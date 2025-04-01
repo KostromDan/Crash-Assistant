@@ -1,3 +1,8 @@
+1.5.1:
+
+- neoforge - Fixed neoforge version in modlist displayed as mc version in some launchers.
+- neoforge - Forgot to mark 1.21.5 as incompatible.
+
 1.5.0:
 
 - Added Spanish localization files. Thanks Rener-py for this.

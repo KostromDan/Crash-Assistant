@@ -149,7 +149,7 @@ public class CrashAssistantCommands {
         if (!checkModlistFeatureEnabled()) {
             return 0;
         }
-        ModListDiff diff = ModListDiff.getDiff();
+        ModListDiff diff = ModListDiff.getDiff(false);
         MutableComponent msg = new ComponentModListDiffStringBuilder(diff.generateDiffMsg(false)).toComponent();
         msg.append(getCopyDiffComponent(diff.generateDiffMsg(true)));
         sendClientMsg(msg);

@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -113,6 +114,11 @@ public class CrashAssistantApp {
 
     private static void onMinecraftFinished() {
         GUIStartTime = Instant.now().toEpochMilli();
+
+        new Thread(() -> {
+            ModListUtils.getCurrentModList(true); //Cache modlist, to not spend time in further, then it needed.
+        }).start();
+
         boolean crashed = false;
         LinkedHashMap<String, Path> availableLogs = new LinkedHashMap<>();
 

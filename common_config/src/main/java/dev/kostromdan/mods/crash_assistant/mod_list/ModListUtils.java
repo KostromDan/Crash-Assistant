@@ -23,9 +23,13 @@ public class ModListUtils {
     private static final Path RESOURCEPACKS_FOLDER = Paths.get("resourcepacks");
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
     public static String currentUsername = "";
+    private static LinkedHashSet<Mod> cachedModList = null;
 
 
-    public static LinkedHashSet<Mod> getCurrentModList() {
+    public synchronized static LinkedHashSet<Mod> getCurrentModList(boolean useCache) {
+        if (cachedModList != null && useCache) {
+            return cachedModList;
+        }
         try {
             LinkedHashSet<Mod> currentMods = new LinkedHashSet<>();
 
@@ -63,6 +67,9 @@ public class ModListUtils {
                     }
                 });
             }
+            if(useCache) {
+                cachedModList = currentMods;
+            }
             return currentMods;
         } catch (Exception e) {
             LOGGER.error("Error while getting current mod list: ", e);
@@ -87,7 +94,7 @@ public class ModListUtils {
     public static void saveCurrentModList() {
         try {
             try (FileWriter writer = new FileWriter(JSON_FILE.toFile())) {
-                String jsonOutput = Mod.GSON.toJson(getCurrentModList(), Mod.TYPE);
+                String jsonOutput = Mod.GSON.toJson(getCurrentModList(false), Mod.TYPE);
                 writer.write(jsonOutput);
             }
 

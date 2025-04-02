@@ -74,7 +74,7 @@ public class ProblematicModsConfig {
      */
     public static List<ProblematicMod> getCurrentProblematicMods() {
         List<ProblematicMod> problematicMods = ProblematicModsConfig.getProblematicModsFromConfig();
-        LinkedHashSet<Mod> currentMods = ModListUtils.getCurrentModList();
+        LinkedHashSet<Mod> currentMods = ModListUtils.getCurrentModList(true);
 
         Map<String, ProblematicMod> configMap = problematicMods.stream()
                 .collect(Collectors.toMap(ProblematicMod::modid, pm -> pm));

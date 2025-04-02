@@ -44,7 +44,7 @@ public class ControlPanel {
         labelButtonPanel.setLayout(new BoxLayout(labelButtonPanel, BoxLayout.X_AXIS));
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-            modListDiff = ModListDiff.getDiff();
+            modListDiff = ModListDiff.getDiff(true);
 
             if (PlatformHelp.isLinkDefault() || CrashAssistantConfig.getBoolean("modpack_modlist.force_add_full_modlist_as_log")) {
                 Path modListTxtPath = Paths.get("logs", "modlist.txt");

@@ -199,9 +199,6 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.CRASH_ASSISTANT, Paths.get("logs", "crash_assistant", "crash_assistant_app.log")));
 
 
-        LogAnalyser.analyseLogs();
-
-
         String normalStopFileName = "normal_stop_pid" + parentPID + ".tmp";
         Path normalStopFilePath = Paths.get("local", "crash_assistant", normalStopFileName);
         if (!(Files.exists(normalStopFilePath) && Files.isRegularFile(normalStopFilePath))) {
@@ -211,8 +208,10 @@ public class CrashAssistantApp {
         String successfulLaunchFileName = "successful_launch_pid" + parentPID + ".tmp";
         Path successfulLaunchFilePath = Paths.get("local", "crash_assistant", successfulLaunchFileName);
         gameLaunchedSuccessfully = Files.exists(successfulLaunchFilePath) && Files.isRegularFile(successfulLaunchFilePath);
-
         LOGGER.info("gameLaunchedSuccessfully: {}", gameLaunchedSuccessfully);
+
+
+        LogAnalyser.analyseLogs();
 
 
         startLocatingTerminatedProcesses();

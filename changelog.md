@@ -8,6 +8,7 @@
     - Path from which CA launched(modpack folder).
     - gameLaunchedSuccessfully boolean variable.
 - Fixed I forgot to update 1 ru lang key.
+- Fixed case when Create addons warning displayed then it shouldn't.
 
 1.6.0 major update:
 

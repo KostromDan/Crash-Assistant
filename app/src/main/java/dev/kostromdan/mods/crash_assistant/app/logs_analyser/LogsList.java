@@ -40,6 +40,7 @@ public class LogsList {
             } catch (IOException e) {
                 CrashAssistantApp.LOGGER.error("Error while checking file size \"" + log.getPath() + "\": ", e);
             }
+            CrashAssistantApp.LOGGER.info("Adding {} from {}", log.getName(), log.getPath().toAbsolutePath().toString());
             logs.add(log);
             new Thread(() -> {
                 try {

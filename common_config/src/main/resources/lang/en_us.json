@@ -31,6 +31,7 @@
   "gui.delayed": "Delayed...",
   "gui.preprocessing": "Preprocessing...",
   "gui.upload_all_button": "Upload all and copy message with links to all files and mod list diff",
+  "gui.upload_all_button_delayed": "Locating terminated processes... Please wait for $SECONDS$ seconds.",
   "gui.upload_all_button_warning_title": "Information",
   "gui.upload_all_finished_button": "Copy message with links to all files and mod list diff",
   "gui.request_help_button": "Request help in the $CONFIG.text.support_name$",
@@ -109,5 +110,6 @@
   "msg.over": "over",
   "msg.mb": "MB",
   "msg.k_lines": "k lines",
-  "msg.intel_corrupted_notification": " can be reason of crash"
+  "msg.intel_corrupted_notification": " can be reason of crash",
+  "msg.found_potential_crash_reason": " with $COUNT$ log analysis result."
 }

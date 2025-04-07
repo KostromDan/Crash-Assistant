@@ -30,6 +30,7 @@
   "gui.delayed": "Задержка...",
   "gui.preprocessing": "Предобрабатываем...",
   "gui.upload_all_button": "Загрузить все и скопировать сообщение с ссылками на все файлы и различиями в списке модов",
+  "gui.upload_all_button_delayed": "Ищем разрушенные процессы... Пожалуйста подожите $SECONDS$ секунд.",
   "gui.upload_all_button_warning_title": "Информация",
   "gui.upload_all_finished_button": "Скопировать сообщение с ссылками на все файлы и различиями в списке модов",
   "gui.request_help_button": "Попросить помощи в $CONFIG.text.support_name$",
@@ -71,7 +72,7 @@
   "warnings_common.line": "строке",
   "warnings.codex": "Codex-анализатор обнаружил в $LINE$ файла <strong>$LOG_FILENAME$</strong> возможную причину данного краша:\nПроблема:\n$PROBLEM$\n\nРешение(я):\n$SOLUTIONS$",
   "warnings.codex_crash_assistant_comment": "Комментарий Crash Assistant по данной проблеме:",
-  "warnings.codex_erroring_entity": "Если это произошло с неизменённым модпаком, сообщите об этом авторам, так как этого не должно происходить.\nДля удаления ошибочного блока или сущности можно временно установить мод <strong>Neruina</strong>.\nЭто не исправит причину проблемы, но позволит войти в мир и удалить проблемную сущность или блок.",
+  "warnings.codex_erroring_entity": "Если это произошло с неизменённым модпаком, подумайте о том, чтобы сообщить об этом авторам модпака — такого происходить не должно.\nЧтобы удалить проблемный блок или сущность, вы можете временно установить мод <strong>Neruina</strong>.\nЭто не устранит саму причину ошибки, но позволит зайти в мир и удалить ошибочный блок или сущность.\n\nДля <strong>Forge</strong> и <strong>NeoForge</strong> также есть альтернативный способ:\nForge: откройте файл <strong>\"world\"/serverconfig/forge-server.toml</strong> (где \"<strong>world</strong>\" — это имя вашего мира)\nNeoForge: откройте файл <strong>config/neoforge-server.toml</strong>\nАктивируйте соответствующую настройку в зависимости от типа ошибки:\nУстановите <strong>removeErroringBlockEntities = true</strong>, чтобы удалять блок-сущности (BlockEntity), вызывающие ошибки в методе обновления.\nУстановите <strong>removeErroringEntities = true</strong>, чтобы удалять сущности (Entity), вызывающие ошибки в методе тика.",
   "commands.mod_config_tooltip": "Нажмите, чтобы открыть конфиг",
   "commands.nickname_tooltip": "Нажмите, чтобы скопировать ник",
   "commands.diff_tooltip": "Нажмите, чтобы скопировать различия в списке модов",
@@ -108,5 +109,6 @@
   "msg.over": "более",
   "msg.mb": "МБ",
   "msg.k_lines": " тыс. строк",
-  "msg.intel_corrupted_notification": " может быть причиной краша"
+  "msg.intel_corrupted_notification": " может быть причиной краша",
+  "msg.found_potential_crash_reason": " c $COUNT$ резулатом/ами анализа логов."
 }

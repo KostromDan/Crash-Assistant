@@ -34,6 +34,7 @@ public class CrashAssistantApp {
     public static boolean crashed_with_report = false;
     public static String crashAssistantJarName = null;
     public static boolean gameLaunchedSuccessfully = false;
+    public static long terminatedProcessesLocationEndTime = 0;
 
 
     public static void main(String[] args) {
@@ -42,6 +43,8 @@ public class CrashAssistantApp {
         });
         LOGGER.info("CrashAssistantApp running: JVM args: {}", Boot.JVM_ARGS);
         LOGGER.info("CrashAssistantApp running: program args: {}", Boot.APP_ARGS);
+
+        LOGGER.info("CrashAssistantApp running from: {}", Paths.get("").toAbsolutePath().toString());
 
         parentPID = -1;
         for (int i = 0; i < args.length; i++) {
@@ -209,6 +212,8 @@ public class CrashAssistantApp {
         Path successfulLaunchFilePath = Paths.get("local", "crash_assistant", successfulLaunchFileName);
         gameLaunchedSuccessfully = Files.exists(successfulLaunchFilePath) && Files.isRegularFile(successfulLaunchFilePath);
 
+        LOGGER.info("gameLaunchedSuccessfully: {}", gameLaunchedSuccessfully);
+
 
         startLocatingTerminatedProcesses();
 
@@ -245,8 +250,9 @@ public class CrashAssistantApp {
     public static void startLocatingTerminatedProcesses() {
         new Thread(() -> {
             long startTime = System.currentTimeMillis();
+            terminatedProcessesLocationEndTime = System.currentTimeMillis() + 7000;
             boolean firstIteration = true;
-            while (System.currentTimeMillis() < startTime + 5000) {
+            while (System.currentTimeMillis() < terminatedProcessesLocationEndTime) {
                 try {
                     Thread.sleep(firstIteration ? 3000 : 100);
                     firstIteration = false;
@@ -283,6 +289,7 @@ public class CrashAssistantApp {
                             } catch (Exception e) {
                                 LOGGER.error("Exception adding file to gui later:", e);
                             }
+                            terminatedProcessesLocationEndTime = System.currentTimeMillis();
                             break;
                         }
                     }

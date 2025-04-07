@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
@@ -21,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
@@ -106,15 +108,25 @@ public class ControlPanel {
         bottomPanel.add(uploadAllButton, gbc);
 
         uploadAllButton.setEnabled(false);
-        new Timer().schedule(
-                new TimerTask() {
-                    @Override
-                    public void run() {
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            final long startTime = Instant.now().toEpochMilli();
+
+            @Override
+            public void run() {
+                SwingUtilities.invokeLater(() -> {
+                    double leastTime = (CrashAssistantApp.terminatedProcessesLocationEndTime - Instant.now().toEpochMilli() + 100) / 1000.0D;
+                    uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button_delayed")
+                            .replaceAll("\\$SECONDS\\$", String.format("%.3f", leastTime)));
+
+                    if (Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
+                        uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
                         uploadAllButton.setEnabled(true);
+                        this.cancel();
                     }
-                },
-                2700
-        );
+                });
+            }
+        }, 0, 21);
 
         requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));
         requestHelpButton.addActionListener(e -> requestHelp());
@@ -294,8 +306,13 @@ public class ControlPanel {
                     continue;
                 }
             }
+            if (log.getType() == LogType.CRASH_ASSISTANT && !KnownCrashReasonMessage.getAllMessages().isEmpty()) {
+                logs.add(formatSingleLogMessage(log) + LanguageProvider.getMsgLang("msg.found_potential_crash_reason")
+                        .replaceAll("\\$COUNT\\$", Integer.toString(KnownCrashReasonMessage.getAllMessages().size())));
+                continue;
+            }
             if (log.getLinkToUploadedLastLines() == null) {
-                logs.add(log.getParentName() + "[" + log.getFileName() + "](<" + log.getLinkToUploadedFirstLines() + ">)");
+                logs.add(formatSingleLogMessage(log));
             } else {
                 logs.add(panel.getMessageWithBothLinks(true));
             }
@@ -346,6 +363,10 @@ public class ControlPanel {
             }
         }
         generatedMsg = sb.toString();
+    }
+
+    public static String formatSingleLogMessage(Log log) {
+        return log.getParentName() + "[" + log.getFileName() + "](<" + log.getLinkToUploadedFirstLines() + ">)";
     }
 
     public static void showUploadAllButtonWarning(String warningMsg) {

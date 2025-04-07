@@ -12,7 +12,11 @@ public interface IntelCorruptedProcessorChecker {
             "i7-13700", "i7-13700f", "i7-13700k", "i7-13700kf", "i7-13790f",
             "i7-14700", "i7-14700f", "i7-14700k", "i7-14700kf", "i7-14790f",
             "i9-13900", "i9-13900f", "i9-13900k", "i9-13900kf", "i9-13900ks",
-            "i9-14900", "i9-14900f", "i9-14900k", "i9-14900kf", "i9-14900ks"
+            "i9-14900", "i9-14900f", "i9-14900k", "i9-14900kf", "i9-14900ks",
+            // After this line: processors are not officially listed as affected,
+            // but we've received reports indicating similar issues with these processors,
+            // so they are considered affected.
+            "i9-14900hx"
     );
 
     static boolean isAffectedProcessor() {

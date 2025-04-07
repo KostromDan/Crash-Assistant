@@ -1,3 +1,32 @@
+1.6.0 major update:
+
+- Redesigned very many aspects of mod, to make Log Analysis easy to maintain and develop.
+- Added analysis of log for most common crash reasons with solution:
+    - hs_err:
+        - atio6axx.dll (AMD driver issue)
+        - There is insufficient memory for the Java Runtime Environment to continue.
+        - jemalloc.dll (Some cursed issue with jemalloc memory allocator)
+        - libglfw.so (Common Linux problem)
+        - libopenal.so (Common Linux problem)
+        - StubRoutines::SafeFetch32 (MacOS ARM - incorrect JDK issue)
+    - log:
+        - Create 6 addons incompatibility
+        - CurseForge corrupted Install folder
+        - OutOfMemoryError
+        - ResourceLocationException
+    - win_event:
+        - WasClosedByWindows
+- Codex logs analyser integration. Every supported log type will be analysed right after uploading. And if it found some
+  problem message will be displayed.
+- Sometimes Codex solution message can be unclear for avg user.
+  For such cases we added own comment on Codex message, currently:
+    - Erroring block/entity.
+- WinEvents cleaning: mod will leave only five latest files to prevent too many files in modpack folder.
+- Prevent error spam in non Windows systems in CA log, bc of PowerShell not available.
+- Now blacklisted logs config option works not by equals(), but startswith().
+- Added i9-14900hx to Intel corrupted processors list.
+  It's not officially listed, but we've seen already 2 similar cursed logs with this processor.
+
 1.5.1:
 
 - neoforge - Fixed neoforge version in modlist displayed as mc version in some launchers.
@@ -6,15 +35,20 @@
 1.5.0:
 
 - Added Spanish localization files. Thanks Rener-py for this.
-- Redesign of modlist diff. Should fix all problems with updated mods not working correctly when duplicated mods are present, some another issues.
-- Added messed up mods with version handling in updated mods. If it is, jar name will be displayed instead of incorrect version.
+- Redesign of modlist diff. Should fix all problems with updated mods not working correctly when duplicated mods are
+  present, some another issues.
+- Added messed up mods with version handling in updated mods. If it is, jar name will be displayed instead of incorrect
+  version.
 - Fixed stupid issue caused incorrect order of parsing mods.toml. Caused rare incorrect version in updated mods.
-- Added option modpack_modlist.add_modloader_jar_name, enabled by default, which will add the modloader jar name to the modlist, making it easier to track if the user changed the modloader version.
-- Added option modpack_modlist.force_add_full_modlist_as_log, which will add the full modlist.txt as a log. Enabled by default for individual downloads and disabled for modpacks; change to true to enable for modpacks.
+- Added option modpack_modlist.add_modloader_jar_name, enabled by default, which will add the modloader jar name to the
+  modlist, making it easier to track if the user changed the modloader version.
+- Added option modpack_modlist.force_add_full_modlist_as_log, which will add the full modlist.txt as a log. Enabled by
+  default for individual downloads and disabled for modpacks; change to true to enable for modpacks.
 - Improved check for duplicated Crash Assistant mod.
 - Fixed issue where I forgot to update the license in mod data.
 - Added some logging.
-- Marked 1.21.5 as incompatible. I will port to 1.22, but 1.21.5 is not mainstream, will never be it and where too much changes. If you need it, feel free to open an issue, maybe I'll change my position. 
+- Marked 1.21.5 as incompatible. I will port to 1.22, but 1.21.5 is not mainstream, will never be it and where too much
+  changes. If you need it, feel free to open an issue, maybe I'll change my position.
 
 1.4.3:
 

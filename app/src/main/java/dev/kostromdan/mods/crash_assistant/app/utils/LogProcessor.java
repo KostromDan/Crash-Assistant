@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -21,6 +22,8 @@ public class LogProcessor {
     List<String> firstLines;
     List<String> lastLines;
     Path logPath;
+    boolean isLogProcessed = false;
+    long sizeOnLastRead = -1;
 
     public LogProcessor(Path logPath) {
         this.firstLines = new ArrayList<>(maxUploadLines);
@@ -28,7 +31,16 @@ public class LogProcessor {
         this.logPath = logPath;
     }
 
-    public void processLogFile() throws IOException {
+    public synchronized void processLogFile() throws IOException {
+        if (isLogProcessed && Files.size(logPath) == sizeOnLastRead) {
+            return;
+        }
+        sizeOnLastRead = Files.size(logPath);
+        countedLines = 0;
+        lineCountInterrupted = false;
+        lastLines = null;
+        firstLines = new ArrayList<>(maxUploadLines);
+
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(this.logPath.toFile()), StandardCharsets.UTF_8))) {
             String line;
@@ -43,6 +55,7 @@ public class LogProcessor {
                 countedLines++;
             }
             if (line == null) {
+                isLogProcessed = true;
                 return;
             } else {
                 long timeCountStarted = Instant.now().toEpochMilli();
@@ -73,6 +86,7 @@ public class LogProcessor {
                 lastLines.remove(0);
             }
         }
+        isLogProcessed = true;
     }
 
     /**
@@ -98,6 +112,16 @@ public class LogProcessor {
 
     public String getLastLinesString() {
         return lastLines == null ? null : String.join("\n", lastLines);
+    }
+
+    public String getAllLinesString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(getFirstLinesString());
+        String lastLinesString = getLastLinesString();
+        if (lastLinesString != null) {
+            builder.append("\n").append(lastLinesString);
+        }
+        return builder.toString();
     }
 
     public int getCountedLines() {

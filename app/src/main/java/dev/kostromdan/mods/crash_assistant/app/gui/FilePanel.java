@@ -2,19 +2,22 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalyser;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
-import dev.kostromdan.mods.crash_assistant.app.utils.LogProcessor;
 import dev.kostromdan.mods.crash_assistant.app.utils.McLogsApiProvider;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import gs.mclo.api.response.UploadLogResponse;
+import gs.mclo.api.response.insights.Problem;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Timer;
 import java.util.*;
@@ -28,24 +31,17 @@ public class FilePanel {
     private final JButton openButton;
     private final JButton uploadButton;
     private final JButton browserButton;
-    private final Path filePath;
-    private final String fileName;
-    private String uploadedLinkFirstLines = null;
-    private String uploadedLinkLastLines = null;
-    private int countedLines;
-    private boolean lineCountInterrupted = false;
     private Exception lastError = null;
+    private final Log log;
 
-    public FilePanel(String fileName, Path filePath) {
-        this.filePath = filePath;
-
-        this.fileName = fileName;
+    public FilePanel(Log log) {
+        this.log = log;
 
         panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        DragAndDrop.enableDragAndDrop(panel, Collections.singletonList(filePath.toFile()));
+        DragAndDrop.enableDragAndDrop(panel, Collections.singletonList(log.getFile()));
 
-        JLabel fileNameLabel = new JLabel(fileName);
+        JLabel fileNameLabel = new JLabel(log.getName());
         panel.add(fileNameLabel, BorderLayout.CENTER);
 
         JPanel spacerPanel = new JPanel();
@@ -91,7 +87,7 @@ public class FilePanel {
     private void openFile() {
         ControlPanel.stopMovingToTop = true;
         try {
-            Desktop.getDesktop().open(filePath.toFile());
+            Desktop.getDesktop().open(log.getFile());
         } catch (IOException e) {
             CrashAssistantApp.LOGGER.error("Failed to open file: ", e);
         }
@@ -105,9 +101,9 @@ public class FilePanel {
         ControlPanel.stopMovingToTop = true;
         try {
             if (System.getProperty("os.name").startsWith("Windows")) {
-                new ProcessBuilder("explorer.exe", "/select,", filePath.toAbsolutePath().toString()).start();
+                new ProcessBuilder("explorer.exe", "/select,", log.getPath().toAbsolutePath().toString()).start();
             } else {
-                Desktop.getDesktop().open(filePath.toFile().getParentFile());
+                Desktop.getDesktop().open(log.getFile().getParentFile());
             }
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to show file in explorer: ", e);
@@ -115,8 +111,8 @@ public class FilePanel {
     }
 
     private void openInBrowser() {
-        String linkToCopy = uploadedLinkFirstLines;
-        if (uploadedLinkLastLines != null) {
+        String linkToCopy = log.getLinkToUploadedFirstLines();
+        if (log.getLinkToUploadedLastLines() != null) {
             linkToCopy = showLogPartSelectionDialog(LanguageProvider.get("gui.split_log_dialog_action_browser"));
         }
         if (linkToCopy == null) {
@@ -130,28 +126,8 @@ public class FilePanel {
 
     }
 
-    public String getFileName() {
-        return fileName;
-    }
-
-    public String getUploadedLinkFirstLines() {
-        return uploadedLinkFirstLines;
-    }
-
-    public String getUploadedLinkLastLines() {
-        return uploadedLinkLastLines;
-    }
-
-    public int getCountedLines() {
-        return countedLines;
-    }
-
-    public boolean isLineCountInterrupted() {
-        return lineCountInterrupted;
-    }
-
-    public Path getFilePath() {
-        return filePath;
+    public Log getLog() {
+        return log;
     }
 
     public Exception getLastError() {
@@ -169,28 +145,40 @@ public class FilePanel {
         }
         uploadButton.setEnabled(false);
         new Thread(() -> {
-            if (uploadedLinkFirstLines == null) {
+            if (log.getLinkToUploadedFirstLines() == null) {
                 lastError = null;
                 uploadButton.setPreferredSize(new Dimension(uploadButton.getMinimumSize().width, 25));
                 uploadButton.setText(LanguageProvider.get("gui.uploading"));
 
                 try {
                     String oldText = uploadButton.getText();
-                    uploadButton.setText(LanguageProvider.get("gui.preprocessing"));
-                    LogProcessor logProcessor = new LogProcessor(filePath);
-                    logProcessor.processLogFile();
-                    uploadButton.setText(oldText);
-                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = McLogsApiProvider.getMcLogsClient().uploadLog(logProcessor.getFirstLinesString());
-                    countedLines = logProcessor.getCountedLines();
-                    lineCountInterrupted = logProcessor.isLineCountInterrupted();
 
-                    String lastLines = logProcessor.getLastLinesString();
+                    if (!fromButton && log.getType() == LogType.CRASH_ASSISTANT) {
+                        List<FilePanel> logsCodexSupports = CrashAssistantGUI.fileListPanel.filePanelList.stream()
+                                .filter(x -> LogAnalyser.CodexSupportedLogTypes.contains(x.getLog().getType()))
+                                .toList();
+                        while (!logsCodexSupports.isEmpty()) {
+                            uploadButton.setText(LanguageProvider.get("gui.delayed"));
+                            Thread.sleep(100);
+                            if (logsCodexSupports.stream().anyMatch(x -> x.getLastError() != null))
+                                throw new UploadException("Crash Assistant log must be uploaded after logs, Codex supports. But encountered error while uploading one of them.");
+                            if (logsCodexSupports.stream().allMatch(x -> x.getLog().getLinkToUploadedFirstLines() != null))
+                                break;
+                        }
+                    }
+
+                    uploadButton.setText(LanguageProvider.get("gui.preprocessing"));
+                    log.getProcessor().processLogFile();
+                    uploadButton.setText(oldText);
+                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = McLogsApiProvider.getMcLogsClient().uploadLog(log.getProcessor().getFirstLinesString());
+
+                    String lastLines = log.getProcessor().getLastLinesString();
                     if (lastLines != null) {
                         CompletableFuture<UploadLogResponse> completableResponseLastLines = McLogsApiProvider.getMcLogsClient().uploadLog(lastLines);
                         UploadLogResponse responseLastLines = completableResponseLastLines.get();
                         responseLastLines.setClient(McLogsApiProvider.getMcLogsClient());
                         if (responseLastLines.isSuccess()) {
-                            uploadedLinkLastLines = CrashAssistantGUI.transformLink(responseLastLines.getUrl());
+                            log.setLinkToUploadedLastLines(CrashAssistantGUI.transformLink(responseLastLines.getUrl()));
                         } else {
                             throw new UploadException("An error occurred when uploading file: " + responseLastLines.getError());
                         }
@@ -200,20 +188,29 @@ public class FilePanel {
 
 
                     if (responseFirstLines.isSuccess()) {
-                        uploadedLinkFirstLines = CrashAssistantGUI.transformLink(responseFirstLines.getUrl());
+                        String link = CrashAssistantGUI.transformLink(responseFirstLines.getUrl());
+                        if (LogAnalyser.CodexSupportedLogTypes.contains(log.getType())) {
+                            synchronized (KnownCrashReasonMessage.class) {
+                                for (Problem problem : responseFirstLines.getInsights().get().getAnalysis().getProblems()) {
+                                    KnownCrashReasonMessage.addCodexMessage(log, problem, link);
+                                }
+                                CrashAssistantGUI.showKnownCrashReasonsWarnings();
+                            }
+                        }
+                        log.setLinkToUploadedFirstLines(link);
                     } else {
                         throw new UploadException("An error occurred when uploading file: " + responseFirstLines.getError());
                     }
                 } catch (IOException | ExecutionException | InterruptedException | UploadException e) {
                     {
                         lastError = e;
-                        CrashAssistantApp.LOGGER.info("Failed to upload file \"" + filePath + "\": ", e);
+                        CrashAssistantApp.LOGGER.info("Failed to upload file \"" + log.getPath() + "\": ", e);
                         uploadButton.setText(LanguageProvider.get("gui.error"));
                         CrashAssistantGUI.highlightButton(uploadButton, new Color(255, 100, 100), 2600);
                         if (fromButton) {
                             JOptionPane.showMessageDialog(
                                     panel,
-                                    LanguageProvider.get("gui.failed_to_upload_file") + " \"" + filePath + "\": " + e,
+                                    LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e,
                                     LanguageProvider.get("gui.failed_to_upload_file") + "!",
                                     JOptionPane.ERROR_MESSAGE
                             );
@@ -232,9 +229,9 @@ public class FilePanel {
                     }
                 }
             }
-            String linkToCopy = uploadedLinkFirstLines;
+            String linkToCopy = log.getLinkToUploadedFirstLines();
             if (fromButton) {
-                if (uploadedLinkLastLines != null) {
+                if (log.getLinkToUploadedLastLines() != null) {
                     linkToCopy = showLogPartSelectionDialog(LanguageProvider.get("gui.split_log_dialog_action_copy"));
                 }
                 if (linkToCopy != null) ClipboardUtils.copy(linkToCopy);
@@ -271,24 +268,24 @@ public class FilePanel {
 
     public String getTooBigReasons(boolean forMsg) {
         Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
-        long size = getFilePath().toFile().length();
+        long size = log.getFile().length();
         List<String> tooBigReasons = new ArrayList<>();
         if (size > 10 * 1024 * 1024)
             tooBigReasons.add("~" + size / (1024 * 1024) + langFunc.apply("msg.mb"));
-        if (getCountedLines() > 25000)
-            tooBigReasons.add((isLineCountInterrupted() ? langFunc.apply("msg.over") + " " : "~") +
-                    getCountedLines() / 1000 + langFunc.apply("msg.k_lines"));
+        if (log.getProcessor().getCountedLines() > 25000)
+            tooBigReasons.add((log.getProcessor().isLineCountInterrupted() ? langFunc.apply("msg.over") + " " : "~") +
+                    log.getProcessor().getCountedLines() / 1000 + langFunc.apply("msg.k_lines"));
         return tooBigReasons.isEmpty() ? "" : "(" + String.join(" & ", tooBigReasons) + ")";
     }
 
     public String getMessageWithBothLinks(boolean forMsg) {
         Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
-        return "[" + getFileName() + " " + langFunc.apply("gui.split_log_dialog_head").toLowerCase() + "](<" + getUploadedLinkFirstLines() + ">) / " +
-                "[" + langFunc.apply("gui.split_log_dialog_tail").toLowerCase() + "](<" + getUploadedLinkLastLines() + ">) " + getTooBigReasons(forMsg);
+        return "[" + log.getFileName() + " " + langFunc.apply("gui.split_log_dialog_head").toLowerCase() + "](<" + log.getLinkToUploadedFirstLines() + ">) / " +
+                "[" + langFunc.apply("gui.split_log_dialog_tail").toLowerCase() + "](<" + log.getLinkToUploadedLastLines() + ">) " + getTooBigReasons(forMsg);
     }
 
     public String showLogPartSelectionDialog(String action) {
-        JEditorPane logSelectionPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.copy_split_log_dialog_text").replace("$LOG_TOO_BIG_REASON$", getTooBigReasons(false)).replace("$FILE_NAME$", fileName).replace("$ACTION$", action), false);
+        JEditorPane logSelectionPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.copy_split_log_dialog_text").replace("$LOG_TOO_BIG_REASON$", getTooBigReasons(false)).replace("$FILE_NAME$", log.getFileName()).replace("$ACTION$", action), false);
         Object[] options = {
                 LanguageProvider.get("gui.split_log_dialog_msg_with_both"),
                 LanguageProvider.get("gui.split_log_dialog_head"),
@@ -334,9 +331,9 @@ public class FilePanel {
         } else if (selectedValue.equals(options[0])) {
             selectedValue = getMessageWithBothLinks(true);
         } else if (selectedValue.equals(options[1])) {
-            selectedValue = uploadedLinkFirstLines;
+            selectedValue = log.getLinkToUploadedFirstLines();
         } else if (selectedValue.equals(options[2])) {
-            selectedValue = uploadedLinkLastLines;
+            selectedValue = log.getLinkToUploadedLastLines();
         }
         FileListPanel.currentLogSelectionDialog = null;
         return (String) selectedValue;

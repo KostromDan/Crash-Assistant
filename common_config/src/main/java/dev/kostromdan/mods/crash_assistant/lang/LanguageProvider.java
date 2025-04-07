@@ -32,14 +32,14 @@ public class LanguageProvider {
         return languages.getOrDefault(currentLangName, languages.get("en_us")).get(key);
     }
 
-    public static String getMsgLang(String key){
+    public static String getMsgLang(String key) {
         if (msgLangName == null) {
             msgLangName = CrashAssistantConfig.get("generated_message.generated_msg_lang");
         }
         return languages.getOrDefault(msgLangName, languages.get("en_us")).get(key);
     }
 
-    public static String get(String key,HashSet<String> placeHoldersSurroundedWithHref) {
+    public static String get(String key, HashMap<String, String> placeHoldersSurroundedWithHref) {
         return languages.getOrDefault(currentLangName, languages.get("en_us")).get(key, placeHoldersSurroundedWithHref);
     }
 
@@ -143,7 +143,7 @@ public class LanguageProvider {
         return langFilesInConfigNames;
     }
 
-    public static Function<String,String> getLangFunction(boolean forMsg) {
+    public static Function<String, String> getLangFunction(boolean forMsg) {
         return forMsg ? LanguageProvider::getMsgLang : LanguageProvider::get;
     }
 }

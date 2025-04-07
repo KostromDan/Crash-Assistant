@@ -1,11 +1,12 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.lang.LinksProvider;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,15 +16,15 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Objects;
 
 public class IntelChipBugWarning {
-    public static final String HELP_URL = "https://www.zdnet.com/article/intel-chip-bug-faq-which-pcs-are-affected-how-to-get-the-patch-and-everything-else-you-need-to-know/";
     public static final String GIF_URL = "https://kostromdan.github.io/Crash-Assistant/assets/intel_bug.gif?raw=true";
     public static final Path LOCAL_GIF_PATH = Paths.get("local", "crash_assistant", "intel_bug.gif");
 
     public static void showIfAffected(boolean debug) {
-        synchronized (KnownCrashReason.class) {
+        synchronized (KnownCrashReasonMessage.class) {
             if (!CrashAssistantConfig.getBoolean("intel_corrupted.enabled")) return;
             if (!IntelCorruptedProcessorChecker.isAffectedProcessor() && !debug) return;
             if (Objects.equals(CrashAssistantLocalConfig.get("intel_corrupted.dont_show_again"), true)) return;
@@ -110,7 +111,9 @@ public class IntelChipBugWarning {
             }
 
             JEditorPane textPane = CrashAssistantGUI.getEditorPane(
-                    LanguageProvider.get("gui.intel_corrupted_msg").replace("$HELP_URL$", HELP_URL), true);
+                    LanguageProvider.get("gui.intel_corrupted_msg", new HashMap<>() {{
+                        put("$LINK.INTEL_CHIP_BUG_FAQ$", "FAQ");
+                    }}), true);
             textPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
             gbc.gridx = colIndex;
@@ -126,7 +129,7 @@ public class IntelChipBugWarning {
             JButton readMoreButton = new JButton(LanguageProvider.get("gui.intel_corrupted_read_more"));
             readMoreButton.addActionListener(e -> {
                 try {
-                    Desktop.getDesktop().browse(new URI(HELP_URL));
+                    Desktop.getDesktop().browse(new URI(LinksProvider.INTEL_CHIP_BUG_FAQ.getLink()));
                 } catch (Exception ex) {
                     CrashAssistantApp.LOGGER.error("Error opening URL: ", ex);
                 }

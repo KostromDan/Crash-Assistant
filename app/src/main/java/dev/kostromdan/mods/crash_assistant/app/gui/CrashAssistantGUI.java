@@ -1,7 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
@@ -17,7 +19,6 @@ import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Timer;
@@ -33,7 +34,7 @@ public class CrashAssistantGUI {
     private static Integer heightWithoutScrollPane = null;
 
 
-    public CrashAssistantGUI(Map<String, Path> availableLogs) {
+    public CrashAssistantGUI() {
         LanguageProvider.updateLang();
         frame = new JFrame(LanguageProvider.get("gui.window_name"));
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -54,9 +55,9 @@ public class CrashAssistantGUI {
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         titleLabel.setFont(titleLabel.getFont().deriveFont(16f));
 
-        HashSet<String> hrefOptions = new HashSet<>() {{
-            add("$CONFIG.text.support_name$");
-            add("$LANG.gui.upload_all_comment$");
+        HashMap<String, String> hrefOptions = new HashMap<>() {{
+            put("$CONFIG.text.support_name$", null);
+            put("$LANG.gui.upload_all_comment$", null);
         }};
 
         String firstLinesOfComment = PlatformHelp.isLinkDefault() ?
@@ -82,13 +83,13 @@ public class CrashAssistantGUI {
         fileListPanel = new FileListPanel();
         frame.add(fileListPanel.getScrollPane(), BorderLayout.CENTER);
 
-        controlPanel = new ControlPanel(fileListPanel, availableLogs);
+        controlPanel = new ControlPanel(fileListPanel);
         frame.add(controlPanel.getPanel(), BorderLayout.SOUTH);
 
         heightWithoutScrollPane = frame.getPreferredSize().height;
 
-        for (Map.Entry<String, Path> entry : availableLogs.entrySet()) {
-            fileListPanel.addFile(entry.getKey(), entry.getValue());
+        for (Log log : LogsList.getLogs()) {
+            fileListPanel.addLog(log);
         }
         DragAndDrop.enableDragAndDrop(fileListPanel.getScrollPane(), fileListPanel.fileListPanelFilesDragAndDrop);
 
@@ -130,23 +131,24 @@ public class CrashAssistantGUI {
         frame.setMinimumSize(new Dimension(frame.getSize().width, heightWithoutScrollPane + 73));
     }
 
-    public static void showKnownCrashReasonsWarnings() {
+    public static void  showKnownCrashReasonsWarnings() {
         ControlPanel.stopMovingToTop = true;
-        synchronized (KnownCrashReason.class) {
+        synchronized (KnownCrashReasonMessage.class) {
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    for (KnownCrashReason crashReason : KnownCrashReason.crashReasons) {
-                        if (crashReason.shownWarn) continue;
-                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}", crashReason.msg.split("\n")[0] + "...");
-                        crashReason.shownWarn = true;
+                    for (KnownCrashReasonMessage crashReason : KnownCrashReasonMessage.getAllMessages()) {
+                        if (crashReason.isShownWarn()) continue;
+                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}",
+                                crashReason.isCodexMessage() ? crashReason.getMessage() : crashReason.getMessage().split("\n")[0] + "...");
+                        crashReason.setShownWarn(true);
                         JOptionPane optionPane = new JOptionPane(
-                                CrashAssistantGUI.getEditorPane(crashReason.msg.replace("$LOG_FILENAME$", crashReason.logPath.getFileName().toString()), false),
+                                CrashAssistantGUI.getEditorPane(crashReason.getMessage(), crashReason.isCodexMessage()),
                                 JOptionPane.WARNING_MESSAGE,
                                 JOptionPane.DEFAULT_OPTION
                         );
                         JDialog dialog = optionPane.createDialog(
                                 frame,
-                                LanguageProvider.get("gui.logs_analyser")
+                                crashReason.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyser") : LanguageProvider.get("gui.logs_analyser")
                         );
                         dialog.setVisible(true);
                         CrashAssistantApp.LOGGER.info("Shown KnownCrashReason.");
@@ -160,7 +162,7 @@ public class CrashAssistantGUI {
 
     public static void showCrashAssistantDuplicatedWarning() {
         ControlPanel.stopMovingToTop = true;
-        synchronized (KnownCrashReason.class) {
+        synchronized (KnownCrashReasonMessage.class) {
             try {
                 if (PlatformHelp.platform != PlatformHelp.FORGE &&
                         PlatformHelp.platform != PlatformHelp.NEOFORGE) return;
@@ -279,9 +281,13 @@ public class CrashAssistantGUI {
         return link;
     }
 
-    public static void addLogFileLater(Path terminatedProcessesPath) {
+    public static void updateLogsListInGUI() {
         SwingUtilities.invokeLater(() -> {
-            CrashAssistantGUI.fileListPanel.addFile(terminatedProcessesPath.getFileName().toString(), terminatedProcessesPath);
+            for (Log log : LogsList.getLogs()) {
+                if (fileListPanel.filePanelList.stream().noneMatch(x -> Objects.equals(x.getLog(), log))) {
+                    fileListPanel.addLog(log);
+                }
+            }
             CrashAssistantGUI.resize();
         });
     }

@@ -1,46 +1,54 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 public class KnownCrashReason {
-    public static final List<KnownCrashReason> crashReasons = Collections.synchronizedList(new ArrayList<>());
-    public boolean shownWarn;
-    public String msg;
-    public final Path logPath;
+    protected HashSet<LogType> logTypes;
+    protected List<String> patterns;
+    protected String message;
 
-    public KnownCrashReason(Path logPath, String msg) {
-        this.shownWarn = false;
-        this.msg = msg;
-        this.logPath = logPath;
-        crashReasons.add(this);
+    protected KnownCrashReason(LogType logType, String message, List<String> patterns) {
+        this.logTypes = new HashSet<>() {{
+            add(logType);
+        }};
+        this.message = message;
+        this.patterns = patterns;
     }
 
-    public static void addIfContainsOneOfPatterns(Path logPath, String msg, String... patterns) {
-        if (RegexChecker.logContainsOneOfPatterns(logPath, patterns)) {
-            crashReasons.add(new KnownCrashReason(logPath, msg));
-        }
+    protected KnownCrashReason(HashSet<LogType> logTypes, String message, List<String> patterns) {
+        this.logTypes = logTypes;
+        this.message = message;
+        this.patterns = patterns;
     }
 
-    public static void addIfContainsOneOfPatterns(String logContents, Path logPath, String msg, String... patterns) {
-        if (RegexChecker.logContainsOneOfPatterns(logContents, logPath, patterns)) {
-            crashReasons.add(new KnownCrashReason(logPath, msg));
-        }
+    protected KnownCrashReason(LogType logType, String message, String... patterns) {
+        this.logTypes = new HashSet<>() {{
+            add(logType);
+        }};
+        this.message = message;
+        this.patterns = List.of(patterns);
     }
 
-    public static void addIfContainsOneOfPatterns(Path logPath, String msg, Collection<String> patterns) {
-        if (RegexChecker.logContainsOneOfPatterns(logPath, patterns)) {
-            crashReasons.add(new KnownCrashReason(logPath, msg));
-        }
+    protected KnownCrashReason(HashSet<LogType> logTypes, String message, String... patterns) {
+        this.logTypes = logTypes;
+        this.message = message;
+        this.patterns = List.of(patterns);
     }
 
-    public static void addIfContainsOneOfPatterns(String logContents, Path logPath, String msg, Collection<String> patterns) {
-        if (RegexChecker.logContainsOneOfPatterns(logContents, logPath, patterns)) {
-            crashReasons.add(new KnownCrashReason(logPath, msg));
-        }
+    HashSet<LogType> getLogTypes() {
+        return logTypes;
     }
 
+    public List<String> getPatterns() {
+        return patterns;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public boolean matches(Log log) {
+        return RegexChecker.logContainsOneOfPatterns(log, patterns);
+    }
 }

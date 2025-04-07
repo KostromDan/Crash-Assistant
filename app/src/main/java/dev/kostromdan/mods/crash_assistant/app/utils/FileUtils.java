@@ -1,51 +1,14 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 
 public interface FileUtils {
-    static void addIfExists(Map<String, Path> map, Path path) {
-        addIfExistsAndModified(map, path.getFileName().toString(), path, false);
-    }
-
-    static void addIfExists(Map<String, Path> map, String fileName, Path path) {
-        addIfExistsAndModified(map, fileName, path, false);
-    }
-
-    static void addIfExistsAndModified(Map<String, Path> map, Path path) {
-        addIfExistsAndModified(map, path.getFileName().toString(), path, true);
-    }
-
-    static void addIfExistsAndModified(Map<String, Path> map, String fileName, Path path) {
-        addIfExistsAndModified(map, fileName, path, true);
-    }
-
-    static void addIfExistsAndModified(Map<String, Path> map, String fileName, Path path, boolean checkModified) {
-        if (Files.exists(path) && Files.isRegularFile(path)) {
-            if (CrashAssistantConfig.getBlacklistedLogs().contains(fileName)) {
-                return;
-            }
-            if (checkModified && path.toFile().lastModified() <= CrashAssistantApp.parentStarted) {
-                return;
-            }
-            try {
-                if (Files.size(path) == 0) {
-                    CrashAssistantApp.LOGGER.warn("File \"" + path + "\" is empty.");
-                    return;
-                }
-            } catch (IOException e) {
-                CrashAssistantApp.LOGGER.error("Error while checking file size \"" + path + "\": ", e);
-            }
-            map.put(fileName, path);
-        }
-    }
-
     static void removeTmpFiles(Path dir) {
         try {
             Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
@@ -92,6 +55,18 @@ public interface FileUtils {
             }
         }
         return filesFound;
+    }
+
+    static boolean isCurseForgeEnv(){
+        try {
+            Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
+            List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).toList();
+            if (curseForgeDirContents.contains("instances") && curseForgeDirContents.contains("install")) {
+                return true;
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
     }
 
 }

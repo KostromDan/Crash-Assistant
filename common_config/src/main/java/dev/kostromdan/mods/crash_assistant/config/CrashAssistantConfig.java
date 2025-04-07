@@ -14,10 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class CrashAssistantConfig {
@@ -68,7 +65,7 @@ public class CrashAssistantConfig {
                 true);
         ArrayList<String> defaultBlacklistedLogs = new ArrayList<>();
         addOption("general.blacklisted_logs",
-                "List of blacklisted log files. This files won't show in GUI logs list.",
+                "List of blacklisted log files (checked with startswith()). This files won't show in GUI logs list.",
                 defaultBlacklistedLogs);
         List<String> blacklistedLogs = config.get("general.blacklisted_logs");
         if (blacklistedLogs.contains("CrashAssistant: latest.log")) {
@@ -306,7 +303,7 @@ public class CrashAssistantConfig {
     }
 
     public static String get(String path, boolean applyPlaceHolders) {
-        return applyPlaceHolders ? Lang.applyPlaceHolders(config.get(path), new HashSet<>()) : config.get(path);
+        return applyPlaceHolders ? Lang.applyPlaceHolders(config.get(path), new HashMap<>()) : config.get(path);
     }
 
     public static <T> void set(String path, T value) {

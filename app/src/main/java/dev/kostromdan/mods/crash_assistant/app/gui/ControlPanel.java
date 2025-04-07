@@ -295,10 +295,7 @@ public class ControlPanel {
                 }
             }
             if (log.getLinkToUploadedLastLines() == null) {
-                String[] splitLog = log.getFileName().split(":");
-                String fileName = (splitLog.length == 2 ? splitLog[1] : splitLog[0]).trim();
-                String fileParentName = splitLog.length == 2 ? splitLog[0] + ": " : "";
-                logs.add(fileParentName + "[" + fileName + "](<" + log.getLinkToUploadedFirstLines() + ">)");
+                logs.add(log.getParentName() + "[" + log.getFileName() + "](<" + log.getLinkToUploadedFirstLines() + ">)");
             } else {
                 logs.add(panel.getMessageWithBothLinks(true));
             }

@@ -77,4 +77,9 @@ public class Log {
     public void setAnalysed(boolean analysed) {
         isAnalysed = analysed;
     }
+
+    public String getParentName() {
+        String[] splitLog = getName().split(":");
+        return splitLog.length == 2 ? splitLog[0] + ": " : "";
+    }
 }

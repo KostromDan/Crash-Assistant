@@ -280,7 +280,7 @@ public class FilePanel {
 
     public String getMessageWithBothLinks(boolean forMsg) {
         Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
-        return "[" + log.getFileName() + " " + langFunc.apply("gui.split_log_dialog_head").toLowerCase() + "](<" + log.getLinkToUploadedFirstLines() + ">) / " +
+        return log.getParentName() + "[" + log.getFileName() + " " + langFunc.apply("gui.split_log_dialog_head").toLowerCase() + "](<" + log.getLinkToUploadedFirstLines() + ">) / " +
                 "[" + langFunc.apply("gui.split_log_dialog_tail").toLowerCase() + "](<" + log.getLinkToUploadedLastLines() + ">) " + getTooBigReasons(forMsg);
     }
 

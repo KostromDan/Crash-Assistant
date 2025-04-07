@@ -1,3 +1,14 @@
+1.6.1:
+
+- Added support of CurseForge launcher log on MacOS.
+- Now displaying last time of UploadAllButton cooldown for locating terminated processes.
+- Added in generated messages count of found potential crash reasons by log analysis.
+- Added some logging:
+    - Paths of added logs.
+    - Path from which CA launched(modpack folder).
+    - gameLaunchedSuccessfully boolean variable.
+- Fixed I forgot to update 1 ru lang key.
+
 1.6.0 major update:
 
 - Redesigned very many aspects of mod, to make Log Analysis easy to maintain and develop.
@@ -24,6 +35,7 @@
 - WinEvents cleaning: mod will leave only five latest files to prevent too many files in modpack folder.
 - Prevent error spam in non Windows systems in CA log, bc of PowerShell not available.
 - Now blacklisted logs config option works not by equals(), but startswith().
+- Added support of ATLauncher launcher log on MacOS.
 - Added i9-14900hx to Intel corrupted processors list.
   It's not officially listed, but we've seen already 2 similar cursed logs with this processor.
 

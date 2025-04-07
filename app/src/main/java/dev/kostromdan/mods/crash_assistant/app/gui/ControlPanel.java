@@ -115,9 +115,9 @@ public class ControlPanel {
             @Override
             public void run() {
                 SwingUtilities.invokeLater(() -> {
-                    double leastTime = (CrashAssistantApp.terminatedProcessesLocationEndTime - Instant.now().toEpochMilli() + 100) / 1000.0D;
+                    double lestTime = (CrashAssistantApp.terminatedProcessesLocationEndTime - Instant.now().toEpochMilli() + 100) / 1000.0D;
                     uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button_delayed")
-                            .replaceAll("\\$SECONDS\\$", String.format("%.3f", leastTime)));
+                            .replaceAll("\\$SECONDS\\$", String.format("%.3f", lestTime)));
 
                     if (Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
                         uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));

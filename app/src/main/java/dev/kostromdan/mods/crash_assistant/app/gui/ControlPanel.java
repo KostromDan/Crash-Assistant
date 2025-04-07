@@ -110,7 +110,6 @@ public class ControlPanel {
         uploadAllButton.setEnabled(false);
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
-            final long startTime = Instant.now().toEpochMilli();
 
             @Override
             public void run() {

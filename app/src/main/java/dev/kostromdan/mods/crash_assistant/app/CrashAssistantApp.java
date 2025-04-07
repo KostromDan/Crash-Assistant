@@ -170,6 +170,12 @@ public class CrashAssistantApp {
             });
         }
 
+        String userHome = System.getProperty("user.home");
+        if (userHome != null && !LogsList.isLauncherLogExist()) {
+            // MacOS CurseForge: launcher_log.txt
+            LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "CurseForge: launcher_log.txt", Paths.get(userHome, "Library", "Application Support", "minecraft", "launcher_log.txt")));
+        }
+
 
         LogsList.addIfExistsAndModified(new Log(LogType.KUBE_JS, "KubeJS: client.log", Paths.get("logs", "kubejs", "client.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.KUBE_JS, "KubeJS: server.log", Paths.get("logs", "kubejs", "server.log")));

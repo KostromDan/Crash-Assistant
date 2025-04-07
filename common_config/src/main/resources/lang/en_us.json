@@ -111,5 +111,5 @@
   "msg.mb": "MB",
   "msg.k_lines": "k lines",
   "msg.intel_corrupted_notification": " can be reason of crash",
-  "msg.found_potential_crash_reason": " with $COUNT$ log analysis result."
+  "msg.found_potential_crash_reason": " with $COUNT$ log analysis result(s)."
 }

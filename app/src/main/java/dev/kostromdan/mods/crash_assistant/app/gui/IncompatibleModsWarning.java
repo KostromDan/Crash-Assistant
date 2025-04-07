@@ -1,7 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.config.ProblematicModsConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 
@@ -24,7 +24,7 @@ public class IncompatibleModsWarning {
     public static void showWarnings(Component parent) {
         ControlPanel.stopMovingToTop = true;
 
-        synchronized (KnownCrashReason.class) {
+        synchronized (KnownCrashReasonMessage.class) {
             try {
                 List<ProblematicModsConfig.ProblematicMod> currentProblematicMods = ProblematicModsConfig.getCurrentProblematicMods();
 

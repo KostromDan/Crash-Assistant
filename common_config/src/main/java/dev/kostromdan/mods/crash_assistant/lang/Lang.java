@@ -9,8 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,25 +22,26 @@ public class Lang {
     }
 
     public String get(String key) {
-        return get(key, new HashSet<>());
+        return get(key, new HashMap<>());
     }
 
-    public String get(String key, HashSet<String> placeHoldersSurroundedWithHref) {
+    public String get(String key, HashMap<String, String> placeHoldersSurroundedWithHref) {
         String value = lang.getOrDefault(key, LanguageProvider.languages.get("en_us").lang.get(key));
         return applyPlaceHolders(value, placeHoldersSurroundedWithHref);
     }
 
-    public static String applyPlaceHolders(String value, HashSet<String> placeHoldersSurroundedWithHref) {
+    public static String applyPlaceHolders(String value, HashMap<String, String> placeHoldersSurroundedWithHref) {
         if (!value.contains("$")) {
             return value;
         }
         value = applyPlaceHolder("$CONFIG.", value, CrashAssistantConfig::get, placeHoldersSurroundedWithHref);
         value = applyPlaceHolder("$LANG.", value, LanguageProvider::get, placeHoldersSurroundedWithHref);
         value = applyPlaceHolder("$BCC.", value, Lang::getBCCValue, placeHoldersSurroundedWithHref);
+        value = applyPlaceHolder("$LINK.", value, LinksProvider::getLinkByKey, placeHoldersSurroundedWithHref);
         return value;
     }
 
-    private static String applyPlaceHolder(String placeHolderStart, String value, Function<String, String> configGetFunction, HashSet<String> placeHoldersSurroundedWithHref) {
+    private static String applyPlaceHolder(String placeHolderStart, String value, Function<String, String> configGetFunction, HashMap<String, String> placeHoldersSurroundedWithHref) {
         while (value.contains(placeHolderStart)) {
             int placeHolderStartLength = placeHolderStart.length();
             int placeHolderStartIndex = value.indexOf(placeHolderStart);
@@ -56,8 +55,17 @@ public class Lang {
                 configValue = configGetFunction.apply(configKey);
             }
 
-            if (placeHoldersSurroundedWithHref.contains(placeholder)) {
-                configValue = "<a href='" + placeholder.substring(1, placeholder.length() - 1) + "'>" + configValue + "</a>";
+            if (placeHoldersSurroundedWithHref.containsKey(placeholder) || placeHolderStart.equals("$LINK.")) {
+                String placeHolderValue = placeHoldersSurroundedWithHref.get(placeholder);
+                if (placeHolderValue == null) {
+                    if (placeHolderStart.equals("$LINK.")) {
+                        configValue = "<a href='" + configValue + "'>" + configValue + "</a>";
+                    } else {
+                        configValue = "<a href='" + placeholder.substring(1, placeholder.length() - 1) + "'>" + configValue + "</a>";
+                    }
+                } else {
+                    configValue = "<a href='" + configValue + "'>" + placeHolderValue + "</a>";
+                }
             }
             value = value.replaceAll(Pattern.quote(placeholder), Matcher.quoteReplacement(configValue));
         }

@@ -1,0 +1,15 @@
+package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
+
+public enum LogType {
+    LOG,
+    DEBUG_LOG,
+    LAUNCHER_LOG,
+    CRASH_REPORT,
+    HS_ERR,
+    WIN_EVENT,
+    MOD_LIST,
+    KUBE_JS,
+    CRAFT_TWEAKER,
+    REI,
+    CRASH_ASSISTANT
+}

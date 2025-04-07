@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 
 import javax.swing.*;
@@ -33,11 +34,12 @@ public class FileListPanel {
         return fileListPanel;
     }
 
-    public void addFile(String fileName, Path file) {
-        FilePanel filePanel = new FilePanel(fileName, file);
+    public void addLog(Log log) {
+        FilePanel filePanel = new FilePanel(log);
         filePanelList.add(filePanel);
+
         fileListPanel.add(filePanel.getPanel());
-        fileListPanelFilesDragAndDrop.add(file.toFile());
+        fileListPanelFilesDragAndDrop.add(log.getFile());
         fileListPanel.revalidate();
     }
 }

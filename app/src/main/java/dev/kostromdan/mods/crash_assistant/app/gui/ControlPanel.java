@@ -2,9 +2,13 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.lang.LinksProvider;
 import dev.kostromdan.mods.crash_assistant.mod_list.*;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import gs.mclo.api.response.UploadLogResponse;
@@ -35,7 +39,7 @@ public class ControlPanel {
     private String generatedMsg = null;
     private ModListDiff modListDiff;
 
-    public ControlPanel(FileListPanel fileListPanel, Map<String, Path> availableLogs) {
+    public ControlPanel(FileListPanel fileListPanel) {
         this.fileListPanel = fileListPanel;
 
         panel = new JPanel(new BorderLayout());
@@ -56,7 +60,7 @@ public class ControlPanel {
                         }
                         writer.newLine();
                     }
-                    availableLogs.put(modListTxtPath.getFileName().toString(), modListTxtPath);
+                    LogsList.addIfExistsAndModified(new Log(LogType.MOD_LIST, modListTxtPath), false, false);
                 } catch (Exception e) {
                     CrashAssistantApp.LOGGER.error("Error while saving modlist.txt", e);
                 }
@@ -192,10 +196,11 @@ public class ControlPanel {
                     }
                     int successCounter = 0;
                     for (FilePanel filePanel : fileListPanel.filePanelList) {
+                        Log log = filePanel.getLog();
                         if (filePanel.getLastError() != null) {
                             JOptionPane.showMessageDialog(
                                     panel,
-                                    LanguageProvider.get("gui.failed_to_upload_file") + " \"" + filePanel.getFilePath() + "\": " + filePanel.getLastError(),
+                                    LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError(),
                                     LanguageProvider.get("gui.failed_to_upload_file") + "!",
                                     JOptionPane.ERROR_MESSAGE
                             );
@@ -214,7 +219,7 @@ public class ControlPanel {
                             );
                             return;
                         }
-                        if (filePanel.getUploadedLinkFirstLines() != null) {
+                        if (log.getLinkToUploadedFirstLines() != null) {
                             successCounter++;
                         }
                         if (successCounter == fileListPanel.filePanelList.size()) {
@@ -261,55 +266,50 @@ public class ControlPanel {
             sb.append(CrashAssistantConfig.get("generated_message.text_under_crashed", true)).append("\n");
         }
         boolean kubeJSPosted = false;
-        List<FilePanel> kubeJSPanelList = new ArrayList<>();
+        List<Log> kubeJSPanelList = new ArrayList<>();
         for (FilePanel panel : fileListPanel.filePanelList) {
-            if (!panel.getFileName().startsWith("KubeJS: ")) {
+            Log log = panel.getLog();
+            if (!log.getFileName().startsWith("KubeJS: ")) {
                 continue;
             }
-            if (panel.getUploadedLinkLastLines() != null) {
+            if (log.getLinkToUploadedLastLines() != null) {
                 kubeJSPanelList.clear();
                 break;
             }
-            kubeJSPanelList.add(panel);
+            kubeJSPanelList.add(log);
         }
         List<String> logs = new ArrayList<>();
         for (FilePanel panel : fileListPanel.filePanelList) {
-            if (panel.getFileName().startsWith("KubeJS: ")) {
+            Log log = panel.getLog();
+            if (log.getFileName().startsWith("KubeJS: ")) {
                 if (kubeJSPosted) continue;
 
                 if (!kubeJSPanelList.isEmpty()) {
                     kubeJSPosted = true;
                     logs.add("KubeJS: " +
                             kubeJSPanelList.stream()
-                                    .map(kubeJSPanel -> "[" + kubeJSPanel.getFilePath().getFileName() + "](<" + kubeJSPanel.getUploadedLinkFirstLines() + ">)")
+                                    .map(kubeJSLog -> "[" + kubeJSLog.getFileName() + "](<" + kubeJSLog.getLinkToUploadedFirstLines() + ">)")
                                     .collect(Collectors.joining(" / "))
                     );
                     continue;
                 }
             }
-            if (panel.getUploadedLinkLastLines() == null) {
-                String[] splitLog = panel.getFileName().split(":");
+            if (log.getLinkToUploadedLastLines() == null) {
+                String[] splitLog = log.getFileName().split(":");
                 String fileName = (splitLog.length == 2 ? splitLog[1] : splitLog[0]).trim();
                 String fileParentName = splitLog.length == 2 ? splitLog[0] + ": " : "";
-                logs.add(fileParentName + "[" + fileName + "](<" + panel.getUploadedLinkFirstLines() + ">)");
+                logs.add(fileParentName + "[" + fileName + "](<" + log.getLinkToUploadedFirstLines() + ">)");
             } else {
                 logs.add(panel.getMessageWithBothLinks(true));
             }
         }
-        if (CrashAssistantApp.launcherLogsCount == 0) {
-            try {
-                Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
-                List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).toList();
-                if (curseForgeDirContents.contains("instances") && curseForgeDirContents.contains("install")) {
-                    logs.add(LanguageProvider.getMsgLang("msg.skip_launcher"));
-                }
-            } catch (Exception ignored) {
-            }
+        if (!LogsList.isLauncherLogExist() && FileUtils.isCurseForgeEnv()) {
+            logs.add(LanguageProvider.getMsgLang("msg.skip_launcher"));
         }
         try {
             if (CrashAssistantConfig.getBoolean("generated_message.intel_corrupted_notification") && IntelCorruptedProcessorChecker.isAffectedProcessor()) {
                 String model = IntelCorruptedProcessorChecker.extractModel();
-                logs.add("[" + model + LanguageProvider.getMsgLang("msg.intel_corrupted_notification") + "](<" + IntelChipBugWarning.HELP_URL + ">)");
+                logs.add("[" + model + LanguageProvider.getMsgLang("msg.intel_corrupted_notification") + "](<" + LinksProvider.INTEL_CHIP_BUG_FAQ.getLink() + ">)");
             }
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while checking IntelCorruptedProcessor", e);

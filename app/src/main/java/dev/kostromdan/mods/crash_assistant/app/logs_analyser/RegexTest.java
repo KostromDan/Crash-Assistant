@@ -6,8 +6,8 @@ import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder.removeSpacesAndEndLines;
-import static dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder.wasClosedMessagesRegex;
+import static dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.WasClosedByWindows.removeSpacesAndEndLines;
+import static dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.WasClosedByWindows.wasClosedMessagesRegex;
 
 public class RegexTest {
 

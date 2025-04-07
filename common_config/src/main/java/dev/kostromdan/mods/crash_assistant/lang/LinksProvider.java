@@ -1,0 +1,27 @@
+package dev.kostromdan.mods.crash_assistant.lang;
+
+public enum LinksProvider {
+    INTEL_CHIP_BUG_FAQ("https://www.zdnet.com/article/intel-chip-bug-faq-which-pcs-are-affected-how-to-get-the-patch-and-everything-else-you-need-to-know/"),
+    AMD_SUPPORT("https://www.amd.com/en/support"),
+    HOW_FORCE_APP_USE_DISCRETE_GPU("https://www.xda-developers.com/how-force-app-use-discrete-gpu-windows-11"),
+    AZUL_DOWNLOAD("https://www.azul.com/downloads/?version=java-21-lts&os=macos&architecture=arm-64-bit&package=jdk#zulu"),
+    GLFW_DOWNLOAD("https://github.com/Frontear/glfw-libs/releases"),
+    C6A("https://modrinth.com/collection/uSfTuDgc"),
+    ATL("https://atlauncher.com/downloads");
+
+
+
+    private final String link;
+
+    LinksProvider(String link) {
+        this.link = link;
+    }
+
+    public String getLink() {
+        return link;
+    }
+
+    public static String getLinkByKey(String enumKey) {
+        return Enum.valueOf(LinksProvider.class, enumKey).link;
+    }
+}

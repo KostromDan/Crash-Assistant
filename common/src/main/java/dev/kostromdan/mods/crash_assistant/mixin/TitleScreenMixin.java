@@ -9,6 +9,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 @Mixin(TitleScreen.class)
 public class TitleScreenMixin {
     @Inject(method = "tick", at = @At("RETURN"), cancellable = false)
@@ -24,6 +29,13 @@ public class TitleScreenMixin {
                     CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname)) {
                 ModListUtils.saveCurrentModList();
             }
+        }
+
+        String successfulLaunchFileName = "successful_launch_pid" + ProcessHandle.current().pid() + ".tmp";
+        Path successfulLaunchFilePath = Paths.get("local", "crash_assistant", successfulLaunchFileName);
+        try {
+            Files.write(successfulLaunchFilePath, Long.toString(System.currentTimeMillis()).getBytes());
+        } catch (IOException ignored) {
         }
     }
 }

@@ -1,10 +1,12 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalyser;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
@@ -18,8 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -32,8 +32,8 @@ public class CrashAssistantApp {
     public static long parentPID;
     public static long parentStarted;
     public static boolean crashed_with_report = false;
-    public static int launcherLogsCount = 0;
     public static String crashAssistantJarName = null;
+    public static boolean gameLaunchedSuccessfully = false;
 
 
     public static void main(String[] args) {
@@ -71,6 +71,8 @@ public class CrashAssistantApp {
 
         FileUtils.removeTmpFiles(Paths.get("local", "crash_assistant"));
         FileUtils.removeOldLogsFolder();
+
+        WinEventCleaner.cleanOldWinEventFiles();
 
         CrashReportsHelper.cacheKnownCrashReports();
         HsErrHelper.removeHsErrLog(parentPID);
@@ -115,24 +117,22 @@ public class CrashAssistantApp {
     private static void onMinecraftFinished() {
         GUIStartTime = Instant.now().toEpochMilli();
 
+        LogAnalyser.registerReasons();
+
         new Thread(() -> {
             ModListUtils.getCurrentModList(true); //Cache modlist, to not spend time in further, then it needed.
         }).start();
 
         boolean crashed = false;
-        LinkedHashMap<String, Path> availableLogs = new LinkedHashMap<>();
 
-        FileUtils.addIfExistsAndModified(availableLogs, Paths.get("logs", "latest.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, Paths.get("logs", "debug.log"));
+        LogsList.addIfExistsAndModified(new Log(LogType.LOG, Paths.get("logs", "latest.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LOG, Paths.get("logs", "debug.log")));
 
         Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(parentPID);
         if (hsErrLog.isPresent()) {
             crashed = true;
             crashed_with_report = true;
-            FileUtils.addIfExistsAndModified(availableLogs, hsErrLog.get());
-            KnownCrashReason.addIfContainsOneOfPatterns(hsErrLog.get(),
-                    LanguageProvider.get("warnings.atio6axx"),
-                    "# Problematic frame:\\R# C  \\[atio6axx\\.dll\\+0x[0-9a-fA-F]+\\]");
+            LogsList.addIfExistsAndModified(new Log(LogType.HS_ERR, hsErrLog.get()));
         }
 
         HashSet<Path> newCrashReports = CrashReportsHelper.scanForNewCrashReports();
@@ -140,52 +140,57 @@ public class CrashAssistantApp {
             crashed = true;
             crashed_with_report = true;
             for (Path path : newCrashReports) {
-                FileUtils.addIfExistsAndModified(availableLogs, path);
+                LogsList.addIfExistsAndModified(new Log(LogType.CRASH_REPORT, path));
             }
         }
 
 
-        launcherLogsCount = availableLogs.size();
-        FileUtils.addIfExistsAndModified(availableLogs, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt"));
-        FileUtils.addIfExistsAndModified(availableLogs, "CurseForge: launcher_log.txt", Paths.get("../../Install", "launcher_log.txt"));
-        FileUtils.addIfExistsAndModified(availableLogs, "ftb-app-electron.log", Paths.get("../../logs", "ftb-app-electron.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "PrismLauncher-0.log", Paths.get("../../../logs", "PrismLauncher-0.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "GDLauncher: main.log", Paths.get("../../../../", "main.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "MultiMC-0.log", Paths.get("../../../", "MultiMC-0.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "PolyMC-0.log", Paths.get("../../../", "PolyMC-0.log"));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "CurseForge: launcher_log.txt", Paths.get("../../Install", "launcher_log.txt")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../logs", "ftb-app-electron.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../logs", "PrismLauncher-0.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "GDLauncher: main.log", Paths.get("../../../../", "main.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../", "MultiMC-0.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../", "PolyMC-0.log")));
 
         FileUtils.getModifiedFiles(Paths.get("../../launcher_logs"), ".log").forEach(path -> {
-            FileUtils.addIfExistsAndModified(availableLogs, path.getFileName().toString(), path);
+            LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path));
         });
 
         String appdata = System.getenv("APPDATA");
+
+        // Mac atlauncher.log
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../logs", "atlauncher.log")));
         if (appdata != null) {
-            FileUtils.addIfExistsAndModified(availableLogs, "atlauncher.log", Paths.get(appdata, "AtLauncher", "logs", "atlauncher.log"));
+            // Windows atlauncher.log
+            LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get(appdata, "AtLauncher", "logs", "atlauncher.log")));
 
             FileUtils.getModifiedFiles(Paths.get(appdata, ".tlauncher", "logs", "tlauncher"), ".log").forEach(path -> {
-                FileUtils.addIfExistsAndModified(availableLogs, path.getFileName().toString(), path); // To notify modpack creators about TLauncher usage.
+                LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path)); // To notify modpack creators about TLauncher usage.
             });
         }
-        launcherLogsCount = availableLogs.size() - launcherLogsCount;
 
 
-        FileUtils.addIfExistsAndModified(availableLogs, "KubeJS: client.log", Paths.get("logs", "kubejs", "client.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "KubeJS: server.log", Paths.get("logs", "kubejs", "server.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, "KubeJS: startup.log", Paths.get("logs", "kubejs", "startup.log"));
+        LogsList.addIfExistsAndModified(new Log(LogType.KUBE_JS, "KubeJS: client.log", Paths.get("logs", "kubejs", "client.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.KUBE_JS, "KubeJS: server.log", Paths.get("logs", "kubejs", "server.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.KUBE_JS, "KubeJS: startup.log", Paths.get("logs", "kubejs", "startup.log")));
 
-        FileUtils.addIfExistsAndModified(availableLogs, Paths.get("logs", "crafttweaker.log"));
-        FileUtils.addIfExistsAndModified(availableLogs, Paths.get("logs", "rei.log"));
+        LogsList.addIfExistsAndModified(new Log(LogType.CRAFT_TWEAKER, Paths.get("logs", "crafttweaker.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.REI, Paths.get("logs", "rei.log")));
         Path reiIssuesPath = Paths.get("logs", "rei-issues.log");
         try {
             if (reiIssuesPath.toFile().exists() && Files.size(reiIssuesPath) != 0) {
-                FileUtils.addIfExistsAndModified(availableLogs, reiIssuesPath);
+                LogsList.addIfExistsAndModified(new Log(LogType.REI, reiIssuesPath));
             }
         } catch (IOException ignored) {
 
         }
 
 
-        FileUtils.addIfExistsAndModified(availableLogs, Paths.get("logs", "crash_assistant", "crash_assistant_app.log"));
+        LogsList.addIfExistsAndModified(new Log(LogType.CRASH_ASSISTANT, Paths.get("logs", "crash_assistant", "crash_assistant_app.log")));
+
+
+        LogAnalyser.analyseLogs();
 
 
         String normalStopFileName = "normal_stop_pid" + parentPID + ".tmp";
@@ -194,7 +199,12 @@ public class CrashAssistantApp {
             crashed = true;
         }
 
-        startLocatingTerminatedProcesses(availableLogs);
+        String successfulLaunchFileName = "successful_launch_pid" + parentPID + ".tmp";
+        Path successfulLaunchFilePath = Paths.get("local", "crash_assistant", successfulLaunchFileName);
+        gameLaunchedSuccessfully = Files.exists(successfulLaunchFilePath) && Files.isRegularFile(successfulLaunchFilePath);
+
+
+        startLocatingTerminatedProcesses();
 
         if (crashed) {
             if (!crashed_with_report) {
@@ -203,30 +213,30 @@ public class CrashAssistantApp {
             } else {
                 LOGGER.info("Seems like Minecraft crashed. Starting Crash Assistant app.");
             }
-            onMinecraftCrashed(availableLogs);
+            onMinecraftCrashed();
         } else {
             LOGGER.info("Seems like Minecraft finished normally. Trying to locate terminated processes and Exiting Crash Assistant app.");
         }
 
     }
 
-    private static void onMinecraftCrashed(Map<String, Path> availableLogs) {
-        startApp(availableLogs);
+    private static void onMinecraftCrashed() {
+        startApp();
     }
 
 
-    public static void startApp(Map<String, Path> availableLogs) {
+    public static void startApp() {
         GUIStartedLaunching = true;
         try {
             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
-            Constructor<?> constructor = clazz.getConstructor(Map.class);
-            constructor.newInstance(availableLogs);
+            Constructor<?> constructor = clazz.getConstructor();
+            constructor.newInstance();
         } catch (Exception e) {
             LOGGER.error("Exception while starting gui:", e);
         }
     }
 
-    public static void startLocatingTerminatedProcesses(Map<String, Path> availableLogs) {
+    public static void startLocatingTerminatedProcesses() {
         new Thread(() -> {
             long startTime = System.currentTimeMillis();
             boolean firstIteration = true;
@@ -240,9 +250,11 @@ public class CrashAssistantApp {
                 Path terminatedProcessesPath = Paths.get(TerminatedProcessesFinder.getTerminatedByWinProcessLogs());
                 if (terminatedProcessesPath.toFile().isFile()) {
                     LOGGER.info("Time to locate terminated process: " + (System.currentTimeMillis() - startTime));
+                    synchronized (LogsList.class) {
+                        LogsList.addIfExistsAndModified(new Log(LogType.WIN_EVENT, terminatedProcessesPath));
+                    }
                     if (!GUIStartedLaunching) {
-                        FileUtils.addIfExistsAndModified(availableLogs, terminatedProcessesPath);
-                        onMinecraftCrashed(availableLogs);
+                        onMinecraftCrashed();
                     } else {
                         startTime = System.currentTimeMillis();
                         while (true) {
@@ -257,8 +269,9 @@ public class CrashAssistantApp {
                             }
                             try {
                                 Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
-                                Method method = clazz.getMethod("addLogFileLater", Path.class);
-                                method.invoke(null, terminatedProcessesPath);
+                                Method method = clazz.getMethod("updateLogsListInGUI");
+                                method.invoke(null);
+                                LogAnalyser.analyseLogs();
                                 method = clazz.getMethod("showKnownCrashReasonsWarnings");
                                 method.invoke(null);
                             } catch (Exception e) {

@@ -126,7 +126,7 @@ public class CrashAssistantApp {
         boolean crashed = false;
 
         LogsList.addIfExistsAndModified(new Log(LogType.LOG, Paths.get("logs", "latest.log")));
-        LogsList.addIfExistsAndModified(new Log(LogType.LOG, Paths.get("logs", "debug.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.DEBUG_LOG, Paths.get("logs", "debug.log")));
 
         Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(parentPID);
         if (hsErrLog.isPresent()) {

@@ -269,7 +269,7 @@ public class ControlPanel {
         List<Log> kubeJSPanelList = new ArrayList<>();
         for (FilePanel panel : fileListPanel.filePanelList) {
             Log log = panel.getLog();
-            if (!log.getFileName().startsWith("KubeJS: ")) {
+            if (!log.getName().startsWith("KubeJS: ")) {
                 continue;
             }
             if (log.getLinkToUploadedLastLines() != null) {
@@ -281,7 +281,7 @@ public class ControlPanel {
         List<String> logs = new ArrayList<>();
         for (FilePanel panel : fileListPanel.filePanelList) {
             Log log = panel.getLog();
-            if (log.getFileName().startsWith("KubeJS: ")) {
+            if (log.getName().startsWith("KubeJS: ")) {
                 if (kubeJSPosted) continue;
 
                 if (!kubeJSPanelList.isEmpty()) {

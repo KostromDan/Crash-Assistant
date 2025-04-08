@@ -19,6 +19,8 @@ import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Timer;
@@ -49,6 +51,8 @@ public class CrashAssistantGUI {
 
         frame.setSize(500, 400);
         frame.setLayout(new BorderLayout());
+
+        addFileMenu();
 
         String titleText = LanguageProvider.get("gui.oops") + getTitleCrashedText(false) + "!";
         JLabel titleLabel = new JLabel(titleText, SwingConstants.LEFT);
@@ -125,13 +129,62 @@ public class CrashAssistantGUI {
         showKnownCrashReasonsWarnings();
     }
 
+    private void addFileMenu() {
+        // Initialize menu bar and main menus
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu(LanguageProvider.get("gui.menu.file"));
+        JMenu analysisMenu = new JMenu(LanguageProvider.get("gui.menu.analysis"));
+
+        // File menu items
+        JMenuItem openConfigItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_config"));
+        openConfigItem.addActionListener(e -> {
+            try {
+                File configFile = new File("config/crash_assistant/config.toml");
+                Desktop.getDesktop().open(configFile);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        fileMenu.add(openConfigItem);
+
+        // Analysis menu items
+        JMenuItem analysisItem = new JMenuItem(LanguageProvider.get("gui.menu.create_dependencies_analysis"));
+        analysisItem.addActionListener(e -> {
+            // Create and configure dialog
+            JDialog dialog = new JDialog(frame, LanguageProvider.get("gui.dialog.dependencies_analysis"), true);
+            dialog.setLayout(new BorderLayout());
+
+            // Add content to dialog
+            JLabel label = new JLabel(LanguageProvider.get("gui.dialog.dependencies_analysis_placeholder"));
+            dialog.add(label, BorderLayout.CENTER);
+
+            // Button panel setup
+            JPanel buttonPanel = new JPanel();
+            JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
+            buttonPanel.add(okButton);
+            okButton.addActionListener(e2 -> dialog.dispose());
+            dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+            // Dialog display settings
+            dialog.setSize(300, 200);
+            dialog.setLocationRelativeTo(frame);
+            dialog.setVisible(true);
+        });
+        analysisMenu.add(analysisItem);
+
+        // Add menus to menu bar and set to frame
+        menuBar.add(fileMenu);
+        menuBar.add(analysisMenu);
+        frame.setJMenuBar(menuBar);
+    }
+
     public static void resize() {
         frame.setSize(Math.max(Math.max(fileListPanel.getFileListPanel().getPreferredSize().width + 12, controlPanel.getPanel().getPreferredSize().width) + 26, labelPanel.getPreferredSize().width + 20),
                 Math.min(heightWithoutScrollPane + fileListPanel.getFileListPanel().getPreferredSize().height + 39, 700));
         frame.setMinimumSize(new Dimension(frame.getSize().width, heightWithoutScrollPane + 73));
     }
 
-    public static void  showKnownCrashReasonsWarnings() {
+    public static void showKnownCrashReasonsWarnings() {
         ControlPanel.stopMovingToTop = true;
         synchronized (KnownCrashReasonMessage.class) {
             try {

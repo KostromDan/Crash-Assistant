@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.Create6Addons;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
@@ -149,27 +150,7 @@ public class CrashAssistantGUI {
 
         // Analysis menu items
         JMenuItem analysisItem = new JMenuItem(LanguageProvider.get("gui.menu.create_dependencies_analysis"));
-        analysisItem.addActionListener(e -> {
-            // Create and configure dialog
-            JDialog dialog = new JDialog(frame, LanguageProvider.get("gui.dialog.dependencies_analysis"), true);
-            dialog.setLayout(new BorderLayout());
-
-            // Add content to dialog
-            JLabel label = new JLabel(LanguageProvider.get("gui.dialog.dependencies_analysis_placeholder"));
-            dialog.add(label, BorderLayout.CENTER);
-
-            // Button panel setup
-            JPanel buttonPanel = new JPanel();
-            JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
-            buttonPanel.add(okButton);
-            okButton.addActionListener(e2 -> dialog.dispose());
-            dialog.add(buttonPanel, BorderLayout.SOUTH);
-
-            // Dialog display settings
-            dialog.setSize(300, 200);
-            dialog.setLocationRelativeTo(frame);
-            dialog.setVisible(true);
-        });
+    analysisItem.addActionListener(e -> Create6Addons.showCreateAnalysisDialog(frame));
         analysisMenu.add(analysisItem);
 
         // Add menus to menu bar and set to frame

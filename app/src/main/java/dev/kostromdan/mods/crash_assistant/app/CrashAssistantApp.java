@@ -7,6 +7,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.loading_utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
@@ -45,6 +46,7 @@ public class CrashAssistantApp {
         LOGGER.info("CrashAssistantApp running: program args: {}", Boot.APP_ARGS);
 
         LOGGER.info("CrashAssistantApp running from: {}", Paths.get("").toAbsolutePath().toString());
+        LOGGER.info("JAVA: {}", JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
 
         parentPID = -1;
         for (int i = 0; i < args.length; i++) {

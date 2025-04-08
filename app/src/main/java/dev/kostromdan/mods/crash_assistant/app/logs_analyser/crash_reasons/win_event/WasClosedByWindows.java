@@ -36,7 +36,7 @@ public class WasClosedByWindows extends KnownCrashReason {
     }
 
     @Override
-    public boolean matches(Log log) {
+    public boolean matches(String logText, Log log) {
         try {
             log.getProcessor().processLogFile();
         } catch (IOException e) {

@@ -48,7 +48,7 @@ public class KnownCrashReason {
         return message;
     }
 
-    public boolean matches(Log log) {
-        return RegexChecker.logContainsOneOfPatterns(log, patterns);
+    public boolean matches(String logText, Log log) {
+        return RegexChecker.logContainsOneOfPatterns(logText, log.getPath(), patterns);
     }
 }

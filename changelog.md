@@ -1,3 +1,14 @@
+1.6.2:
+
+- Minor optimisations and fixes.
+- Added log analysis for ctov without lithostitched.
+- Added File menu. Currently one option to open config.
+- Added Analysis menu. Currently one option to analyse Create mod deps.
+    - Added new gui for analysis which Create addons not compatible with current version of Create mod.
+- Fixed case when Create addons warning displayed then it shouldn't.
+- Fixed case when Create addons warning wasn't displayed then it should.
+- Added logging of current java binary path.
+
 1.6.1:
 
 - Added support of CurseForge launcher log on MacOS.

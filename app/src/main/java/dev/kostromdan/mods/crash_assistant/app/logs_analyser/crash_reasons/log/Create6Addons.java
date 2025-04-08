@@ -7,13 +7,14 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.loading_utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
 
 import javax.swing.*;
 import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
@@ -41,12 +42,16 @@ public class Create6Addons extends KnownCrashReason {
     }
 
     @Override
-    public boolean matches(Log log) {
+    public boolean matches(String logText, Log log) {
         if (CrashAssistantApp.gameLaunchedSuccessfully) {
             return false;
         }
         List<Mod> createMods = getCurrentCreateMods();
         if (createMods.isEmpty()) {
+            return false;
+        }
+        ModListDiff diff = ModListDiff.getDiff(true);
+        if (!PlatformHelp.isLinkDefault() && diff.getAddedMods().isEmpty() && diff.getUpdatedMods().isEmpty()) {
             return false;
         }
         if (createMods.size() == 1 &&
@@ -56,7 +61,7 @@ public class Create6Addons extends KnownCrashReason {
                         .anyMatch(mod -> Objects.equals(mod.getModId(), "railways"))) {
             return true;
         }
-        return super.matches(log);
+        return super.matches(logText, log);
     }
 
     public static List<Mod> getCurrentCreateMods() {
@@ -84,23 +89,47 @@ public class Create6Addons extends KnownCrashReason {
         return className;
     }
 
-    public static String getJDepsPath() {
-        String javaBinaryPath = JavaBinaryLocator.getJavaBinary(ProcessHandle.current());
-        String jdepsPath = javaBinaryPath.replaceAll("(?<=[/\\\\])java(\\.exe)?$", "jdeps$1");
-        if (Files.isRegularFile(Paths.get(javaBinaryPath)) && !Files.isRegularFile(Paths.get(jdepsPath))) {
-            CrashAssistantApp.LOGGER.error("JDK is required for analysis of jar files. JRE is not suitable for this!");
-            return null;
+    public static boolean validateJdepsPath(String jdepsPath) {
+        try {
+            new ProcessBuilder(jdepsPath, "-version").start();
+            return true;
+        } catch (IOException ex) {
+            return false;
         }
-        return jdepsPath;
     }
 
-    public static HashSet<String> getCreateClassesModUsing(Mod mod) {
+    public static String getJDepsPath() {
+        String javaBinaryPath = JavaBinaryLocator.getJavaBinary(ProcessHandle.current());
+        if (javaBinaryPath.contains("javaw")) {
+            javaBinaryPath = javaBinaryPath.replace("javaw", "java");
+        }
+        String jdepsPath = javaBinaryPath.replaceAll("(?<=[/\\\\])java(\\.exe)?$", "jdeps$1");
+        if (validateJdepsPath(jdepsPath)) return jdepsPath;
+
+        // Second attempt: try getting the path from JAVA_HOME.
+        String javaHome = System.getenv("JAVA_HOME");
+        if (javaHome != null && !javaHome.isEmpty()) {
+            String osName = System.getProperty("os.name").toLowerCase();
+            if (osName.contains("win")) {
+                jdepsPath = javaHome + File.separator + "bin" + File.separator + "jdeps.exe";
+            } else {
+                jdepsPath = javaHome + File.separator + "bin" + File.separator + "jdeps";
+            }
+            if (validateJdepsPath(jdepsPath)) {
+                return jdepsPath;
+            }
+        }
+
+        return null;
+    }
+
+    public static HashSet<String> getCreateClassesModUsing(Mod mod, String jdepsPath) {
         HashSet<String> result = new HashSet<>();
         try {
             ProcessBuilder jdepsProcessBuilder = new ProcessBuilder(
-                    getJDepsPath(),
+                    jdepsPath,
                     "-verbose:class",
-                    "mods/" + mod.getJarName()
+                    Paths.get("mods", mod.getJarName()).toAbsolutePath().toString()
             );
             jdepsProcessBuilder.redirectErrorStream(true);
             Process process = jdepsProcessBuilder.start();
@@ -163,7 +192,7 @@ public class Create6Addons extends KnownCrashReason {
     }
 
     public static void showCreateAnalysisDialog(JFrame parent) {
-        JDialog dialog = new JDialog(parent, "Create Dependencies Analysis", true);
+        JDialog dialog = new JDialog(parent, LanguageProvider.get("gui.menu.analysis.create_dependencies") + " (" + LanguageProvider.get("gui.window_name") + ")", true);
         dialog.setLayout(new BorderLayout());
 
         // Top panel with status and progress
@@ -177,37 +206,39 @@ public class Create6Addons extends KnownCrashReason {
         topPanel.add(progressBar, BorderLayout.SOUTH);
         dialog.add(topPanel, BorderLayout.NORTH);
 
-        // Text area for results with auto-scrolling disabled
+        //// Text area for results with auto-scrolling disabled
         JTextArea textArea = new JTextArea();
         textArea.setEditable(false);
-        // Prevent auto-scrolling by disabling caret update policy
-        textArea.setCaretPosition(0); // Start at the top
+        textArea.setCaretPosition(0);
         DefaultCaret caret = (DefaultCaret) textArea.getCaret();
-        caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE); // Disable auto-scrolling
+        caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
         JScrollPane scrollPane = new JScrollPane(textArea);
         dialog.add(scrollPane, BorderLayout.CENTER);
 
-        dialog.setSize(800, 500);
+        dialog.setSize(900, 500);
         dialog.setLocationRelativeTo(parent);
 
         // Start analysis in a background thread
         new Thread(() -> {
             // Check if JDK is available
-            if (getJDepsPath() == null) {
-                String message = "JDK is required for analysis of jar files. JRE is not suitable for this!\n";
+            String jdepsPath = getJDepsPath();
+            if (jdepsPath == null) {
+                String message = "JDK is required for analysis of jar files. JRE is not suitable for this!\nWe've tried JAVA_HOME and java used for launching game.\n";
                 SwingUtilities.invokeLater(() -> {
                     textArea.append(message);
+                    CrashAssistantApp.LOGGER.info(message.trim());
                     addOkButton(dialog);
                 });
-                CrashAssistantApp.LOGGER.error(message.trim());
                 return;
             }
 
-            // Check for multiple Create mods and interrupt if necessary
+            // Check for multiple Create mods
             List<Mod> createMods = getCurrentCreateMods();
             if (createMods.isEmpty()) {
                 SwingUtilities.invokeLater(() -> {
-                    textArea.append("No Create mod found.\n");
+                    String message = "No Create mod found.\n";
+                    textArea.append(message);
+                    CrashAssistantApp.LOGGER.info(message.trim());
                     addOkButton(dialog);
                 });
                 return;
@@ -218,9 +249,9 @@ public class Create6Addons extends KnownCrashReason {
                         "Analysis cannot proceed with multiple Create mods.\n";
                 SwingUtilities.invokeLater(() -> {
                     textArea.append(message);
+                    CrashAssistantApp.LOGGER.info(message.trim());
                     addOkButton(dialog);
                 });
-                CrashAssistantApp.LOGGER.error(message.trim());
                 return;
             }
 
@@ -230,12 +261,14 @@ public class Create6Addons extends KnownCrashReason {
 
             List<Mod> modsToAnalyze = ModListUtils.getCurrentModList(true).stream()
                     .filter(mod -> !Objects.equals(mod.getModId(), "create"))
-                    .collect(Collectors.toList());
+                    .toList();
             int totalMods = modsToAnalyze.size();
 
             if (totalMods == 0) {
                 SwingUtilities.invokeLater(() -> {
-                    textArea.append("No mods to analyze.\n");
+                    String message = "No mods to analyze.\n";
+                    textArea.append(message);
+                    CrashAssistantApp.LOGGER.info(message.trim());
                     addOkButton(dialog);
                 });
                 return;
@@ -251,7 +284,8 @@ public class Create6Addons extends KnownCrashReason {
             for (Mod mod : modsToAnalyze) {
                 executor.submit(() -> {
                     SwingUtilities.invokeLater(() -> currentJarLabel.setText("Current mod: " + mod.getJarName()));
-                    HashSet<String> deps = getCreateClassesModUsing(mod);
+                    CrashAssistantApp.LOGGER.info("Analyzing mod: " + mod.getJarName());
+                    HashSet<String> deps = getCreateClassesModUsing(mod, jdepsPath);
                     Set<String> invalidDeps = deps.stream()
                             .filter(dep -> !currentCreateClasses.contains(dep))
                             .collect(Collectors.toSet());
@@ -262,8 +296,13 @@ public class Create6Addons extends KnownCrashReason {
                                 "Found %d Create mod class dependency(ies) in %s, which are missing from the current %s\n",
                                 invalidDeps.size(), mod.getJarName(), createMod.getJarName()
                         );
-                        SwingUtilities.invokeLater(() -> textArea.append(message));
+                        SwingUtilities.invokeLater(() -> {
+                            textArea.append(message);
+                            CrashAssistantApp.LOGGER.info(message.trim());
+                        });
                     }
+                    CrashAssistantApp.LOGGER.info("Analyzed mod: " + mod.getJarName());
+
 
                     int completed = completedTasks.incrementAndGet();
                     SwingUtilities.invokeLater(() -> progressBar.setValue(completed));
@@ -288,18 +327,26 @@ public class Create6Addons extends KnownCrashReason {
                     CrashAssistantApp.LOGGER.info(message.trim());
                 } else {
                     StringBuilder detailedMessage = new StringBuilder();
-                    detailedMessage.append("\n\n\nDetailed walkthrough of mods with missing classes:\n");
-                    for (Map.Entry<Mod, Set<String>> entry : missingClassesMap.entrySet()) {
-                        Mod mod = entry.getKey();
-                        Set<String> missingClasses = entry.getValue();
+                    detailedMessage.append("\n\n\nDetailed walkthrough of mods which rely on missing Create mod classes:\n");
+                    // Sort mods alphabetically by jar name
+                    List<Mod> sortedMods = new ArrayList<>(missingClassesMap.keySet());
+                    sortedMods.sort(Comparator.comparing(Mod::getJarName));
+
+                    for (Mod mod : sortedMods) {
+                        Set<String> missingClasses = missingClassesMap.get(mod);
+                        // Sort missing classes alphabetically
+                        List<String> sortedClasses = new ArrayList<>(missingClasses);
+                        Collections.sort(sortedClasses);
+
                         detailedMessage.append(String.format(
-                                "Mod: %s\nMissing classes:\n%s\n\n",
+                                "Mod: %s\nMissing classes of create:\n%s\n\n",
                                 mod.getJarName(),
-                                String.join("\n", missingClasses)
+                                String.join("\n", sortedClasses)
                         ));
                     }
-                    textArea.append(detailedMessage.toString());
-                    CrashAssistantApp.LOGGER.info(detailedMessage.toString());
+                    String detailedText = detailedMessage.toString();
+                    textArea.append(detailedText);
+                    CrashAssistantApp.LOGGER.info(detailedText.trim());
                 }
                 addOkButton(dialog);
             });

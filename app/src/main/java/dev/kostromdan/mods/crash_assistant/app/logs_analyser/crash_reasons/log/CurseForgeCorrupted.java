@@ -22,10 +22,10 @@ public class CurseForgeCorrupted extends KnownCrashReason {
     }
 
     @Override
-    public boolean matches(Log log) {
+    public boolean matches(String logText, Log log) {
         if (!FileUtils.isCurseForgeEnv()) {
             return false;
         }
-        return super.matches(log);
+        return super.matches(logText, log);
     }
 }

@@ -3,9 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.codex.CodexAnalysis;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.codex.ErroringEntity;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_err.*;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.Create6Addons;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.CurseForgeCorrupted;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ResourceLocationException;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.*;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.WasClosedByWindows;
 
@@ -40,7 +38,8 @@ public class LogAnalyser {
     public static synchronized void analyseLog(Log log) {
         if (log.isAnalysed()) return;
         registeredReasons.stream().filter(reason -> reason.getLogTypes().contains(log.getType())).forEach(reason -> {
-            if (reason.matches(log)
+            String logText = log.getProcessor().getAllLinesString();
+            if (reason.matches(logText, log)
 //                    || true //debug
             ) {
                 KnownCrashReasonMessage.addCrashReasonMessage(new KnownCrashReasonMessage(log, reason));
@@ -67,6 +66,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new MacJDK());
 
         registerKnownCrashReason(new Create6Addons());
+        registerKnownCrashReason(new CtovWithoutLithostitched());
         registerKnownCrashReason(new CurseForgeCorrupted());
         registerKnownCrashReason(new OutOfMemoryError());
         registerKnownCrashReason(new ResourceLocationException());

@@ -84,6 +84,8 @@ public class LogAnalyser {
         registerKnownCrashReason(new Create6Addons());
         registerKnownCrashReason(new CtovWithoutLithostitched());
         registerKnownCrashReason(new CurseForgeCorrupted());
+        registerKnownCrashReason(new DuplicatedMods());
+        registerKnownCrashReason(new MissingEmbeddiumForOculus());
         registerKnownCrashReason(new OutOfMemoryError());
         registerKnownCrashReason(new ResourceLocationException());
 

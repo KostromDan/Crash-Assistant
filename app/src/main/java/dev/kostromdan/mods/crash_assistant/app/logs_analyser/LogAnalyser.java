@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class LogAnalyser {
     private static final List<KnownCrashReason> registeredReasons = new ArrayList<>();
@@ -34,33 +37,52 @@ public class LogAnalyser {
         if (!CrashAssistantConfig.getBoolean("analysis.enabled")) {
             return;
         }
+        ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         HashSet<String> disabledCrashReasons = new HashSet<>(CrashAssistantConfig.getBlacklistedAnalysis());
         synchronized (KnownCrashReasonMessage.class) {
             for (Log log : LogsList.getLogs()) {
-                analyseLog(log, disabledCrashReasons);
+                analyseLog(log, disabledCrashReasons, pool);
+            }
+
+            pool.shutdown();
+            try {
+                if (!pool.awaitTermination(5, TimeUnit.MINUTES)) {
+                    pool.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                CrashAssistantApp.LOGGER.error("Interrupted while awaiting termination of analysis tasks", e);
             }
         }
     }
 
-    public static synchronized void analyseLog(Log log, HashSet<String> disabledCrashReasons) {
+
+    public static synchronized void analyseLog(Log log, HashSet<String> disabledCrashReasons, ExecutorService pool) {
         if (log.isAnalysed()) return;
+
         try {
             log.getProcessor().processLogFile();
         } catch (IOException e) {
             CrashAssistantApp.LOGGER.error("Error processing log file", e);
         }
         String logText = log.getProcessor().getAllLinesString();
-        registeredReasons.stream()
+        List<KnownCrashReason> registeredReasonsForThisLog = registeredReasons.stream()
                 .filter(reason ->
                         reason.getLogTypes().contains(log.getType()) &&
-                                !disabledCrashReasons.contains(reason.getClass().getSimpleName()))
-                .forEach(reason -> {
-                    if (reason.matches(logText, log)
-//                    || true //debug
-                    ) {
-                        KnownCrashReasonMessage.addCrashReasonMessage(new KnownCrashReasonMessage(log, reason));
+                                !disabledCrashReasons.contains(reason.getClass().getSimpleName())
+                ).toList();
+
+        for (KnownCrashReason reason : registeredReasonsForThisLog) {
+            pool.submit(() -> {
+                if (reason.matches(logText, log)) {
+                    synchronized (pool) {
+                        KnownCrashReasonMessage.addCrashReasonMessage(
+                                new KnownCrashReasonMessage(log, reason)
+                        );
                     }
-                });
+                }
+            });
+        }
         log.setAnalysed(true);
     }
 

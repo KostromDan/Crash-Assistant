@@ -9,6 +9,8 @@ import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
 import javax.swing.*;
 import javax.swing.text.DefaultCaret;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
@@ -24,6 +26,10 @@ import java.util.jar.JarInputStream;
 import java.util.stream.Collectors;
 
 public class CreateDependencies {
+    private static volatile boolean isCancelled = false;
+    private static final List<Process> runningProcesses = Collections.synchronizedList(new ArrayList<>());
+    private static ExecutorService executor; // Declared as a static field
+
     public static List<Mod> getCurrentCreateMods() {
         return ModListUtils.getCurrentModList(true).stream()
                 .filter(mod -> Objects.equals(mod.getModId(), "create"))
@@ -66,7 +72,6 @@ public class CreateDependencies {
         String jdepsPath = javaBinaryPath.replaceAll("(?<=[/\\\\])java(\\.exe)?$", "jdeps$1");
         if (validateJdepsPath(jdepsPath)) return jdepsPath;
 
-        // Second attempt: try getting the path from JAVA_HOME.
         String javaHome = System.getenv("JAVA_HOME");
         if (javaHome != null && !javaHome.isEmpty()) {
             String osName = System.getProperty("os.name").toLowerCase();
@@ -79,7 +84,6 @@ public class CreateDependencies {
                 return jdepsPath;
             }
         }
-
         return null;
     }
 
@@ -166,7 +170,7 @@ public class CreateDependencies {
         topPanel.add(progressBar, BorderLayout.SOUTH);
         dialog.add(topPanel, BorderLayout.NORTH);
 
-        //// Text area for results with auto-scrolling disabled
+        // Text area for results with auto-scrolling disabled
         JTextArea textArea = new JTextArea();
         textArea.setEditable(false);
         textArea.setCaretPosition(0);
@@ -177,6 +181,29 @@ public class CreateDependencies {
 
         dialog.setSize(900, 500);
         dialog.setLocationRelativeTo(parent);
+
+        // Reset state for new analysis
+        isCancelled = false;
+        runningProcesses.clear();
+
+        // Initialize executor for this analysis
+        executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+        // Add window listener to handle dialog closing
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                CrashAssistantApp.LOGGER.info("Window closed, interrupting all create dep analysis processes...");
+                isCancelled = true;
+                executor.shutdownNow();
+                synchronized (runningProcesses) {
+                    for (Process p : runningProcesses) {
+                        p.destroy();
+                    }
+                    runningProcesses.clear();
+                }
+            }
+        });
 
         // Start analysis in a background thread
         new Thread(() -> {
@@ -193,7 +220,7 @@ public class CreateDependencies {
             }
 
             // Check for multiple Create mods
-            java.util.List<Mod> createMods = getCurrentCreateMods();
+            List<Mod> createMods = getCurrentCreateMods();
             if (createMods.isEmpty()) {
                 SwingUtilities.invokeLater(() -> {
                     String message = "No Create mod found.\n";
@@ -219,7 +246,7 @@ public class CreateDependencies {
             Mod createMod = createMods.get(0);
             Set<String> currentCreateClasses = getCurrentCreateClasses(createMod);
 
-            java.util.List<Mod> modsToAnalyze = ModListUtils.getCurrentModList(true).stream()
+            List<Mod> modsToAnalyze = ModListUtils.getCurrentModList(true).stream()
                     .filter(mod -> !Objects.equals(mod.getModId(), "create"))
                     .toList();
             int totalMods = modsToAnalyze.size();
@@ -239,12 +266,50 @@ public class CreateDependencies {
             AtomicInteger completedTasks = new AtomicInteger(0);
             SwingUtilities.invokeLater(() -> progressBar.setMaximum(totalMods));
 
-            ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
             for (Mod mod : modsToAnalyze) {
                 executor.submit(() -> {
+                    if (isCancelled) return;
+
                     SwingUtilities.invokeLater(() -> currentJarLabel.setText("Current mod: " + mod.getJarName()));
-                    HashSet<String> deps = getCreateClassesModUsing(mod, jdepsPath);
+                    Process process = null;
+                    HashSet<String> deps = new HashSet<>();
+                    try {
+                        ProcessBuilder jdepsProcessBuilder = new ProcessBuilder(
+                                jdepsPath,
+                                "-verbose:class",
+                                Paths.get("mods", mod.getJarName()).toAbsolutePath().toString()
+                        );
+                        jdepsProcessBuilder.redirectErrorStream(true);
+                        process = jdepsProcessBuilder.start();
+                        runningProcesses.add(process);
+
+                        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                if (isCancelled) break;
+                                line = line.trim();
+                                int arrowIndex = line.indexOf("->");
+                                if (arrowIndex != -1) {
+                                    String dependency = line.substring(arrowIndex + 2).trim();
+                                    if (dependency.endsWith(".class")) continue;
+                                    int spaceIndex = dependency.indexOf(' ');
+                                    String classPath = dependency.substring(0, spaceIndex == -1 ? dependency.length() : spaceIndex).replace('.', '/');
+                                    classPath += ".class";
+                                    if (isCreateClass(classPath)) {
+                                        deps.add(fixClassName(classPath));
+                                    }
+                                }
+                            }
+                        }
+                        process.waitFor();
+                    } catch (Exception e) {
+                        CrashAssistantApp.LOGGER.error("Error while analysing create mod deps for " + mod.getJarName() + ": ", e);
+                    } finally {
+                        if (process != null) {
+                            runningProcesses.remove(process);
+                        }
+                    }
+
                     Set<String> invalidDeps = deps.stream()
                             .filter(dep -> !currentCreateClasses.contains(dep))
                             .collect(Collectors.toSet());
@@ -256,16 +321,23 @@ public class CreateDependencies {
                                 invalidDeps.size(), mod.getJarName(), createMod.getJarName()
                         );
                         SwingUtilities.invokeLater(() -> {
-                            textArea.append(message);
-                            CrashAssistantApp.LOGGER.info(message.trim());
+                            if (!isCancelled) {
+                                textArea.append(message);
+                                CrashAssistantApp.LOGGER.info(message.trim());
+                            }
                         });
                     }
 
                     int completed = completedTasks.incrementAndGet();
-                    SwingUtilities.invokeLater(() -> progressBar.setValue(completed));
+                    SwingUtilities.invokeLater(() -> {
+                        if (!isCancelled) {
+                            progressBar.setValue(completed);
+                        }
+                    });
                 });
             }
 
+            // Shutdown executor and wait for tasks to complete
             executor.shutdown();
             try {
                 executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -273,42 +345,43 @@ public class CreateDependencies {
                 Thread.currentThread().interrupt();
             }
 
-            // Display results after analysis
-            SwingUtilities.invokeLater(() -> {
-                statusLabel.setText("Analysis complete");
-                currentJarLabel.setText("Current mod: None");
+            // Display results after analysis only if not cancelled
+            if (!isCancelled) {
+                SwingUtilities.invokeLater(() -> {
+                    statusLabel.setText("Analysis complete");
+                    currentJarLabel.setText("Current mod: None");
 
-                if (missingClassesMap.isEmpty()) {
-                    String message = String.format(
-                            "Haven't found in any mod, Create mod class dependency(ies), which are missing from the current %s\n",
-                            createMod.getJarName()
-                    );                    textArea.append(message);
-                    CrashAssistantApp.LOGGER.info(message.trim());
-                } else {
-                    StringBuilder detailedMessage = new StringBuilder();
-                    detailedMessage.append("\n\n\nDetailed walkthrough of mods which rely on missing Create mod classes:\n");
-                    // Sort mods alphabetically by jar name
-                    java.util.List<Mod> sortedMods = new ArrayList<>(missingClassesMap.keySet());
-                    sortedMods.sort(Comparator.comparing(Mod::getJarName));
+                    if (missingClassesMap.isEmpty()) {
+                        String message = String.format(
+                                "Haven't found in any mod, Create mod class dependency(ies), which are missing from the current %s\n",
+                                createMod.getJarName()
+                        );
+                        textArea.append(message);
+                        CrashAssistantApp.LOGGER.info(message.trim());
+                    } else {
+                        StringBuilder detailedMessage = new StringBuilder();
+                        detailedMessage.append("\n\n\nDetailed walkthrough of mods which rely on missing Create mod classes:\n");
+                        List<Mod> sortedMods = new ArrayList<>(missingClassesMap.keySet());
+                        sortedMods.sort(Comparator.comparing(Mod::getJarName));
 
-                    for (Mod mod : sortedMods) {
-                        Set<String> missingClasses = missingClassesMap.get(mod);
-                        // Sort missing classes alphabetically
-                        List<String> sortedClasses = new ArrayList<>(missingClasses);
-                        Collections.sort(sortedClasses);
+                        for (Mod mod : sortedMods) {
+                            Set<String> missingClasses = missingClassesMap.get(mod);
+                            List<String> sortedClasses = new ArrayList<>(missingClasses);
+                            Collections.sort(sortedClasses);
 
-                        detailedMessage.append(String.format(
-                                "Mod: %s\nMissing classes of create:\n%s\n\n",
-                                mod.getJarName(),
-                                String.join("\n", sortedClasses)
-                        ));
+                            detailedMessage.append(String.format(
+                                    "Mod: %s\nMissing classes of create:\n%s\n\n",
+                                    mod.getJarName(),
+                                    String.join("\n", sortedClasses)
+                            ));
+                        }
+                        String detailedText = detailedMessage.toString();
+                        textArea.append(detailedText);
+                        CrashAssistantApp.LOGGER.info(detailedText.trim());
                     }
-                    String detailedText = detailedMessage.toString();
-                    textArea.append(detailedText);
-                    CrashAssistantApp.LOGGER.info(detailedText.trim());
-                }
-                addOkButton(dialog);
-            });
+                    addOkButton(dialog);
+                });
+            }
         }).start();
 
         dialog.setVisible(true);

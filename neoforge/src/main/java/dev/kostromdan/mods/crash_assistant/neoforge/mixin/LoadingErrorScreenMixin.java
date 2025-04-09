@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.NeoForge.mixin;
+package dev.kostromdan.mods.crash_assistant.neoforge.mixin;
 
 import net.neoforged.neoforge.client.gui.LoadingErrorScreen;
 import org.spongepowered.asm.mixin.Mixin;

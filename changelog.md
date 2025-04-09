@@ -4,6 +4,8 @@
 - Added config for analysis feature:
     - enabled
     - blacklisted analysis list
+- Fixed case when Create addons warning displayed then it shouldn't.
+- Fixed case when Create addons warning wasn't displayed then it should.
 - Small fixes.
 
 1.6.2:

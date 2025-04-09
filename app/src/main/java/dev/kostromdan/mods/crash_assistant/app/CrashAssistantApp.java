@@ -210,10 +210,10 @@ public class CrashAssistantApp {
         String successfulLaunchFileName = "successful_launch_pid" + parentPID + ".tmp";
         Path successfulLaunchFilePath = Paths.get("local", "crash_assistant", successfulLaunchFileName);
         gameLaunchedSuccessfully = Files.exists(successfulLaunchFilePath) && Files.isRegularFile(successfulLaunchFilePath);
-        LOGGER.info("gameLaunchedSuccessfully: {}", gameLaunchedSuccessfully);
+        LOGGER.info("Reached first tick of TitleScreen: {}", gameLaunchedSuccessfully);
 
 
-        LogAnalyser.analyseLogs();
+        new Thread(LogAnalyser::analyseLogs).start();
 
 
         startLocatingTerminatedProcesses();

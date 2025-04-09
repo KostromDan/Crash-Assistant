@@ -1,3 +1,13 @@
+1.6.4:
+
+- Added new log analysis:
+    - MissingEmbeddiumForOculus
+    - DuplicatedMods
+- Async log analysis. Now logs analysing async.
+- Removed some useless debug logging I forgot to remove.
+- If closed Create dep analysis while it's not finished, interrupt all analysis processes to not waste user resources with useless process.
+- Small fixes and improvements.
+
 1.6.3:
 
 - Fixed mistake done in 1.6.2: most log analysis stopped displaying at all.

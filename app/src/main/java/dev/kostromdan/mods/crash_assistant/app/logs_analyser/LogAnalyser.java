@@ -44,17 +44,17 @@ public class LogAnalyser {
 
     public static synchronized void analyseLog(Log log, HashSet<String> disabledCrashReasons) {
         if (log.isAnalysed()) return;
+        try {
+            log.getProcessor().processLogFile();
+        } catch (IOException e) {
+            CrashAssistantApp.LOGGER.error("Error processing log file", e);
+        }
+        String logText = log.getProcessor().getAllLinesString();
         registeredReasons.stream()
                 .filter(reason ->
                         reason.getLogTypes().contains(log.getType()) &&
                                 !disabledCrashReasons.contains(reason.getClass().getSimpleName()))
                 .forEach(reason -> {
-                    try {
-                        log.getProcessor().processLogFile();
-                    } catch (IOException e) {
-                        CrashAssistantApp.LOGGER.error("Error processing log file", e);
-                    }
-                    String logText = log.getProcessor().getAllLinesString();
                     if (reason.matches(logText, log)
 //                    || true //debug
                     ) {

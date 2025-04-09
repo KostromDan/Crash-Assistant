@@ -150,7 +150,7 @@ public class CrashAssistantGUI {
 
         // Analysis menu items
         JMenuItem analysisItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.create_dependencies"));
-    analysisItem.addActionListener(e -> Create6Addons.showCreateAnalysisDialog(frame));
+    analysisItem.addActionListener(e -> CreateDependencies.showCreateAnalysisDialog(frame));
         analysisMenu.add(analysisItem);
 
         // Add menus to menu bar and set to frame

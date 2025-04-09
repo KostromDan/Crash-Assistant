@@ -7,6 +7,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_er
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.*;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.WasClosedByWindows;
+import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,28 +31,36 @@ public class LogAnalyser {
     }
 
     public static synchronized void analyseLogs() {
+        if (!CrashAssistantConfig.getBoolean("analysis.enabled")) {
+            return;
+        }
+        HashSet<String> disabledCrashReasons = new HashSet<>(CrashAssistantConfig.getBlacklistedAnalysis());
         synchronized (KnownCrashReasonMessage.class) {
             for (Log log : LogsList.getLogs()) {
-                analyseLog(log);
+                analyseLog(log, disabledCrashReasons);
             }
         }
     }
 
-    public static synchronized void analyseLog(Log log) {
+    public static synchronized void analyseLog(Log log, HashSet<String> disabledCrashReasons) {
         if (log.isAnalysed()) return;
-        registeredReasons.stream().filter(reason -> reason.getLogTypes().contains(log.getType())).forEach(reason -> {
-            try {
-                log.getProcessor().processLogFile();
-            } catch (IOException e) {
-                CrashAssistantApp.LOGGER.error("Error processing log file", e);
-            }
-            String logText = log.getProcessor().getAllLinesString();
-            if (reason.matches(logText, log)
+        registeredReasons.stream()
+                .filter(reason ->
+                        reason.getLogTypes().contains(log.getType()) &&
+                                !disabledCrashReasons.contains(reason.getClass().getSimpleName()))
+                .forEach(reason -> {
+                    try {
+                        log.getProcessor().processLogFile();
+                    } catch (IOException e) {
+                        CrashAssistantApp.LOGGER.error("Error processing log file", e);
+                    }
+                    String logText = log.getProcessor().getAllLinesString();
+                    if (reason.matches(logText, log)
 //                    || true //debug
-            ) {
-                KnownCrashReasonMessage.addCrashReasonMessage(new KnownCrashReasonMessage(log, reason));
-            }
-        });
+                    ) {
+                        KnownCrashReasonMessage.addCrashReasonMessage(new KnownCrashReasonMessage(log, reason));
+                    }
+                });
         log.setAnalysed(true);
     }
 

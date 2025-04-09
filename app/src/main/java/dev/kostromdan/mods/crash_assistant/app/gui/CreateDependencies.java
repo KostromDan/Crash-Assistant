@@ -244,7 +244,6 @@ public class CreateDependencies {
             for (Mod mod : modsToAnalyze) {
                 executor.submit(() -> {
                     SwingUtilities.invokeLater(() -> currentJarLabel.setText("Current mod: " + mod.getJarName()));
-                    CrashAssistantApp.LOGGER.info("Analyzing mod: " + mod.getJarName());
                     HashSet<String> deps = getCreateClassesModUsing(mod, jdepsPath);
                     Set<String> invalidDeps = deps.stream()
                             .filter(dep -> !currentCreateClasses.contains(dep))
@@ -261,8 +260,6 @@ public class CreateDependencies {
                             CrashAssistantApp.LOGGER.info(message.trim());
                         });
                     }
-                    CrashAssistantApp.LOGGER.info("Analyzed mod: " + mod.getJarName());
-
 
                     int completed = completedTasks.incrementAndGet();
                     SwingUtilities.invokeLater(() -> progressBar.setValue(completed));

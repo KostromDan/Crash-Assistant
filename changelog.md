@@ -1,3 +1,11 @@
+1.6.3:
+
+- Fixed mistake done in 1.6.2: most log analysis stopped displaying at all.
+- Added config for analysis feature:
+    - enabled
+    - blacklisted analysis list
+- Small fixes.
+
 1.6.2:
 
 - Minor optimisations and fixes.

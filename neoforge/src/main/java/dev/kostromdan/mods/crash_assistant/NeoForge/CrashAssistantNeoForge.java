@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.forge;
+package dev.kostromdan.mods.crash_assistant.NeoForge;
 
 import com.mojang.brigadier.CommandDispatcher;
 import dev.kostromdan.mods.crash_assistant.CrashAssistant;

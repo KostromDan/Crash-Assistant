@@ -31,4 +31,4 @@ side = "BOTH"
 config = "crash_assistant.mixins.json"
 
 [[mixins]]
-config = "crash_assistant-NeoForge.mixins"
+config = "crash_assistant-NeoForge.mixins.json"

@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
+import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.codex.CodexAnalysis;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.codex.ErroringEntity;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_err.*;
@@ -7,6 +8,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.*
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.WasClosedByWindows;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +40,11 @@ public class LogAnalyser {
     public static synchronized void analyseLog(Log log) {
         if (log.isAnalysed()) return;
         registeredReasons.stream().filter(reason -> reason.getLogTypes().contains(log.getType())).forEach(reason -> {
+            try {
+                log.getProcessor().processLogFile();
+            } catch (IOException e) {
+                CrashAssistantApp.LOGGER.error("Error processing log file", e);
+            }
             String logText = log.getProcessor().getAllLinesString();
             if (reason.matches(logText, log)
 //                    || true //debug

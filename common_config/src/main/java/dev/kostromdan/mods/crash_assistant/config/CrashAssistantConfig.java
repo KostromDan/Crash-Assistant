@@ -151,6 +151,17 @@ public class CrashAssistantConfig {
                         "true - anyways will add modlist.txt to logs.",
                 false);
 
+        config.setComment("analysis", "Settings of analysis feature.\n" +
+                "Analysing logs for most common reasons of crashes and displaying recommendations with fixes.");
+        addOption("analysis.enabled",
+                "Enable feature.",
+                true);
+        addOption("analysis.blacklisted_reasons",
+                "Here you can disable some Analysis by class names.\n" +
+                        "List of them can be found here: dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons\n" +
+                        "For example \"Create6Addons\"",
+                new ArrayList<>());
+
         config.setComment("crash_command", "Settings of '/crash_assistant crash' command feature.");
         addOption("crash_command.enabled",
                 "Enable feature.",
@@ -208,6 +219,10 @@ public class CrashAssistantConfig {
 
     public static ArrayList<String> getBlacklistedLogs() {
         return get("general.blacklisted_logs");
+    }
+
+    public static ArrayList<String> getBlacklistedAnalysis() {
+        return get("analysis.blacklisted_reasons");
     }
 
     public static ArrayList<String> getModpackCreators() {

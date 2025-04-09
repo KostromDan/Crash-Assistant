@@ -279,8 +279,10 @@ public class CreateDependencies {
                 currentJarLabel.setText("Current mod: None");
 
                 if (missingClassesMap.isEmpty()) {
-                    String message = "No issues found.\n";
-                    textArea.append(message);
+                    String message = String.format(
+                            "Haven't found in any mod, Create mod class dependency(ies), which are missing from the current %s\n",
+                            createMod.getJarName()
+                    );                    textArea.append(message);
                     CrashAssistantApp.LOGGER.info(message.trim());
                 } else {
                     StringBuilder detailedMessage = new StringBuilder();

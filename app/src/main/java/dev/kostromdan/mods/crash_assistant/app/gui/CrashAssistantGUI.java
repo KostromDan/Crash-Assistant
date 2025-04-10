@@ -136,16 +136,54 @@ public class CrashAssistantGUI {
         JMenu analysisMenu = new JMenu(LanguageProvider.get("gui.menu.analysis"));
 
         // File menu items
+
+        // Open config file (existing)
         JMenuItem openConfigItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_config"));
         openConfigItem.addActionListener(e -> {
             try {
                 File configFile = new File("config/crash_assistant/config.toml");
                 Desktop.getDesktop().open(configFile);
             } catch (IOException ex) {
-                ex.printStackTrace();
+                CrashAssistantApp.LOGGER.error("Error opening config file", ex);
             }
         });
         fileMenu.add(openConfigItem);
+
+        // Open mods folder
+        JMenuItem openModsFolderItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_mods_folder"));
+        openModsFolderItem.addActionListener(e -> {
+            try {
+                File modsFolder = new File("mods");
+                Desktop.getDesktop().open(modsFolder);
+            } catch (IOException ex) {
+                CrashAssistantApp.LOGGER.error("Error opening mods folder", ex);
+            }
+        });
+        fileMenu.add(openModsFolderItem);
+
+        // Open config folder
+        JMenuItem openConfigFolderItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_config_folder"));
+        openConfigFolderItem.addActionListener(e -> {
+            try {
+                File configFolder = new File("config");
+                Desktop.getDesktop().open(configFolder);
+            } catch (IOException ex) {
+                CrashAssistantApp.LOGGER.error("Error opening config folder", ex);
+            }
+        });
+        fileMenu.add(openConfigFolderItem);
+
+        // Open modpack folder
+        JMenuItem openModpackFolderItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_modpack_folder"));
+        openModpackFolderItem.addActionListener(e -> {
+            try {
+                File modpackFolder = new File(".");
+                Desktop.getDesktop().open(modpackFolder);
+            } catch (IOException ex) {
+                CrashAssistantApp.LOGGER.error("Error opening modpack folder", ex);
+            }
+        });
+        fileMenu.add(openModpackFolderItem);
 
         // Analysis menu items
         JMenuItem analysisItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.create_dependencies"));
@@ -157,6 +195,7 @@ public class CrashAssistantGUI {
         menuBar.add(analysisMenu);
         frame.setJMenuBar(menuBar);
     }
+
 
     public static void resize() {
         frame.setSize(Math.max(Math.max(fileListPanel.getFileListPanel().getPreferredSize().width + 12, controlPanel.getPanel().getPreferredSize().width) + 26, labelPanel.getPreferredSize().width + 20),

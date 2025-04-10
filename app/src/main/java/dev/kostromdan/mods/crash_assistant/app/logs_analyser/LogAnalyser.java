@@ -37,9 +37,9 @@ public class LogAnalyser {
         if (!CrashAssistantConfig.getBoolean("analysis.enabled")) {
             return;
         }
-        ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        HashSet<String> disabledCrashReasons = new HashSet<>(CrashAssistantConfig.getBlacklistedAnalysis());
         synchronized (KnownCrashReasonMessage.class) {
+            ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            HashSet<String> disabledCrashReasons = new HashSet<>(CrashAssistantConfig.getBlacklistedAnalysis());
             for (Log log : LogsList.getLogs()) {
                 analyseLog(log, disabledCrashReasons, pool);
             }
@@ -74,7 +74,9 @@ public class LogAnalyser {
 
         for (KnownCrashReason reason : registeredReasonsForThisLog) {
             pool.submit(() -> {
-                if (reason.matches(logText, log)) {
+                if (reason.matches(logText, log)
+//                        || true //dubug too see all text
+                ) {
                     synchronized (pool) {
                         KnownCrashReasonMessage.addCrashReasonMessage(
                                 new KnownCrashReasonMessage(log, reason)

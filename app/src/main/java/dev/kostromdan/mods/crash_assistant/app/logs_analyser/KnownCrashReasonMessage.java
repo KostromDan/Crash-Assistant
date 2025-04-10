@@ -32,6 +32,10 @@ public class KnownCrashReasonMessage {
         return reason.getMessage().replaceAll("\\$LOG_FILENAME\\$", log.getFileName());
     }
 
+    public KnownCrashReason getReason() {
+        return reason;
+    }
+
     public static List<KnownCrashReasonMessage> getAllMessages() {
         return crashReasonMessages;
     }

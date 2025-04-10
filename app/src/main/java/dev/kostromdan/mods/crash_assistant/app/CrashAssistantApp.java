@@ -263,6 +263,7 @@ public class CrashAssistantApp {
                     synchronized (KnownCrashReasonMessage.class) {
                         LogsList.addIfExistsAndModified(new Log(LogType.WIN_EVENT, terminatedProcessesPath));
                     }
+                    new Thread(LogAnalyser::analyseLogs).start();
                     if (!GUIStartedLaunching) {
                         onMinecraftCrashed();
                     } else {
@@ -281,7 +282,6 @@ public class CrashAssistantApp {
                                 Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
                                 Method method = clazz.getMethod("updateLogsListInGUI");
                                 method.invoke(null);
-                                LogAnalyser.analyseLogs();
                                 method = clazz.getMethod("showKnownCrashReasonsWarnings");
                                 method.invoke(null);
                             } catch (Exception e) {

@@ -62,7 +62,9 @@ public class ControlPanel {
                         }
                         writer.newLine();
                     }
-                    LogsList.addIfExistsAndModified(new Log(LogType.MOD_LIST, modListTxtPath), false, false);
+                    synchronized (KnownCrashReasonMessage.class) {
+                        LogsList.addIfExistsAndModified(new Log(LogType.MOD_LIST, modListTxtPath), false, false);
+                    }
                 } catch (Exception e) {
                     CrashAssistantApp.LOGGER.error("Error while saving modlist.txt", e);
                 }

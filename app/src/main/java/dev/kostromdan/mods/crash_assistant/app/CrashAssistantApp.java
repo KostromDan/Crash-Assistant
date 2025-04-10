@@ -1,10 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalyser;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.loading_utils.JavaBinaryLocator;
@@ -210,10 +207,10 @@ public class CrashAssistantApp {
         String successfulLaunchFileName = "successful_launch_pid" + parentPID + ".tmp";
         Path successfulLaunchFilePath = Paths.get("local", "crash_assistant", successfulLaunchFileName);
         gameLaunchedSuccessfully = Files.exists(successfulLaunchFilePath) && Files.isRegularFile(successfulLaunchFilePath);
-        LOGGER.info("gameLaunchedSuccessfully: {}", gameLaunchedSuccessfully);
+        LOGGER.info("Reached first tick of TitleScreen: {}", gameLaunchedSuccessfully);
 
 
-        LogAnalyser.analyseLogs();
+        new Thread(LogAnalyser::analyseLogs).start();
 
 
         startLocatingTerminatedProcesses();
@@ -263,7 +260,7 @@ public class CrashAssistantApp {
                 Path terminatedProcessesPath = Paths.get(TerminatedProcessesFinder.getTerminatedByWinProcessLogs());
                 if (terminatedProcessesPath.toFile().isFile()) {
                     LOGGER.info("Time to locate terminated process: " + (System.currentTimeMillis() - startTime));
-                    synchronized (LogsList.class) {
+                    synchronized (KnownCrashReasonMessage.class) {
                         LogsList.addIfExistsAndModified(new Log(LogType.WIN_EVENT, terminatedProcessesPath));
                     }
                     if (!GUIStartedLaunching) {

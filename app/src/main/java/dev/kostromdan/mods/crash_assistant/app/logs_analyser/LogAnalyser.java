@@ -75,7 +75,7 @@ public class LogAnalyser {
         for (KnownCrashReason reason : registeredReasonsForThisLog) {
             pool.submit(() -> {
                 if (reason.matches(logText, log)
-//                        || true //dubug too see all text
+//                        || true //dubug too see all available warnings
                 ) {
                     synchronized (pool) {
                         KnownCrashReasonMessage.addCrashReasonMessage(

@@ -171,7 +171,8 @@ public class CrashAssistantGUI {
                 SwingUtilities.invokeAndWait(() -> {
                     for (KnownCrashReasonMessage crashReason : KnownCrashReasonMessage.getAllMessages()) {
                         if (crashReason.isShownWarn()) continue;
-                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}",
+                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
+                                crashReason.getReason().getClass().getSimpleName(),
                                 crashReason.isCodexMessage() ? crashReason.getMessage() : crashReason.getMessage().split("\n")[0] + "...");
                         crashReason.setShownWarn(true);
                         JOptionPane optionPane = new JOptionPane(
@@ -184,7 +185,7 @@ public class CrashAssistantGUI {
                                 crashReason.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyser") : LanguageProvider.get("gui.logs_analyser")
                         );
                         dialog.setVisible(true);
-                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason.");
+                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {}", crashReason.getReason().getClass().getSimpleName());
                     }
                 });
             } catch (Exception e) {

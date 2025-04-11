@@ -1,3 +1,7 @@
+1.7.2:
+
+- Improved start time. Especially if massive logs exist. Now almost no effect.
+
 1.7.1:
 
 - Small fixes in uploading project.

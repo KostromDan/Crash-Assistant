@@ -127,7 +127,7 @@ unifiedPublishing {
         gameLoaders = ["forge"]
 
         displayName = tasks.jar.archiveFile.get().asFile.name
-        version = version
+        version = project.version
         changelog = file('../changelog.md').text
         releaseType = release_type
 

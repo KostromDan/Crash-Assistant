@@ -1,3 +1,7 @@
+1.7.1:
+
+- Small fixes in uploading project.
+
 1.7.0 major update:
 
 - Switch from architectury to multiloader mdk.

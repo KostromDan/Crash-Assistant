@@ -1,10 +1,10 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.loading_utils.JavaBinaryLocator;
-import dev.kostromdan.mods.crash_assistant.mod_list.Mod;
-import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import javax.swing.*;
 import javax.swing.text.DefaultCaret;

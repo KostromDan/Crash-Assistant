@@ -1,7 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.fabric.client;
 
-import dev.kostromdan.mods.crash_assistant.commands.CrashAssistantCommands;
-import dev.kostromdan.mods.crash_assistant.events.CrashAssistantEvents;
+import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommands;
+import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;

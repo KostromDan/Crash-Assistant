@@ -3,9 +3,9 @@ package dev.kostromdan.mods.crash_assistant.core_mod.services;
 import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.ITransformationService;
 import cpw.mods.modlauncher.api.ITransformer;
-import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
-import dev.kostromdan.mods.crash_assistant.loading_utils.LibrariesJarLocator;
-import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import net.neoforged.fml.loading.FMLLoader;
 import org.jetbrains.annotations.NotNull;
 

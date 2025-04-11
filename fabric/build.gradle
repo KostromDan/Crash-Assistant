@@ -1,22 +1,10 @@
 plugins {
-    id 'com.github.johnrengelman.shadow'
-    id "me.shedaniel.unified-publishing" version "0.1.+"
-}
-
-architectury {
-    platformSetupLoomIde()
-    fabric()
+    id 'multiloader-loader'
+    id 'fabric-loom'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 configurations {
-    common {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-    compileClasspath.extendsFrom common
-    runtimeClasspath.extendsFrom common
-    developmentFabric.extendsFrom common
-
     shadowBundle {
         canBeResolved = true
         canBeConsumed = false
@@ -24,17 +12,18 @@ configurations {
 }
 
 dependencies {
-    modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_api_version"
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
+    }
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
 
-    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
-    shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
-
+    compileOnly project(path: ':common_config')
+    shadowBundle project(path: ':common_config')
     shadowBundle 'com.electronwill.night-config:toml:3.6.4'
     shadowBundle 'com.electronwill.night-config:json:3.6.4'
-    implementation project(path: ':common_config')
-    shadowBundle project(path: ':common_config')
-
 }
 
 shadowJar {
@@ -52,40 +41,26 @@ remapJar {
     input.set shadowJar.archiveFile
 }
 
-processResources {
-    inputs.property 'version', project.version
-
-    filesMatching('fabric.mod.json') {
-        expand version: project.version
+loom {
+    def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
+    if (aw.exists()) {
+        accessWidenerPath.set(aw)
+    }
+    mixin {
+        defaultRefmapName.set("${mod_id}.refmap.json")
+    }
+    runs {
+        client {
+            client()
+            setConfigName('Fabric Client')
+            ideConfigGenerated(true)
+            runDir('runs/client')
+        }
+        server {
+            server()
+            setConfigName('Fabric Server')
+            ideConfigGenerated(true)
+            runDir('runs/server')
+        }
     }
 }
-
-//unifiedPublishing {
-//    project {
-//        gameVersions = ["1.19.2", "1.19.3", "1.19.4", "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4"]
-//        gameLoaders = ["fabric", "quilt"]
-//
-//        displayName = tasks.remapJar.archiveFile.get().asFile.name
-//        version = mod_version
-//        changelog = file('../changelog.md').text
-//        releaseType = release_type
-//
-//        mainPublication tasks.remapJar
-//
-//        var cfToken = System.getenv("CF_TOKEN")
-//        if (cfToken != null) {
-//            curseforge {
-//                token = cfToken
-//                id = "1154099"
-//            }
-//        }
-//
-//        var mrToken = System.getenv("MODRINTH_TOKEN")
-//        if (mrToken != null) {
-//            modrinth {
-//                token = mrToken
-//                id = "ix1qq8Ux"
-//            }
-//        }
-//    }
-//}

@@ -1,10 +1,13 @@
 package dev.kostromdan.mods.crash_assistant.neoforge.mixin;
 
+import com.electronwill.nightconfig.core.Config;
 import net.neoforged.neoforge.client.gui.LoadingErrorScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import com.electronwill.nightconfig.core.AbstractCommentedConfig;
+
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,5 +24,7 @@ public class LoadingErrorScreenMixin {
             Files.write(loadingErrorFilePath, Long.toString(System.currentTimeMillis()).getBytes());
         } catch (IOException ignored) {
         }
+        AbstractCommentedConfig c = null;
+
     }
 }

@@ -7,7 +7,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_er
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.*;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.WasClosedByWindows;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;

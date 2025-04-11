@@ -1,41 +1,43 @@
 {
-  "schemaVersion": 1,
-  "id": "crash_assistant",
-  "version": "${version}",
-  "name": "Crash Assistant",
-  "description": "Shows a GUI after Minecraft crashes, immediately showing all affected logs, crash reports, or hs_err files. Provides a one-click solution to upload them, copy the link, and perform other actions for easier reporting, debugging, and troubleshooting.",
-  "authors": [
-    "KostromDan"
-  ],
-  "contact": {
-    "homepage": "https://www.curseforge.com/minecraft/mc-mods/crash-assistant",
-    "sources": "https://github.com/KostromDan/Crash-Assistant",
-    "issues": "https://github.com/KostromDan/Crash-Assistant/issues"
-  },
-  "license": "GNU LGPLv3",
-  "icon": "assets/crash_assistant/icon.png",
-  "environment": "*",
-  "entrypoints": {
-    "preLaunch": [
-      "dev.kostromdan.mods.crash_assistant.fabric.pre_launch.CrashAssistantPreLaunch"
+    "schemaVersion": 1,
+    "id": "${mod_id}",
+    "version": "${version}",
+    "name": "${mod_name}",
+    "description": "${description}",
+    "authors": [
+        "${mod_author}"
     ],
-    "main": [
-      "dev.kostromdan.mods.crash_assistant.fabric.CrashAssistantFabric"
+    "contact": {
+        "homepage": "https://www.curseforge.com/minecraft/mc-mods/crash-assistant",
+        "sources": "https://github.com/KostromDan/Crash-Assistant",
+        "issues": "https://github.com/KostromDan/Crash-Assistant/issues"
+    },
+    "license": "${license}",
+    "icon": "${mod_id}.png",
+    "environment": "*",
+    "entrypoints": {
+        "preLaunch": [
+            "dev.kostromdan.mods.crash_assistant.fabric.pre_launch.CrashAssistantPreLaunch"
+        ],
+        "main": [
+            "dev.kostromdan.mods.crash_assistant.fabric.CrashAssistantFabric"
+        ],
+        "client": [
+            "dev.kostromdan.mods.crash_assistant.fabric.client.CrashAssistantFabricClient"
+        ]
+    },
+    "mixins": [
+        "${mod_id}.mixins.json",
+        "${mod_id}.fabric.mixins.json"
     ],
-    "client": [
-      "dev.kostromdan.mods.crash_assistant.fabric.client.CrashAssistantFabricClient"
-    ]
-  },
-  "mixins": [
-    "crash_assistant.mixins.json"
-  ],
-  "depends": {
-    "fabricloader": ">=0.16.9",
-    "minecraft": ">=1.21 <=1.21.4",
-    "java": ">=21",
-    "fabric-api": "*"
-  },
-  "suggests": {
-    "another-mod": "*"
-  }
+    "depends": {
+        "fabricloader": ">=${fabric_loader_version}",
+        "fabric-api": "*",
+        "minecraft": "${minecraft_version_range_fabric}",
+        "java": ">=${java_version}"
+    },
+    "suggests": {
+        "another-mod": "*"
+    }
 }
+  

@@ -1,8 +1,8 @@
 package dev.kostromdan.mods.crash_assistant.fabric.pre_launch;
 
-import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
-import dev.kostromdan.mods.crash_assistant.loading_utils.LibrariesJarLocator;
-import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
 import org.apache.logging.log4j.LogManager;

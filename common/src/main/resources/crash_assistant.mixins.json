@@ -1,14 +1,15 @@
 {
   "required": true,
-  "package": "dev.kostromdan.mods.crash_assistant.mixin",
-  "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
+  "package": "dev.kostromdan.mods.crash_assistant.common.mixin",
+  "refmap": "${mod_id}.refmap.json",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
   "client": [
     "MinecraftMixin",
     "TitleScreenMixin"
   ],
-  "mixins": [
-  ],
+  "server": [],
   "injectors": {
     "defaultRequire": 1
   }

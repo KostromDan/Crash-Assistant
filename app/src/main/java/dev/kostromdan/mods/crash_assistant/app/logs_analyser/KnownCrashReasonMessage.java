@@ -1,7 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.codex.CodexMessage;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import gs.mclo.api.response.insights.Problem;
 import gs.mclo.api.response.insights.Solution;
 

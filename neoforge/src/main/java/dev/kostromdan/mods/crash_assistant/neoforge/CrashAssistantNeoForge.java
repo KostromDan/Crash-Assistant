@@ -1,9 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.neoforge;
 
 import com.mojang.brigadier.CommandDispatcher;
-import dev.kostromdan.mods.crash_assistant.CrashAssistant;
-import dev.kostromdan.mods.crash_assistant.commands.CrashAssistantCommands;
-import dev.kostromdan.mods.crash_assistant.events.CrashAssistantEvents;
+import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
+import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommands;
+import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
 import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -19,7 +19,6 @@ public final class CrashAssistantNeoForge {
         if (FMLEnvironment.dist.isClient()) {
             NeoForge.EVENT_BUS.register(ClientModEvents.class);
         }
-
     }
 
     public static class ClientModEvents {

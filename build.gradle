@@ -1,77 +1,37 @@
 plugins {
-    id 'java'
-    id 'dev.architectury.loom' version '1.7-SNAPSHOT' apply false
-    id 'architectury-plugin' version '3.4-SNAPSHOT'
-    id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
-architectury {
-    minecraft = project.minecraft_version
-}
-
-allprojects {
-    group = rootProject.maven_group
-    version = rootProject.mod_version
-}
-
-subprojects { subproject ->
-    if (!(subproject.name in ['app'])) {
-        apply plugin: 'dev.architectury.loom'
-        apply plugin: 'architectury-plugin'
-        apply plugin: 'maven-publish'
-
-        var archives_name
-        base {
-            if (subproject.name in ['neoforge_coremod']) {
-                archivesName = "$rootProject.archives_name-neoforge"
-            } else {
-                archivesName = "$rootProject.archives_name-$project.name"
-            }
-            archives_name = archivesName
-        }
-
-        repositories {
-        }
-
-        loom {
-            silentMojangMappingsLicense()
-        }
-
-        dependencies {
-            minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
-            mappings loom.officialMojangMappings()
-        }
-
-        java {
-            withSourcesJar()
-
-            sourceCompatibility = JavaVersion.VERSION_21
-            targetCompatibility = JavaVersion.VERSION_21
-        }
-
-        tasks.withType(JavaCompile).configureEach {
-            it.options.release = 21
-        }
-    }
+    id 'base'
+    // see https://fabricmc.net/develop/ for new versions
+    id 'fabric-loom' version '1.8-SNAPSHOT' apply false
+    // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
+    id 'net.neoforged.moddev' version '2.0.49-beta' apply false
 }
 
 
 task collectJars(type: Copy) {
-    def deps = [
-//            ':fabric',
-            ':neoforge_coremod'
-    ]
-            .collect { path -> project(path).tasks.remapJar }
-    dependsOn deps
-    from deps
+    dependsOn(":fabric:build", ":forge_coremod:build", ":neoforge_coremod:build")
 
-    into 'build/libs'
+    from("fabric/build/libs") {
+        include '*.jar'
+        exclude '*-sources.jar', '*-javadoc.jar', '*-dev-shadow.jar'
+    }
+
+    from("forge_coremod/build/libs") {
+        include '*.jar'
+        exclude '*-sources.jar', '*-javadoc.jar', '*-dev-shadow.jar'
+        rename { originalName ->
+            originalName.replace("_coremod", "")
+        }
+    }
+
+    from("neoforge_coremod/build/libs") {
+        include '*.jar'
+        exclude '*-sources.jar', '*-javadoc.jar', '*-dev-shadow.jar'
+        rename { originalName ->
+            originalName.replace("_coremod", "")
+        }
+    }
+
+    into("$rootDir/build/libs")
 }
 
-assemble.dependsOn collectJars
+build.finalizedBy(collectJars)

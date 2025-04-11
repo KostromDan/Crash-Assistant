@@ -1,3 +1,23 @@
+1.7.1:
+
+- Small fixes in uploading project.
+
+1.7.0 major update:
+
+- Switch from architectury to multiloader mdk.
+  A lot of things changed.
+- Global re-structuration of project.
+- MinecraftForge 1.21.1 port.
+- Fixed rare bug if gui started only because of win_event, analysis didn't triggered.
+- Fixed some grammar and wording issues in en.
+- Improved logging of showing KnownCrashReason.
+- Added new options to file menu:
+    - Open mods folder
+    - Open config folder
+    - Open game folder
+- Improved insufficient_memory message (added info about disk ending space).
+- Small fixes and improvements.
+
 1.6.4:
 
 - Added new log analysis:
@@ -5,7 +25,8 @@
     - DuplicatedMods
 - Async log analysis. Now logs analysing async.
 - Removed some useless debug logging I forgot to remove.
-- If closed Create dep analysis while it's not finished, interrupt all analysis processes to not waste user resources with useless process.
+- If closed Create dep analysis while it's not finished, interrupt all analysis processes to not waste user resources
+  with useless process.
 - Small fixes and improvements.
 
 1.6.3:

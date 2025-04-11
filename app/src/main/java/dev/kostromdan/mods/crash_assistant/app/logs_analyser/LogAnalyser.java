@@ -9,7 +9,6 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.O
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.WasClosedByWindows;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

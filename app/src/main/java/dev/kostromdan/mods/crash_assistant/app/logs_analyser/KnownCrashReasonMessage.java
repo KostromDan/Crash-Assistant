@@ -5,7 +5,10 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import gs.mclo.api.response.insights.Problem;
 import gs.mclo.api.response.insights.Solution;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class KnownCrashReasonMessage {
     private static final List<KnownCrashReasonMessage> crashReasonMessages = Collections.synchronizedList(new ArrayList<>());

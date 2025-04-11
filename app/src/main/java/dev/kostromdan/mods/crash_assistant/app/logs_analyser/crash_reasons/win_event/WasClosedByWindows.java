@@ -1,13 +1,11 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event;
 
-import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.RegexChecker;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 

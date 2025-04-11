@@ -1,19 +1,14 @@
 package dev.kostromdan.mods.crash_assistant.core_mod.services;
 
-import cpw.mods.jarhandling.SecureJar;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import net.minecraftforge.fml.loading.moddiscovery.AbstractModProvider;
-import net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator;
 import net.minecraftforge.forgespi.locating.IDependencyLocator;
 import net.minecraftforge.forgespi.locating.IModFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 
 /**

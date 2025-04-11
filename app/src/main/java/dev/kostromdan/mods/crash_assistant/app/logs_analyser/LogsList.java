@@ -5,7 +5,9 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class LogsList {
     private static final Set<Log> logs = Collections.synchronizedSet(new TreeSet<>(new LogComparator()));

@@ -1,6 +1,5 @@
 package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
@@ -251,12 +250,11 @@ public interface JarInJarHelper {
         return values;
     }
 
-
     static Path getJarInJar(String name) throws IOException, URISyntaxException {
         //Idea taken from org.sinytra.connector.locator.EmbeddedDependencies#getJarInJar
         Path pathInModFile = Path.of(JarInJarHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI()).resolve("META-INF/jarjar/" + name);
         URI filePathUri = new URI("jij:" + pathInModFile.toAbsolutePath().toUri().getRawSchemeSpecificPart()).normalize();
-        Map<String, ?> outerFsArgs = ImmutableMap.of("packagePath", pathInModFile);
+        Map<String, ?> outerFsArgs = Map.of("packagePath", pathInModFile);
         FileSystem zipFS = FileSystems.newFileSystem(filePathUri, outerFsArgs);
         return zipFS.getPath("/");
     }

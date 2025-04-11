@@ -60,7 +60,7 @@ public class CrashAssistantCommands {
                 .then(LiteralArgumentBuilder.literal("crash")
                         .requires(c -> CrashAssistantConfig.getBoolean("crash_command.enabled"))
                         .then(RequiredArgumentBuilder.argument("to_crash", StringArgumentType.string())
-                                .suggests(new CrashAssistantCommands.CrashCommandsSuggestionProvider<>())
+                                .suggests(new CrashCommandsSuggestionProvider<>())
                                 .executes(CrashAssistantCommands::crash)
                                 .then(getCrashArg(1)
                                         .then(getCrashArg(2)

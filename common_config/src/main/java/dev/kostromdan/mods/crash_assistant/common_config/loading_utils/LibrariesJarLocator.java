@@ -2,40 +2,55 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public interface LibrariesJarLocator {
     static String getLibraryJarPath(Class cls) throws JarLocatingException, URISyntaxException {
-        String pathString = cls.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-        int jarIndex = pathString.lastIndexOf(".jar");
-        if (jarIndex == -1) {
-            throw new JarLocatingException("Not found '.jar' in IRI.getPath() of `" + cls + "'; path: " + pathString);
+        Path path = getPathFromClass(cls);
+
+        if (path == null) {
+            throw new JarLocatingException("getPathFromClass returned null, class: " + cls.getName());
         }
-
-        pathString = pathString.substring(0, jarIndex + 4);
-
-        Path path;
-        try {
-            path = Paths.get(pathString);
-        } catch (Exception e) {
-            try {
-                if (pathString.startsWith("/")) {
-                    pathString = pathString.substring(1);
-                }
-                path = Paths.get(pathString);
-            } catch (Exception e2) {
-                throw new JarLocatingException("Failed converting pathString got from `" + cls + "' to Paths.get(pathString); pathString: `" + pathString + "`");
-            }
-        }
-
         if (!Files.exists(path)) {
-            throw new JarLocatingException("Successfully parsed '.jar' path of `" + cls + "',but it does not exist; path: `" + path + "`; pathString: `" + pathString + "`");
+            throw new JarLocatingException("Successfully parsed '.jar' path of `" + cls + "',but it does not exist; path: `" + path);
+        }
+        if (!Files.isRegularFile(path)) {
+            throw new JarLocatingException("Successfully parsed '.jar' path of `" + cls + "',but it is not regular file; path: `" + path);
         }
 
         return path.toAbsolutePath().toString();
+    }
+
+    static Path getPathFromClass(Class cls) {
+        String resourcePath = cls.getName().replace('.', '/') + ".class";
+        return getPathFromResource(resourcePath);
+    }
+
+    private static Path getPathFromResource(String resource) {
+        ClassLoader cl = LibrariesJarLocator.class.getClassLoader();
+        var url = cl.getResource(resource);
+        if (url == null)
+            return null;
+        return getPath(url, resource);
+    }
+
+    private static Path getPath(URL url, String resource) {
+        var str = url.toString();
+        int len = resource.length();
+        if ("jar".equalsIgnoreCase(url.getProtocol())) {
+            str = url.getFile();
+            len += 2;
+            str = str.substring(0, str.length() - len);
+        } else if ("union".equalsIgnoreCase(url.getProtocol())) {
+            str = url.getFile();
+            str = "file://" + str.substring(0, str.lastIndexOf(".jar") + 4);
+        }
+        return Path.of(URI.create(str));
     }
 
     static void setupLoaderJarName(Class cls) {

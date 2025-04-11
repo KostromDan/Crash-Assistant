@@ -1,6 +1,8 @@
 1.7.2:
 
 - Improved start time. Especially if massive logs exist. Now almost no effect.
+- Added logging of time of analysing logs for crash reasons.
+- Improved logging wording on time of parsing mods metadata time.
 
 1.7.1:
 

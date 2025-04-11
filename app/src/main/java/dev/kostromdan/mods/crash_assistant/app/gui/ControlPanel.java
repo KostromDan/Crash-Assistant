@@ -10,7 +10,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import gs.mclo.api.response.UploadLogResponse;
 
@@ -40,7 +40,7 @@ public class ControlPanel {
     public final JButton uploadAllButton;
     public final JButton requestHelpButton;
     private String generatedMsg = null;
-    private dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff modListDiff;
+    private ModListDiff modListDiff;
 
     public ControlPanel(FileListPanel fileListPanel) {
         this.fileListPanel = fileListPanel;
@@ -51,12 +51,12 @@ public class ControlPanel {
         labelButtonPanel.setLayout(new BoxLayout(labelButtonPanel, BoxLayout.X_AXIS));
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-            modListDiff = dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff.getDiff(true);
+            modListDiff = ModListDiff.getDiff(true);
 
             if (PlatformHelp.isLinkDefault() || CrashAssistantConfig.getBoolean("modpack_modlist.force_add_full_modlist_as_log")) {
                 Path modListTxtPath = Paths.get("logs", "modlist.txt");
                 try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
-                    for (dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod mod : modListDiff.getCurrentMods()) {
+                    for (Mod mod : modListDiff.getCurrentMods()) {
                         writer.write(mod.getJarName());
                         if (mod.getModId() != null) {
                             writer.write(" : " + mod.getModId());
@@ -150,7 +150,7 @@ public class ControlPanel {
             URI uri = new URI(link);
             if (!TrustedDomainsHelper.isTrustedTopDomain(uri)) {
                 String creatorWarning = "";
-                if (CrashAssistantConfig.getModpackCreators().contains(dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils.getCurrentUsername())) {
+                if (CrashAssistantConfig.getModpackCreators().contains(ModListUtils.getCurrentUsername())) {
                     creatorWarning = "\n\n<b>The next text is seen only by modpack creators</b>:\n" +
                             "If you think your domain(" + TrustedDomainsHelper.getTopDomainName(uri) + ") should be in trusted domains,\n" +
                             "please contact us on <a href =https://github.com/KostromDan/Crash-Assistant/blob/1.19.2%2B/app/src/main/java/dev/kostromdan/mods/crash_assistant/app/utils/TrustedDomainsHelper.java>GitHub</a>.";
@@ -331,16 +331,16 @@ public class ControlPanel {
             CrashAssistantApp.LOGGER.error("Error while checking IntelCorruptedProcessor", e);
         }
 
-        sb.append(dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff.getFilePrefix());
+        sb.append(ModListDiff.getFilePrefix());
         if (CrashAssistantConfig.getBoolean("generated_message.one_line_logs")) {
             sb.append(String.join("   |   ", logs));
         } else {
-            sb.append(String.join("\n" + dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff.getFilePrefix(), logs));
+            sb.append(String.join("\n" + ModListDiff.getFilePrefix(), logs));
         }
         sb.append("\n");
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             sb.append("\n");
-            dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
+            ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
             String modlistDIff = diffStringBuilder.toText();
             String modListDiffAnsi = diffStringBuilder.toAnsi();
             int lineCount = modlistDIff.length() - modlistDIff.replace("\n", "").length();
@@ -348,13 +348,13 @@ public class ControlPanel {
                     (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.FORGE && lineCount > 3)) {
                 try {
                     String link = uploadModlistDiff(modlistDIff);
-                    sb.append(dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff.getFilePrefix());
+                    sb.append(ModListDiff.getFilePrefix());
                     sb.append(ModListDiff.getFirstString(true, true, link));
                     sb.append("\n```ansi\n");
                     sb.append(LanguageProvider.getMsgLang("gui.modlist_changed_label_msg")
-                            .replace("$ADDED_MODS_COUNT$", dev.kostromdan.mods.crash_assistant.common_config.mod_list.AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + dev.kostromdan.mods.crash_assistant.common_config.mod_list.AnsiColor.postfix)
-                            .replace("$REMOVED_MODS_COUNT$", dev.kostromdan.mods.crash_assistant.common_config.mod_list.AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + dev.kostromdan.mods.crash_assistant.common_config.mod_list.AnsiColor.postfix)
-                            .replace("$UPDATED_MODS_COUNT$", dev.kostromdan.mods.crash_assistant.common_config.mod_list.AnsiColor.BLUE.getColorPrefix() + modListDiff.getUpdatedMods().size() + dev.kostromdan.mods.crash_assistant.common_config.mod_list.AnsiColor.postfix));
+                            .replace("$ADDED_MODS_COUNT$", AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + AnsiColor.postfix)
+                            .replace("$REMOVED_MODS_COUNT$", AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + AnsiColor.postfix)
+                            .replace("$UPDATED_MODS_COUNT$", AnsiColor.BLUE.getColorPrefix() + modListDiff.getUpdatedMods().size() + AnsiColor.postfix));
                     sb.append("\n```");
                 } catch (ExecutionException | InterruptedException | UploadException e) {
                     CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);

@@ -22,9 +22,9 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.*;
 import java.util.List;
 import java.util.Timer;
-import java.util.*;
 import java.util.function.Function;
 
 public class CrashAssistantGUI {

@@ -1,6 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 

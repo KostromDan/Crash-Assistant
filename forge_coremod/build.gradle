@@ -3,6 +3,11 @@ plugins {
     id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
     id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id "me.shedaniel.unified-publishing" version "0.1.+"
+}
+
+base {
+    archivesName = "${mod_id}-forge-${minecraft_version}"
 }
 
 configurations {
@@ -41,7 +46,7 @@ jar {
 }
 
 base {
-    archivesName = "${mod_id}-forge_coremod-${minecraft_version}"
+    archivesName = "${mod_id}-forge-${minecraft_version}"
 }
 
 minecraft {
@@ -114,4 +119,34 @@ sourceSets.each {
     def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
     it.output.resourcesDir = dir
     it.java.destinationDirectory = dir
+}
+
+unifiedPublishing {
+    project {
+        gameVersions = ["1.21.1", "1.21.2", "1.21.3", "1.21.4"]
+        gameLoaders = ["forge"]
+
+        displayName = tasks.jar.archiveFile.get().asFile.name
+        version = version
+        changelog = file('../changelog.md').text
+        releaseType = release_type
+
+        mainPublication tasks.jar
+
+        var cfToken = System.getenv("CF_TOKEN")
+        if (cfToken != null) {
+            curseforge {
+                token = cfToken
+                id = "1154099"
+            }
+        }
+
+        var mrToken = System.getenv("MODRINTH_TOKEN")
+        if (mrToken != null) {
+            modrinth {
+                token = mrToken
+                id = "ix1qq8Ux"
+            }
+        }
+    }
 }

@@ -1,9 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.forge;
 
 import com.mojang.brigadier.CommandDispatcher;
-import dev.kostromdan.mods.crash_assistant.CrashAssistant;
-import dev.kostromdan.mods.crash_assistant.commands.CrashAssistantCommands;
-import dev.kostromdan.mods.crash_assistant.events.CrashAssistantEvents;
+import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
+import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommands;
+import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;

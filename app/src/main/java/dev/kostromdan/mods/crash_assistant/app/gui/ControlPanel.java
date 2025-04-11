@@ -7,11 +7,11 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.lang.LinksProvider;
-import dev.kostromdan.mods.crash_assistant.mod_list.*;
-import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import gs.mclo.api.response.UploadLogResponse;
 
 import javax.swing.*;

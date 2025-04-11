@@ -1,6 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
-import dev.kostromdan.mods.crash_assistant.loading_utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;

@@ -9,7 +9,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.McLogsApiProvider;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import gs.mclo.api.response.UploadLogResponse;
 import gs.mclo.api.response.insights.Problem;
 

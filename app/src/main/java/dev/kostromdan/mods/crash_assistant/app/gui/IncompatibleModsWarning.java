@@ -2,8 +2,8 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
-import dev.kostromdan.mods.crash_assistant.config.ProblematicModsConfig;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 
 import javax.swing.*;
 import java.awt.*;

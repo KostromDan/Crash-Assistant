@@ -3,10 +3,10 @@ package dev.kostromdan.mods.crash_assistant.app;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.loading_utils.JavaBinaryLocator;
-import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
-import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

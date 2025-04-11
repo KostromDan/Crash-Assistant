@@ -1,7 +1,7 @@
 # 
 <h1 align="center">Crash Assistant  <br>
 	<a href="https://www.curseforge.com/minecraft/mc-mods/crash-assistant/files"><img src="https://cf.way2muchnoise.eu/versions/1154099(c70039).svg" alt="Supported Versions"></a>
-	<a href="https://github.com/KostromDan/Crash-Assistant/blob/1.19.2%2B/LICENSE"><img src="https://img.shields.io/github/license/KostromDan/Crash-Assistant?style=flat&color=900c3f" alt="License"></a>
+	<a href="https://github.com/KostromDan/Crash-Assistant/blob/1.19.2-1.20.1/LICENSE"><img src="https://img.shields.io/github/license/KostromDan/Crash-Assistant?style=flat&color=900c3f" alt="License"></a>
 	<a href="https://www.curseforge.com/minecraft/mc-mods/crash-assistant"><img src="http://cf.way2muchnoise.eu/1154099.svg" alt="CF"></a>
     <a href="https://modrinth.com/mod/crash-assistant"><img src="https://img.shields.io/modrinth/dt/ix1qq8Ux?logo=modrinth&label=&suffix=%20&style=flat&color=242629&labelColor=5ca424&logoColor=1c1c1c" alt="Modrinth"></a>
     <br><br>
@@ -40,9 +40,9 @@ For localization go [lang](common_config/src/main/resources/lang)
 
 ### How it works?
 Coremod includes 2 services:
-* [CrashAssistantTransformationService.java](neoforge_coremod/src/main/java/dev/kostromdan/mods/crash_assistant/core_mod/services/CrashAssistantTransformationService.java)
+* [CrashAssistantTransformationService](forge_coremod%2Fsrc%2Fmain%2Fjava%2Fdev%2Fkostromdan%2Fmods%2Fcrash_assistant%2Fcore_mod%2Fservices%2FCrashAssistantTransformationService.java)
   * `app` should be launched as soon as possible after game start to be able to help players even with coremod/mixin/hs_err crashes. So we launch it from static block of ITransformationService, the first point, we can launch it from forge mod.
-* [CrashAssistantDependencyLocator.java](neoforge_coremod/src/main/java/dev/kostromdan/mods/crash_assistant/core_mod/services/CrashAssistantDependencyLocator.java)
+* [CrashAssistantDependencyLocator](forge_coremod%2Fsrc%2Fmain%2Fjava%2Fdev%2Fkostromdan%2Fmods%2Fcrash_assistant%2Fcore_mod%2Fservices%2FCrashAssistantDependencyLocator.java)
   * We want to have singlefile mod, not `forge_mod.jar` and `forge_coremod.jar`. Since forge doesn't load jar in jar mods from coremods, we should do it by ourselves.
 
 

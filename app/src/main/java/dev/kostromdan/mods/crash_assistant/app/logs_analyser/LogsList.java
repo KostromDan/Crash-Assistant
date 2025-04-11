@@ -43,12 +43,8 @@ public class LogsList {
             CrashAssistantApp.LOGGER.info("Adding {} from {}", log.getName(), log.getPath().toAbsolutePath().toString());
             logs.add(log);
             new Thread(() -> {
-                try {
-                    log.getProcessor().processLogFile();
-                } catch (IOException e) {
-                    CrashAssistantApp.LOGGER.error("Error while processing log file \"" + log.getPath() + "\": ", e);
-                }
-            });
+                log.getProcessor().processLogFileSafe();
+            }).start();
         }
     }
 }

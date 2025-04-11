@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalyser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
@@ -126,7 +127,10 @@ public class CrashAssistantGUI {
         showCrashAssistantDuplicatedWarning();
         IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         IntelChipBugWarning.showIfAffected(false);
-        showKnownCrashReasonsWarnings();
+        new Thread(() -> {
+            LogAnalyser.analyseLogs();
+            showKnownCrashReasonsWarnings();
+        }).start();
     }
 
     private void addFileMenu() {
@@ -203,7 +207,7 @@ public class CrashAssistantGUI {
         frame.setMinimumSize(new Dimension(frame.getSize().width, heightWithoutScrollPane + 73));
     }
 
-    public static void showKnownCrashReasonsWarnings() {
+    public static synchronized void showKnownCrashReasonsWarnings() {
         ControlPanel.stopMovingToTop = true;
         synchronized (KnownCrashReasonMessage.class) {
             try {
@@ -363,6 +367,8 @@ public class CrashAssistantGUI {
             }
             CrashAssistantGUI.resize();
         });
+        LogAnalyser.analyseLogs();
+        showKnownCrashReasonsWarnings();
     }
 
     public static String getTitleCrashedText(boolean forMsg) {

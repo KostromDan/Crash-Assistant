@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 public class LogAnalyser {
     private static final List<KnownCrashReason> registeredReasons = new ArrayList<>();
     private static final List<CodexAnalysis> registeredCodexReasons = new ArrayList<>();
+    private static boolean reasonsRegistered = false;
     public static final HashSet<LogType> CodexSupportedLogTypes = new HashSet<>() {{
         add(LogType.LOG);
         add(LogType.CRASH_REPORT);
@@ -37,9 +38,16 @@ public class LogAnalyser {
         if (!CrashAssistantConfig.getBoolean("analysis.enabled")) {
             return;
         }
+        long startTime = System.currentTimeMillis();
+        registerReasons();
         synchronized (KnownCrashReasonMessage.class) {
             ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
             HashSet<String> disabledCrashReasons = new HashSet<>(CrashAssistantConfig.getBlacklistedAnalysis());
+            for (Log log : LogsList.getLogs()) {
+                pool.submit(() -> {
+                    log.getProcessor().processLogFileSafe();
+                });
+            }
             for (Log log : LogsList.getLogs()) {
                 analyseLog(log, disabledCrashReasons, pool);
             }
@@ -53,19 +61,14 @@ public class LogAnalyser {
                 Thread.currentThread().interrupt();
                 CrashAssistantApp.LOGGER.error("Interrupted while awaiting termination of analysis tasks", e);
             }
+            CrashAssistantApp.LOGGER.info("Analysis finished in {} ms", System.currentTimeMillis() - startTime);
         }
     }
 
 
-    public static synchronized void analyseLog(Log log, HashSet<String> disabledCrashReasons, ExecutorService pool) {
+    private static synchronized void analyseLog(Log log, HashSet<String> disabledCrashReasons, ExecutorService pool) {
         if (log.isAnalysed()) return;
 
-        try {
-            log.getProcessor().processLogFile();
-        } catch (IOException e) {
-            CrashAssistantApp.LOGGER.error("Error processing log file", e);
-        }
-        String logText = log.getProcessor().getAllLinesString();
         List<KnownCrashReason> registeredReasonsForThisLog = registeredReasons.stream()
                 .filter(reason ->
                         reason.getLogTypes().contains(log.getType()) &&
@@ -74,6 +77,8 @@ public class LogAnalyser {
 
         for (KnownCrashReason reason : registeredReasonsForThisLog) {
             pool.submit(() -> {
+                log.getProcessor().processLogFileSafe();
+                String logText = log.getProcessor().getAllLinesString();
                 if (reason.matches(logText, log)
 //                        || true //dubug too see all available warnings
                 ) {
@@ -89,6 +94,7 @@ public class LogAnalyser {
     }
 
     public static synchronized String analyseCodexMessage(String message) {
+        registerReasons();
         for (CodexAnalysis reason : registeredCodexReasons) {
             if (reason.matches(message)) {
                 return reason.getMessage();
@@ -97,7 +103,10 @@ public class LogAnalyser {
         return "";
     }
 
-    public static void registerReasons() {
+    public static synchronized void registerReasons() {
+        if (reasonsRegistered) {
+            return;
+        }
         registerKnownCrashReason(new Atio6axx());
         registerKnownCrashReason(new InsufficientMemory());
         registerKnownCrashReason(new Jemalloc());
@@ -117,5 +126,7 @@ public class LogAnalyser {
 
 
         registerCodexKnownCrashReason(new ErroringEntity());
+
+        reasonsRegistered = true;
     }
 }

@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
+import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 
 import java.io.BufferedReader;
@@ -31,8 +32,8 @@ public class LogProcessor {
         this.logPath = logPath;
     }
 
-    public synchronized void processLogFile() throws IOException {
-        if (isLogProcessed && Files.size(logPath) == sizeOnLastRead) {
+    public synchronized void processLogFile(boolean checkUpdated) throws IOException {
+        if (isLogProcessed && (!checkUpdated || Files.size(logPath) == sizeOnLastRead)) {
             return;
         }
         sizeOnLastRead = Files.size(logPath);
@@ -87,6 +88,14 @@ public class LogProcessor {
             }
         }
         isLogProcessed = true;
+    }
+
+    public synchronized void processLogFileSafe() {
+        try {
+            processLogFile(false);
+        } catch (IOException e) {
+            CrashAssistantApp.LOGGER.info("Error processing log file", e);
+        }
     }
 
     /**

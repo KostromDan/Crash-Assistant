@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -119,11 +120,11 @@ public class CrashAssistantApp {
     private static void onMinecraftFinished() {
         GUIStartTime = Instant.now().toEpochMilli();
 
-        LogAnalyser.registerReasons();
-
         new Thread(() -> {
             ModListUtils.getCurrentModList(true); //Cache modlist, to not spend time in further, then it needed.
         }).start();
+
+        new Thread(LanguageProvider::updateLang).start(); // Init lang async.
 
         boolean crashed = false;
 
@@ -210,9 +211,6 @@ public class CrashAssistantApp {
         LOGGER.info("Reached first tick of TitleScreen: {}", gameLaunchedSuccessfully);
 
 
-        new Thread(LogAnalyser::analyseLogs).start();
-
-
         startLocatingTerminatedProcesses();
 
         if (crashed) {
@@ -263,7 +261,6 @@ public class CrashAssistantApp {
                     synchronized (KnownCrashReasonMessage.class) {
                         LogsList.addIfExistsAndModified(new Log(LogType.WIN_EVENT, terminatedProcessesPath));
                     }
-                    new Thread(LogAnalyser::analyseLogs).start();
                     if (!GUIStartedLaunching) {
                         onMinecraftCrashed();
                     } else {
@@ -281,8 +278,6 @@ public class CrashAssistantApp {
                             try {
                                 Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
                                 Method method = clazz.getMethod("updateLogsListInGUI");
-                                method.invoke(null);
-                                method = clazz.getMethod("showKnownCrashReasonsWarnings");
                                 method.invoke(null);
                             } catch (Exception e) {
                                 LOGGER.error("Exception adding file to gui later:", e);

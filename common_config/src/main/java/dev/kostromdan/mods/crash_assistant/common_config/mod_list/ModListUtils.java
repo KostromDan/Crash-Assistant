@@ -57,7 +57,7 @@ public class ModListUtils {
                 }
 
                 executor.shutdown();
-                LOGGER.info("Analysed " + currentMods.size() + " mods in " + (System.currentTimeMillis() - start) + " ms");
+                LOGGER.info("Parsed " + currentMods.size() + " mod(s) metadata in " + (System.currentTimeMillis() - start) + " ms");
             }
             if (Files.exists(RESOURCEPACKS_FOLDER) && CrashAssistantConfig.getBoolean("modpack_modlist.add_resourcepacks")) {
                 Files.list(RESOURCEPACKS_FOLDER).sorted(new PathComparator()).forEach(path -> {

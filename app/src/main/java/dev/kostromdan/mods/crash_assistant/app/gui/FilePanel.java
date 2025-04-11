@@ -168,7 +168,7 @@ public class FilePanel {
                     }
 
                     uploadButton.setText(LanguageProvider.get("gui.preprocessing"));
-                    log.getProcessor().processLogFile();
+                    log.getProcessor().processLogFile(true);
                     uploadButton.setText(oldText);
                     CompletableFuture<UploadLogResponse> completableResponseFirstLines = McLogsApiProvider.getMcLogsClient().uploadLog(log.getProcessor().getFirstLinesString());
 

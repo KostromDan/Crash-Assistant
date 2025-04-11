@@ -34,6 +34,7 @@ processResources {
 tasks.named('javadoc', Javadoc).configure {
     dependsOn(configurations.commonJava)
     source(configurations.commonJava)
+    options.addStringOption('Xdoclint:none', '-quiet')
 }
 
 tasks.named('sourcesJar', Jar) {

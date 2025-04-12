@@ -1,5 +1,6 @@
 1.7.2:
 
+- 1.21.5 initial release for Forge, NeoForge and Fabric.
 - Improved start time. Especially if massive logs exist. Now almost no effect.
 - Added logging of time of analysing logs for crash reasons.
 - Improved logging wording on time of parsing mods metadata time.

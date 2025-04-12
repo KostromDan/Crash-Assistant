@@ -1,3 +1,7 @@
+1.7.3:
+
+- Fixed crash on 1.21.5 fabric due to incorrect jar was published by unified publishing.
+
 1.7.2:
 
 - 1.21.5 initial release for Forge, NeoForge and Fabric.

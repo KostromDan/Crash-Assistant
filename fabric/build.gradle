@@ -27,18 +27,19 @@ dependencies {
 }
 
 shadowJar {
-    archiveClassifier.set('dev-shadow')
     configurations = [project.configurations.shadowBundle]
+    archiveClassifier.set('dev-shadow')
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
 }
 
-remapJar {
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn(':app:shadowJar')
+    dependsOn tasks.shadowJar
+    from zipTree(tasks.shadowJar.archiveFile.get().asFile)
     from(project(':app').tasks.shadowJar) {
         into 'META-INF/jarjar'
     }
-
-    input.set shadowJar.archiveFile
 }
 
 loom {

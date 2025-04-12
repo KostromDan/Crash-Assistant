@@ -83,7 +83,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 unifiedPublishing {
     project {
-        gameVersions = ["1.21.1", "1.21.2", "1.21.3", "1.21.4"]
+        gameVersions = ["1.21.5"]
         gameLoaders = ["neoforge"]
 
         displayName = tasks.jar.archiveFile.get().asFile.name

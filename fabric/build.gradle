@@ -2,6 +2,7 @@ plugins {
     id 'multiloader-loader'
     id 'fabric-loom'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id "me.shedaniel.unified-publishing" version "0.1.+"
 }
 
 configurations {
@@ -62,6 +63,36 @@ loom {
             setConfigName('Fabric Server')
             ideConfigGenerated(true)
             runDir('runs/server')
+        }
+    }
+}
+
+unifiedPublishing {
+    project {
+        gameVersions = ["1.21.5"]
+        gameLoaders = ["fabric", "quilt"]
+
+        displayName = tasks.jar.archiveFile.get().asFile.name
+        version = project.version
+        changelog = file('../changelog.md').text
+        releaseType = release_type
+
+        mainPublication tasks.jar
+
+        var cfToken = System.getenv("CF_TOKEN")
+        if (cfToken != null) {
+            curseforge {
+                token = cfToken
+                id = "1154099"
+            }
+        }
+
+        var mrToken = System.getenv("MODRINTH_TOKEN")
+        if (mrToken != null) {
+            modrinth {
+                token = mrToken
+                id = "ix1qq8Ux"
+            }
         }
     }
 }

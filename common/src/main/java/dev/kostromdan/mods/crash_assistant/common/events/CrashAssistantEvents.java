@@ -10,6 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 
+import java.net.URI;
+
 public class CrashAssistantEvents {
     public static void onGameJoin() {
         if (!CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname) || CrashAssistantConfig.getBoolean("greeting.shown_greeting")) {
@@ -21,8 +23,8 @@ public class CrashAssistantEvents {
         msg.append(Component.literal("Crash Assistant")
                 .withStyle(style -> style
                         .withColor(ChatFormatting.LIGHT_PURPLE)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/KostromDan/Crash-Assistant"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(LanguageProvider.get("text.opens_url"))))
+                        .withClickEvent(new ClickEvent.OpenUrl(URI.create("https://github.com/KostromDan/Crash-Assistant")))
+                        .withHoverEvent(new HoverEvent.ShowText(Component.literal(LanguageProvider.get("text.opens_url"))))
                 ));
         msg.append(Component.literal(LanguageProvider.get("text.greeting2")));
         msg.append(CrashAssistantCommands.getModConfigComponent());

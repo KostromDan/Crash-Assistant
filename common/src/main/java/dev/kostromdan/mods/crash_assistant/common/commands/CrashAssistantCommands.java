@@ -71,8 +71,8 @@ public class CrashAssistantCommands {
         return Component.literal("[mod config]")
                 .withStyle(style -> style
                         .withColor(ChatFormatting.YELLOW)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, CrashAssistantConfig.getConfigPath().toAbsolutePath().toString()))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(LanguageProvider.get("commands.mod_config_tooltip"))))
+                        .withClickEvent(new ClickEvent.OpenFile(CrashAssistantConfig.getConfigPath()))
+                        .withHoverEvent(new HoverEvent.ShowText(Component.literal(LanguageProvider.get("commands.mod_config_tooltip"))))
                 );
     }
 
@@ -80,8 +80,8 @@ public class CrashAssistantCommands {
         return Component.literal("[nickname]")
                 .withStyle(style -> style
                         .withColor(ChatFormatting.YELLOW)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, '"' + playerNickname + '"'))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(LanguageProvider.get("commands.nickname_tooltip"))))
+                        .withClickEvent(new ClickEvent.CopyToClipboard('"' + playerNickname + '"'))
+                        .withHoverEvent(new HoverEvent.ShowText(Component.literal(LanguageProvider.get("commands.nickname_tooltip"))))
                 );
     }
 
@@ -89,8 +89,8 @@ public class CrashAssistantCommands {
         return Component.literal("[" + LanguageProvider.get("commands.diff_copy") + "]")
                 .withStyle(style -> style
                         .withColor(ChatFormatting.YELLOW)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, diff.toText()))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(LanguageProvider.get("commands.diff_tooltip"))))
+                        .withClickEvent(new ClickEvent.CopyToClipboard(diff.toText()))
+                        .withHoverEvent(new HoverEvent.ShowText(Component.literal(LanguageProvider.get("commands.diff_tooltip"))))
                 );
     }
 

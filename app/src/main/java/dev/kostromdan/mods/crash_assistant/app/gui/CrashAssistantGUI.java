@@ -121,6 +121,7 @@ public class CrashAssistantGUI {
             @Override
             public void run() {
                 if (!ControlPanel.stopMovingToTop) {
+                    IntegratedGPUWarning.awaitShown();
                     SwingUtilities.invokeLater(() -> {
                         frame.setAlwaysOnTop(true);
                         frame.toFront();
@@ -135,6 +136,9 @@ public class CrashAssistantGUI {
         CrashAssistantApp.GUIStartTime = Instant.now().toEpochMilli() - CrashAssistantApp.GUIStartTime;
         CrashAssistantApp.GUIInitialisationFinished = true;
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
+
+        IntegratedGPUWarning.awaitShown();
+
         showCrashAssistantDuplicatedWarning();
         IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         IntelChipBugWarning.showIfAffected(false);

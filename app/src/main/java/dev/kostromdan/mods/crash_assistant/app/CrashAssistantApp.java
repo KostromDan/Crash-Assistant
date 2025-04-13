@@ -147,7 +147,7 @@ public class CrashAssistantApp {
                         if (gpu.type() == RendererType.DEDICATED) {
                             dedicatedGpus.add(gpu.name());
                         }
-                        if (Objects.equals(gpu.name(), renderer)) {
+                        if (gpu.name().startsWith(renderer) || renderer.startsWith(gpu.name())) {
                             foundGPU = Optional.of(gpu);
                         }
                     }

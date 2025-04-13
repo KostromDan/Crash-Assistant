@@ -76,6 +76,9 @@ public class Boot {
         if (lwjglNatives != null && !Objects.equals(lwjglNatives, "UNDEFINED")) {
             CrashAssistantAgent.appendJarFile(lwjglNatives);
         }
+        if (Objects.equals(lwjglNatives, "UNDEFINED")) {
+            lwjglNatives = null;
+        }
 
         Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
         Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);

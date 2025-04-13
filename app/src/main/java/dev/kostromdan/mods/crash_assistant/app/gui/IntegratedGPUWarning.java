@@ -1,117 +1,110 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
+import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 public class IntegratedGPUWarning extends JFrame {
 
     /**
      * Constructs a new frame that displays an editor pane with warning messages,
-     * and includes a "don't show again" checkbox, a "Learn more" button, and an OK button.
+     * and includes a "don't show again" checkbox and an OK button.
      *
      * @param integratedGPU the integrated GPU string to display
      * @param dedicatedGPUs the list of dedicated GPUs to display
      */
     public IntegratedGPUWarning(String integratedGPU, List<String> dedicatedGPUs) {
-        super("Integrated GPU Warning");
+        super(LanguageProvider.get("gui.integrated_gpu"));
 
-        // Build the content text for the editor pane using the provided parameters.
+        // Prepare the warning text.
         String content = LanguageProvider.get("warnings.integrated_gpu")
                 .replace("$I_GPU$", integratedGPU)
                 .replace("$D_GPUS$", String.join("\n", dedicatedGPUs))
                 .replace("$JAVA_PATH$", Path.of(JavaBinaryLocator.getJavaBinary(ProcessHandle.current()))
                         .toAbsolutePath().toString());
 
-        // Create the editor pane with your custom text.
-        // If CrashAssistantGUI.getEditorPane returns a scrollable pane, you can add that directly.
-        // Otherwise, consider wrapping it in a JScrollPane if the content can be long.
+        // Editor pane with HTML content.
         JEditorPane editorPane = CrashAssistantGUI.getEditorPane(content, false);
-        editorPane.setEditable(false);
 
-        // ---------------------------------------------
-        // Bottom panel components
-        // ---------------------------------------------
+        // Wrap the editor pane in a panel with a VISIBLE border + internal padding.
+        JPanel textPanel = new JPanel(new BorderLayout());
+        textPanel.setBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),  // Visible line border
+                        BorderFactory.createEmptyBorder(10, 10, 10, 10)       // Spacing around the text
+                )
+        );
+        textPanel.add(editorPane, BorderLayout.CENTER);
 
-        // 1. "Don't show again" checkbox (left).
+        // "Don't show again" checkbox.
         JCheckBox dontShowAgainCheck = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
-        dontShowAgainCheck.addActionListener(e ->
-                CrashAssistantLocalConfig.set("intel_corrupted.dont_show_again", dontShowAgainCheck.isSelected())
+        dontShowAgainCheck.addActionListener(e -> {
+                    CrashAssistantLocalConfig.set("integrated_gpu.dont_show_again", dontShowAgainCheck.isSelected());
+                    CrashAssistantApp.LOGGER.info("Don't show again checkbox switched: {}", dontShowAgainCheck.isSelected());
+                }
         );
 
-        // 2. "Learn more" button (center).
-        JButton learnMoreButton = new JButton(("gui.learn_more"));
-        learnMoreButton.addActionListener(e -> {
-            // TODO: Open FAQ link or documentation in a browser, for example:
-            // openLink("https://example.com/intel-bug-faq");
-            // For now, just show a message dialog as a placeholder.
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Here, you could show more information or open a browser to the FAQ page.",
-                    "Learn More",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-        });
-
-        // 3. OK button (right).
+        // OK button.
         JButton okButton = new JButton("OK");
         okButton.addActionListener(e -> dispose());
 
-        // ---------------------------------------------
-        // Layout the bottom panel to match your screenshot
-        // ---------------------------------------------
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // Bottom panel that centers both the checkbox and the OK button in the same row.
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        bottomPanel.add(dontShowAgainCheck);
+        bottomPanel.add(okButton);
 
-        // Left side: "Don't show again"
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        leftPanel.add(dontShowAgainCheck);
-        bottomPanel.add(leftPanel, BorderLayout.WEST);
+        // Main panel to hold textPanel in the center and bottomPanel at the bottom.
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));  // Extra margin around everything
+        mainPanel.add(textPanel, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        // Center: "Learn more"
-        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        centerPanel.add(learnMoreButton);
-        bottomPanel.add(centerPanel, BorderLayout.CENTER);
-
-        // Right: "OK"
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        rightPanel.add(okButton);
-        bottomPanel.add(rightPanel, BorderLayout.EAST);
-
-        // ---------------------------------------------
-        // Frame layout
-        // ---------------------------------------------
-        getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(editorPane, BorderLayout.CENTER);
-        getContentPane().add(bottomPanel, BorderLayout.SOUTH);
-
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        // Set up the frame.
+        setContentPane(mainPanel);
         pack();
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
+        setAlwaysOnTop(true);
     }
 
-    // Example main method for testing the frame independently.
-    public static void main(String[] args) {
-        // Set the system look and feel if possible.
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+    public static void showIfNotDisabled(String integratedGPU, List<String> dedicatedGPUs) {
+        if (Objects.equals(CrashAssistantLocalConfig.get("integrated_gpu.dont_show_again"), true)) {
+            CrashAssistantApp.LOGGER.warn("integrated_gpu.dont_show_again is true. Prevented GUI warn.");
+            return;
         }
-
-        // Launch the GUI on the Event Dispatch Thread.
         SwingUtilities.invokeLater(() -> {
-            // Provide sample data for testing.
-            IntegratedGPUWarning frame = new IntegratedGPUWarning(
-                    "Intel HD Graphics",
-                    List.of("NVIDIA GTX 1080", "AMD Radeon RX 580")
-            );
+            CrashAssistantApp.LOGGER.warn("Showing IntegratedGPUWarning.");
+            IntegratedGPUWarning frame = new IntegratedGPUWarning(integratedGPU, dedicatedGPUs);
+
+            // Add a window listener to wait for the frame to be closed
+            frame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    CrashAssistantApp.LOGGER.warn("Shown IntegratedGPUWarning."); // Log after frame is closed.
+                }
+            });
+
             frame.setVisible(true);
         });
+    }
+
+
+    // Demo main method for testing.
+    public static void main(String[] args) {
+        // Show the warning with sample data.
+        showIfNotDisabled(
+                "Intel HD Graphics",
+                List.of("NVIDIA GTX 1080", "AMD Radeon RX 580")
+        );
+
     }
 }

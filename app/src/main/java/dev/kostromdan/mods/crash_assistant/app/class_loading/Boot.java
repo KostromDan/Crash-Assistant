@@ -8,12 +8,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Boot {
     public static String log4jApi = null;
     public static String log4jCore = null;
     public static String googleGson = null;
     public static String commonIo = null;
+    public static String lwjglNatives = null;
     public static String processor = null;
     public static String jarPath = null;
     public static boolean recursiveStart = false;
@@ -32,6 +34,8 @@ public class Boot {
                 googleGson = args[i + 1];
             } else if ("-commonIo".equals(args[i]) && i + 1 < args.length) {
                 commonIo = args[i + 1];
+            } else if ("-lwjglNatives".equals(args[i]) && i + 1 < args.length) {
+                lwjglNatives = args[i + 1];
             } else if ("-processor".equals(args[i]) && i + 1 < args.length) {
                 processor = args[i + 1];
             } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
@@ -69,6 +73,9 @@ public class Boot {
         CrashAssistantAgent.appendJarFile(log4jCore);
         CrashAssistantAgent.appendJarFile(googleGson);
         CrashAssistantAgent.appendJarFile(commonIo);
+        if (lwjglNatives != null && !Objects.equals(lwjglNatives, "UNDEFINED")) {
+            CrashAssistantAgent.appendJarFile(lwjglNatives);
+        }
 
         Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
         Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);

@@ -21,9 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class CrashAssistantApp {
@@ -35,6 +33,7 @@ public class CrashAssistantApp {
     public static long parentStarted;
     public static boolean crashed_with_report = false;
     public static String crashAssistantJarName = null;
+    public static String renderer = null;
     public static boolean gameLaunchedSuccessfully = false;
     public static long terminatedProcessesLocationEndTime = 0;
 
@@ -48,10 +47,6 @@ public class CrashAssistantApp {
 
         LOGGER.info("CrashAssistantApp running from: {}", Paths.get("").toAbsolutePath().toString());
         LOGGER.info("JAVA: {}", JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
-
-        if (Boot.lwjglNatives != null) {
-            GPUDetector.main(args);
-        }
 
         parentPID = -1;
         for (int i = 0; i < args.length; i++) {
@@ -127,12 +122,35 @@ public class CrashAssistantApp {
     }
 
     private static void checkRendererFile() {
+        if (renderer != null) return;
+        if (Boot.lwjglNatives == null) return;
         Path rendererPath = Paths.get("local", "crash_assistant", "renderer" + parentPID + ".tmp");
 
         if (rendererPath.toFile().exists()) {
             try {
                 String renderer = new String(Files.readAllBytes(rendererPath));
                 LOGGER.info("Detected renderer: {}", renderer);
+
+                if (Boot.lwjglNatives != null) {
+                    List<GPUDetector.GPU> gpus = GPUDetector.detectGPUs();
+                    List<GPUDetector.GPU> dedicatedGpus = new ArrayList<>();
+                    boolean dedicatedExists = false;
+                    boolean rendererInList = false;
+                    boolean rendererIntegrated = false;
+                    for (GPUDetector.GPU gpu : gpus) {
+                        if (gpu.type() == GPUDetector.RendererType.DEDICATED) {
+                            dedicatedExists = true;
+                            dedicatedGpus.add(gpu);
+                        }
+                        if (Objects.equals(gpu.name(), renderer)) {
+                            rendererInList = true;
+                            rendererIntegrated = gpu.type() == GPUDetector.RendererType.INTEGRATED;
+                        }
+                    }
+                    if (rendererInList && rendererIntegrated && dedicatedExists) {
+                        LOGGER.info("Detected Minecraft running on integrated GPU:\n{},\nwhile dedicated exists:\n{}", renderer, dedicatedGpus);
+                    }
+                }
             } catch (IOException e) {
                 LOGGER.error("Exception while reading renderer file:", e);
             }

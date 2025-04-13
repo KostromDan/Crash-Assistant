@@ -1,34 +1,60 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
-import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.vulkan.VK10.*;
 
 public class GPUDetector {
-    public static void main(String[] args) {
-        // Step 1: Create Vulkan instance
+
+    /** Enum representing the type of GPU. */
+    public enum RendererType {
+        INTEGRATED,
+        DEDICATED,
+        UNKNOWN
+    }
+
+    /** Record representing a GPU with its type and name. */
+    public record GPU(RendererType type, String name) {}
+
+    /**
+     * Detects GPUs using Vulkan and returns a list of GPU records.
+     * Each record contains the GPU's type and name.
+     *
+     * @return a List of GPU objects representing the detected GPUs
+     * @throws RuntimeException if Vulkan instance creation or device enumeration fails
+     */
+    public static List<GPU> detectGPUs() {
+        // Create Vulkan instance
         VkInstance instance = createVulkanInstance();
 
-        // Step 2 & 3: Enumerate physical devices and get their properties
+        // List to store detected GPUs
+        List<GPU> gpus = new ArrayList<>();
+
+        // Use MemoryStack for native memory allocation
         try (MemoryStack stack = MemoryStack.stackPush()) {
             // Get the number of physical devices
             IntBuffer deviceCount = stack.mallocInt(1);
-            VK10.vkEnumeratePhysicalDevices(instance, deviceCount, null);
+            int err = VK10.vkEnumeratePhysicalDevices(instance, deviceCount, null);
+            if (err != VK10.VK_SUCCESS) {
+                throw new RuntimeException("Failed to enumerate physical devices: " + err);
+            }
+
+            // If no devices are found, return an empty list
             if (deviceCount.get(0) == 0) {
-                CrashAssistantApp.LOGGER.info("No Vulkan-compatible GPUs found.");
-                return;
+                VK10.vkDestroyInstance(instance, null);
+                return gpus;
             }
 
             // Allocate buffer for physical devices
             PointerBuffer devices = stack.mallocPointer(deviceCount.get(0));
             VK10.vkEnumeratePhysicalDevices(instance, deviceCount, devices);
 
-            // Step 4: Iterate over devices and check their type
+            // Iterate over devices and collect their properties
             for (int i = 0; i < devices.capacity(); i++) {
                 VkPhysicalDevice device = new VkPhysicalDevice(devices.get(i), instance);
                 VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties.calloc(stack);
@@ -37,21 +63,33 @@ public class GPUDetector {
                 String deviceName = properties.deviceNameString();
                 int deviceType = properties.deviceType();
 
-                CrashAssistantApp.LOGGER.info("GPU: " + deviceName);
+                // Map Vulkan device type to RendererType
+                RendererType type;
                 if (deviceType == VK10.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
-                    CrashAssistantApp.LOGGER.info("Type: Integrated");
+                    type = RendererType.INTEGRATED;
                 } else if (deviceType == VK10.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-                    CrashAssistantApp.LOGGER.info("Type: Dedicated");
+                    type = RendererType.DEDICATED;
                 } else {
-                    CrashAssistantApp.LOGGER.info("Type: Other");
+                    type = RendererType.UNKNOWN;
                 }
+
+                // Add GPU record to the list
+                gpus.add(new GPU(type, deviceName));
             }
         }
 
-        // Step 6: Clean up
+        // Clean up Vulkan instance
         VK10.vkDestroyInstance(instance, null);
+
+        return gpus;
     }
 
+    /**
+     * Creates a Vulkan instance for GPU detection.
+     *
+     * @return the created VkInstance
+     * @throws RuntimeException if instance creation fails
+     */
     private static VkInstance createVulkanInstance() {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             // Application info

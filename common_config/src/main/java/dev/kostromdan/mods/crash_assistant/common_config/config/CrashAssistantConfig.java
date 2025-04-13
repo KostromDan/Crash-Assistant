@@ -63,6 +63,12 @@ public class CrashAssistantConfig {
         addOption("general.show_dont_send_screenshot_of_gui_notice",
                 "Append comment text with notice about sending screenshot of this gui tells nothing to modpack creators.",
                 true);
+        addOption("general.screenshot_of_gui_notice_animated_border",
+                "Animate border to request user attention even more.",
+                true);
+        addOption("general.upload_all_animated_border",
+                "Animate border to request user attention even more.",
+                true);
         ArrayList<String> defaultBlacklistedLogs = new ArrayList<>();
         addOption("general.blacklisted_logs",
                 "List of blacklisted log files (checked with startswith()). This files won't show in GUI logs list.",

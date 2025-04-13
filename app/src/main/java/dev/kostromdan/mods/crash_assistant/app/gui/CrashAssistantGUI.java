@@ -66,21 +66,31 @@ public class CrashAssistantGUI {
         }};
 
         String firstLinesOfComment = PlatformHelp.isLinkDefault() ?
-                LanguageProvider.get("gui.comment_under_title_cant_resolve", hrefOptions) : LanguageProvider.get("gui.comment_under_title_pls_report", hrefOptions);
+                LanguageProvider.get("gui.comment_under_title_cant_resolve", hrefOptions) :
+                LanguageProvider.get("gui.comment_under_title_pls_report", hrefOptions);
 
+        // Main comment text (excluding screenshot notice)
         String commentText = firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions);
-        if (CrashAssistantConfig.getBoolean("general.show_dont_send_screenshot_of_gui_notice")) {
-            String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
-            commentText += "\n<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
-        }
-
-        JEditorPane commentPane = getEditorPane(commentText, false);
+        JEditorPane commentPane = getEditorPaneNoMargins(commentText, false);
 
         labelPanel = new JPanel();
         labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.Y_AXIS));
         labelPanel.add(titleLabel);
         if (!commentText.isEmpty()) {
             labelPanel.add(commentPane);
+        }
+
+        // Screenshot notice in a separate JEditorPane
+        if (CrashAssistantConfig.getBoolean("general.show_dont_send_screenshot_of_gui_notice")) {
+            String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
+            String screenshotHtml = "<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
+            JEditorPane screenshotNoticePane = getEditorPaneNoMargins(screenshotHtml, false);
+
+            // Apply the animated border
+            if (CrashAssistantConfig.getBoolean("general.screenshot_of_gui_notice_animated_border")) {
+                screenshotNoticePane.setBorder(new AnimatedBorder(screenshotNoticePane, Color.RED, false));
+            }
+            labelPanel.add(screenshotNoticePane);
         }
 
         frame.add(labelPanel, BorderLayout.NORTH);
@@ -103,6 +113,7 @@ public class CrashAssistantGUI {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
+        // Remaining initialization code (unchanged)
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             final long startTime = Instant.now().toEpochMilli();
@@ -339,6 +350,21 @@ public class CrashAssistantGUI {
         pane.setBackground(new JButton().getBackground());
         pane.addHyperlinkListener(getHyperlinkListener());
         pane.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return pane;
+    }
+
+    public static JEditorPane getEditorPaneNoMargins(String text, boolean wrap) {
+        // Call the original getEditorPane method
+        JEditorPane pane = getEditorPane(text, wrap);
+
+        // Apply adjustments to remove margins and borders
+        pane.setMargin(new Insets(0, 0, 0, 0)); // Remove internal margins
+        pane.setBorder(BorderFactory.createEmptyBorder()); // Remove border spacing
+
+        // Ensure HTML content has no internal margins or padding
+        String bodyRule = "body { margin: 0; padding: 0; }";
+        ((HTMLDocument) pane.getDocument()).getStyleSheet().addRule(bodyRule);
+
         return pane;
     }
 

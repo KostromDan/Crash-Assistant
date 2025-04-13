@@ -6,6 +6,9 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
+import dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPU;
+import dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPUDetector;
+import dev.kostromdan.mods.crash_assistant.app.utils.gpu.RendererType;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
@@ -132,23 +135,24 @@ public class CrashAssistantApp {
                 LOGGER.info("Detected renderer: {}", renderer);
 
                 if (Boot.lwjglNatives != null) {
-                    List<GPUDetector.GPU> gpus = GPUDetector.detectGPUs();
-                    List<GPUDetector.GPU> dedicatedGpus = new ArrayList<>();
-                    boolean dedicatedExists = false;
-                    boolean rendererInList = false;
-                    boolean rendererIntegrated = false;
-                    for (GPUDetector.GPU gpu : gpus) {
-                        if (gpu.type() == GPUDetector.RendererType.DEDICATED) {
-                            dedicatedExists = true;
+                    List<GPU> gpus = GPUDetector.detectGPUs();
+                    List<GPU> dedicatedGpus = new ArrayList<>();
+                    Optional<GPU> foundGPU = Optional.empty();
+                    for (GPU gpu : gpus) {
+                        if (gpu.type() == RendererType.DEDICATED) {
                             dedicatedGpus.add(gpu);
                         }
                         if (Objects.equals(gpu.name(), renderer)) {
-                            rendererInList = true;
-                            rendererIntegrated = gpu.type() == GPUDetector.RendererType.INTEGRATED;
+                            foundGPU = Optional.of(gpu);
                         }
                     }
-                    if (rendererInList && rendererIntegrated && dedicatedExists) {
-                        LOGGER.info("Detected Minecraft running on integrated GPU:\n{},\nwhile dedicated exists:\n{}", renderer, dedicatedGpus);
+                    if (foundGPU.isPresent() &&
+                            foundGPU.get().type() == RendererType.INTEGRATED &&
+                            !dedicatedGpus.isEmpty()) {
+                        LOGGER.info("Detected Minecraft running on integrated GPU:\n" +
+                                "{},\n" +
+                                "while dedicated exists:\n" +
+                                "{}", foundGPU.get(), dedicatedGpus);
                     }
                 }
             } catch (IOException e) {

@@ -61,6 +61,13 @@ subprojects { subproject ->
     }
 }
 
+apply plugin: 'idea'
+idea {
+    module {
+        downloadSources = true
+    }
+}
+
 
 task collectJars(type: Copy) {
     def deps = [':fabric', ':forge_coremod']

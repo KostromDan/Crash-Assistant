@@ -154,7 +154,7 @@ public class CrashAssistantApp {
                     if (foundGPU.isPresent() &&
                             foundGPU.get().type() == RendererType.INTEGRATED &&
                             !dedicatedGpus.isEmpty()) {
-                        LOGGER.info("Detected Minecraft running on integrated GPU:\n" +
+                        LOGGER.warn("Detected Minecraft running on integrated GPU:\n" +
                                 "{},\n" +
                                 "while one or more dedicated exists:\n" +
                                 "{}", foundGPU.get().name(), String.join("\n", dedicatedGpus));
@@ -167,7 +167,7 @@ public class CrashAssistantApp {
                         }
                     }
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.error("Exception while analysis of current GPUs:", e);
                 renderer = "UNDEFINED";
             }

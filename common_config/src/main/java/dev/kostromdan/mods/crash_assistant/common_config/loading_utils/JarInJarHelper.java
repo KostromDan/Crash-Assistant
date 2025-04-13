@@ -57,13 +57,66 @@ public interface JarInJarHelper {
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    "-lwjglNatives", LibrariesJarLocator.getLibraryJarPathFromResource("windows/x64/org/lwjgl/lwjgl.dll"),
+                    "-lwjglNatives", locateNatives(),
                     "-processor", new SystemInfo().getHardware().getProcessor().getProcessorIdentifier().getName()
             );
             crashAssistantAppProcessBuilder.start();
             ProblematicModsConfig.crashIfProblematicMod();
         } catch (Exception e) {
             LOGGER.error("Error while launching GUI: ", e);
+        }
+    }
+
+    static String locateNatives() {
+        try {
+            // Get OS and architecture, converting to lowercase for consistency
+            String osName = System.getProperty("os.name").toLowerCase();
+            String osArch = System.getProperty("os.arch").toLowerCase();
+
+            // Determine OS directory
+            String osDir;
+            if (osName.contains("windows")) {
+                osDir = "windows";
+            } else if (osName.contains("linux")) {
+                osDir = "linux";
+            } else if (osName.contains("mac")) {
+                osDir = "macos";
+            } else {
+                throw new UnsupportedOperationException("Unsupported OS: " + osName);
+            }
+
+            // Determine architecture directory
+            String archDir;
+            if (osArch.equals("x86_64") || osArch.equals("amd64")) {
+                archDir = "x64";
+            } else if (osArch.equals("x86") || osArch.equals("i386")) {
+                archDir = "x86";
+            } else if (osArch.equals("aarch64")) {
+                archDir = "arm64";
+            } else {
+                throw new UnsupportedOperationException("Unsupported architecture: " + osArch);
+            }
+
+            // Determine file extension
+            String extension;
+            if (osName.contains("windows")) {
+                extension = ".dll";
+            } else if (osName.contains("linux")) {
+                extension = ".so";
+            } else if (osName.contains("mac")) {
+                extension = ".dylib";
+            } else {
+                throw new UnsupportedOperationException("Unsupported OS: " + osName);
+            }
+
+            // Construct the resource path (e.g., "windows/x64/org/lwjgl/lwjgl.dll")
+            String resourcePath = osDir + "/" + archDir + "/org/lwjgl/lwjgl" + extension;
+
+            // Return the JAR path containing the native library
+            return LibrariesJarLocator.getLibraryJarPathFromResource(resourcePath);
+        } catch (Exception e) {
+            LOGGER.warn("Error while locating Natives, integrated GPU detection won't work: ", e);
+            return "UNDEFINED";
         }
     }
 

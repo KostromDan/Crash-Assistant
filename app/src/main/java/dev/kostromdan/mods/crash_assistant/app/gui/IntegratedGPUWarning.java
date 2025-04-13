@@ -15,6 +15,8 @@ import java.util.Objects;
 
 public class IntegratedGPUWarning extends JFrame {
 
+    public static boolean isCurrentlyDisplayed = false;
+
     /**
      * Constructs a new frame that displays an editor pane with warning messages,
      * and includes a "don't show again" checkbox and an OK button.
@@ -81,6 +83,7 @@ public class IntegratedGPUWarning extends JFrame {
             CrashAssistantApp.LOGGER.warn("integrated_gpu.dont_show_again is true. Prevented GUI warn.");
             return;
         }
+        isCurrentlyDisplayed = true;
         SwingUtilities.invokeLater(() -> {
             CrashAssistantApp.LOGGER.warn("Showing IntegratedGPUWarning.");
             IntegratedGPUWarning frame = new IntegratedGPUWarning(integratedGPU, dedicatedGPUs);
@@ -90,11 +93,22 @@ public class IntegratedGPUWarning extends JFrame {
                 @Override
                 public void windowClosed(WindowEvent e) {
                     CrashAssistantApp.LOGGER.warn("Shown IntegratedGPUWarning."); // Log after frame is closed.
+                    isCurrentlyDisplayed = false;
                 }
             });
 
             frame.setVisible(true);
         });
+    }
+
+    public static void awaitShown(){
+        while (isCurrentlyDisplayed) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
 

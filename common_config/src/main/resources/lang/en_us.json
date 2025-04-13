@@ -6,7 +6,7 @@
   "gui.comment_under_title": "Post the generated message from the \"$LANG.gui.upload_all_comment$\" button in $CONFIG.text.support_place$.\nAdditionally, provide some details about how the crash happened.",
   "gui.comment_under_title_cant_resolve": "If you can't resolve the problem by reading logs, join the $CONFIG.text.support_name$.",
   "gui.comment_under_title_pls_report": "If you want to report the problem or need help, join the $CONFIG.text.support_name$.",
-  "gui.comment_under_title_screenshot_notice": "Please read the text above carefully. Screenshot of this GUI, tells us nothing!",
+  "gui.comment_under_title_screenshot_notice": "Please read the text above carefully. A screenshot of this GUI tells us nothing!",
   "gui.upload_all_comment": "Upload all...",
   "gui.file_list_label": "Available log files:",
   "gui.open_button": "Open",

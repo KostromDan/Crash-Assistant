@@ -17,7 +17,7 @@ public class CurseForgeCorrupted extends KnownCrashReason {
                 }}),
                 "Missing or unsupported mandatory dependencies:\\R\\s*Mod ID: 'minecraft', Requested by: .*?, Actual version: '\\[MISSING\\]'",
                 "Missing or unsupported mandatory dependencies:\\R\\s*Mod ID: 'neoforge', Requested by: .*?, Actual version: '\\[MISSING\\]'",
-                "Error loading class: net/minecraft/world/level/biome/Biome \\(java\\.lang\\.IllegalStateException: Unable to find method \\(\\)Lnet/minecraft/world/level/biome/BiomeSpecialEffects; with name getModifiedSpecialEffects in net/minecraft/world/level/biome/Biome\\)"
+                "Error loading class: net/minecraft/world/level/biome/Biome \\(java\\.lang\\.IllegalStateException: Unable to find method \\(\\)Lnet/minecraft/world/level/biome/"
         );
     }
 

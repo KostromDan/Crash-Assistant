@@ -120,5 +120,8 @@
   "msg.mb": "МБ",
   "msg.k_lines": " тыс. строк",
   "msg.intel_corrupted_notification": " может быть причиной краша",
-  "msg.found_potential_crash_reason": " c $COUNT$ резулатом/ами анализа логов."
+  "msg.found_potential_crash_reason": " c $COUNT$ резулатом/ами анализа логов.",
+  "warnings.integrated_gpu": "<h4>Обнаружено, что Minecraft запущен на встроенной видеокарте, хотя доступны одна или несколько дискретных видеокарт!</h4>Встроенная видеокарта (используется сейчас):\n<strong style='color: red;'>$I_GPU$</strong>\n\nДоступные дискретные видеокарты:\n<strong style='color: green;'>$D_GPUS$</strong>\n\nОжидается <strong style='color: red;'>ужасная производительность</strong> и <strong style='color: red;'>лаги</strong>, пока Minecraft работает на встроенной видеокарте.\n<strong>Настоятельно рекомендуется</strong> закрыть Minecraft и переключиться на дискретную видеокарту <strong>прямо сейчас</strong>.\nВы можете сделать это, следуя этому руководству: $LINK.HOW_FORCE_APP_USE_DISCRETE_GPU$\nПуть к Java, используемый для запуска данного клиента Minecraft:\n<strong>$JAVA_PATH$</strong>",
+  "warnings.disk_space_ended": "Сообщение <strong>java.io.IOException: На диске недостаточно свободного места</strong> в файле <strong>$LOG_FILENAME$</strong> означает:\nНа диске не хватило места для завершения операции.\nУ вас заканчивается свободное место на диске! Очистите пространство, чтобы решить проблему.",
+  "gui.integrated_gpu": "Предупреждение: Встроенная видеокарта ($LANG.gui.window_name$)"
 }

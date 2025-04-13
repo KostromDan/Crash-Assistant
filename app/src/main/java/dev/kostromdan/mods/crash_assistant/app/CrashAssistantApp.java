@@ -169,6 +169,7 @@ public class CrashAssistantApp {
                 }
             } catch (IOException e) {
                 LOGGER.error("Exception while analysis of current GPUs:", e);
+                renderer = "UNDEFINED";
             }
         }
     }

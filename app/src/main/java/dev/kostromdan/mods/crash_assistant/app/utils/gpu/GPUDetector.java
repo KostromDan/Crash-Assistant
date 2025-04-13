@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.app.utils;
+package dev.kostromdan.mods.crash_assistant.app.utils.gpu;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -7,20 +7,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.lwjgl.vulkan.VK10.*;
-
 public class GPUDetector {
-
-    /** Enum representing the type of GPU. */
-    public enum RendererType {
-        INTEGRATED,
-        DEDICATED,
-        UNKNOWN
-    }
-
-    /** Record representing a GPU with its type and name. */
-    public record GPU(RendererType type, String name) {}
-
     /**
      * Detects GPUs using Vulkan and returns a list of GPU records.
      * Each record contains the GPU's type and name.

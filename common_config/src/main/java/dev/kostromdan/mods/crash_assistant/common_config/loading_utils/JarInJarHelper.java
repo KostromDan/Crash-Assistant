@@ -57,6 +57,7 @@ public interface JarInJarHelper {
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
+                    "-lwjglNatives", LibrariesJarLocator.getLibraryJarPathFromResource("windows/x64/org/lwjgl/lwjgl.dll"),
                     "-processor", new SystemInfo().getHardware().getProcessor().getProcessorIdentifier().getName()
             );
             crashAssistantAppProcessBuilder.start();

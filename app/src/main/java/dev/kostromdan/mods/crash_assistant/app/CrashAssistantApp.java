@@ -158,6 +158,13 @@ public class CrashAssistantApp {
                                 "{},\n" +
                                 "while one or more dedicated exists:\n" +
                                 "{}", foundGPU.get().name(), String.join("\n", dedicatedGpus));
+                        try {
+                            Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.IntegratedGPUWarning");
+                            Method method = clazz.getMethod("showIfNotDisabled", String.class, List.class);
+                            method.invoke(null, foundGPU.get().name(), dedicatedGpus);
+                        } catch (Exception e) {
+                            LOGGER.error("Exception while showing IntegratedGPUWarning:", e);
+                        }
                     }
                 }
             } catch (IOException e) {

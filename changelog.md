@@ -1,3 +1,13 @@
+1.7.4:
+
+- Added IntegratedGPUWarning about Integrated GPU used while dedicated exist, on startup.
+- Improved CurseForgeCorrupted warning. Added new regex.
+- Added new DiskSpaceEnded crash reason detection.
+- Added to WasClosedByWindows new lang of message regex.
+- Added to screenshot notice and upload all button animated borders to additionally request user attention.
+- Config option for animated borders.
+- Fixed some formulations.
+
 1.7.3:
 
 - Fixed crash on 1.21.5 fabric due to incorrect jar was published by unified publishing.

@@ -39,6 +39,7 @@ dependencies {
     implementation 'com.electronwill.night-config:toml:3.6.4'
     implementation 'com.electronwill.night-config:json:3.6.4'
     implementation 'commons-io:commons-io:2.15.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'gs.mclo:api:4.0.1'
 
     implementation "org.lwjgl:lwjgl:$lwjglVersion"

@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
@@ -19,6 +21,7 @@ public class Boot {
     public static String processor = null;
     public static String jarPath = null;
     public static boolean recursiveStart = false;
+    public static String serialisedGPUs = null;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
     public static List<String> APP_ARGS;
 
@@ -40,6 +43,8 @@ public class Boot {
                 processor = args[i + 1];
             } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
                 jarPath = args[i + 1];
+            } else if ("-serialisedGPUs".equals(args[i]) && i + 1 < args.length) {
+                serialisedGPUs = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
             } else if ("-recursiveStart".equals(args[i])) {
                 recursiveStart = true;
             }
@@ -52,32 +57,47 @@ public class Boot {
             System.exit(-1);
         }
 
+        CrashAssistantAgent.appendJarFile(log4jApi);
+        CrashAssistantAgent.appendJarFile(log4jCore);
+        CrashAssistantAgent.appendJarFile(googleGson);
+        CrashAssistantAgent.appendJarFile(commonIo);
+        if (lwjglNatives != null && !Objects.equals(lwjglNatives, "UNDEFINED") && !recursiveStart) {
+            CrashAssistantAgent.appendJarFile(lwjglNatives);
+        } else {
+            lwjglNatives = null;
+        }
+
         /**
          * If Minecraft JVM terminated by windows itself, all child processes will be also terminated.
          * So Crash Assistant can't be child process. This way we make Crash Assistant completely independent process.
+         *
+         * Also, here we're locating GPUs with Vulkan, it's increasing heap before GUI start,
+         * so we're doing it on this TMP process, to not waste user resources on App avaiting stage.
          */
         if (!recursiveStart) {
+            try {
+                Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPUDetector");
+                Method mainMethod = crashAssistantAppClass.getMethod("getSerialisedGPUs");
+                serialisedGPUs = (String) mainMethod.invoke(null);
+            } catch (Exception e) {
+                e.printStackTrace(System.err);
+            }
+
             List<String> argsList = new ArrayList<>();
             argsList.add(JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
             argsList.addAll(JVM_ARGS);
             argsList.add("-jar");
             argsList.add(jarPath);
             argsList.addAll(APP_ARGS);
+            if (serialisedGPUs != null) {
+                String encodedGPUs = Base64.getEncoder().encodeToString(serialisedGPUs.getBytes(StandardCharsets.UTF_8));
+                argsList.add("-serialisedGPUs");
+                argsList.add(encodedGPUs);
+            }
             argsList.add("-recursiveStart");
             ProcessBuilder pb = new ProcessBuilder(argsList);
             pb.start();
             System.exit(0);
-        }
-
-        CrashAssistantAgent.appendJarFile(log4jApi);
-        CrashAssistantAgent.appendJarFile(log4jCore);
-        CrashAssistantAgent.appendJarFile(googleGson);
-        CrashAssistantAgent.appendJarFile(commonIo);
-        if (lwjglNatives != null && !Objects.equals(lwjglNatives, "UNDEFINED")) {
-            CrashAssistantAgent.appendJarFile(lwjglNatives);
-        }
-        if (Objects.equals(lwjglNatives, "UNDEFINED")) {
-            lwjglNatives = null;
         }
 
         Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");

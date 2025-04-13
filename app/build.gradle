@@ -14,7 +14,24 @@ java {
 
 repositories {
     mavenCentral()
+    maven {
+        url 'https://repo.lwjgl.org/'
+    }
 }
+
+def lwjglVersion = '3.3.1'
+def lwjglNatives = {
+    def osName = System.getProperty('os.name').toLowerCase()
+    if (osName.contains('win')) {
+        return 'natives-windows'
+    } else if (osName.contains('mac')) {
+        return 'natives-macos'
+    } else if (osName.contains('nix') || osName.contains('nux') || osName.contains('aix')) {
+        return 'natives-linux'
+    } else {
+        throw new GradleException('Unsupported operating system')
+    }
+}()
 
 dependencies {
     implementation 'org.apache.logging.log4j:log4j-core:2.24.2'
@@ -23,6 +40,10 @@ dependencies {
     implementation 'com.electronwill.night-config:json:3.6.4'
     implementation 'commons-io:commons-io:2.15.1'
     implementation 'gs.mclo:api:4.0.1'
+
+    implementation "org.lwjgl:lwjgl:$lwjglVersion"
+    runtimeOnly "org.lwjgl:lwjgl:$lwjglVersion:$lwjglNatives"
+    implementation "org.lwjgl:lwjgl-vulkan:$lwjglVersion"
 
     implementation project(path: ':common_config')
 }
@@ -45,6 +66,7 @@ shadowJar {
         exclude(dependency('org.apache.logging.log4j:.*'))
         exclude(dependency('com.google.code.gson:.*'))
         exclude(dependency('commons-io:commons-io:2.15.1'))
+        exclude("windows/**")
     }
 }
 

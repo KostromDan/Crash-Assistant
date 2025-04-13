@@ -49,6 +49,10 @@ public class CrashAssistantApp {
         LOGGER.info("CrashAssistantApp running from: {}", Paths.get("").toAbsolutePath().toString());
         LOGGER.info("JAVA: {}", JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
 
+        if (Boot.lwjglNatives != null) {
+            GPUDetector.main(args);
+        }
+
         parentPID = -1;
         for (int i = 0; i < args.length; i++) {
             if ("-parentPID".equals(args[i]) && i + 1 < args.length) {
@@ -97,6 +101,8 @@ public class CrashAssistantApp {
                     return;
                 }
 
+                checkRendererFile();
+
                 System.gc();
                 TimeUnit.SECONDS.sleep(1);
 
@@ -119,6 +125,20 @@ public class CrashAssistantApp {
         }
         return false;
     }
+
+    private static void checkRendererFile() {
+        Path rendererPath = Paths.get("local", "crash_assistant", "renderer" + parentPID + ".tmp");
+
+        if (rendererPath.toFile().exists()) {
+            try {
+                String renderer = new String(Files.readAllBytes(rendererPath));
+                LOGGER.info("Detected renderer: {}", renderer);
+            } catch (IOException e) {
+                LOGGER.error("Exception while reading renderer file:", e);
+            }
+        }
+    }
+
 
     private static void onMinecraftFinished() {
         GUIStartTime = Instant.now().toEpochMilli();

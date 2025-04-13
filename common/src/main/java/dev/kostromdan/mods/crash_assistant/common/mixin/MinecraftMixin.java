@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.common.mixin;
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import net.minecraft.client.Minecraft;
+import org.lwjgl.opengl.GL11C;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -34,6 +35,17 @@ public class MinecraftMixin {
         CrashAssistant.playerNickname = Minecraft.getInstance().getUser().getName();
         try {
             Files.write(ModListUtils.USERNAME_FILE, CrashAssistant.playerNickname.getBytes());
+        } catch (IOException ignored) {
+        }
+
+        String renderer = GL11C.glGetString(GL11C.GL_RENDERER);
+        if (renderer == null) {
+            return;
+        }
+        String rendererFileName = "renderer" + ProcessHandle.current().pid() + ".tmp";
+        Path rendererFilePath = Paths.get("local", "crash_assistant", rendererFileName);
+        try {
+            Files.write(rendererFilePath, renderer.getBytes());
         } catch (IOException ignored) {
         }
     }

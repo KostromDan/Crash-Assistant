@@ -124,6 +124,10 @@ public class ControlPanel {
                     if (Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
                         uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
                         uploadAllButton.setEnabled(true);
+                        if (CrashAssistantConfig.getBoolean("general.upload_all_animated_border")) {
+                            uploadAllButton.setBorder(new AnimatedBorder(uploadAllButton, Color.GREEN, true));
+                        }
+
                         this.cancel();
                     }
                 });

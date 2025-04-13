@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
@@ -7,7 +9,6 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPU;
-import dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPUDetector;
 import dev.kostromdan.mods.crash_assistant.app.utils.gpu.RendererType;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -20,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -126,21 +128,24 @@ public class CrashAssistantApp {
 
     private static void checkRendererFile() {
         if (renderer != null) return;
-        if (Boot.lwjglNatives == null) return;
+        if (Boot.serialisedGPUs == null) return;
         Path rendererPath = Paths.get("local", "crash_assistant", "renderer" + parentPID + ".tmp");
 
         if (rendererPath.toFile().exists()) {
             try {
-                String renderer = new String(Files.readAllBytes(rendererPath));
+                renderer = new String(Files.readAllBytes(rendererPath));
                 LOGGER.info("Detected renderer: {}", renderer);
+                LOGGER.info("Boot.serialisedGPUs: {}", Boot.serialisedGPUs);
 
-                if (Boot.lwjglNatives != null) {
-                    List<GPU> gpus = GPUDetector.detectGPUs();
-                    List<GPU> dedicatedGpus = new ArrayList<>();
+                if (Boot.serialisedGPUs != null) {
+                    Type gpuListType = new TypeToken<List<GPU>>() {
+                    }.getType();
+                    List<GPU> gpus = new Gson().fromJson(Boot.serialisedGPUs, gpuListType);
+                    List<String> dedicatedGpus = new ArrayList<>();
                     Optional<GPU> foundGPU = Optional.empty();
                     for (GPU gpu : gpus) {
                         if (gpu.type() == RendererType.DEDICATED) {
-                            dedicatedGpus.add(gpu);
+                            dedicatedGpus.add(gpu.name());
                         }
                         if (Objects.equals(gpu.name(), renderer)) {
                             foundGPU = Optional.of(gpu);
@@ -151,12 +156,12 @@ public class CrashAssistantApp {
                             !dedicatedGpus.isEmpty()) {
                         LOGGER.info("Detected Minecraft running on integrated GPU:\n" +
                                 "{},\n" +
-                                "while dedicated exists:\n" +
-                                "{}", foundGPU.get(), dedicatedGpus);
+                                "while one or more dedicated exists:\n" +
+                                "{}", foundGPU.get().name(), String.join("\n", dedicatedGpus));
                     }
                 }
             } catch (IOException e) {
-                LOGGER.error("Exception while reading renderer file:", e);
+                LOGGER.error("Exception while analysis of current GPUs:", e);
             }
         }
     }

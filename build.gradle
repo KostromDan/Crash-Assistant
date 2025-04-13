@@ -6,6 +6,13 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.49-beta' apply false
 }
 
+apply plugin: 'idea'
+idea {
+    module {
+        downloadSources = true
+    }
+}
+
 
 task collectJars(type: Copy) {
     dependsOn(":fabric:build", ":forge_coremod:build", ":neoforge_coremod:build")

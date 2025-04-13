@@ -26,6 +26,22 @@ public interface LibrariesJarLocator {
         return path.toAbsolutePath().toString();
     }
 
+    static String getLibraryJarPathFromResource(String resource) throws JarLocatingException, URISyntaxException {
+        Path path = getPathFromResource(resource);
+
+        if (path == null) {
+            throw new JarLocatingException("getPathFromClass returned null, resource: " + resource);
+        }
+        if (!Files.exists(path)) {
+            throw new JarLocatingException("Successfully parsed path of `" + resource + "',but it does not exist; path: `" + path);
+        }
+        if (!Files.isRegularFile(path)) {
+            throw new JarLocatingException("Successfully parsed path of `" + resource + "',but it is not regular file; path: `" + path);
+        }
+
+        return path.toAbsolutePath().toString();
+    }
+
     static Path getPathFromClass(Class cls) {
         String resourcePath = cls.getName().replace('.', '/') + ".class";
         return getPathFromResource(resourcePath);

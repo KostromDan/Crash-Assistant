@@ -28,3 +28,10 @@
                                          esloten. Als u wilt zien of er meer informatie over het probleem beschikbaar i
                                          s, controleert u de probleemgeschiedenis in het configuratiescherm van Beveili
                                          ging en onderhoud.
+   ProviderName: Application Hang
+TimeCreated           Id LevelDisplayName Message
+-----------           -- ---------------- -------
+13.04.2025 17:18:30 1002 Chyba            Verze 17.0.8.0 programu javaw.exe ukončila interakci se systémem Windows a by
+                                          la ukončena. Pokud chcete zjistit, zda jsou k dispozici další informace o pro
+                                          blému, zkontrolujte historii problémů v ovládacím panelu Zabezpečení a údržba
+                                          .

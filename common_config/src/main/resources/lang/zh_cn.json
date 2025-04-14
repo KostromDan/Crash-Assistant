@@ -73,7 +73,7 @@
   "warnings.c6a": "我们在 <strong>$LOG_FILENAME$</strong> 中检测到缺少Create模组类的迹象，而Create模组当前已安装。\nCreate Update 6最近已发布，您可能遇到以下不匹配之一：\n- Create Update 5与Update 6的附属模组，或\n- Create Update 6与Update 5的附属模组。\n\n您需要确保所有与Create相关的模组要么全部来自Update 5，要么全部来自Update 6。\n请注意，发布日期并不是确定兼容性的完全可靠方法。\n（这里的附属模组指的是任何与Create集成的模组，包括标准附属模组和具有Create兼容性的模组。）\n\n这可能是误报，请仔细检查。\n\n要识别哪些模组与当前版本的Create模组不兼容：\n点击确定，然后在窗口顶部打开 <strong>$LANG.gui.menu.analysis$</strong> -> <strong>$LANG.gui.menu.analysis.create_dependencies$</strong>。\n等待进程完成——然后您将看到与已安装版本的Create不兼容的模组列表。",
   "warnings.ctov_without_lithostitched": "检测到您正在使用CTOV模组但没有安装Lithostitched。\n从技术上讲，CTOV本身可以工作，但一旦涉及其他模组，它就会停止工作。\n如果您的整合包包含许多模组，这很可能是问题所在，安装Lithostitched应该可以解决它。",
   "warnings.duplicated_mods": "我们在 <strong>$LOG_FILENAME$</strong> 末尾发现了关于重复模组的错误。\n按确定，打开 <strong>$LOG_FILENAME$</strong> 转到文件末尾，查看哪些模组重复了。\n移除其中之一。",
-  "warnings.missing_embeddium_for_oculus": "我们在 <strong>$LOG_FILENAME$</strong> 中检测到您缺少Embeddium for Oculus。\n安装Embeddium模组将解决您的问题。",
+  "warnings.missing_embeddium_for_oculus": "我们在 <strong>$LOG_FILENAME$</strong> 中检测到您缺少Embeddium以支持Oculus运行。\n安装Embeddium模组将解决您的问题。",
   "warnings_common.so_vm_options": "注意：确保在Java参数部分的顶部添加\"<strong>-XX:+UnlockExperimentalVMOptions</strong>\"，并在底部添加路径参数。",
   "warnings_common.repository": "仓库",
   "warnings_common.here": "这里",

@@ -1,11 +1,13 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class LogsList {
     private static final Set<Log> logs = Collections.synchronizedSet(new TreeSet<>(new LogComparator()));
@@ -43,12 +45,8 @@ public class LogsList {
             CrashAssistantApp.LOGGER.info("Adding {} from {}", log.getName(), log.getPath().toAbsolutePath().toString());
             logs.add(log);
             new Thread(() -> {
-                try {
-                    log.getProcessor().processLogFile();
-                } catch (IOException e) {
-                    CrashAssistantApp.LOGGER.error("Error while processing log file \"" + log.getPath() + "\": ", e);
-                }
-            });
+                log.getProcessor().processLogFileSafe();
+            }).start();
         }
     }
 }

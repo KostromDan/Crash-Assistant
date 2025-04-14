@@ -1,11 +1,14 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.codex.CodexMessage;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import gs.mclo.api.response.insights.Problem;
 import gs.mclo.api.response.insights.Solution;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class KnownCrashReasonMessage {
     private static final List<KnownCrashReasonMessage> crashReasonMessages = Collections.synchronizedList(new ArrayList<>());
@@ -30,6 +33,10 @@ public class KnownCrashReasonMessage {
 
     public String getMessage() {
         return reason.getMessage().replaceAll("\\$LOG_FILENAME\\$", log.getFileName());
+    }
+
+    public KnownCrashReason getReason() {
+        return reason;
     }
 
     public static List<KnownCrashReasonMessage> getAllMessages() {

@@ -1,25 +1,32 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.loading_utils.JavaBinaryLocator;
-import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
-import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPU;
+import dev.kostromdan.mods.crash_assistant.app.utils.gpu.RendererType;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class CrashAssistantApp {
@@ -31,6 +38,7 @@ public class CrashAssistantApp {
     public static long parentStarted;
     public static boolean crashed_with_report = false;
     public static String crashAssistantJarName = null;
+    public static String renderer = null;
     public static boolean gameLaunchedSuccessfully = false;
     public static long terminatedProcessesLocationEndTime = 0;
 
@@ -93,6 +101,8 @@ public class CrashAssistantApp {
                     return;
                 }
 
+                checkRendererFile();
+
                 System.gc();
                 TimeUnit.SECONDS.sleep(1);
 
@@ -116,14 +126,63 @@ public class CrashAssistantApp {
         return false;
     }
 
+    private static void checkRendererFile() {
+        if (renderer != null) return;
+        if (Boot.serialisedGPUs == null) return;
+        Path rendererPath = Paths.get("local", "crash_assistant", "renderer" + parentPID + ".tmp");
+
+        if (rendererPath.toFile().exists()) {
+            try {
+                renderer = new String(Files.readAllBytes(rendererPath));
+                LOGGER.info("Detected renderer: {}", renderer);
+                LOGGER.info("Boot.serialisedGPUs: {}", Boot.serialisedGPUs);
+
+                if (Boot.serialisedGPUs != null) {
+                    Type gpuListType = new TypeToken<List<GPU>>() {
+                    }.getType();
+                    List<GPU> gpus = new Gson().fromJson(Boot.serialisedGPUs, gpuListType);
+                    List<String> dedicatedGpus = new ArrayList<>();
+                    Optional<GPU> foundGPU = Optional.empty();
+                    for (GPU gpu : gpus) {
+                        if (gpu.type() == RendererType.DEDICATED) {
+                            dedicatedGpus.add(gpu.name());
+                        }
+                        if (gpu.name().startsWith(renderer) || renderer.startsWith(gpu.name())) {
+                            foundGPU = Optional.of(gpu);
+                        }
+                    }
+                    if (foundGPU.isPresent() &&
+                            foundGPU.get().type() == RendererType.INTEGRATED &&
+                            !dedicatedGpus.isEmpty()) {
+                        LOGGER.warn("Detected Minecraft running on integrated GPU:\n" +
+                                "{},\n" +
+                                "while one or more dedicated exists:\n" +
+                                "{}", foundGPU.get().name(), String.join("\n", dedicatedGpus));
+                        try {
+                            Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.IntegratedGPUWarning");
+                            Method method = clazz.getMethod("showIfNotDisabled", String.class, List.class);
+                            method.invoke(null, foundGPU.get().name(), dedicatedGpus);
+                        } catch (Exception e) {
+                            LOGGER.error("Exception while showing IntegratedGPUWarning:", e);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Exception while analysis of current GPUs:", e);
+                renderer = "UNDEFINED";
+            }
+        }
+    }
+
+
     private static void onMinecraftFinished() {
         GUIStartTime = Instant.now().toEpochMilli();
-
-        LogAnalyser.registerReasons();
 
         new Thread(() -> {
             ModListUtils.getCurrentModList(true); //Cache modlist, to not spend time in further, then it needed.
         }).start();
+
+        new Thread(LanguageProvider::updateLang).start(); // Init lang async.
 
         boolean crashed = false;
 
@@ -210,9 +269,6 @@ public class CrashAssistantApp {
         LOGGER.info("Reached first tick of TitleScreen: {}", gameLaunchedSuccessfully);
 
 
-        new Thread(LogAnalyser::analyseLogs).start();
-
-
         startLocatingTerminatedProcesses();
 
         if (crashed) {
@@ -280,9 +336,6 @@ public class CrashAssistantApp {
                             try {
                                 Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
                                 Method method = clazz.getMethod("updateLogsListInGUI");
-                                method.invoke(null);
-                                LogAnalyser.analyseLogs();
-                                method = clazz.getMethod("showKnownCrashReasonsWarnings");
                                 method.invoke(null);
                             } catch (Exception e) {
                                 LOGGER.error("Exception adding file to gui later:", e);

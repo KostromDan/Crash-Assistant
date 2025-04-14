@@ -3,10 +3,10 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantLocalConfig;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.lang.LinksProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
 
 import javax.swing.*;
 import java.awt.*;

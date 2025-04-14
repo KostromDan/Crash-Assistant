@@ -9,7 +9,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.McLogsApiProvider;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import gs.mclo.api.response.UploadLogResponse;
 import gs.mclo.api.response.insights.Problem;
 
@@ -18,9 +18,9 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URL;
+import java.util.*;
 import java.util.List;
 import java.util.Timer;
-import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -168,7 +168,7 @@ public class FilePanel {
                     }
 
                     uploadButton.setText(LanguageProvider.get("gui.preprocessing"));
-                    log.getProcessor().processLogFile();
+                    log.getProcessor().processLogFile(true);
                     uploadButton.setText(oldText);
                     CompletableFuture<UploadLogResponse> completableResponseFirstLines = McLogsApiProvider.getMcLogsClient().uploadLog(log.getProcessor().getFirstLinesString());
 

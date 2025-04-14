@@ -7,11 +7,11 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.lang.LinksProvider;
-import dev.kostromdan.mods.crash_assistant.mod_list.*;
-import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import gs.mclo.api.response.UploadLogResponse;
 
 import javax.swing.*;
@@ -23,9 +23,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -123,6 +124,10 @@ public class ControlPanel {
                     if (Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
                         uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
                         uploadAllButton.setEnabled(true);
+                        if (CrashAssistantConfig.getBoolean("general.upload_all_animated_border")) {
+                            uploadAllButton.setBorder(new AnimatedBorder(uploadAllButton, Color.GREEN, true));
+                        }
+
                         this.cancel();
                     }
                 });
@@ -152,7 +157,7 @@ public class ControlPanel {
                 if (CrashAssistantConfig.getModpackCreators().contains(ModListUtils.getCurrentUsername())) {
                     creatorWarning = "\n\n<b>The next text is seen only by modpack creators</b>:\n" +
                             "If you think your domain(" + TrustedDomainsHelper.getTopDomainName(uri) + ") should be in trusted domains,\n" +
-                            "please contact us on <a href =https://github.com/KostromDan/Crash-Assistant/blob/1.19.2%2B/app/src/main/java/dev/kostromdan/mods/crash_assistant/app/utils/TrustedDomainsHelper.java>GitHub</a>.";
+                            "please contact us on <a href =https://github.com/KostromDan/Crash-Assistant/blob/1.19.2-1.20.1/app/src/main/java/dev/kostromdan/mods/crash_assistant/app/utils/TrustedDomainsHelper.java>GitHub</a>.";
                 }
                 int result = JOptionPane.showConfirmDialog(
                         null,

@@ -1,3 +1,44 @@
+1.7.4:
+
+- Added IntegratedGPUWarning about Integrated GPU used while dedicated exist, on startup.
+- Improved CurseForgeCorrupted warning. Added new regex.
+- Added new DiskSpaceEnded crash reason detection.
+- Added to WasClosedByWindows new lang of message regex.
+- Added to screenshot notice and upload all button animated borders to additionally request user attention.
+- Config option for animated borders.
+- Fixed some formulations.
+
+1.7.3:
+
+- Fixed crash on 1.21.5 fabric due to incorrect jar was published by unified publishing.
+
+1.7.2:
+
+- 1.21.5 initial release for Forge, NeoForge and Fabric.
+- Improved start time. Especially if massive logs exist. Now almost no effect.
+- Added logging of time of analysing logs for crash reasons.
+- Improved logging wording on time of parsing mods metadata time.
+
+1.7.1:
+
+- Small fixes in uploading project.
+
+1.7.0 major update:
+
+- Switch from architectury to multiloader mdk.
+  A lot of things changed.
+- Global re-structuration of project.
+- MinecraftForge 1.21.1 port.
+- Fixed rare bug if gui started only because of win_event, analysis didn't triggered.
+- Fixed some grammar and wording issues in en.
+- Improved logging of showing KnownCrashReason.
+- Added new options to file menu:
+    - Open mods folder
+    - Open config folder
+    - Open game folder
+- Improved insufficient_memory message (added info about disk ending space).
+- Small fixes and improvements.
+
 1.6.4:
 
 - Added new log analysis:
@@ -5,7 +46,8 @@
     - DuplicatedMods
 - Async log analysis. Now logs analysing async.
 - Removed some useless debug logging I forgot to remove.
-- If closed Create dep analysis while it's not finished, interrupt all analysis processes to not waste user resources with useless process.
+- If closed Create dep analysis while it's not finished, interrupt all analysis processes to not waste user resources
+  with useless process.
 - Small fixes and improvements.
 
 1.6.3:

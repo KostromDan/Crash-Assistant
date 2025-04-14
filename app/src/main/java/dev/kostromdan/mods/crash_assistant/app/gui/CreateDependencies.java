@@ -1,10 +1,10 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.loading_utils.JavaBinaryLocator;
-import dev.kostromdan.mods.crash_assistant.mod_list.Mod;
-import dev.kostromdan.mods.crash_assistant.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import javax.swing.*;
 import javax.swing.text.DefaultCaret;
@@ -65,6 +65,7 @@ public class CreateDependencies {
     }
 
     public static String getJDepsPath() {
+        // Option 1: Derive from java binary location.
         String javaBinaryPath = JavaBinaryLocator.getJavaBinary(ProcessHandle.current());
         if (javaBinaryPath.contains("javaw")) {
             javaBinaryPath = javaBinaryPath.replace("javaw", "java");
@@ -72,20 +73,41 @@ public class CreateDependencies {
         String jdepsPath = javaBinaryPath.replaceAll("(?<=[/\\\\])java(\\.exe)?$", "jdeps$1");
         if (validateJdepsPath(jdepsPath)) return jdepsPath;
 
+        // Option 2: Use JAVA_HOME environment variable.
         String javaHome = System.getenv("JAVA_HOME");
         if (javaHome != null && !javaHome.isEmpty()) {
             String osName = System.getProperty("os.name").toLowerCase();
-            if (osName.contains("win")) {
-                jdepsPath = javaHome + File.separator + "bin" + File.separator + "jdeps.exe";
+            // Check if javaHome already ends with 'bin'
+            if (javaHome.endsWith("bin") || javaHome.endsWith("bin" + File.separator)) {
+                if (osName.contains("win")) {
+                    jdepsPath = javaHome + File.separator + "jdeps.exe";
+                } else {
+                    jdepsPath = javaHome + File.separator + "jdeps";
+                }
+                if (validateJdepsPath(jdepsPath)) {
+                    return jdepsPath;
+                }
             } else {
-                jdepsPath = javaHome + File.separator + "bin" + File.separator + "jdeps";
-            }
-            if (validateJdepsPath(jdepsPath)) {
-                return jdepsPath;
+                // Otherwise, append bin directory.
+                if (osName.contains("win")) {
+                    jdepsPath = javaHome + File.separator + "bin" + File.separator + "jdeps.exe";
+                } else {
+                    jdepsPath = javaHome + File.separator + "bin" + File.separator + "jdeps";
+                }
+                if (validateJdepsPath(jdepsPath)) {
+                    return jdepsPath;
+                }
             }
         }
+
+        // Option 3: Fall back to using just "jdeps" command.
+        if (validateJdepsPath("jdeps")) {
+            return "jdeps";
+        }
+
         return null;
     }
+
 
     public static HashSet<String> getCreateClassesModUsing(Mod mod, String jdepsPath) {
         HashSet<String> result = new HashSet<>();

@@ -3,14 +3,15 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalyser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
-import dev.kostromdan.mods.crash_assistant.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
-import dev.kostromdan.mods.crash_assistant.mod_list.Mod;
-import dev.kostromdan.mods.crash_assistant.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -22,9 +23,9 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.*;
 import java.util.List;
 import java.util.Timer;
-import java.util.*;
 import java.util.function.Function;
 
 public class CrashAssistantGUI {
@@ -65,21 +66,31 @@ public class CrashAssistantGUI {
         }};
 
         String firstLinesOfComment = PlatformHelp.isLinkDefault() ?
-                LanguageProvider.get("gui.comment_under_title_cant_resolve", hrefOptions) : LanguageProvider.get("gui.comment_under_title_pls_report", hrefOptions);
+                LanguageProvider.get("gui.comment_under_title_cant_resolve", hrefOptions) :
+                LanguageProvider.get("gui.comment_under_title_pls_report", hrefOptions);
 
+        // Main comment text (excluding screenshot notice)
         String commentText = firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions);
-        if (CrashAssistantConfig.getBoolean("general.show_dont_send_screenshot_of_gui_notice")) {
-            String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
-            commentText += "\n<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
-        }
-
-        JEditorPane commentPane = getEditorPane(commentText, false);
+        JEditorPane commentPane = getEditorPaneNoMargins(commentText, false);
 
         labelPanel = new JPanel();
         labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.Y_AXIS));
         labelPanel.add(titleLabel);
         if (!commentText.isEmpty()) {
             labelPanel.add(commentPane);
+        }
+
+        // Screenshot notice in a separate JEditorPane
+        if (CrashAssistantConfig.getBoolean("general.show_dont_send_screenshot_of_gui_notice")) {
+            String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
+            String screenshotHtml = "<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
+            JEditorPane screenshotNoticePane = getEditorPaneNoMargins(screenshotHtml, false);
+
+            // Apply the animated border
+            if (CrashAssistantConfig.getBoolean("general.screenshot_of_gui_notice_animated_border")) {
+                screenshotNoticePane.setBorder(new AnimatedBorder(screenshotNoticePane, Color.RED, false));
+            }
+            labelPanel.add(screenshotNoticePane);
         }
 
         frame.add(labelPanel, BorderLayout.NORTH);
@@ -102,6 +113,7 @@ public class CrashAssistantGUI {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
+        // Remaining initialization code (unchanged)
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             final long startTime = Instant.now().toEpochMilli();
@@ -109,6 +121,7 @@ public class CrashAssistantGUI {
             @Override
             public void run() {
                 if (!ControlPanel.stopMovingToTop) {
+                    IntegratedGPUWarning.awaitShown();
                     SwingUtilities.invokeLater(() -> {
                         frame.setAlwaysOnTop(true);
                         frame.toFront();
@@ -123,10 +136,16 @@ public class CrashAssistantGUI {
         CrashAssistantApp.GUIStartTime = Instant.now().toEpochMilli() - CrashAssistantApp.GUIStartTime;
         CrashAssistantApp.GUIInitialisationFinished = true;
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
+
+        IntegratedGPUWarning.awaitShown();
+
         showCrashAssistantDuplicatedWarning();
         IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         IntelChipBugWarning.showIfAffected(false);
-        showKnownCrashReasonsWarnings();
+        new Thread(() -> {
+            LogAnalyser.analyseLogs();
+            showKnownCrashReasonsWarnings();
+        }).start();
     }
 
     private void addFileMenu() {
@@ -136,16 +155,54 @@ public class CrashAssistantGUI {
         JMenu analysisMenu = new JMenu(LanguageProvider.get("gui.menu.analysis"));
 
         // File menu items
+
+        // Open config file (existing)
         JMenuItem openConfigItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_config"));
         openConfigItem.addActionListener(e -> {
             try {
                 File configFile = new File("config/crash_assistant/config.toml");
                 Desktop.getDesktop().open(configFile);
             } catch (IOException ex) {
-                ex.printStackTrace();
+                CrashAssistantApp.LOGGER.error("Error opening config file", ex);
             }
         });
         fileMenu.add(openConfigItem);
+
+        // Open mods folder
+        JMenuItem openModsFolderItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_mods_folder"));
+        openModsFolderItem.addActionListener(e -> {
+            try {
+                File modsFolder = new File("mods");
+                Desktop.getDesktop().open(modsFolder);
+            } catch (IOException ex) {
+                CrashAssistantApp.LOGGER.error("Error opening mods folder", ex);
+            }
+        });
+        fileMenu.add(openModsFolderItem);
+
+        // Open config folder
+        JMenuItem openConfigFolderItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_config_folder"));
+        openConfigFolderItem.addActionListener(e -> {
+            try {
+                File configFolder = new File("config");
+                Desktop.getDesktop().open(configFolder);
+            } catch (IOException ex) {
+                CrashAssistantApp.LOGGER.error("Error opening config folder", ex);
+            }
+        });
+        fileMenu.add(openConfigFolderItem);
+
+        // Open modpack folder
+        JMenuItem openModpackFolderItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_modpack_folder"));
+        openModpackFolderItem.addActionListener(e -> {
+            try {
+                File modpackFolder = new File(".");
+                Desktop.getDesktop().open(modpackFolder);
+            } catch (IOException ex) {
+                CrashAssistantApp.LOGGER.error("Error opening modpack folder", ex);
+            }
+        });
+        fileMenu.add(openModpackFolderItem);
 
         // Analysis menu items
         JMenuItem analysisItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.create_dependencies"));
@@ -158,20 +215,22 @@ public class CrashAssistantGUI {
         frame.setJMenuBar(menuBar);
     }
 
+
     public static void resize() {
         frame.setSize(Math.max(Math.max(fileListPanel.getFileListPanel().getPreferredSize().width + 12, controlPanel.getPanel().getPreferredSize().width) + 26, labelPanel.getPreferredSize().width + 20),
                 Math.min(heightWithoutScrollPane + fileListPanel.getFileListPanel().getPreferredSize().height + 39, 700));
         frame.setMinimumSize(new Dimension(frame.getSize().width, heightWithoutScrollPane + 73));
     }
 
-    public static void showKnownCrashReasonsWarnings() {
+    public static synchronized void showKnownCrashReasonsWarnings() {
         ControlPanel.stopMovingToTop = true;
         synchronized (KnownCrashReasonMessage.class) {
             try {
                 SwingUtilities.invokeAndWait(() -> {
                     for (KnownCrashReasonMessage crashReason : KnownCrashReasonMessage.getAllMessages()) {
                         if (crashReason.isShownWarn()) continue;
-                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}",
+                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
+                                crashReason.getReason().getClass().getSimpleName(),
                                 crashReason.isCodexMessage() ? crashReason.getMessage() : crashReason.getMessage().split("\n")[0] + "...");
                         crashReason.setShownWarn(true);
                         JOptionPane optionPane = new JOptionPane(
@@ -184,7 +243,7 @@ public class CrashAssistantGUI {
                                 crashReason.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyser") : LanguageProvider.get("gui.logs_analyser")
                         );
                         dialog.setVisible(true);
-                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason.");
+                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {}", crashReason.getReason().getClass().getSimpleName());
                     }
                 });
             } catch (Exception e) {
@@ -298,6 +357,21 @@ public class CrashAssistantGUI {
         return pane;
     }
 
+    public static JEditorPane getEditorPaneNoMargins(String text, boolean wrap) {
+        // Call the original getEditorPane method
+        JEditorPane pane = getEditorPane(text, wrap);
+
+        // Apply adjustments to remove margins and borders
+        pane.setMargin(new Insets(0, 0, 0, 0)); // Remove internal margins
+        pane.setBorder(BorderFactory.createEmptyBorder()); // Remove border spacing
+
+        // Ensure HTML content has no internal margins or padding
+        String bodyRule = "body { margin: 0; padding: 0; }";
+        ((HTMLDocument) pane.getDocument()).getStyleSheet().addRule(bodyRule);
+
+        return pane;
+    }
+
     public static boolean isUploadingToGnome() {
         return Objects.equals(CrashAssistantConfig.get("general.upload_to"), "gnomebot.dev") || PlatformHelp.isLinkDefault();
     }
@@ -323,6 +397,8 @@ public class CrashAssistantGUI {
             }
             CrashAssistantGUI.resize();
         });
+        LogAnalyser.analyseLogs();
+        showKnownCrashReasonsWarnings();
     }
 
     public static String getTitleCrashedText(boolean forMsg) {

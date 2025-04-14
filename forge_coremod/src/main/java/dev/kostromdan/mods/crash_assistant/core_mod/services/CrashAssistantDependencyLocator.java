@@ -1,6 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.core_mod.services;
 
-import dev.kostromdan.mods.crash_assistant.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import net.minecraftforge.fml.loading.moddiscovery.AbstractJarFileModProvider;
 import net.minecraftforge.forgespi.locating.IDependencyLocator;
 import net.minecraftforge.forgespi.locating.IModFile;

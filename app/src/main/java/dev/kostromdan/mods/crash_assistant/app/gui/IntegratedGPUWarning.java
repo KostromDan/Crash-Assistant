@@ -94,8 +94,8 @@ public class IntegratedGPUWarning extends JFrame {
             });
 
             frame.setVisible(true);
-            awaitShown();
         });
+        awaitShown();
     }
 
     public static void awaitShown(){

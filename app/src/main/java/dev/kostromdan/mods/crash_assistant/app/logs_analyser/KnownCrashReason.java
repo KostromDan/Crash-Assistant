@@ -7,6 +7,7 @@ public class KnownCrashReason {
     protected HashSet<LogType> logTypes;
     protected List<String> patterns;
     protected String message;
+    public static HashSet<KnownCrashReason> shownKnownCrashReasons = new HashSet<>();
 
     protected KnownCrashReason(LogType logType, String message, List<String> patterns) {
         this.logTypes = new HashSet<>() {{

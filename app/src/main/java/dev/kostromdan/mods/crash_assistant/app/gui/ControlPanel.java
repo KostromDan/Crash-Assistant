@@ -71,20 +71,19 @@ public class ControlPanel {
                 }
             }
 
-            String labelMsg;
+            String labelMsg = "<html><div style='white-space:nowrap;'>";
             JButton showModListButton = new JButton(LanguageProvider.get("gui.show_modlist_diff_button"));
             if (modListDiff.isEmpty()) {
-                labelMsg = LanguageProvider.get("gui.modlist_not_changed_label") + ":";
+                labelMsg += LanguageProvider.get("gui.modlist_not_changed_label") + ":";
                 showModListButton.setEnabled(false);
                 showModListButton.setToolTipText(LanguageProvider.get("gui.modlist_not_changed_label"));
             } else {
-                labelMsg = "<html><div style='white-space:nowrap;'>"
-                        + LanguageProvider.get("gui.modlist_changed_label")
+                labelMsg += LanguageProvider.get("gui.modlist_changed_label")
                         .replace("$ADDED_MODS_COUNT$", "<span style='color:green;'>" + modListDiff.getAddedMods().size() + "</span>")
                         .replace("$REMOVED_MODS_COUNT$", "<span style='color:red;'>" + modListDiff.getRemovedMods().size() + "</span>")
-                        .replace("$UPDATED_MODS_COUNT$", "<span style='color:blue;'>" + modListDiff.getUpdatedMods().size() + "</span>")
-                        + "</div></html>";
+                        .replace("$UPDATED_MODS_COUNT$", "<span style='color:blue;'>" + modListDiff.getUpdatedMods().size() + "</span>");
             }
+            labelMsg += "</div></html>";
 
             JLabel label = new JLabel(labelMsg);
             label.setMaximumSize(label.getPreferredSize());
@@ -96,6 +95,7 @@ public class ControlPanel {
             labelButtonPanel.add(Box.createHorizontalStrut(10));
             labelButtonPanel.add(showModListButton);
             labelButtonPanel.add(Box.createHorizontalGlue());
+            labelButtonPanel.setBorder(BorderFactory.createTitledBorder(ModListDiff.getFirstString(false, false, null)));
 
             panel.add(labelButtonPanel, BorderLayout.NORTH);
         }

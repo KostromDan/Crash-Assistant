@@ -40,7 +40,6 @@ public class ControlPanel {
     public final JButton uploadAllButton;
     public final JButton requestHelpButton;
     private String generatedMsg = null;
-    private ModListDiff modListDiff;
 
     public ControlPanel(FileListPanel fileListPanel) {
         this.fileListPanel = fileListPanel;
@@ -51,7 +50,7 @@ public class ControlPanel {
         labelButtonPanel.setLayout(new BoxLayout(labelButtonPanel, BoxLayout.X_AXIS));
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-            modListDiff = ModListDiff.getDiff(true);
+            ModListDiff modListDiff = ModListDiff.getDiff(true);
 
             if (PlatformHelp.isLinkDefault() || CrashAssistantConfig.getBoolean("modpack_modlist.force_add_full_modlist_as_log")) {
                 Path modListTxtPath = Paths.get("logs", "modlist.txt");
@@ -183,6 +182,7 @@ public class ControlPanel {
         JTextPane textPane = new JTextPane();
         textPane.setEditable(false);
         textPane.setContentType("text/html");
+        ModListDiff modListDiff = ModListDiff.getDiff(true);
         textPane.setText(modListDiff.generateDiffMsg(false).toHtml());
         textPane.setCaretPosition(0);
 
@@ -344,6 +344,7 @@ public class ControlPanel {
         sb.append("\n");
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             sb.append("\n");
+            ModListDiff modListDiff = ModListDiff.getDiff(true);
             ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
             String modlistDIff = diffStringBuilder.toText();
             String modListDiffAnsi = diffStringBuilder.toAnsi();

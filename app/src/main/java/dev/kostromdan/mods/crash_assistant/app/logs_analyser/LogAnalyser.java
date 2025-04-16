@@ -39,18 +39,13 @@ public class LogAnalyser {
         }
         long startTime = System.currentTimeMillis();
         registerReasons();
+        readLogsNeededForAnalysis();
         synchronized (KnownCrashReasonMessage.class) {
             ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
             HashSet<String> disabledCrashReasons = new HashSet<>(CrashAssistantConfig.getBlacklistedAnalysis());
             for (Log log : LogsList.getLogs()) {
-                pool.submit(() -> {
-                    log.getProcessor().processLogFileSafe();
-                });
-            }
-            for (Log log : LogsList.getLogs()) {
                 analyseLog(log, disabledCrashReasons, pool);
             }
-
             pool.shutdown();
             try {
                 if (!pool.awaitTermination(5, TimeUnit.MINUTES)) {
@@ -61,6 +56,35 @@ public class LogAnalyser {
                 CrashAssistantApp.LOGGER.error("Interrupted while awaiting termination of analysis tasks", e);
             }
             CrashAssistantApp.LOGGER.info("Analysis finished in {} ms", System.currentTimeMillis() - startTime);
+        }
+    }
+
+    public static synchronized void readLogsNeededForAnalysis() {
+        if (!CrashAssistantConfig.getBoolean("analysis.enabled")) {
+            return;
+        }
+        long startTime = System.currentTimeMillis();
+        registerReasons();
+        synchronized (KnownCrashReasonMessage.class) {
+            ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            for (Log log : LogsList.getLogs()) {
+                if (registeredReasons.stream().noneMatch(reason ->
+                        reason.getLogTypes().contains(log.getType()))) continue;
+                pool.submit(() -> {
+                    log.getProcessor().processLogFileSafe();
+                });
+            }
+
+            pool.shutdown();
+            try {
+                if (!pool.awaitTermination(5, TimeUnit.MINUTES)) {
+                    pool.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                CrashAssistantApp.LOGGER.error("Interrupted while awaiting termination of reading tasks", e);
+            }
+            CrashAssistantApp.LOGGER.info("Reading finished in {} ms", System.currentTimeMillis() - startTime);
         }
     }
 
@@ -76,7 +100,6 @@ public class LogAnalyser {
 
         for (KnownCrashReason reason : registeredReasonsForThisLog) {
             pool.submit(() -> {
-                log.getProcessor().processLogFileSafe();
                 String logText = log.getProcessor().getAllLinesString();
                 if (reason.matches(logText, log)
 //                        || true //dubug too see all available warnings

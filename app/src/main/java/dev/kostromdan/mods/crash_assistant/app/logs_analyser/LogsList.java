@@ -44,9 +44,6 @@ public class LogsList {
             }
             CrashAssistantApp.LOGGER.info("Adding {} from {}", log.getName(), log.getPath().toAbsolutePath().toString());
             logs.add(log);
-            new Thread(() -> {
-                log.getProcessor().processLogFileSafe();
-            }).start();
         }
     }
 }

@@ -11,6 +11,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPU;
 import dev.kostromdan.mods.crash_assistant.app.utils.gpu.RendererType;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
@@ -158,6 +159,10 @@ public class CrashAssistantApp {
                                 "{},\n" +
                                 "while one or more dedicated exists:\n" +
                                 "{}", foundGPU.get().name(), String.join("\n", dedicatedGpus));
+                        if (Objects.equals(CrashAssistantLocalConfig.get("integrated_gpu.dont_show_again"), true)) {
+                            CrashAssistantApp.LOGGER.warn("integrated_gpu.dont_show_again is true. Prevented GUI warn.");
+                            return;
+                        }
                         try {
                             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.IntegratedGPUWarning");
                             Method method = clazz.getMethod("showIfNotDisabled", String.class, List.class);

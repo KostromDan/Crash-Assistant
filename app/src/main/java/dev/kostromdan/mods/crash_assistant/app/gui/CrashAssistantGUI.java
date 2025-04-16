@@ -1,10 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalyser;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
@@ -121,7 +118,6 @@ public class CrashAssistantGUI {
             @Override
             public void run() {
                 if (!ControlPanel.stopMovingToTop) {
-                    IntegratedGPUWarning.awaitShown();
                     SwingUtilities.invokeLater(() -> {
                         frame.setAlwaysOnTop(true);
                         frame.toFront();
@@ -137,7 +133,6 @@ public class CrashAssistantGUI {
         CrashAssistantApp.GUIInitialisationFinished = true;
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
 
-        IntegratedGPUWarning.awaitShown();
 
         showCrashAssistantDuplicatedWarning();
         IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
@@ -229,6 +224,8 @@ public class CrashAssistantGUI {
                 SwingUtilities.invokeAndWait(() -> {
                     for (KnownCrashReasonMessage crashReason : KnownCrashReasonMessage.getAllMessages()) {
                         if (crashReason.isShownWarn()) continue;
+                        if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason.getReason())) continue;
+                        KnownCrashReason.shownKnownCrashReasons.add(crashReason.getReason());
                         CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
                                 crashReason.getReason().getClass().getSimpleName(),
                                 crashReason.isCodexMessage() ? crashReason.getMessage() : crashReason.getMessage().split("\n")[0] + "...");

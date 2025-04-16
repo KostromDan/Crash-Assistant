@@ -79,10 +79,6 @@ public class IntegratedGPUWarning extends JFrame {
     }
 
     public static void showIfNotDisabled(String integratedGPU, List<String> dedicatedGPUs) {
-        if (Objects.equals(CrashAssistantLocalConfig.get("integrated_gpu.dont_show_again"), true)) {
-            CrashAssistantApp.LOGGER.warn("integrated_gpu.dont_show_again is true. Prevented GUI warn.");
-            return;
-        }
         isCurrentlyDisplayed = true;
         SwingUtilities.invokeLater(() -> {
             CrashAssistantApp.LOGGER.warn("Showing IntegratedGPUWarning.");
@@ -98,6 +94,7 @@ public class IntegratedGPUWarning extends JFrame {
             });
 
             frame.setVisible(true);
+            awaitShown();
         });
     }
 

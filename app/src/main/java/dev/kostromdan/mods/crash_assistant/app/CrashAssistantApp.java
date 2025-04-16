@@ -14,7 +14,6 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -148,7 +147,7 @@ public class CrashAssistantApp {
                         if (gpu.type() == RendererType.DEDICATED) {
                             dedicatedGpus.add(gpu.name());
                         }
-                        if (gpu.name().startsWith(renderer) || renderer.startsWith(gpu.name())) {
+                        if (gpu.name().contains(renderer) || renderer.contains(gpu.name())) {
                             foundGPU = Optional.of(gpu);
                         }
                     }
@@ -182,10 +181,6 @@ public class CrashAssistantApp {
 
     private static void onMinecraftFinished() {
         GUIStartTime = Instant.now().toEpochMilli();
-
-        new Thread(() -> {
-            ModListUtils.getCurrentModList(true); //Cache modlist, to not spend time in further, then it needed.
-        }).start();
 
         new Thread(LanguageProvider::updateLang).start(); // Init lang async.
 

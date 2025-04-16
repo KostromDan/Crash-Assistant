@@ -35,3 +35,9 @@ TimeCreated           Id LevelDisplayName Message
                                           la ukončena. Pokud chcete zjistit, zda jsou k dispozici další informace o pro
                                           blému, zkontrolujte historii problémů v ovládacím panelu Zabezpečení a údržba
                                           .
+   ProviderName: Application Hang
+TimeCreated           Id LevelDisplayName Message
+-----------           -- ---------------- -------
+14/04/2025 11:02:15 1002 Erro             O programa javaw.exe versão **.**.**.** interagiu com o Windows e foi fechado.
+                                          Para ver se há mais informações disponíveis sobre o problema, verifique o
+                                          histórico de problemas no painel de controle de Segurança e Manutenção.

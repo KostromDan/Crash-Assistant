@@ -19,7 +19,8 @@ public class WasClosedByWindows extends KnownCrashReason {
             "Programmet java\\w*(?:\\.\\w+)?, version \\S+ avslutades eftersom det slutade samverka med Windows\\. Ytterligare information om problemet kan finnas i problemhistoriken i Säkerhet och underhåll på Kontrollpanelen\\.",
             "Programma java\\w*(?:\\.\\w+)? versie \\S+ communiceert niet meer met Windows en is gesloten\\. Als u wilt zien of er meer informatie over het probleem beschikbaar is, controleert u de probleemgeschiedenis in het configuratiescherm van Beveiliging en onderhoud\\.",
             "프로그램 java\\w*(?:\\.\\w+)? 버전 \\S+이\\(가\\) Windows와의 상호 작용을 중지하고 닫혔습니다\\. 문제에 대한 추가 정보가 있는지 확인하려면 보안 및 유지 관리 제어판에서 문제 기록을 확인하세요\\.",
-            "Verze \\S+ programu java\\w*(?:\\.\\w+)? ukončila interakci se systémem Windows a byla ukončena\\. Pokud chcete zjistit, zda jsou k dispozici další informace o problému, zkontrolujte historii problémů v ovládacím panelu Zabezpečení a údržba\\."
+            "Verze \\S+ programu java\\w*(?:\\.\\w+)? ukončila interakci se systémem Windows a byla ukončena\\. Pokud chcete zjistit, zda jsou k dispozici další informace o problému, zkontrolujte historii problémů v ovládacím panelu Zabezpečení a údržba\\.",
+            "O programa java\\w*(?:\\.\\w+)? versão \\S+ interagiu com o Windows e foi fechado\\. Para ver se há mais informações disponíveis sobre o problema, verifique o histórico de problemas no painel de controle de Segurança e Manutenção\\."
     ).map(WasClosedByWindows::removeSpacesAndEndLines).toList();
 
     public static String removeSpacesAndEndLines(String s) {

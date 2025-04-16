@@ -11,7 +11,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 
 public class IntegratedGPUWarning extends JFrame {
 
@@ -98,7 +97,7 @@ public class IntegratedGPUWarning extends JFrame {
         awaitShown();
     }
 
-    public static void awaitShown(){
+    public static void awaitShown() {
         while (isCurrentlyDisplayed) {
             try {
                 Thread.sleep(100);

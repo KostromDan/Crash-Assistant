@@ -6,5 +6,6 @@ package dev.kostromdan.mods.crash_assistant.app.utils.gpu;
 public enum RendererType {
     INTEGRATED,
     DEDICATED,
+    VIRTUAL_GPU,
     UNKNOWN
 }

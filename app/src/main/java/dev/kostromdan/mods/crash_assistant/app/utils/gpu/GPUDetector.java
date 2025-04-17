@@ -58,6 +58,8 @@ public class GPUDetector {
                     type = RendererType.INTEGRATED;
                 } else if (deviceType == VK10.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
                     type = RendererType.DEDICATED;
+                } else if (deviceType == VK10.VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU) {
+                    type = RendererType.VIRTUAL_GPU;
                 } else {
                     type = RendererType.UNKNOWN;
                 }

@@ -40,6 +40,8 @@ public class ControlPanel {
     public final JButton uploadAllButton;
     public final JButton requestHelpButton;
     private String generatedMsg = null;
+    private JLabel modListLabel;
+    private JButton showModListButton;
 
     public ControlPanel(FileListPanel fileListPanel) {
         this.fileListPanel = fileListPanel;
@@ -50,47 +52,17 @@ public class ControlPanel {
         labelButtonPanel.setLayout(new BoxLayout(labelButtonPanel, BoxLayout.X_AXIS));
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-            ModListDiff modListDiff = ModListDiff.getDiff(true);
+            modListLabel = new JLabel(LanguageProvider.get("gui.modlist_loading"));
+            modListLabel.setMaximumSize(modListLabel.getPreferredSize());
 
-            if (PlatformHelp.isLinkDefault() || CrashAssistantConfig.getBoolean("modpack_modlist.force_add_full_modlist_as_log")) {
-                Path modListTxtPath = Paths.get("logs", "modlist.txt");
-                try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
-                    for (Mod mod : modListDiff.getCurrentMods()) {
-                        writer.write(mod.getJarName());
-                        if (mod.getModId() != null) {
-                            writer.write(" : " + mod.getModId());
-                        }
-                        writer.newLine();
-                    }
-                    synchronized (KnownCrashReasonMessage.class) {
-                        LogsList.addIfExistsAndModified(new Log(LogType.MOD_LIST, modListTxtPath), false, false);
-                    }
-                } catch (Exception e) {
-                    CrashAssistantApp.LOGGER.error("Error while saving modlist.txt", e);
-                }
-            }
-
-            String labelMsg = "<html><div style='white-space:nowrap;'>";
-            JButton showModListButton = new JButton(LanguageProvider.get("gui.show_modlist_diff_button"));
-            if (modListDiff.isEmpty()) {
-                labelMsg += LanguageProvider.get("gui.modlist_not_changed_label") + ":";
-                showModListButton.setEnabled(false);
-                showModListButton.setToolTipText(LanguageProvider.get("gui.modlist_not_changed_label"));
-            } else {
-                labelMsg += LanguageProvider.get("gui.modlist_changed_label")
-                        .replace("$ADDED_MODS_COUNT$", "<span style='color:green;'>" + modListDiff.getAddedMods().size() + "</span>")
-                        .replace("$REMOVED_MODS_COUNT$", "<span style='color:red;'>" + modListDiff.getRemovedMods().size() + "</span>")
-                        .replace("$UPDATED_MODS_COUNT$", "<span style='color:blue;'>" + modListDiff.getUpdatedMods().size() + "</span>");
-            }
-            labelMsg += "</div></html>";
-
-            JLabel label = new JLabel(labelMsg);
-            label.setMaximumSize(label.getPreferredSize());
+            showModListButton = new JButton(LanguageProvider.get("gui.show_modlist_diff_button"));
+            showModListButton.setEnabled(false);
+            showModListButton.setToolTipText(LanguageProvider.get("gui.modlist_loading"));
             showModListButton.addActionListener(e -> showModList());
 
             showModListButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, showModListButton.getPreferredSize().height));
 
-            labelButtonPanel.add(label);
+            labelButtonPanel.add(modListLabel);
             labelButtonPanel.add(Box.createHorizontalStrut(10));
             labelButtonPanel.add(showModListButton);
             labelButtonPanel.add(Box.createHorizontalGlue());
@@ -140,6 +112,56 @@ public class ControlPanel {
         bottomPanel.add(requestHelpButton, gbc);
 
         panel.add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    public void updateModListInfo() {
+        ModListDiff modListDiff = ModListDiff.getDiff(true);
+        if (!CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) return;
+        if (PlatformHelp.isLinkDefault() || CrashAssistantConfig.getBoolean("modpack_modlist.force_add_full_modlist_as_log")) {
+            Path modListTxtPath = Paths.get("logs", "modlist.txt");
+            try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
+                for (Mod mod : modListDiff.getCurrentMods()) {
+                    writer.write(mod.getJarName());
+                    if (mod.getModId() != null) {
+                        writer.write(" : " + mod.getModId());
+                    }
+                    writer.newLine();
+                }
+                synchronized (KnownCrashReasonMessage.class) {
+                    LogsList.addIfExistsAndModified(new Log(LogType.MOD_LIST, modListTxtPath), false, false);
+                }
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.error("Error while saving modlist.txt", e);
+            }
+        }
+
+        String labelMsg = "<html><div style='white-space:nowrap;'>";
+        if (modListDiff.isEmpty()) {
+            labelMsg += LanguageProvider.get("gui.modlist_not_changed_label") + ":";
+            showModListButton.setEnabled(false);
+            showModListButton.setToolTipText(LanguageProvider.get("gui.modlist_not_changed_label"));
+        } else {
+            labelMsg += LanguageProvider.get("gui.modlist_changed_label")
+                    .replace("$ADDED_MODS_COUNT$", "<span style='color:green;'>" + modListDiff.getAddedMods().size() + "</span>")
+                    .replace("$REMOVED_MODS_COUNT$", "<span style='color:red;'>" + modListDiff.getRemovedMods().size() + "</span>")
+                    .replace("$UPDATED_MODS_COUNT$", "<span style='color:blue;'>" + modListDiff.getUpdatedMods().size() + "</span>");
+            showModListButton.setEnabled(true);
+            showModListButton.setToolTipText(null);
+        }
+        labelMsg += "</div></html>";
+
+        modListLabel.setText(labelMsg);
+        modListLabel.setMaximumSize(modListLabel.getPreferredSize());
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException ignored) {
+            }
+            synchronized (KnownCrashReasonMessage.class) {
+                SwingUtilities.invokeLater(CrashAssistantGUI::addMissingLogs);
+            }
+        }).start();
     }
 
     public JPanel getPanel() {

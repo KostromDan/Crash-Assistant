@@ -77,7 +77,7 @@ public class ModListDiff {
         return updatedMods;
     }
 
-    public static ModListDiff getDiff(boolean useCache) {
+    public static synchronized ModListDiff getDiff(boolean useCache) {
         return new ModListDiff(ModListUtils.getSavedModList(), ModListUtils.getCurrentModList(useCache));
     }
 

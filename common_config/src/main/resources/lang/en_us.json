@@ -24,6 +24,7 @@
   "gui.modlist_changed_label": "Detected mods: $ADDED_MODS_COUNT$ added, $REMOVED_MODS_COUNT$ removed, $UPDATED_MODS_COUNT$ updated:",
   "gui.modlist_changed_label_msg": "$ADDED_MODS_COUNT$ added, $REMOVED_MODS_COUNT$ removed, $UPDATED_MODS_COUNT$ updated.",
   "gui.modlist_diff_dialog_name": "Mod List Diff",
+  "gui.modlist_loading": "Mod List Diff is loading",
   "gui.copy_link_button": "Copy link",
   "gui.copied": "Copied!",
   "gui.error": "Error!",

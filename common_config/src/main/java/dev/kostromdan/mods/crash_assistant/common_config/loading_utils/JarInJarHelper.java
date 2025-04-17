@@ -73,44 +73,23 @@ public interface JarInJarHelper {
             String osName = System.getProperty("os.name").toLowerCase();
             String osArch = System.getProperty("os.arch").toLowerCase();
 
-            // Determine OS directory
-            String osDir;
-            if (osName.contains("windows")) {
-                osDir = "windows";
-            } else if (osName.contains("linux")) {
-                osDir = "linux";
-            } else if (osName.contains("mac")) {
-                osDir = "macos";
-            } else {
-                throw new UnsupportedOperationException("Unsupported OS: " + osName);
+            if (!osName.contains("windows")) {
+                return "UNDEFINED";
             }
 
             // Determine architecture directory
             String archDir;
-            if (osArch.equals("x86_64") || osArch.equals("amd64")) {
-                archDir = "x64";
-            } else if (osArch.equals("x86") || osArch.equals("i386")) {
-                archDir = "x86";
-            } else if (osArch.equals("aarch64")) {
-                archDir = "arm64";
-            } else {
-                throw new UnsupportedOperationException("Unsupported architecture: " + osArch);
-            }
-
-            // Determine file extension
-            String extension;
-            if (osName.contains("windows")) {
-                extension = ".dll";
-            } else if (osName.contains("linux")) {
-                extension = ".so";
-            } else if (osName.contains("mac")) {
-                extension = ".dylib";
-            } else {
-                throw new UnsupportedOperationException("Unsupported OS: " + osName);
+            switch (osArch) {
+                case "x86_64", "amd64" -> archDir = "x64";
+                case "x86", "i386" -> archDir = "x86";
+                case "aarch64" -> archDir = "arm64";
+                default -> {
+                    return "UNDEFINED";
+                }
             }
 
             // Construct the resource path (e.g., "windows/x64/org/lwjgl/lwjgl.dll")
-            String resourcePath = osDir + "/" + archDir + "/org/lwjgl/lwjgl" + extension;
+            String resourcePath = "windows/" + archDir + "/org/lwjgl/lwjgl.dll";
 
             // Return the JAR path containing the native library
             return LibrariesJarLocator.getLibraryJarPathFromResource(resourcePath);

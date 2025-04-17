@@ -324,6 +324,8 @@ public class CreateDependencies {
                             }
                         }
                         process.waitFor();
+                    }catch (InterruptedException ignored) {
+                        CrashAssistantApp.LOGGER.warn("Analysis of " + mod.getJarName() + " was interrupted.");
                     } catch (Exception e) {
                         CrashAssistantApp.LOGGER.error("Error while analysing create mod deps for " + mod.getJarName() + ": ", e);
                     } finally {

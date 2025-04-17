@@ -1,3 +1,10 @@
+1.7.6:
+
+- Prevented confusing error message on macs.
+- Improved GUI start time on slow pcs, by delaying computing of mod list diff after start of the GUI.
+- Added virtual gpu type detection to Vulkan gpu detector.
+- 
+
 1.7.5:
 
 - Improved GUI start time on weak systems.

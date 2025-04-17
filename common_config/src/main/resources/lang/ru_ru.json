@@ -23,6 +23,7 @@
   "gui.modlist_changed_label": "Обнаружено $ADDED_MODS_COUNT$ добавленных, $REMOVED_MODS_COUNT$ удалённых, $UPDATED_MODS_COUNT$ обновлённых модов",
   "gui.modlist_changed_label_msg": "$ADDED_MODS_COUNT$ добавленных, $REMOVED_MODS_COUNT$ удалённых, $UPDATED_MODS_COUNT$ обновлённых.",
   "gui.modlist_diff_dialog_name": "Различия в модах",
+  "gui.modlist_loading": "Различия в модах загружаются",
   "gui.copy_link_button": "Скопировать ссылку",
   "gui.copied": "Скопировано!",
   "gui.error": "Ошибка!",

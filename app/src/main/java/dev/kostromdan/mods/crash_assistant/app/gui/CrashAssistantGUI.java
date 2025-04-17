@@ -110,7 +110,6 @@ public class CrashAssistantGUI {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        // Remaining initialization code (unchanged)
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             final long startTime = Instant.now().toEpochMilli();
@@ -134,6 +133,7 @@ public class CrashAssistantGUI {
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
 
 
+        controlPanel.updateModListInfo();
         showCrashAssistantDuplicatedWarning();
         IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         IntelChipBugWarning.showIfAffected(false);
@@ -386,16 +386,18 @@ public class CrashAssistantGUI {
     }
 
     public static void updateLogsListInGUI() {
-        SwingUtilities.invokeLater(() -> {
-            for (Log log : LogsList.getLogs()) {
-                if (fileListPanel.filePanelList.stream().noneMatch(x -> Objects.equals(x.getLog(), log))) {
-                    fileListPanel.addLog(log);
-                }
-            }
-            CrashAssistantGUI.resize();
-        });
+        SwingUtilities.invokeLater(CrashAssistantGUI::addMissingLogs);
         LogAnalyser.analyseLogs();
         showKnownCrashReasonsWarnings();
+    }
+
+    public static void addMissingLogs() {
+        for (Log log : LogsList.getLogs()) {
+            if (fileListPanel.filePanelList.stream().noneMatch(x -> Objects.equals(x.getLog(), log))) {
+                fileListPanel.addLog(log);
+            }
+        }
+        CrashAssistantGUI.resize();
     }
 
     public static String getTitleCrashedText(boolean forMsg) {

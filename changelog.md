@@ -1,3 +1,11 @@
+1.7.5:
+
+- Improved GUI start time on weak systems.
+- Improved ModList diff view in GUI to prevent potential confusion.
+- Prevent showing same warn if it found in multiple logs.
+- Added to WasClosedByWindows new lang of message regex.
+- Small fixes and improvements.
+
 1.7.4:
 
 - Added IntegratedGPUWarning about Integrated GPU used while dedicated exist, on startup.

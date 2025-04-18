@@ -109,7 +109,7 @@ public class GPUDetector {
     public static String getSerialisedGPUs() {
         List<GPU> gpus = GPUDetector.detectGPUs();
 
-        String serialisedGPUs = GPU.serialiseGPUs(gpus);
+        String serialisedGPUs = GPU.serializeGPUs(gpus);
 
         System.out.println(serialisedGPUs);
 
@@ -118,7 +118,7 @@ public class GPUDetector {
 
     public static void main(String[] args) { // Test
         String serialized = getSerialisedGPUs();
-        List<GPU> gpus = GPU.deserialiseGPUs(serialized);
+        List<GPU> gpus = GPU.deserializeGPUs(serialized);
         System.out.println(gpus);
     }
 }

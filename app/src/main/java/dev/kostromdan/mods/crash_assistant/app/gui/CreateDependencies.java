@@ -113,42 +113,6 @@ public class CreateDependencies {
         return null;
     }
 
-
-    public static HashSet<String> getCreateClassesModUsing(Mod mod, String jdepsPath) {
-        HashSet<String> result = new HashSet<>();
-        try {
-            ProcessBuilder jdepsProcessBuilder = new ProcessBuilder(
-                    jdepsPath,
-                    "-verbose:class",
-                    Paths.get("mods", mod.getJarName()).toAbsolutePath().toString()
-            );
-            jdepsProcessBuilder.redirectErrorStream(true);
-            Process process = jdepsProcessBuilder.start();
-
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-                    int arrowIndex = line.indexOf("->");
-                    if (arrowIndex != -1) {
-                        String dependency = line.substring(arrowIndex + 2).trim();
-                        if (dependency.endsWith(".class")) continue;
-                        int spaceIndex = dependency.indexOf(' ');
-                        String classPath = dependency.substring(0, spaceIndex == -1 ? dependency.length() : spaceIndex).replace('.', '/');
-                        classPath += ".class";
-                        if (isCreateClass(classPath)) {
-                            result.add(fixClassName(classPath));
-                        }
-                    }
-                }
-            }
-            process.waitFor();
-        } catch (Exception e) {
-            CrashAssistantApp.LOGGER.error("Error while analysing create mod deps: ", e);
-        }
-        return result;
-    }
-
     public static HashSet<String> getCurrentCreateClasses(Mod createMod) {
         HashSet<String> currentCreateClasses = new HashSet<>();
         try {
@@ -183,21 +147,44 @@ public class CreateDependencies {
     }
 
     public static void showCreateAnalysisDialog(JFrame parent) {
-        JDialog dialog = new JDialog(parent, LanguageProvider.get("gui.menu.analysis.create_dependencies") + " (" + LanguageProvider.get("gui.window_name") + ")", true);
+        JDialog dialog = new JDialog(
+                parent,
+                LanguageProvider.get("gui.menu.analysis.create_dependencies")
+                        + " (" + LanguageProvider.get("gui.window_name") + ")",
+                true
+        );
         dialog.setLayout(new BorderLayout());
 
-        // Top panel with status and progress
+        // Static text header, left‑aligned, with two lines via HTML
+        JLabel headerLabel = new JLabel(
+                "<html>"
+                        + "Wait for analysis to finish.<br>"
+                        + "Try removing/updating/downgrading all mods detected below to match the current Create mod version.<br>" +
+                        "&nbsp;"
+                        + "</html>"
+        );
+        headerLabel.setHorizontalAlignment(SwingConstants.LEFT);
+
+        // Top panel with status and progress, labels left‑aligned
         JPanel topPanel = new JPanel(new BorderLayout());
         JLabel statusLabel = new JLabel("Analyzing mods...");
+        statusLabel.setHorizontalAlignment(SwingConstants.LEFT);
         JLabel currentJarLabel = new JLabel("Current mod: None");
+        currentJarLabel.setHorizontalAlignment(SwingConstants.LEFT);
         JProgressBar progressBar = new JProgressBar(0, 100);
         progressBar.setValue(0);
         topPanel.add(statusLabel, BorderLayout.NORTH);
         topPanel.add(currentJarLabel, BorderLayout.CENTER);
         topPanel.add(progressBar, BorderLayout.SOUTH);
-        dialog.add(topPanel, BorderLayout.NORTH);
 
-        // Text area for results with auto-scrolling disabled
+        // Wrap header and topPanel
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.add(headerLabel, BorderLayout.NORTH);
+        headerPanel.add(topPanel, BorderLayout.SOUTH);
+
+        dialog.add(headerPanel, BorderLayout.NORTH);
+
+        // Text area for results
         JTextArea textArea = new JTextArea();
         textArea.setEditable(false);
         textArea.setCaretPosition(0);

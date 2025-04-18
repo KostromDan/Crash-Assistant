@@ -7,13 +7,16 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 public class CtovWithoutLithostitched extends KnownCrashReason {
     public CtovWithoutLithostitched() {
         super(
                 LogType.LOG,
-                LanguageProvider.get("warnings.ctov_without_lithostitched")
+                LanguageProvider.get("warnings.ctov_without_lithostitched", new HashMap<>(){{
+                    put("$LINK.LITHOSTITCHED$", "Lithostitched");
+                }})
         );
     }
 

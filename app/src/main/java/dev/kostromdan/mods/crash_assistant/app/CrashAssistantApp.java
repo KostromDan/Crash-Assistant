@@ -19,7 +19,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -136,7 +135,7 @@ public class CrashAssistantApp {
                 LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
 
                 if (Boot.serialisedGPUs != null) {
-                    List<GPU> gpus = GPU.deserialiseGPUs(Boot.serialisedGPUs);
+                    List<GPU> gpus = GPU.deserializeGPUs(Boot.serialisedGPUs);
                     List<String> dedicatedGpus = new ArrayList<>();
                     Optional<GPU> foundGPU = Optional.empty();
                     for (GPU gpu : gpus) {

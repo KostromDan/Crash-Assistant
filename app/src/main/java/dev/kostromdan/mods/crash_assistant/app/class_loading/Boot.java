@@ -59,7 +59,7 @@ public class Boot {
 
         CrashAssistantAgent.appendJarFile(log4jApi);
         CrashAssistantAgent.appendJarFile(log4jCore);
-//        CrashAssistantAgent.appendJarFile(googleGson);
+        CrashAssistantAgent.appendJarFile(googleGson);
         CrashAssistantAgent.appendJarFile(commonIo);
         if (lwjglNatives != null && !Objects.equals(lwjglNatives, "UNDEFINED") && !recursiveStart) {
             CrashAssistantAgent.appendJarFile(lwjglNatives);

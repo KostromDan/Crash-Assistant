@@ -224,7 +224,12 @@ public class CreateDependencies {
             // Check if JDK is available
             String jdepsPath = getJDepsPath();
             if (jdepsPath == null) {
-                String message = "JDK is required for analysis of jar files. JRE is not suitable for this!\nWe've tried JAVA_HOME, jdeps cmd and java used for launching game.\nThe easiest way to fix this for you is installing JDK (not JRE) from:\n$LINK.ADOPTIUM_JDK$\nMake sure to select JAVA_HOME check box in the installation settings.".replace("$LINK.ADOPTIUM_JDK$", LinksProvider.ADOPTIUM_JDK.getLink());
+                String message = ("JDK is required for analysis of jar files. JRE is not suitable for this!\n" +
+                        "We've tried JAVA_HOME, jdeps cmd and java used for launching game.\n" +
+                        "The easiest way to fix this for you is installing JDK (not JRE) from:\n" +
+                        "$LINK.ADOPTIUM_JDK$\n" +
+                        "Make sure to select JAVA_HOME check box in the installation settings.")
+                        .replace("$LINK.ADOPTIUM_JDK$", LinksProvider.ADOPTIUM_JDK.getLink());
                 SwingUtilities.invokeLater(() -> {
                     textArea.append(message);
                     CrashAssistantApp.LOGGER.info(message.trim());

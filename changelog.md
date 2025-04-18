@@ -1,3 +1,18 @@
+1.7.7:
+
+- Added JDK install instruction to Crate dependencies analysis if we can't locate jdeps.
+- Fixed potential issue with JAVA HOME in Crate dependencies analysis.
+- Improved text of Create mod dep Analysis to be more clear and prevent potential confusion.
+- Fixed iGPU warning on linux/macos. Now should work correct.
+- Decreased heap size by 3 mb on app idle phase.
+- Add full ctov name to CtovWithoutLithostitched warn to prevent potential confusion.
+- Added link to Lithostitched mod to CtovWithoutLithostitched warn.
+- Change architecture of LinksProvider to be able to return different links based on conditions.
+- Added new crash reason Nvoglv64. Nvidia Driver issue.
+- Added new crash reason MacOSIncompatibleShaderDriverIssue. MacOS incompatible shaders.
+- Added new crash reason Jvm.dll. Some cursed bug which can be caused by multiple reasons.
+- Small fixes and improvements.
+
 1.7.6:
 
 - Prevented confusing error message on macs.

@@ -1,6 +1,5 @@
 package dev.kostromdan.mods.crash_assistant.app.utils.gpu;
 
-import com.google.gson.Gson;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -108,23 +107,18 @@ public class GPUDetector {
     }
 
     public static String getSerialisedGPUs() {
-        // Detect GPUs
         List<GPU> gpus = GPUDetector.detectGPUs();
 
-        for (GPU gpu : gpus) {
-            System.out.println(gpu.type() + ": " + gpu.name());
-        }
+        String serialisedGPUs = GPU.serialiseGPUs(gpus);
 
-        // Convert them to JSON (you can use any method: CSV, plain text, etc.)
-        String json = new Gson().toJson(gpus);
+        System.out.println(serialisedGPUs);
 
-        // Print JSON to stdout so the parent process can read it
-        System.out.println(json);
-
-        return json;
+        return serialisedGPUs;
     }
 
-    public static void main(String[] args) {
-        getSerialisedGPUs();
+    public static void main(String[] args) { // Test
+        String serialized = getSerialisedGPUs();
+        List<GPU> gpus = GPU.deserialiseGPUs(serialized);
+        System.out.println(gpus);
     }
 }

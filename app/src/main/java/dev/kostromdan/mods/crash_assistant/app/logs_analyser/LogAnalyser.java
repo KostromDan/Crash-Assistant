@@ -132,6 +132,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new Atio6axx());
         registerKnownCrashReason(new InsufficientMemory());
         registerKnownCrashReason(new Jemalloc());
+        registerKnownCrashReason(new Jvm());
         registerKnownCrashReason(new LibGLFWDotSo());
         registerKnownCrashReason(new LibOpenALDotSo());
         registerKnownCrashReason(new MacJDK());

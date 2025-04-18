@@ -7,7 +7,8 @@ public enum LinksProvider {
     AZUL_DOWNLOAD("https://www.azul.com/downloads/?version=java-21-lts&os=macos&architecture=arm-64-bit&package=jdk#zulu"),
     GLFW_DOWNLOAD("https://github.com/Frontear/glfw-libs/releases"),
     C6A("https://modrinth.com/collection/uSfTuDgc"),
-    ATL("https://atlauncher.com/downloads");
+    ATL("https://atlauncher.com/downloads"),
+    ADOPTIUM_JDK("https://adoptium.net/temurin/releases/?package=jdk");
 
 
 

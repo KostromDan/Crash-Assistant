@@ -7,7 +7,7 @@ import java.util.List;
  * Record representing a GPU with its type and name.
  */
 public record GPU(RendererType type, String name) {
-    public static String serialiseGPUs(List<GPU> gpus) {
+    public static String serializeGPUs(List<GPU> gpus) {
         List<String> gpuStrings = new ArrayList<>();
         for (GPU gpu : gpus) {
             gpuStrings.add(gpu.type() + " : " + gpu.name());
@@ -15,7 +15,7 @@ public record GPU(RendererType type, String name) {
         return String.join("\n", gpuStrings);
     }
 
-    public static List<GPU> deserialiseGPUs(String serialisedGPU) {
+    public static List<GPU> deserializeGPUs(String serialisedGPU) {
         List<GPU> gpus = new ArrayList<>();
         for (String line : serialisedGPU.split("\n")) {
             int index = line.indexOf(" : ");

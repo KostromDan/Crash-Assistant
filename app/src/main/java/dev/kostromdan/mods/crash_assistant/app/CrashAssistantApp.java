@@ -1,7 +1,5 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
@@ -135,12 +133,10 @@ public class CrashAssistantApp {
             try {
                 renderer = new String(Files.readAllBytes(rendererPath));
                 LOGGER.info("Detected renderer: {}", renderer);
-                LOGGER.info("Boot.serialisedGPUs: {}", Boot.serialisedGPUs);
+                LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
 
                 if (Boot.serialisedGPUs != null) {
-                    Type gpuListType = new TypeToken<List<GPU>>() {
-                    }.getType();
-                    List<GPU> gpus = new Gson().fromJson(Boot.serialisedGPUs, gpuListType);
+                    List<GPU> gpus = GPU.deserialiseGPUs(Boot.serialisedGPUs);
                     List<String> dedicatedGpus = new ArrayList<>();
                     Optional<GPU> foundGPU = Optional.empty();
                     for (GPU gpu : gpus) {

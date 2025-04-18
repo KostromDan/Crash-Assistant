@@ -8,8 +8,10 @@ public enum LinksProvider {
     GLFW_DOWNLOAD("https://github.com/Frontear/glfw-libs/releases"),
     C6A("https://modrinth.com/collection/uSfTuDgc"),
     ATL("https://atlauncher.com/downloads"),
-    ADOPTIUM_JDK("https://adoptium.net/temurin/releases/?package=jdk");
+    ADOPTIUM_JDK("https://adoptium.net/temurin/releases/?package=jdk"),
 
+    // Mods
+    LITHOSTITCHED("https://www.curseforge.com/minecraft/mc-mods/lithostitched");
 
 
     private final String link;

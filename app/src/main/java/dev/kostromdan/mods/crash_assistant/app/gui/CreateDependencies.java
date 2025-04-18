@@ -1,7 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
@@ -78,7 +80,10 @@ public class CreateDependencies {
         if (javaHome != null && !javaHome.isEmpty()) {
             String osName = System.getProperty("os.name").toLowerCase();
             // Check if javaHome already ends with 'bin'
-            if (javaHome.endsWith("bin") || javaHome.endsWith("bin" + File.separator)) {
+            if (javaHome.endsWith(File.separator)) {
+                javaHome = javaHome.substring(0, javaHome.length() - 1);
+            }
+            if (javaHome.endsWith("bin")) {
                 if (osName.contains("win")) {
                     jdepsPath = javaHome + File.separator + "jdeps.exe";
                 } else {
@@ -232,7 +237,7 @@ public class CreateDependencies {
             // Check if JDK is available
             String jdepsPath = getJDepsPath();
             if (jdepsPath == null) {
-                String message = "JDK is required for analysis of jar files. JRE is not suitable for this!\nWe've tried JAVA_HOME and java used for launching game.\n";
+                String message = "JDK is required for analysis of jar files. JRE is not suitable for this!\nWe've tried JAVA_HOME, jdeps cmd and java used for launching game.\nThe easiest way to fix this for you is installing JDK (not JRE) from:\n$LINK.ADOPTIUM_JDK$\nMake sure to select JAVA_HOME check box in the installation settings.".replace("$LINK.ADOPTIUM_JDK$", LinksProvider.ADOPTIUM_JDK.getLink());
                 SwingUtilities.invokeLater(() -> {
                     textArea.append(message);
                     CrashAssistantApp.LOGGER.info(message.trim());
@@ -324,7 +329,7 @@ public class CreateDependencies {
                             }
                         }
                         process.waitFor();
-                    }catch (InterruptedException ignored) {
+                    } catch (InterruptedException ignored) {
                         CrashAssistantApp.LOGGER.warn("Analysis of " + mod.getJarName() + " was interrupted.");
                     } catch (Exception e) {
                         CrashAssistantApp.LOGGER.error("Error while analysing create mod deps for " + mod.getJarName() + ": ", e);

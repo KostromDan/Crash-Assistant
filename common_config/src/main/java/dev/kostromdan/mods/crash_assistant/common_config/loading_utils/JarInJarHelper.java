@@ -67,34 +67,42 @@ public interface JarInJarHelper {
         }
     }
 
+
     static String locateNatives() {
         try {
-            // Get OS and architecture, converting to lowercase for consistency
-            String osName = System.getProperty("os.name").toLowerCase();
-            String osArch = System.getProperty("os.arch").toLowerCase();
+            // Normalise OS/arch strings
+            String osName = System.getProperty("os.name").toLowerCase(Locale.ROOT);
+            String osArch = System.getProperty("os.arch").toLowerCase(Locale.ROOT);
 
-            if (!osName.contains("windows")) {
-                return "UNDEFINED";
+            /* ---------- OS directory ---------- */
+            final String osDir;
+            if (osName.contains("win")) osDir = "windows";
+            else if (osName.contains("mac")) osDir = "macos";
+            else if (osName.contains("nux")) osDir = "linux";     // covers “linux” & “gnu/linux”
+            else throw new UnsupportedOperationException("Unsupported OS: " + osName);
+
+            /* ---------- Arch directory ---------- */
+            final String archDir;
+            if (osArch.matches("^(x8664|amd64|x86_64)$")) archDir = "x64";
+            else if (osArch.matches("^(x86|i[3-6]86)$")) archDir = "x86";
+            else if (osArch.matches("^(aarch64|arm64)$")) archDir = "arm64";
+            else if (osArch.matches("^(arm|armv7l|arm32)$")) archDir = "arm32";
+            else throw new UnsupportedOperationException("Unsupported arch: " + osArch);
+
+            /* ---------- File name ---------- */
+            final String fileName;
+            switch (osDir) {
+                case "windows" -> fileName = "lwjgl.dll";
+                case "linux" -> fileName = "liblwjgl.so";
+                case "macos" -> fileName = "liblwjgl.dylib";
+                default -> throw new IllegalStateException("Unexpected OS directory: " + osDir);
             }
 
-            // Determine architecture directory
-            String archDir;
-            switch (osArch) {
-                case "x86_64", "amd64" -> archDir = "x64";
-                case "x86", "i386" -> archDir = "x86";
-                case "aarch64" -> archDir = "arm64";
-                default -> {
-                    return "UNDEFINED";
-                }
-            }
-
-            // Construct the resource path (e.g., "windows/x64/org/lwjgl/lwjgl.dll")
-            String resourcePath = "windows/" + archDir + "/org/lwjgl/lwjgl.dll";
-
-            // Return the JAR path containing the native library
+            /* ---------- Complete resource path ---------- */
+            String resourcePath = osDir + '/' + archDir + "/org/lwjgl/" + fileName;
             return LibrariesJarLocator.getLibraryJarPathFromResource(resourcePath);
         } catch (Exception e) {
-            LOGGER.warn("Error while locating Natives, integrated GPU detection won't work: ", e);
+            LOGGER.warn("Error while locating LWJGL natives. No issues, but integrated‑GPU warning will be disabled. Seems like Crash Assistant issue, pls report.", e);
             return "UNDEFINED";
         }
     }

@@ -135,6 +135,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new LibGLFWDotSo());
         registerKnownCrashReason(new LibOpenALDotSo());
         registerKnownCrashReason(new MacJDK());
+        registerKnownCrashReason(new Nvoglv64());
 
         registerKnownCrashReason(new Create6Addons());
         registerKnownCrashReason(new CtovWithoutLithostitched());

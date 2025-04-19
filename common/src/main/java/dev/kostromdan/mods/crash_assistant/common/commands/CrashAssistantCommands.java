@@ -23,7 +23,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextComponent;
 
 import java.time.Instant;
 import java.util.*;
@@ -52,11 +53,6 @@ public class CrashAssistantCommands {
                         ).then(LiteralArgumentBuilder.literal("diff")
                                 .executes(CrashAssistantCommands::showDiff)
                         ))
-//                .then(LiteralArgumentBuilder.literal("deadlock_integrated_server")
-//                        .then(LiteralArgumentBuilder.literal("start")
-//                                .executes(CrashAssistantCommands::deadlockIntegratedServer))
-//                        .then(LiteralArgumentBuilder.literal("release")
-//                                .executes(CrashAssistantCommands::releaseIntegratedServer)))
                 .then(LiteralArgumentBuilder.literal("crash")
                         .requires(c -> CrashAssistantConfig.getBoolean("crash_command.enabled"))
                         .then(RequiredArgumentBuilder.argument("to_crash", StringArgumentType.string())
@@ -68,30 +64,33 @@ public class CrashAssistantCommands {
     }
 
     public static Component getModConfigComponent() {
-        return Component.literal("[mod config]")
-                .withStyle(style -> style
-                        .withColor(ChatFormatting.YELLOW)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, CrashAssistantConfig.getConfigPath().toAbsolutePath().toString()))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(LanguageProvider.get("commands.mod_config_tooltip"))))
-                );
+        TextComponent component = new TextComponent("[mod config]");
+        Style style = Style.EMPTY
+                .withColor(ChatFormatting.YELLOW)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, CrashAssistantConfig.getConfigPath().toAbsolutePath().toString()))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.mod_config_tooltip"))));
+        component.setStyle(style);
+        return component;
     }
 
     public static Component getCopyNicknameComponent(String playerNickname) {
-        return Component.literal("[nickname]")
-                .withStyle(style -> style
-                        .withColor(ChatFormatting.YELLOW)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, '"' + playerNickname + '"'))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(LanguageProvider.get("commands.nickname_tooltip"))))
-                );
+        TextComponent component = new TextComponent("[nickname]");
+        Style style = Style.EMPTY
+                .withColor(ChatFormatting.YELLOW)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, '"' + playerNickname + '"'))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.nickname_tooltip"))));
+        component.setStyle(style);
+        return component;
     }
 
     public static Component getCopyDiffComponent(ModListDiffStringBuilder diff) {
-        return Component.literal("[" + LanguageProvider.get("commands.diff_copy") + "]")
-                .withStyle(style -> style
-                        .withColor(ChatFormatting.YELLOW)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, diff.toText()))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(LanguageProvider.get("commands.diff_tooltip"))))
-                );
+        TextComponent component = new TextComponent("[" + LanguageProvider.get("commands.diff_copy") + "]");
+        Style style = Style.EMPTY
+                .withColor(ChatFormatting.YELLOW)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, diff.toText()))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.diff_tooltip"))));
+        component.setStyle(style);
+        return component;
     }
 
     public static void sendClientMsg(Component message) {
@@ -105,11 +104,10 @@ public class CrashAssistantCommands {
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             return true;
         }
-        MutableComponent msg = Component.empty();
-        msg.append(Component.literal(LanguageProvider.get("commands.modlist_disabled_error_msg")));
+        TextComponent msg = new TextComponent("");
+        msg.append(new TextComponent(LanguageProvider.get("commands.modlist_disabled_error_msg")));
         msg.append(getModConfigComponent());
-        msg.withStyle(ChatFormatting.RED);
-
+        msg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
         sendClientMsg(msg);
         return false;
     }
@@ -119,26 +117,27 @@ public class CrashAssistantCommands {
             return 0;
         }
 
-        MutableComponent msg = Component.empty();
-
+        TextComponent msg = new TextComponent("");
         if (CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname)) {
             ModListUtils.saveCurrentModList();
-            msg.append(Component.literal(LanguageProvider.get("commands.modlist_overwritten_success")));
+            msg.append(new TextComponent(LanguageProvider.get("commands.modlist_overwritten_success")));
             if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update")) {
-                msg.append(Component.literal(LanguageProvider.get("commands.modlist_auto_update_msg"))
-                        .withStyle(style -> style.withColor(ChatFormatting.WHITE)));
+                TextComponent autoUpdateMsg = new TextComponent(LanguageProvider.get("commands.modlist_auto_update_msg"));
+                autoUpdateMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE));
+                msg.append(autoUpdateMsg);
             } else {
-                msg.append(Component.literal(LanguageProvider.get("commands.modlist_enable_auto_update_msg"))
-                        .withStyle(style -> style.withColor(ChatFormatting.WHITE)));
+                TextComponent enableAutoUpdateMsg = new TextComponent(LanguageProvider.get("commands.modlist_enable_auto_update_msg"));
+                enableAutoUpdateMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE));
+                msg.append(enableAutoUpdateMsg);
             }
             msg.append(getModConfigComponent());
-            msg.withStyle(ChatFormatting.GREEN);
+            msg.setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
         } else {
-            msg.append(Component.literal(LanguageProvider.get("commands.not_creator_error_msg")));
+            msg.append(new TextComponent(LanguageProvider.get("commands.not_creator_error_msg")));
             msg.append(getCopyNicknameComponent(CrashAssistant.playerNickname));
-            msg.append(Component.literal(LanguageProvider.get("commands.add_to_creator_list_msg")));
+            msg.append(new TextComponent(LanguageProvider.get("commands.add_to_creator_list_msg")));
             msg.append(getModConfigComponent());
-            msg.withStyle(ChatFormatting.RED);
+            msg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
         }
 
         sendClientMsg(msg);
@@ -150,7 +149,7 @@ public class CrashAssistantCommands {
             return 0;
         }
         ModListDiff diff = ModListDiff.getDiff(false);
-        MutableComponent msg = new ComponentModListDiffStringBuilder(diff.generateDiffMsg(false)).toComponent();
+        TextComponent msg = new ComponentModListDiffStringBuilder(diff.generateDiffMsg(false)).toComponent();
         msg.append(getCopyDiffComponent(diff.generateDiffMsg(true)));
         sendClientMsg(msg);
         return 0;
@@ -172,7 +171,7 @@ public class CrashAssistantCommands {
 
     public static int crash(CommandContext<?> context) {
         LanguageProvider.updateLang();
-        MutableComponent msg = Component.empty();
+        TextComponent msg = new TextComponent("");
         String toCrash = "null";
         try {
             toCrash = context.getArgument("to_crash", String.class);
@@ -180,7 +179,9 @@ public class CrashAssistantCommands {
                 throw new IllegalArgumentException();
             }
         } catch (IllegalArgumentException ignored) {
-            sendClientMsg(Component.literal(LanguageProvider.get("commands.crash_command_validation_failed_to_crash") + " '" + toCrash + "'").withStyle(style -> style.withColor(ChatFormatting.RED)));
+            TextComponent errorMsg = new TextComponent(LanguageProvider.get("commands.crash_command_validation_failed_to_crash") + " '" + toCrash + "'");
+            errorMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+            sendClientMsg(errorMsg);
             return 0;
         }
         toCrash = supportedCrashCommands.get(toCrash);
@@ -193,9 +194,11 @@ public class CrashAssistantCommands {
             new Thread(() -> {
                 if (!validateCrashArgs(args)) return;
                 if (!args.isEmpty()) {
-                    sendClientMsg(Component.literal(LanguageProvider.get("commands.crash_command_applying_args")).withStyle(style -> style.withColor(ChatFormatting.YELLOW)));
+                    TextComponent applyingArgsMsg = new TextComponent(LanguageProvider.get("commands.crash_command_applying_args"));
+                    applyingArgsMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW));
+                    sendClientMsg(applyingArgsMsg);
                     try {
-                        Thread.sleep(100); // Wait while main thread will send msg, since next operations are blocking all threads.
+                        Thread.sleep(100); // Wait while main thread sends msg, since next operations are blocking.
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
@@ -217,14 +220,15 @@ public class CrashAssistantCommands {
                 }
 
                 if (!noCrash) {
-                    sendClientMsg(Component.literal(LanguageProvider.get("commands.crash_command_crashing")).withStyle(style -> style.withColor(ChatFormatting.RED)));
+                    TextComponent crashingMsg = new TextComponent(LanguageProvider.get("commands.crash_command_crashing"));
+                    crashingMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                    sendClientMsg(crashingMsg);
                 } else {
-                    sendClientMsg(Component.literal(LanguageProvider.get("commands.crash_command_done")));
+                    sendClientMsg(new TextComponent(LanguageProvider.get("commands.crash_command_done")));
                 }
 
                 if (Objects.equals(finalToCrash, "Minecraft")) {
                     Minecraft.getInstance().execute(() -> {
-                        // Todo: doesn't work if integrated server deadlocked.
                         ManualCrashThrower.crashGame("Minecraft crashed by '/crash_assistant crash' command.");
                     });
                 } else if (Objects.equals(finalToCrash, "JVM")) {
@@ -236,12 +240,16 @@ public class CrashAssistantCommands {
         }
         lastCrashCommand = Instant.now();
 
-        msg.append(Component.literal(LanguageProvider.get("commands.crash_command_1")));
-        msg.append(Component.literal(toCrash).withStyle(style -> style.withColor(ChatFormatting.YELLOW)));
-        msg.append(Component.literal(LanguageProvider.get("commands.crash_command_2")));
-        msg.append(Component.literal(Integer.toString(secondsToCrash)).withStyle(style -> style.withColor(ChatFormatting.YELLOW)));
-        msg.append(Component.literal(LanguageProvider.get("commands.crash_command_3")));
-        msg.withStyle(style -> style.withColor(ChatFormatting.RED));
+        msg.append(new TextComponent(LanguageProvider.get("commands.crash_command_1")));
+        TextComponent toCrashComponent = new TextComponent(toCrash);
+        toCrashComponent.setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW));
+        msg.append(toCrashComponent);
+        msg.append(new TextComponent(LanguageProvider.get("commands.crash_command_2")));
+        TextComponent secondsComponent = new TextComponent(Integer.toString(secondsToCrash));
+        secondsComponent.setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW));
+        msg.append(secondsComponent);
+        msg.append(new TextComponent(LanguageProvider.get("commands.crash_command_3")));
+        msg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
         sendClientMsg(msg);
         return 0;
     }
@@ -249,7 +257,9 @@ public class CrashAssistantCommands {
     public static boolean validateCrashArgs(List<String> args) {
         for (String arg : args) {
             if (!supportedCrashArgs.contains(arg)) {
-                sendClientMsg(Component.literal(LanguageProvider.get("commands.crash_command_validation_failed") + " '" + arg + "'").withStyle(style -> style.withColor(ChatFormatting.RED)));
+                TextComponent errorMsg = new TextComponent(LanguageProvider.get("commands.crash_command_validation_failed") + " '" + arg + "'");
+                errorMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                sendClientMsg(errorMsg);
                 return false;
             }
         }
@@ -302,17 +312,17 @@ public class CrashAssistantCommands {
             this.sb = modListDiffStringBuilder.sb;
         }
 
-        public MutableComponent toComponent() {
-            MutableComponent msg = Component.empty();
+        public TextComponent toComponent() {
+            TextComponent msg = new TextComponent("");
             for (ColoredString cs : sb) {
-                if (cs.color().isEmpty()) {
-                    msg.append(cs.text());
-                } else {
-                    msg.append(Component.literal(cs.text()).withStyle(
-                            style -> style.withColor(Enum.valueOf(ChatFormatting.class, cs.color().toUpperCase()))));
+                TextComponent part = new TextComponent(cs.text());
+                if (!cs.color().isEmpty()) {
+                    ChatFormatting color = ChatFormatting.valueOf(cs.color().toUpperCase());
+                    part.setStyle(Style.EMPTY.withColor(color));
                 }
+                msg.append(part);
                 if (cs.endsWithNewLine()) {
-                    msg.append("\n");
+                    msg.append(new TextComponent("\n"));
                 }
             }
             return msg;

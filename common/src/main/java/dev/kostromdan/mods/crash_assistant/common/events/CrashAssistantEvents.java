@@ -6,9 +6,9 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextComponent;
 
 public class CrashAssistantEvents {
     public static void onGameJoin() {
@@ -17,17 +17,20 @@ public class CrashAssistantEvents {
         }
         CrashAssistantConfig.set("greeting.shown_greeting", true);
         LanguageProvider.updateLang();
-        MutableComponent msg = Component.literal(LanguageProvider.get("text.greeting1"));
-        msg.append(Component.literal("Crash Assistant")
-                .withStyle(style -> style
-                        .withColor(ChatFormatting.LIGHT_PURPLE)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/KostromDan/Crash-Assistant"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(LanguageProvider.get("text.opens_url"))))
-                ));
-        msg.append(Component.literal(LanguageProvider.get("text.greeting2")));
+        TextComponent msg = new TextComponent(LanguageProvider.get("text.greeting1"));
+
+        // Create and style the "Crash Assistant" component
+        TextComponent crashAssistantComponent = new TextComponent("Crash Assistant");
+        Style style = Style.EMPTY
+                .withColor(ChatFormatting.LIGHT_PURPLE)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/KostromDan/Crash-Assistant"))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("text.opens_url"))));
+        crashAssistantComponent.setStyle(style);
+
+        msg.append(crashAssistantComponent);
+        msg.append(new TextComponent(LanguageProvider.get("text.greeting2")));
         msg.append(CrashAssistantCommands.getModConfigComponent());
-        msg.append(Component.literal(LanguageProvider.get("text.greeting3")));
+        msg.append(new TextComponent(LanguageProvider.get("text.greeting3")));
         CrashAssistantCommands.sendClientMsg(msg);
     }
-
 }

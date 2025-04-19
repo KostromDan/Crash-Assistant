@@ -79,7 +79,7 @@ public enum PlatformHelp {
      * @return true if OS is Linux, false otherwise
      */
     public static boolean isLinux() {
-        return OS.contains("linux");
+        return OS.contains("nux");
     }
 
     /**
@@ -88,7 +88,7 @@ public enum PlatformHelp {
      * @return true if OS is macOS, false otherwise
      */
     public static boolean isMacOS() {
-        return OS.contains("macos");
+        return OS.contains("mac");
     }
 
     /**
@@ -97,7 +97,7 @@ public enum PlatformHelp {
      * @return true if OS is Windows, false otherwise
      */
     public static boolean isWindows() {
-        return OS.contains("windows");
+        return OS.contains("win");
     }
 
     public static boolean isFabricBased() {

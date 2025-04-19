@@ -9,6 +9,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 
@@ -16,10 +17,10 @@ public class MissingEmbeddiumForOculus extends KnownCrashReason {
     public MissingEmbeddiumForOculus() {
         super(
                 LogType.LOG,
-                LanguageProvider.get("warnings.missing_embeddium_for_oculus"),
+                LanguageProvider.get("warnings.missing_embeddium_for_oculus", new HashMap<>() {{
+                    put("$LINK.EMBEDDIUM$", "Embeddium");
+                }}),
                 ".*Error loading class: net/caffeinemc/mods/sodium/api/memory/MemoryIntrinsics \\(java\\.lang\\.ClassNotFoundException: net\\.caffeinemc\\.mods\\.sodium\\.api\\.memory\\.MemoryIntrinsics\\).*"
-
-
         );
     }
 

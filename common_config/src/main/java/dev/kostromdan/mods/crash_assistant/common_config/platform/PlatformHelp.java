@@ -99,4 +99,12 @@ public enum PlatformHelp {
     public static boolean isWindows() {
         return OS.contains("windows");
     }
+
+    public static boolean isFabricBased() {
+        return platform == FABRIC || platform == QUILT;
+    }
+
+    public static boolean isForgeBased() {
+        return platform == FORGE || platform == NEOFORGE;
+    }
 }

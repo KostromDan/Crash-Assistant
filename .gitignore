@@ -29,3 +29,4 @@ local
 /crash-reports/
 win_event*.txt
 hs_err_pid-1.log
+/.architectury-transformer/*

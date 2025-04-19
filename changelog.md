@@ -1,7 +1,7 @@
 1.7.7:
 
-- Added JDK install instruction to Crate dependencies analysis if we can't locate jdeps.
-- Fixed potential issue with JAVA HOME in Crate dependencies analysis.
+- Added JDK install instruction to Create dependencies analysis if we can't locate jdeps.
+- Fixed potential issue with JAVA HOME in Create dependencies analysis.
 - Improved text of Create mod dep Analysis to be more clear and prevent potential confusion.
 - Fixed iGPU warning on linux/macos. Now should work correct.
 - Decreased heap size by 3 mb on app idle phase.

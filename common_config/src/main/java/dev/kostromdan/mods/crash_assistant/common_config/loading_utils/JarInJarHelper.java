@@ -100,7 +100,22 @@ public interface JarInJarHelper {
 
             /* ---------- Complete resource path ---------- */
             String resourcePath = osDir + '/' + archDir + "/org/lwjgl/" + fileName;
-            return LibrariesJarLocator.getLibraryJarPathFromResource(resourcePath);
+            try {
+                return LibrariesJarLocator.getLibraryJarPathFromResource(resourcePath);
+            } catch (Exception ex) { // Second attempt fallback. Mostly for 3.2.2
+                String lwjglJarPath = LibrariesJarLocator.getLibraryJarPathFromResource("org/lwjgl/system/JNI.class");
+                String lwjglJarPathWithoutJar = lwjglJarPath.substring(0, lwjglJarPath.length() - 4);
+                List<String> potentialPathStrings = new ArrayList<>();
+                potentialPathStrings.add(lwjglJarPathWithoutJar + "-natives-" + osDir + "-" + archDir + ".jar");
+                potentialPathStrings.add(lwjglJarPathWithoutJar + "-natives-" + osDir + ".jar");
+                for (String potentialPathString : potentialPathStrings) {
+                    Path finalNativesPath = Paths.get(potentialPathString);
+                    if (Files.isRegularFile(finalNativesPath)) {
+                        return finalNativesPath.toString();
+                    }
+                }
+                throw ex;
+            }
         } catch (Exception e) {
             LOGGER.warn("Error while locating LWJGL natives. No issues, but integrated‑GPU warning will be disabled. Seems like Crash Assistant issue, pls report.", e);
             return "UNDEFINED";

@@ -61,6 +61,9 @@ public class CrashAssistantApp {
             } else if ("-loaderJarName".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.loaderJarName = args[i + 1];
                 LOGGER.info("loaderJarName: {}", PlatformHelp.loaderJarName);
+            } else if ("-minecraftVersion".equals(args[i]) && i + 1 < args.length) {
+                PlatformHelp.minecraftVersion = args[i + 1];
+                LOGGER.info("minecraftVersion: {}", PlatformHelp.minecraftVersion);
             } else if ("-crashAssistantJarName".equals(args[i]) && i + 1 < args.length) {
                 crashAssistantJarName = args[i + 1];
                 LOGGER.info("crashAssistantJarName: {}", crashAssistantJarName);

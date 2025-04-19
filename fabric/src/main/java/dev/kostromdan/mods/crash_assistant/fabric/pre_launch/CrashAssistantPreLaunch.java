@@ -15,6 +15,10 @@ public class CrashAssistantPreLaunch implements PreLaunchEntrypoint {
     @Override
     public void onPreLaunch() {
         String launchTarget = FabricLoader.getInstance().getEnvironmentType().toString();
+        FabricLoader.getInstance().getModContainer("minecraft")
+                .ifPresent(container -> {
+                    PlatformHelp.minecraftVersion = container.getMetadata().getVersion().getFriendlyString();
+                });
         if (FabricLoader.getInstance().isModLoaded("quilt_loader")) {
             PlatformHelp.platform = PlatformHelp.QUILT;
         } else {

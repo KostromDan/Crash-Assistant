@@ -52,6 +52,7 @@ public interface JarInJarHelper {
                     "-parentPID", Objects.toString(ProcessHandle.current().pid()),
                     "-platform", PlatformHelp.platform.toString(),
                     "-loaderJarName", PlatformHelp.loaderJarName,
+                    "-minecraftVersion", PlatformHelp.minecraftVersion,
                     "-crashAssistantJarName", crashAssistantJarName,
                     "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),

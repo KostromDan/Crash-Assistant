@@ -111,7 +111,7 @@ public interface JarInJarHelper {
                 for (String potentialPathString : potentialPathStrings) {
                     Path finalNativesPath = Paths.get(potentialPathString);
                     if (Files.isRegularFile(finalNativesPath)) {
-                        return finalNativesPath.toString();
+                        return finalNativesPath.toAbsolutePath().toString();
                     }
                 }
                 throw ex;

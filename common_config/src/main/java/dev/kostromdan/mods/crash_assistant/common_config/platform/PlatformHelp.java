@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public enum PlatformHelp {
@@ -18,6 +19,9 @@ public enum PlatformHelp {
     private final String helpChannel;
     public static PlatformHelp platform = UNKNOWN;
     public static String loaderJarName = "UNDEFINED";
+    public static String minecraftVersion = "UNDEFINED";
+    private static final String OS = System.getProperty("os.name").toLowerCase(Locale.ROOT);
+
 
     PlatformHelp(String helpLink, String helpName, String helpChannel) {
         this.helpLink = helpLink;
@@ -67,5 +71,32 @@ public enum PlatformHelp {
                 add("fabric.mod.json");
             }};
         };
+    }
+
+    /**
+     * Checks if the current operating system is Linux.
+     *
+     * @return true if OS is Linux, false otherwise
+     */
+    public static boolean isLinux() {
+        return OS.contains("linux");
+    }
+
+    /**
+     * Checks if the current operating system is macOS.
+     *
+     * @return true if OS is macOS, false otherwise
+     */
+    public static boolean isMacOS() {
+        return OS.contains("macos");
+    }
+
+    /**
+     * Checks if the current operating system is Windows.
+     *
+     * @return true if OS is Windows, false otherwise
+     */
+    public static boolean isWindows() {
+        return OS.contains("windows");
     }
 }

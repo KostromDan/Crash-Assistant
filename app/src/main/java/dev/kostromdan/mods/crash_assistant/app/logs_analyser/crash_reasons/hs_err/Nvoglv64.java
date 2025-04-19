@@ -1,8 +1,10 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_err;
 
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 public class Nvoglv64 extends KnownCrashReason {
     public Nvoglv64() {
@@ -11,5 +13,11 @@ public class Nvoglv64 extends KnownCrashReason {
                 LanguageProvider.get("warnings.nvoglv64"),
                 "# Problematic frame:\\R# C  \\[nvoglv64\\.dll\\+0x[0-9A-Fa-f]+\\]"
         );
+    }
+
+    @Override
+    public boolean matches(String logText, Log log) {
+        if (!PlatformHelp.isWindows()) return false;
+        return super.matches(logText, log);
     }
 }

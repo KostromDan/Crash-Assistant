@@ -32,6 +32,7 @@ public class CrashAssistantTransformationService implements ITransformationServi
     public void initialize(IEnvironment environment) {
         String launchTarget = environment.getProperty(IEnvironment.Keys.LAUNCHTARGET.get()).orElse("unknown");
         PlatformHelp.platform = PlatformHelp.NEOFORGE;
+        PlatformHelp.minecraftVersion = FMLLoader.versionInfo().mcVersion();
         LibrariesJarLocator.setupLoaderJarName("neoforge-" + FMLLoader.versionInfo().neoForgeVersion());
         JarInJarHelper.launchCrashAssistantApp(launchTarget);
         JarInJarHelper.checkDuplicatedCrashAssistantMod(true);

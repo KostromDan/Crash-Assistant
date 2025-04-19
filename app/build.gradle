@@ -19,7 +19,7 @@ repositories {
     }
 }
 
-def lwjglVersion = '3.3.1'
+def lwjglVersion = '3.2.2'
 def lwjglNatives = {
     def osName = System.getProperty('os.name').toLowerCase()
     if (osName.contains('win')) {
@@ -68,6 +68,7 @@ shadowJar {
         exclude(dependency('com.google.code.gson:.*'))
         exclude(dependency('commons-io:commons-io:2.15.1'))
         exclude("windows/**")
+        exclude '**/*.dll', '**/*.so', '**/*.dylib', '**/*.sha1', '**/*.git'
     }
 }
 

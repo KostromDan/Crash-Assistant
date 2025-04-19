@@ -45,7 +45,7 @@ public class GPUDetector {
             // Iterate over devices and collect their properties
             for (int i = 0; i < devices.capacity(); i++) {
                 VkPhysicalDevice device = new VkPhysicalDevice(devices.get(i), instance);
-                VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties.calloc(stack);
+                VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties.callocStack(stack);
                 VK10.vkGetPhysicalDeviceProperties(device, properties);
 
                 String deviceName = properties.deviceNameString();
@@ -83,7 +83,7 @@ public class GPUDetector {
     private static VkInstance createVulkanInstance() {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             // Application info
-            VkApplicationInfo appInfo = VkApplicationInfo.calloc(stack)
+            VkApplicationInfo appInfo = VkApplicationInfo.callocStack(stack)
                     .sType(VK10.VK_STRUCTURE_TYPE_APPLICATION_INFO)
                     .pApplicationName(stack.UTF8("GPU Detector"))
                     .applicationVersion(VK10.VK_MAKE_VERSION(1, 0, 0))
@@ -92,7 +92,7 @@ public class GPUDetector {
                     .apiVersion(VK10.VK_API_VERSION_1_0);
 
             // Instance create info
-            VkInstanceCreateInfo createInfo = VkInstanceCreateInfo.calloc(stack)
+            VkInstanceCreateInfo createInfo = VkInstanceCreateInfo.callocStack(stack)
                     .sType(VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                     .pApplicationInfo(appInfo);
 

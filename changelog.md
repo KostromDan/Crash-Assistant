@@ -1,3 +1,9 @@
+1.7.8:
+
+- Initial 1.18.2 backport.
+- Added lwjgl natives location fallback algo.
+- Fixed one stupid mistake.
+
 1.7.7:
 
 - Added JDK install instruction to Create dependencies analysis if we can't locate jdeps.

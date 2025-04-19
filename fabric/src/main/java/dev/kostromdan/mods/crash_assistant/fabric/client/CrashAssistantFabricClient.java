@@ -9,10 +9,8 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 public final class CrashAssistantFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        // Register client commands using the v1 API
         ClientCommandManager.DISPATCHER.register(CrashAssistantCommands.getCommands());
 
-        // Register player join event
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             CrashAssistantEvents.onGameJoin();
         });

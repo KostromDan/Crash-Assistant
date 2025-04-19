@@ -75,7 +75,7 @@ public class Boot {
          * so we're doing it on this TMP process, to not waste user resources on App avaiting stage.
          */
         if (!recursiveStart) {
-            if (log4jApi != null) {
+            if (lwjglNatives != null) {
                 try {
                     Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPUDetector");
                     Method mainMethod = crashAssistantAppClass.getMethod("getSerialisedGPUs");

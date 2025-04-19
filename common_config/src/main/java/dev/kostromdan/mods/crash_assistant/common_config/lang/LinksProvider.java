@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.lang;
 
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+
 import java.util.function.Supplier;
 
 public enum LinksProvider {
@@ -13,9 +15,18 @@ public enum LinksProvider {
     C6A(() -> "https://modrinth.com/collection/uSfTuDgc"),
     ATL(() -> "https://atlauncher.com/downloads"),
     ADOPTIUM_JDK(() -> "https://adoptium.net/temurin/releases/?package=jdk"),
+    RESULTS_OF_MEMORY_DIAGNOSTICS(() -> "https://answers.microsoft.com/en-us/windows/forum/all/how-do-i-see-the-results-of-memory-diagnostic-i/36f9d014-256a-4757-927a-d85ade3b0c09"),
 
     // Mod links:
-    LITHOSTITCHED(() -> "https://www.curseforge.com/minecraft/mc-mods/lithostitched");
+    LITHOSTITCHED(() -> "https://www.curseforge.com/minecraft/mc-mods/lithostitched"),
+    MODERN_FIX(() -> "https://www.curseforge.com/minecraft/mc-mods/modernfix"),
+    FERRITE_CORE(() -> {
+        if (PlatformHelp.isForgeBased()) {
+            return "https://www.curseforge.com/minecraft/mc-mods/ferritecore";
+        }
+        return "https://www.curseforge.com/minecraft/mc-mods/ferritecore-fabric";
+    }),
+    EMBEDDIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/embeddium");
 
 
     private final Supplier<String> linkSupplier;

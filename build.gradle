@@ -29,9 +29,9 @@ subprojects { subproject ->
         var archives_name
         base {
             if (subproject.name in ['forge_coremod']) {
-                archivesName = "$rootProject.archives_name-forge-1.19.2-1.20.1"
+                archivesName = "$rootProject.archives_name-forge-1.18.2"
             } else {
-                archivesName = "$rootProject.archives_name-$project.name-1.19.2-1.21.4"
+                archivesName = "$rootProject.archives_name-$project.name-1.18.2"
             }
             archives_name = archivesName
         }

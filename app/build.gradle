@@ -61,6 +61,10 @@ jar {
 }
 
 shadowJar {
+    from("$rootDir/LICENSE") {
+        rename { "CRASH_ASSISTANT_LICENSE" }
+        into ""
+    }
     dependsOn(':common_config:build')
     archiveClassifier.set('')
     dependencies {

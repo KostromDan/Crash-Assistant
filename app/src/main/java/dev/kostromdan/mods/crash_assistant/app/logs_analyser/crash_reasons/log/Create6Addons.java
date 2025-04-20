@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.CreateDependencies;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
+import dev.kostromdan.mods.crash_assistant.app.utils.maven_version_cmp.VersionUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
@@ -35,6 +36,9 @@ public class Create6Addons extends KnownCrashReason {
 
     @Override
     public boolean matches(String logText, Log log) {
+        if (VersionUtils.isLower(PlatformHelp.minecraftVersion, "1.20")) {
+            return false;
+        }
         if (CrashAssistantApp.gameLaunchedSuccessfully) {
             return false;
         }

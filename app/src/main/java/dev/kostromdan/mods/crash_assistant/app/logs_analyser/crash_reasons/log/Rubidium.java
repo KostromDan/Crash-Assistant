@@ -22,8 +22,6 @@ public class Rubidium extends KnownCrashReason {
 
     @Override
     public boolean matches(String logText, Log log) {
-        if(true)return true;
-
         return ModListUtils.getCurrentModList(true).stream().anyMatch(mod -> Objects.equals(mod.getModId(), "rubidium"));
     }
 }

@@ -36,7 +36,6 @@ public class Create6Addons extends KnownCrashReason {
 
     @Override
     public boolean matches(String logText, Log log) {
-        if(true)return true;
         if (VersionUtils.isLower(PlatformHelp.minecraftVersion, "1.20")) {
             return false;
         }

@@ -38,6 +38,7 @@ public class CrashAssistantApp {
     public static String crashAssistantJarName = null;
     public static String renderer = null;
     public static boolean gameLaunchedSuccessfully = false;
+    public static boolean joinedWorldSuccessfully = false;
     public static long terminatedProcessesLocationEndTime = 0;
 
 
@@ -259,6 +260,9 @@ public class CrashAssistantApp {
 
         gameLaunchedSuccessfully = ProcessSignalIO.exists("successful_launch", parentPID);
         LOGGER.info("Reached first tick of TitleScreen: {}", gameLaunchedSuccessfully);
+
+        joinedWorldSuccessfully = ProcessSignalIO.exists("joined_world", parentPID);
+        LOGGER.info("Joined world successfully: {}", joinedWorldSuccessfully);
 
 
         startLocatingTerminatedProcesses();

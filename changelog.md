@@ -1,3 +1,13 @@
+1.7.9:
+
+- Pass Minecraft version to app process, to be used in analysis.
+- Create6Addons now checking version larger 1.20
+- Added maven version comparator to be used in analysis.
+- Checking OS on OS specific Crash Reasons to optimise analysis.
+- Added links to all mods which we recommend in analysis.
+  Now you can click to mod and go to mod page.
+- Small fixes and improvements.
+
 1.7.8:
 
 - Initial 1.18.2 backport.

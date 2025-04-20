@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common.events;
 
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
 import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommands;
+import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import net.minecraft.ChatFormatting;
@@ -14,6 +15,7 @@ import java.net.URI;
 
 public class CrashAssistantEvents {
     public static void onGameJoin() {
+        ProcessSignalIO.post("joined_world");
         if (!CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname) || CrashAssistantConfig.getBoolean("greeting.shown_greeting")) {
             return;
         }

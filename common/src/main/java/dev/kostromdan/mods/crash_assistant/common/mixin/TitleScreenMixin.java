@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common.mixin;
 
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
+import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import net.minecraft.client.gui.screens.TitleScreen;
@@ -9,10 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Mixin(TitleScreen.class)
 public class TitleScreenMixin {
@@ -31,11 +28,6 @@ public class TitleScreenMixin {
             }
         }
 
-        String successfulLaunchFileName = "successful_launch_pid" + ProcessHandle.current().pid() + ".tmp";
-        Path successfulLaunchFilePath = Paths.get("local", "crash_assistant", successfulLaunchFileName);
-        try {
-            Files.write(successfulLaunchFilePath, Long.toString(System.currentTimeMillis()).getBytes());
-        } catch (IOException ignored) {
-        }
+        ProcessSignalIO.post("successful_launch");
     }
 }

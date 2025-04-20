@@ -8,6 +8,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPU;
 import dev.kostromdan.mods.crash_assistant.app.utils.gpu.RendererType;
+import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -114,9 +115,7 @@ public class CrashAssistantApp {
     }
 
     private static boolean checkLoadingErrorScreen() {
-        Path loadingErrorFML = Paths.get("local", "crash_assistant", "loading_error_fml" + parentPID + ".tmp");
-
-        if (loadingErrorFML.toFile().exists()) {
+        if (ProcessSignalIO.exists("loading_error_fml", parentPID)) {
             LOGGER.info("Detected FML error modloading screen.");
             if (CrashAssistantConfig.getBoolean("general.show_on_fml_error_screen")) {
                 onMinecraftFinished();
@@ -129,11 +128,11 @@ public class CrashAssistantApp {
     private static void checkRendererFile() {
         if (renderer != null) return;
         if (Boot.serialisedGPUs == null) return;
-        Path rendererPath = Paths.get("local", "crash_assistant", "renderer" + parentPID + ".tmp");
+        Optional<String> potentialRenderer = ProcessSignalIO.get("renderer", parentPID);
 
-        if (rendererPath.toFile().exists()) {
+        if (potentialRenderer.isPresent()) {
             try {
-                renderer = new String(Files.readAllBytes(rendererPath));
+                renderer = potentialRenderer.get();
                 LOGGER.info("Detected renderer: {}", renderer);
                 LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
 
@@ -254,16 +253,11 @@ public class CrashAssistantApp {
 
         LogsList.addIfExistsAndModified(new Log(LogType.CRASH_ASSISTANT, Paths.get("logs", "crash_assistant", "crash_assistant_app.log")));
 
-
-        String normalStopFileName = "normal_stop_pid" + parentPID + ".tmp";
-        Path normalStopFilePath = Paths.get("local", "crash_assistant", normalStopFileName);
-        if (!(Files.exists(normalStopFilePath) && Files.isRegularFile(normalStopFilePath))) {
+        if (!ProcessSignalIO.exists("normal_stop", parentPID)) {
             crashed = true;
         }
 
-        String successfulLaunchFileName = "successful_launch_pid" + parentPID + ".tmp";
-        Path successfulLaunchFilePath = Paths.get("local", "crash_assistant", successfulLaunchFileName);
-        gameLaunchedSuccessfully = Files.exists(successfulLaunchFilePath) && Files.isRegularFile(successfulLaunchFilePath);
+        gameLaunchedSuccessfully = ProcessSignalIO.exists("successful_launch", parentPID);
         LOGGER.info("Reached first tick of TitleScreen: {}", gameLaunchedSuccessfully);
 
 

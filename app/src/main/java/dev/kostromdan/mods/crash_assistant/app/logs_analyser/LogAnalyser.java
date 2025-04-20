@@ -147,6 +147,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new MissingEmbeddiumForOculus());
         registerKnownCrashReason(new OutOfMemoryError());
         registerKnownCrashReason(new ResourceLocationException());
+        registerKnownCrashReason(new Rubidium());
 
         registerKnownCrashReason(new WasClosedByWindows());
 

@@ -1,30 +1,18 @@
 package dev.kostromdan.mods.crash_assistant.neoforge.mixin;
 
-import com.electronwill.nightconfig.core.Config;
+import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import net.neoforged.neoforge.client.gui.LoadingErrorScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import com.electronwill.nightconfig.core.AbstractCommentedConfig;
 
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Mixin(LoadingErrorScreen.class)
 public class LoadingErrorScreenMixin {
     @Inject(method = "init", at = @At("RETURN"), cancellable = false)
     private void OnErrorScreenInit(CallbackInfo ci) {
-        String loadingErrorFileName = "loading_error_fml" + ProcessHandle.current().pid() + ".tmp";
-        Path loadingErrorFilePath = Paths.get("local", "crash_assistant", loadingErrorFileName);
-        try {
-            Files.write(loadingErrorFilePath, Long.toString(System.currentTimeMillis()).getBytes());
-        } catch (IOException ignored) {
-        }
-        AbstractCommentedConfig c = null;
-
+        ProcessSignalIO.post("loading_error_fml");
     }
 }

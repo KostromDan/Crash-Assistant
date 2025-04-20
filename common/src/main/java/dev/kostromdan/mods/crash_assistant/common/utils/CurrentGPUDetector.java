@@ -1,10 +1,8 @@
 package dev.kostromdan.mods.crash_assistant.common.utils;
 
+import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import org.lwjgl.opengl.GL11C;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public interface CurrentGPUDetector {
     static void writeCurrentGPU() {
@@ -13,9 +11,7 @@ public interface CurrentGPUDetector {
             if (renderer == null) {
                 return;
             }
-            String rendererFileName = "renderer" + ProcessHandle.current().pid() + ".tmp";
-            Path rendererFilePath = Paths.get("local", "crash_assistant", rendererFileName);
-            Files.write(rendererFilePath, renderer.getBytes());
+            ProcessSignalIO.post("renderer", renderer);
         } catch (Exception ignored) {
         }
     }

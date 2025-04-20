@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
+import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import org.apache.logging.log4j.LogManager;
@@ -12,13 +13,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class ModListUtils {
     public static final Logger LOGGER = LogManager.getLogger();
-    public static final Path USERNAME_FILE = Paths.get("local", "crash_assistant", "username.info");
     private static final Path MODS_FOLDER = Paths.get("mods");
     private static final Path RESOURCEPACKS_FOLDER = Paths.get("resourcepacks");
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
@@ -105,11 +106,9 @@ public class ModListUtils {
     }
 
     public static String getCurrentUsername() {
-        if (currentUsername.isEmpty() && Files.exists(ModListUtils.USERNAME_FILE)) {
-            try {
-                currentUsername = new String(Files.readAllBytes(ModListUtils.USERNAME_FILE));
-            } catch (Exception ignored) {
-            }
+        if (currentUsername.isEmpty()) {
+            Optional<String> x = ProcessSignalIO.getInfo("username");
+            x.ifPresent(s -> currentUsername = s);
         }
         return currentUsername;
     }

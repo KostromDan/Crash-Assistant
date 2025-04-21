@@ -22,6 +22,8 @@ public class LogProcessor {
     boolean lineCountInterrupted = false;
     List<String> firstLines;
     List<String> lastLines;
+    List<String> allLinesListCached;
+    String allLinesStringCached;
     Path logPath;
     boolean isLogProcessed = false;
     long sizeOnLastRead = -1;
@@ -122,14 +124,31 @@ public class LogProcessor {
         return lastLines == null ? null : String.join("\n", lastLines);
     }
 
-    public String getAllLinesString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getFirstLinesString());
-        String lastLinesString = getLastLinesString();
-        if (lastLinesString != null) {
-            builder.append("\n").append(lastLinesString);
+    public synchronized String getAllLinesString() {
+        synchronized (this) {
+            if (allLinesStringCached == null) {
+                allLinesStringCached = String.join("\n", getAllLinesList());
+            }
+            return allLinesStringCached;
         }
-        return builder.toString();
+    }
+
+    public synchronized List<String> getAllLinesList() {
+        synchronized (this) {
+            if (allLinesListCached == null) {
+                allLinesListCached = new ArrayList<>();
+                allLinesListCached.addAll(firstLines);
+                if (lastLines != null) allLinesListCached.addAll(lastLines);
+            }
+            return allLinesListCached;
+        }
+    }
+
+    public synchronized void destroyAllLinesCache() {
+        synchronized (this) {
+            allLinesStringCached = null;
+            allLinesListCached = null;
+        }
     }
 
     public int getCountedLines() {

@@ -7,6 +7,25 @@ import java.util.Collection;
 import java.util.regex.Pattern;
 
 public class RegexChecker {
+    public static boolean logContainsOneOfPatterns(Log log, Collection<String> patterns) {
+        if (patterns == null) {
+            return false;
+        }
+        return logContainsOneOfPatterns(log, patterns.toArray(new String[0]));
+    }
+
+    public static boolean logContainsOneOfPatterns(Log log, String... patterns) {
+        if (patterns.length == 0 || !log.getFile().isFile()) {
+            return false;
+        }
+        try {
+            return logContainsOneOfPatterns(log.getProcessor().getAllLinesString(), log.getPath(), patterns);
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error while reading " + log.getFileName() + " file: ", e);
+            return false;
+        }
+    }
+
     public static boolean logContainsOneOfPatterns(String logContents, Path logFile, Collection<String> patterns) {
         if (patterns == null) {
             return false;

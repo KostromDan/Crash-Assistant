@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class LogAnalysisUtils {
-    static Optional<String> problematicFrame = null;
+    public static Optional<String> problematicFrame = null;
 
     public static synchronized Optional<String> getProblematicFrameString(Log log) {
         ifBlock:

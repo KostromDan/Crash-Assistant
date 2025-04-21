@@ -21,7 +21,7 @@ public class CtovWithoutLithostitched extends KnownCrashReason {
     }
 
     @Override
-    public boolean matches(String logText, Log log) {
+    public boolean matches(Log log) {
         if (CrashAssistantApp.gameLaunchedSuccessfully) return false;
         if (ModListUtils.getCurrentModList(true).stream().noneMatch(mod -> Objects.equals(mod.getModId(), "ctov"))) {
             return false;

@@ -2,10 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -364,6 +361,16 @@ public class ControlPanel {
             sb.append(String.join("\n" + ModListDiff.getFilePrefix(), logs));
         }
         sb.append("\n");
+
+        if (CrashAssistantConfig.getBoolean("generated_message.put_problematic_frame_to_message")) {
+            if (LogAnalysisUtils.problematicFrame.isPresent()) {
+                sb.append("```java\n");
+                sb.append("# Problematic frame:\n");
+                sb.append(LogAnalysisUtils.problematicFrame.get());
+                sb.append("\n```");
+            }
+
+        }
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             sb.append("\n");
             ModListDiff modListDiff = ModListDiff.getDiff(true);

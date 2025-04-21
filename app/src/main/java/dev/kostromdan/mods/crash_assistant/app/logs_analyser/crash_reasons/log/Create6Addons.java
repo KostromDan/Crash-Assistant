@@ -35,7 +35,7 @@ public class Create6Addons extends KnownCrashReason {
     }
 
     @Override
-    public boolean matches(String logText, Log log) {
+    public boolean matches(Log log) {
         if (VersionUtils.isLower(PlatformHelp.minecraftVersion, "1.20")) {
             return false;
         }
@@ -57,7 +57,7 @@ public class Create6Addons extends KnownCrashReason {
                         .anyMatch(mod -> Objects.equals(mod.getModId(), "railways"))) {
             return true;
         }
-        return super.matches(logText, log);
+        return super.matches(log);
 
     }
 }

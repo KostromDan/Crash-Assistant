@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_e
 
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalysisUtils;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -15,14 +16,13 @@ public class MacJDK extends KnownCrashReason {
                 LanguageProvider.get("warnings.macjdk", new HashMap<>() {{
                     put("$LINK.AZUL_DOWNLOAD$", LanguageProvider.get("warnings_common.here"));
                     put("$LINK.ATL$", "ATLauncher");
-                }}),
-                "# Problematic frame:\\R# v  ~StubRoutines::SafeFetch32"
+                }})
         );
     }
 
     @Override
-    public boolean matches(String logText, Log log) {
+    public boolean matches(Log log) {
         if (!PlatformHelp.isMacOS()) return false;
-        return super.matches(logText, log);
+        return LogAnalysisUtils.hsErrContainsOneOfFrames(log, "~StubRoutines::SafeFetch32");
     }
 }

@@ -19,10 +19,10 @@ public class ResourceLocationException extends KnownCrashReason {
     }
 
     @Override
-    public boolean matches(String logText, Log log) {
+    public boolean matches(Log log) {
         if (ModListUtils.getCurrentModList(true).stream().noneMatch(mod -> Objects.equals(mod.getModId(), "modular_machinery_reborn"))) {
             return false;
         }
-        return super.matches(logText, log);
+        return super.matches(log);
     }
 }

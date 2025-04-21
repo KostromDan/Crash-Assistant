@@ -71,7 +71,7 @@ public class LogAnalyser {
                 if (registeredReasons.stream().noneMatch(reason ->
                         reason.getLogTypes().contains(log.getType()))) continue;
                 pool.submit(() -> {
-                    log.getProcessor().processLogFileSafe();
+                    log.getReader().readLogFileSafe();
                 });
             }
 
@@ -85,7 +85,7 @@ public class LogAnalyser {
                 CrashAssistantApp.LOGGER.error("Interrupted while awaiting termination of reading tasks", e);
             }
             for (Log log : LogsList.getLogs()) {
-                log.getProcessor().destroyAllLinesCache();
+                log.getReader().destroyAllLinesCache();
             }
             CrashAssistantApp.LOGGER.info("Reading finished in {} ms", System.currentTimeMillis() - startTime);
         }

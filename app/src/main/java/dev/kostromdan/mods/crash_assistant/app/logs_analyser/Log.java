@@ -1,7 +1,5 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
-import dev.kostromdan.mods.crash_assistant.app.utils.LogProcessor;
-
 import java.io.File;
 import java.nio.file.Path;
 
@@ -9,7 +7,7 @@ public class Log {
     private final String name;
     private final Path path;
     private final LogType type;
-    private final LogProcessor processor;
+    private final LogReader reader;
     private String linkToUploadedFirstLines = null;
     private String linkToUploadedLastLines = null;
     private boolean isAnalysed = false;
@@ -19,7 +17,7 @@ public class Log {
         this.name = name;
         this.path = path;
         this.type = type;
-        this.processor = new LogProcessor(path);
+        this.reader = new LogReader(path);
     }
 
     public Log(LogType type, Path path) {
@@ -46,8 +44,8 @@ public class Log {
         return type;
     }
 
-    public LogProcessor getProcessor() {
-        return processor;
+    public LogReader getReader() {
+        return reader;
     }
 
     public boolean isLogUploaded() {

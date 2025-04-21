@@ -19,7 +19,7 @@ public class RegexChecker {
             return false;
         }
         try {
-            return logContainsOneOfPatterns(log.getProcessor().getAllLinesString(), log.getPath(), patterns);
+            return logContainsOneOfPatterns(log.getReader().getAllLinesString(), log.getPath(), patterns);
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while reading " + log.getFileName() + " file: ", e);
             return false;

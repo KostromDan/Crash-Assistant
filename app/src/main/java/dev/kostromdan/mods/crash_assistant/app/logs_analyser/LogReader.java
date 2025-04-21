@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.app.utils;
+package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import org.apache.commons.io.input.ReversedLinesFileReader;
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class LogProcessor {
+public class LogReader {
     final static int maxUploadLines = 25000;
     final static int maxUploadLength = 10485760;
     int countedLines = 0;
@@ -28,13 +28,13 @@ public class LogProcessor {
     boolean isLogProcessed = false;
     long sizeOnLastRead = -1;
 
-    public LogProcessor(Path logPath) {
+    public LogReader(Path logPath) {
         this.firstLines = new ArrayList<>(maxUploadLines);
         this.lastLines = null;
         this.logPath = logPath;
     }
 
-    public synchronized void processLogFile(boolean checkUpdated) throws IOException {
+    public synchronized void readLogFile(boolean checkUpdated) throws IOException {
         if (isLogProcessed && (!checkUpdated || Files.size(logPath) == sizeOnLastRead)) {
             return;
         }
@@ -91,9 +91,9 @@ public class LogProcessor {
         isLogProcessed = true;
     }
 
-    public synchronized void processLogFileSafe() {
+    public synchronized void readLogFileSafe() {
         try {
-            processLogFile(false);
+            readLogFile(false);
         } catch (IOException e) {
             CrashAssistantApp.LOGGER.info("Error processing log file", e);
         }

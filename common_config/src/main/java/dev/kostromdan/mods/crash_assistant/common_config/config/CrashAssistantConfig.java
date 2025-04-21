@@ -126,6 +126,9 @@ public class CrashAssistantConfig {
                         "Supports html formatting, placeholders.\n" +
                         "Leave empty to prevent showing this warning message.",
                 "");
+        addOption("generated_message.put_problematic_frame_to_message",
+                "Puts problematic frame from hs_err to message.",
+                true);
 
         config.setComment("modpack_modlist", "Settings of modlist feature.\n" +
                 "Adds in generated msg block about which mods modpack user added/removed/updated.\n" +

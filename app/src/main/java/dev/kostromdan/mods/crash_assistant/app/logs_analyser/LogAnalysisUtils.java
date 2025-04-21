@@ -13,7 +13,7 @@ public class LogAnalysisUtils {
                 problematicFrame = Optional.empty();
                 break ifBlock;
             }
-            List<String> lines = log.getProcessor().getAllLinesList();
+            List<String> lines = log.getReader().getAllLinesList();
             boolean found = false;
             for (String line : lines) {
                 if (found) {

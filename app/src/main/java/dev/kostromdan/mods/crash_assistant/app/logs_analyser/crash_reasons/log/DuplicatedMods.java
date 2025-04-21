@@ -20,7 +20,7 @@ public class DuplicatedMods extends KnownCrashReason {
     public boolean matches(Log log) {
         if (CrashAssistantApp.gameLaunchedSuccessfully) return false;
 //        if (PlatformHelp.platform != PlatformHelp.FORGE) return false;
-        List<String> lines = log.getProcessor().getAllLinesList();
+        List<String> lines = log.getReader().getAllLinesList();
         boolean found = false;
         boolean exception = false;
         String modsLine = null;

@@ -37,7 +37,7 @@ public class WasClosedByWindows extends KnownCrashReason {
 
     @Override
     public boolean matches(Log log) {
-        log.getProcessor().processLogFileSafe();
-        return RegexChecker.logContainsOneOfPatterns(removeSpacesAndEndLines(log.getProcessor().getAllLinesString()), log.getPath(), patterns);
+        log.getReader().readLogFileSafe();
+        return RegexChecker.logContainsOneOfPatterns(removeSpacesAndEndLines(log.getReader().getAllLinesString()), log.getPath(), patterns);
     }
 }

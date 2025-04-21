@@ -168,11 +168,11 @@ public class FilePanel {
                     }
 
                     uploadButton.setText(LanguageProvider.get("gui.preprocessing"));
-                    log.getProcessor().processLogFile(true);
+                    log.getReader().readLogFile(true);
                     uploadButton.setText(oldText);
-                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = McLogsApiProvider.getMcLogsClient().uploadLog(log.getProcessor().getFirstLinesString());
+                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = McLogsApiProvider.getMcLogsClient().uploadLog(log.getReader().getFirstLinesString());
 
-                    String lastLines = log.getProcessor().getLastLinesString();
+                    String lastLines = log.getReader().getLastLinesString();
                     if (lastLines != null) {
                         CompletableFuture<UploadLogResponse> completableResponseLastLines = McLogsApiProvider.getMcLogsClient().uploadLog(lastLines);
                         UploadLogResponse responseLastLines = completableResponseLastLines.get();
@@ -272,9 +272,9 @@ public class FilePanel {
         List<String> tooBigReasons = new ArrayList<>();
         if (size > 10 * 1024 * 1024)
             tooBigReasons.add("~" + size / (1024 * 1024) + langFunc.apply("msg.mb"));
-        if (log.getProcessor().getCountedLines() > 25000)
-            tooBigReasons.add((log.getProcessor().isLineCountInterrupted() ? langFunc.apply("msg.over") + " " : "~") +
-                    log.getProcessor().getCountedLines() / 1000 + langFunc.apply("msg.k_lines"));
+        if (log.getReader().getCountedLines() > 25000)
+            tooBigReasons.add((log.getReader().isLineCountInterrupted() ? langFunc.apply("msg.over") + " " : "~") +
+                    log.getReader().getCountedLines() / 1000 + langFunc.apply("msg.k_lines"));
         return tooBigReasons.isEmpty() ? "" : "(" + String.join(" & ", tooBigReasons) + ")";
     }
 

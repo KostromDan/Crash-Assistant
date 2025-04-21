@@ -1,3 +1,15 @@
+1.7.10:
+
+- Include problematic frame to generated message. New config option for this.
+- Rename LogProcessor to LogReader.
+- Started redesign of log analysis. Now takes less time.
+- New Rubidium warn. 
+- Improved create mod deps formulations.
+- Improve JVM.dll warn text.
+- Display mod change recommendations to modpack creators.
+- Created joinedWorldSuccessfully boolean to be used in analysis.
+- Move process interaction logic to ProcessSignalIO, to remove duplicated code and make it simpler..
+
 1.7.9:
 
 - Pass Minecraft version to app process, to be used in analysis.

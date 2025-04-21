@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_e
 
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalysisUtils;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -16,14 +17,13 @@ public class Jvm extends KnownCrashReason {
                             put("$LINK.RESULTS_OF_MEMORY_DIAGNOSTICS$", LanguageProvider.get("warnings_common.instruction"));
                         }})
                         .replace("$HALF_OF_PROCESSORS$",
-                                String.valueOf(Runtime.getRuntime().availableProcessors() / 2)),
-                "# Problematic frame:\\R# V  \\[jvm\\.dll\\+0x[0-9a-fA-F]+\\]"
+                                String.valueOf(Runtime.getRuntime().availableProcessors() / 2))
         );
     }
 
     @Override
-    public boolean matches(String logText, Log log) {
+    public boolean matches(Log log) {
         if (!PlatformHelp.isWindows()) return false;
-        return super.matches(logText, log);
+        return LogAnalysisUtils.hsErrContainsOneOfFrames(log, "jvm.dll");
     }
 }

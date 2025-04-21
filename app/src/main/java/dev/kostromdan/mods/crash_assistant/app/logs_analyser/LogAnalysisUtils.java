@@ -4,13 +4,14 @@ import java.util.List;
 import java.util.Optional;
 
 public class LogAnalysisUtils {
-    public static Optional<String> problematicFrame = null;
+    public static boolean analysedForProblematicFrame = false;
+    public static Optional<String> problematicFrame = Optional.empty();
 
     public static synchronized Optional<String> getProblematicFrameString(Log log) {
         ifBlock:
-        if (problematicFrame == null) {
+        if (!analysedForProblematicFrame) {
+            analysedForProblematicFrame = true;
             if (log.getType() != LogType.HS_ERR) {
-                problematicFrame = Optional.empty();
                 break ifBlock;
             }
             List<String> lines = log.getReader().getAllLinesList();
@@ -24,7 +25,6 @@ public class LogAnalysisUtils {
                     found = true;
                 }
             }
-            problematicFrame = Optional.empty();
         }
         return problematicFrame;
     }

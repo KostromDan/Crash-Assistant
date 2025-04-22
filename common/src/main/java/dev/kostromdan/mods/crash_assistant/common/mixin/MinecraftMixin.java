@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.common.mixin;
 
+import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
 import dev.kostromdan.mods.crash_assistant.common.utils.CurrentGPUDetector;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import net.minecraft.client.Minecraft;
@@ -22,7 +23,8 @@ public class MinecraftMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"), cancellable = false)
     private void afterInit(CallbackInfo ci) {
-        ProcessSignalIO.postInfo("username", Minecraft.getInstance().getUser().getName());
+        CrashAssistant.playerNickname = Minecraft.getInstance().getUser().getName();
+        ProcessSignalIO.postInfo("username", CrashAssistant.playerNickname);
         CurrentGPUDetector.writeCurrentGPU();
     }
 }

@@ -336,10 +336,24 @@ public class CrashAssistantGUI {
     }
 
     public static JEditorPane getEditorPane(String text, boolean wrap) {
+        return getEditorPane(text, wrap, null);
+    }
+
+    public static JEditorPane getEditorPane(String text, boolean wrap, Integer width) {
         JEditorPane pane = new JEditorPane();
         pane.setEditable(false);
         pane.setContentType("text/html");
-        pane.setText("<html><div " + (wrap ? "" : "style='white-space:nowrap;'") + ">" + text.replaceAll("\n", "<br>") + "</div></html>");
+        StringBuilder html = new StringBuilder();
+        html.append("<html>");
+        if (width != null) {
+            html.append("<body style='width:" + width + "px;'>");
+        }
+        html.append("<div " + (wrap ? "" : "style='white-space:nowrap;'") + ">" + text.replaceAll("\n", "<br>") + "</div>");
+        if (width != null) {
+            html.append("</body>");
+        }
+        html.append("</html>");
+        pane.setText(html.toString());
 
         Font defaultFont = UIManager.getFont("Label.font");
         String bodyRule = "body { font-family: " + defaultFont.getFamily() + "; " +

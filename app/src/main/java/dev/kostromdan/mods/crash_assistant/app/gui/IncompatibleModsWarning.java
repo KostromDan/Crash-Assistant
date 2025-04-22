@@ -43,7 +43,7 @@ public class IncompatibleModsWarning {
                                 parent,
                                 CrashAssistantGUI.getEditorPane(
                                         (problematicMod.msg()).replaceAll("\\$JAR_NAME\\$", problematicMod.currentMod().getJarName()),
-                                        false
+                                        true, 600
                                 ),
                                 LanguageProvider.get("gui.incompatible_mod"),
                                 JOptionPane.DEFAULT_OPTION,

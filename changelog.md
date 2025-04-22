@@ -1,9 +1,16 @@
+1.7.11:
+
+- Fixed 1.7.10 crash bc I accidentally removed one line of code, while was getting rig of duplicated inter process
+  communication code.
+- Fixed too long lines without manually \n in problematic mods config warn displayed too long.
+- Fixed I forgot to uncomment one line in DuplicatedMods before release.
+
 1.7.10:
 
 - Include problematic frame to generated message. New config option for this.
 - Rename LogProcessor to LogReader.
 - Started redesign of log analysis. Now takes less time.
-- New Rubidium warn. 
+- New Rubidium warn.
 - Improved create mod deps formulations.
 - Improve JVM.dll warn text.
 - Display mod change recommendations to modpack creators.

@@ -146,6 +146,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new CurseForgeCorrupted());
         registerKnownCrashReason(new DiskSpaceEnded());
         registerKnownCrashReason(new DuplicatedMods());
+        registerKnownCrashReason(new KubeJSDataPack());
         registerKnownCrashReason(new MissingEmbeddiumForOculus());
         registerKnownCrashReason(new MissingUnsupportedDependencies());
         registerKnownCrashReason(new ModernFixWatchDog());

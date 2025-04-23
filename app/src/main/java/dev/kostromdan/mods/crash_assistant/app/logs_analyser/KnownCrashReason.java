@@ -7,6 +7,8 @@ public class KnownCrashReason {
     protected HashSet<LogType> logTypes;
     protected List<String> patterns;
     protected String message;
+    protected int priority;
+    protected HashSet<String> conflictingReasons = new HashSet<>();
     public static HashSet<KnownCrashReason> shownKnownCrashReasons = new HashSet<>();
 
     protected KnownCrashReason(LogType logType, String message, List<String> patterns) {
@@ -47,6 +49,14 @@ public class KnownCrashReason {
 
     public String getMessage() {
         return message;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public HashSet<String> getConflictingReasons() {
+        return conflictingReasons;
     }
 
     public boolean matches(Log log) {

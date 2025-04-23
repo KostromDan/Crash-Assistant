@@ -225,6 +225,16 @@ public class CrashAssistantGUI {
                     for (KnownCrashReasonMessage crashReason : KnownCrashReasonMessage.getAllMessages()) {
                         if (crashReason.isShownWarn()) continue;
                         if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason.getReason())) continue;
+                        HashSet<String> conflictingReasons = crashReason.getReason().getConflictingReasons();
+                        if (!conflictingReasons.isEmpty() &&
+                                KnownCrashReason.shownKnownCrashReasons.stream()
+                                        .anyMatch(x -> conflictingReasons
+                                                .contains(x.getClass().getSimpleName()))) {
+                            CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}",
+                                    crashReason.getReason().getClass().getSimpleName());
+                            continue;
+                        }
+
                         KnownCrashReason.shownKnownCrashReasons.add(crashReason.getReason());
                         CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
                                 crashReason.getReason().getClass().getSimpleName(),

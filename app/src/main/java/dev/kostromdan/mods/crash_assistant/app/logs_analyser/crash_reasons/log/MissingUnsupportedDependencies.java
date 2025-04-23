@@ -11,7 +11,6 @@ import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 public class MissingUnsupportedDependencies extends KnownCrashReason {
     public MissingUnsupportedDependencies() {

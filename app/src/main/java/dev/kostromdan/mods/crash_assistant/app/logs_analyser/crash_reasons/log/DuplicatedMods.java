@@ -20,7 +20,7 @@ public class DuplicatedMods extends KnownCrashReason {
     @Override
     public boolean matches(Log log) {
         if (CrashAssistantApp.gameLaunchedSuccessfully) return false;
-        if (PlatformHelp.platform != PlatformHelp.FORGE) return false;
+        if (!PlatformHelp.isForgeBased()) return false;
         List<String> lines = log.getReader().getAllLinesList();
         String modsLine = null;
         for (int i = 0; i < lines.size(); i++) {
@@ -30,7 +30,7 @@ public class DuplicatedMods extends KnownCrashReason {
                     modsLine = lines.get(i + 1);
                 }
             }
-            if (modsLine != null && line.contains("EarlyLoadingException: Duplicate mods found")) {
+            if (modsLine != null && (line.contains("EarlyLoadingException: Duplicate mods found") || line.contains("ModLoadingException"))) {
                 message = message.replace("$LINE_FROM_LOG$", modsLine);
                 return true;
             }

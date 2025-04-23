@@ -5,8 +5,10 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ModernFixWatchDog extends KnownCrashReason {
     public ModernFixWatchDog() {
@@ -19,6 +21,7 @@ public class ModernFixWatchDog extends KnownCrashReason {
     @Override
     public boolean matches(Log log) {
         if (!CrashAssistantApp.gameLaunchedSuccessfully) return false;
+        if (ModListUtils.getCurrentModList(true).stream().noneMatch(mod -> Objects.equals(mod.getModId(), "modernfix"))) return false;
         List<String> lines = log.getReader().getAllLinesList();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);

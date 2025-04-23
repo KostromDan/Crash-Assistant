@@ -147,6 +147,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new DiskSpaceEnded());
         registerKnownCrashReason(new DuplicatedMods());
         registerKnownCrashReason(new MissingEmbeddiumForOculus());
+        registerKnownCrashReason(new MissingUnsupportedDependencies());
         registerKnownCrashReason(new ModernFixWatchDog());
         registerKnownCrashReason(new OutOfMemoryError());
         registerKnownCrashReason(new ResourceLocationException());

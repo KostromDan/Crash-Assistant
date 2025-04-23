@@ -5,13 +5,18 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import gs.mclo.api.response.insights.Problem;
 import gs.mclo.api.response.insights.Solution;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class KnownCrashReasonMessage {
-    private static final List<KnownCrashReasonMessage> crashReasonMessages = Collections.synchronizedList(new ArrayList<>());
+    private static final Comparator<KnownCrashReasonMessage> CRASH_REASON_COMPARATOR = Comparator
+            .comparingInt((KnownCrashReasonMessage msg) -> msg.getReason().getPriority())
+            .reversed()
+            .thenComparing(msg -> msg.getReason().getClass().getSimpleName().toLowerCase())
+            .thenComparing(System::identityHashCode);
+    private static final SortedSet<KnownCrashReasonMessage> crashReasonMessages =
+            Collections.synchronizedSortedSet(
+                    new TreeSet<>(CRASH_REASON_COMPARATOR)
+            );
     private boolean shownWarn;
     private final Log log;
     private final KnownCrashReason reason;
@@ -39,7 +44,7 @@ public class KnownCrashReasonMessage {
         return reason;
     }
 
-    public static List<KnownCrashReasonMessage> getAllMessages() {
+    public static Set<KnownCrashReasonMessage> getAllMessages() {
         return crashReasonMessages;
     }
 

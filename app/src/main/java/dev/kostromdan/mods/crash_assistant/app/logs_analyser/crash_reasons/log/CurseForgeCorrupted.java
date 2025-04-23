@@ -19,13 +19,12 @@ public class CurseForgeCorrupted extends KnownCrashReason {
                 "Missing or unsupported mandatory dependencies:\\R\\s*Mod ID: 'neoforge', Requested by: .*?, Actual version: '\\[MISSING\\]'",
                 "Error loading class: net/minecraft/world/level/biome/Biome \\(java\\.lang\\.IllegalStateException: Unable to find method \\(\\)Lnet/minecraft/world/level/biome/"
         );
+        this.priority = 2000;
     }
 
     @Override
     public boolean matches(Log log) {
-        if (!FileUtils.isCurseForgeEnv()) {
-            return false;
-        }
+        if (!FileUtils.isCurseForgeEnv()) return false;
         return super.matches(log);
     }
 }

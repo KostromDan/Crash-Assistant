@@ -31,7 +31,7 @@ public class DuplicatedMods extends KnownCrashReason {
                 }
             }
             if (modsLine != null && line.contains("EarlyLoadingException: Duplicate mods found")) {
-                message = message.replace("$MODS_LINE$", modsLine);
+                message = message.replace("$LINE_FROM_LOG$", modsLine);
                 return true;
             }
         }

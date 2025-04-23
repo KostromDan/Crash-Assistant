@@ -26,7 +26,7 @@ public class ModernFixWatchDog extends KnownCrashReason {
                 if (line.contains("[ModernFix integrated server watchdog/ERROR] ")) {
                     line = line.split("\\[org.embeddedt.modernfix.world.IntegratedWatchdog/]: ")[1];
                 }
-                message = message.replace("$MODS_LINE$", line);
+                message = message.replace("$LINE_FROM_LOG$", line);
                 return true;
             }
         }

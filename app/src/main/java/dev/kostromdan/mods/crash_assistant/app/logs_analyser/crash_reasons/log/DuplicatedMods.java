@@ -22,27 +22,19 @@ public class DuplicatedMods extends KnownCrashReason {
         if (CrashAssistantApp.gameLaunchedSuccessfully) return false;
         if (PlatformHelp.platform != PlatformHelp.FORGE) return false;
         List<String> lines = log.getReader().getAllLinesList();
-        boolean found = false;
-        boolean exception = false;
         String modsLine = null;
-        for (String line : lines) {
-            if (found && modsLine == null) {
-                modsLine = line;
-                continue;
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            if (line.contains("Found duplicate mods:") && modsLine == null) {
+                if (i + 1 < lines.size()) {
+                    modsLine = lines.get(i + 1);
+                }
             }
-            if (line.contains("Found duplicate mods:")) {
-                found = true;
-                continue;
-            }
-            if (found && line.contains("EarlyLoadingException: Duplicate mods found")) {
-                exception = true;
-                break;
+            if (modsLine != null && line.contains("EarlyLoadingException: Duplicate mods found")) {
+                message = message.replace("$MODS_LINE$", modsLine);
+                return true;
             }
         }
-        if (modsLine == null || !exception) {
-            return false;
-        }
-        message = message.replace("$MODS_LINE$", modsLine);
-        return true;
+        return false;
     }
 }

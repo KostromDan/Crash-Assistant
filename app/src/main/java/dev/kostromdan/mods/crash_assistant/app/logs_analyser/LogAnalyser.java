@@ -150,6 +150,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new MissingEmbeddiumForOculus());
         registerKnownCrashReason(new MissingUnsupportedDependencies());
         registerKnownCrashReason(new ModernFixWatchDog());
+        registerKnownCrashReason(new Optifine());
         registerKnownCrashReason(new OutOfMemoryError());
         registerKnownCrashReason(new ResourceLocationException());
         registerKnownCrashReason(new Rubidium());

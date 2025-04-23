@@ -22,7 +22,7 @@ public class MissingUnsupportedDependencies extends KnownCrashReason {
     @Override
     public boolean matches(Log log) {
         if (CrashAssistantApp.gameLaunchedSuccessfully) return false;
-//        if (!PlatformHelp.isForgeBased()) return false;
+        if (!PlatformHelp.isForgeBased()) return false;
         List<String> lines = log.getReader().getAllLinesList();
         List<String> problemLines = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {

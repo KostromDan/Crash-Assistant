@@ -1,3 +1,14 @@
+1.7.12:
+
+- Improved DuplicatedMods warn (neo compat)
+- Added priority system to Log Analyser.
+- Added conflicting Crash Reasons logic for Log Analyser.
+- Added Optifine warning.
+- Added KubeJSDataPack Log Analysis.
+- Added ModernFixWatchDog Log Analysis.
+- Added MissingUnsupportedDependencies Log Analysis.
+- Small fixes and improvements.
+
 1.7.11:
 
 - Fixed 1.7.10 crash bc I accidentally removed one line of code, while was getting rig of duplicated inter process

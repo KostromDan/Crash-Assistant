@@ -1,3 +1,8 @@
+1.7.13:
+
+- Improved Log Analysis: ResourceLocationException, MissingEmbeddiumForOculus, Create6Addons
+- Disabled Optifine warn for forge 1.20.2+
+
 1.7.12:
 
 - Improved DuplicatedMods warn (neo compat)

@@ -20,7 +20,8 @@ public class MissingEmbeddiumForOculus extends KnownCrashReason {
                 LanguageProvider.get("warnings.missing_embeddium_for_oculus", new HashMap<>() {{
                     put("$LINK.EMBEDDIUM$", "Embeddium");
                 }}),
-                ".*Error loading class: net/caffeinemc/mods/sodium/api/memory/MemoryIntrinsics \\(java\\.lang\\.ClassNotFoundException: net\\.caffeinemc\\.mods\\.sodium\\.api\\.memory\\.MemoryIntrinsics\\).*"
+                ".*Error loading class: net/caffeinemc/mods/sodium/api/memory/MemoryIntrinsics \\(java\\.lang\\.ClassNotFoundException: net\\.caffeinemc\\.mods\\.sodium\\.api\\.memory\\.MemoryIntrinsics\\).*",
+                "java\\.lang\\.NoClassDefFoundError: net/caffeinemc/mods/sodium/api/vertex/buffer/VertexBufferWriter"
         );
     }
 

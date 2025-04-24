@@ -20,7 +20,7 @@ public class Optifine extends KnownCrashReason {
 
     @Override
     public boolean matches(Log log) {
-        if (PlatformHelp.platform == PlatformHelp.FORGE && VersionUtils.isGreaterThanOrEqual(PlatformHelp.minecraftVersion, "1.21")) {
+        if (PlatformHelp.platform == PlatformHelp.FORGE && VersionUtils.isGreaterThanOrEqual(PlatformHelp.minecraftVersion, "1.20.2")) {
             return false;
         }
         return ModListUtils.getCurrentModList(true).stream().anyMatch(mod -> Objects.equals(mod.getModId(), "optifine"));

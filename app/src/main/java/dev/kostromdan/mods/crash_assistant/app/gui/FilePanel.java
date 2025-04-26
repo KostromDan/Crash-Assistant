@@ -24,6 +24,7 @@ import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class FilePanel {
     private final JPanel panel;
@@ -156,7 +157,7 @@ public class FilePanel {
                     if (!fromButton && log.getType() == LogType.CRASH_ASSISTANT) {
                         List<FilePanel> logsCodexSupports = CrashAssistantGUI.fileListPanel.filePanelList.stream()
                                 .filter(x -> LogAnalyser.CodexSupportedLogTypes.contains(x.getLog().getType()))
-                                .toList();
+                                .collect(Collectors.toList());
                         while (!logsCodexSupports.isEmpty()) {
                             uploadButton.setText(LanguageProvider.get("gui.delayed"));
                             Thread.sleep(100);

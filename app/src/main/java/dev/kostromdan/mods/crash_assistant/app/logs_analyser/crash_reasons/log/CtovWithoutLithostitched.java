@@ -14,7 +14,7 @@ public class CtovWithoutLithostitched extends KnownCrashReason {
     public CtovWithoutLithostitched() {
         super(
                 LogType.LOG,
-                LanguageProvider.get("warnings.ctov_without_lithostitched", new HashMap<>(){{
+                LanguageProvider.get("warnings.ctov_without_lithostitched", new HashMap<String, String>(){{
                     put("$LINK.LITHOSTITCHED$", "Lithostitched");
                 }})
         );

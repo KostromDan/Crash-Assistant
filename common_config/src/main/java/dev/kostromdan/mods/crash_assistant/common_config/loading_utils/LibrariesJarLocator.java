@@ -9,8 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public interface LibrariesJarLocator {
-    static String getLibraryJarPath(Class cls) throws JarLocatingException, URISyntaxException {
+public class LibrariesJarLocator {
+    public static String getLibraryJarPath(Class cls) throws JarLocatingException, URISyntaxException {
         Path path = getPathFromClass(cls);
 
         if (path == null) {
@@ -26,7 +26,7 @@ public interface LibrariesJarLocator {
         return path.toAbsolutePath().toString();
     }
 
-    static String getLibraryJarPathFromResource(String resource) throws JarLocatingException {
+    public static String getLibraryJarPathFromResource(String resource) throws JarLocatingException {
         Path path = getPathFromResource(resource);
 
         if (path == null) {
@@ -46,21 +46,21 @@ public interface LibrariesJarLocator {
         return absolutePath;
     }
 
-    static Path getPathFromClass(Class cls) {
+    public static Path getPathFromClass(Class cls) {
         String resourcePath = cls.getName().replace('.', '/') + ".class";
         return getPathFromResource(resourcePath);
     }
 
-    private static Path getPathFromResource(String resource) {
+    public static Path getPathFromResource(String resource) {
         ClassLoader cl = LibrariesJarLocator.class.getClassLoader();
-        var url = cl.getResource(resource);
+        URL url = cl.getResource(resource);
         if (url == null)
             return null;
         return getPath(url, resource);
     }
 
-    private static Path getPath(URL url, String resource) {
-        var str = url.toString();
+    public static Path getPath(URL url, String resource) {
+        String str = url.toString();
         int len = resource.length();
         if ("jar".equalsIgnoreCase(url.getProtocol())) {
             str = url.getFile();
@@ -70,7 +70,7 @@ public interface LibrariesJarLocator {
             str = url.getFile();
             str = "file://" + str.substring(0, str.lastIndexOf(".jar") + 4);
         }
-        return Path.of(URI.create(str));
+        return Paths.get(URI.create(str));
     }
 
     static void setupLoaderJarName(Class cls) {

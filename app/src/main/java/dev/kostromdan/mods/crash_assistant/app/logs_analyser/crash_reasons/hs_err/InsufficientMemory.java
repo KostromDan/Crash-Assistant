@@ -19,7 +19,7 @@ public class InsufficientMemory extends KnownCrashReason {
 
     public static String getEndRecommendations() {
         return PlatformHelp.isLinkDefault() || ModListDiff.isModpackCreator() ?
-                LanguageProvider.get("warnings.insufficient_memory_indv", new HashMap<>() {{
+                LanguageProvider.get("warnings.insufficient_memory_indv", new HashMap<String, String>() {{
                     put("$LINK.MODERN_FIX$", "ModernFix");
                     put("$LINK.FERRITE_CORE$", "FerriteCore");
                 }}) :

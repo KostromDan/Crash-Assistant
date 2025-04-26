@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -252,8 +253,8 @@ public class CrashAssistantConfig {
     public static synchronized void executeWithLock(Runnable function) {
         CONFIG_PATH.getParent().toFile().mkdirs();
         CONFIG_LOCK_PATH.toFile().getParentFile().mkdirs();
-        try (var lockChannel = FileChannel.open(CONFIG_LOCK_PATH, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-             var lock = lockChannel.lock()) {
+        try (FileChannel lockChannel = FileChannel.open(CONFIG_LOCK_PATH, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+             FileLock lock = lockChannel.lock()) {
             function.run();
             Files.deleteIfExists(CONFIG_LOCK_PATH);
         } catch (OverlappingFileLockException e) { // Current JVM FileLock already locked, ignoring
@@ -297,8 +298,8 @@ public class CrashAssistantConfig {
     public static long getCommentsHash() {
         long hash = 0;
         hash += config.commentMap().hashCode();
-        for (var entry : config.valueMap().entrySet()) {
-            var value = entry.getValue();
+        for (Map.Entry entry : config.valueMap().entrySet()) {
+            Object value = entry.getValue();
             if (value instanceof AbstractCommentedConfig) {
                 hash += ((AbstractCommentedConfig) value).commentMap().hashCode();
             }

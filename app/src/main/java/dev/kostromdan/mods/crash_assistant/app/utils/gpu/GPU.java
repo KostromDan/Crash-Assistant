@@ -4,13 +4,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Record representing a GPU with its type and name.
+ * Class representing a GPU with its type and name.
  */
-public record GPU(RendererType type, String name) {
+public class GPU {
+    private final RendererType type;
+    private final String name;
+
+    public GPU(RendererType type, String name) {
+        this.type = type;
+        this.name = name;
+    }
+
+    public RendererType getType() {
+        return type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
     public static String serializeGPUs(List<GPU> gpus) {
         List<String> gpuStrings = new ArrayList<>();
         for (GPU gpu : gpus) {
-            gpuStrings.add(gpu.type() + " : " + gpu.name());
+            gpuStrings.add(gpu.getType() + " : " + gpu.getName());
         }
         return String.join("\n", gpuStrings);
     }

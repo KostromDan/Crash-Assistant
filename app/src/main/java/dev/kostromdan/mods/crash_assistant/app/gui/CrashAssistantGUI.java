@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class CrashAssistantGUI {
     private static JFrame frame = null;
@@ -57,7 +58,7 @@ public class CrashAssistantGUI {
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         titleLabel.setFont(titleLabel.getFont().deriveFont(16f));
 
-        HashMap<String, String> hrefOptions = new HashMap<>() {{
+        HashMap<String, String> hrefOptions = new HashMap<String, String>() {{
             put("$CONFIG.text.support_name$", null);
             put("$LANG.gui.upload_all_comment$", null);
         }};
@@ -270,7 +271,7 @@ public class CrashAssistantGUI {
                 SwingUtilities.invokeAndWait(() -> {
                     JOptionPane optionPane = new JOptionPane(
                             CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.duplicated_mod_warn") +
-                                    String.join("\n", mods.stream().map(Mod::getJarName).toList()), false),
+                                    String.join("\n", mods.stream().map(Mod::getJarName).collect(Collectors.toList())), false),
                             JOptionPane.WARNING_MESSAGE,
                             JOptionPane.DEFAULT_OPTION
                     );

@@ -7,11 +7,12 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsC
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Core;
-import oshi.SystemInfo;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -19,8 +20,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.nio.file.FileSystem;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public interface JarInJarHelper {
     Logger LOGGER = LogManager.getLogger("CrashAssistantJarInJarHelper");
@@ -34,13 +35,12 @@ public interface JarInJarHelper {
             String crashAssistantJarName = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).getFileName().toString();
             LOGGER.info("Launching CrashAssistantApp ({})", crashAssistantJarName);
 
-            ProcessHandle currentProcess = ProcessHandle.current();
-            String currentProcessData = Objects.toString(currentProcess.pid()) + "_"
-                    + Objects.toString(currentProcess.info().startInstant().get().getEpochSecond());
+            String currentProcessData = Objects.toString(ProcessHelper.getCurrentPid()) + "_"
+                    + Objects.toString(ProcessHelper.getStartTime());
             Path extractedJarPath = extractJarInJar("app.jar", currentProcessData + "_app.jar");
 
             ProcessBuilder crashAssistantAppProcessBuilder = new ProcessBuilder(
-                    JavaBinaryLocator.getJavaBinary(currentProcess),
+                    JavaBinaryLocator.getJavaBinary(),
                     "-XX:+UseSerialGC",
                     "-XX:MaxHeapFreeRatio=30",
                     "-XX:MinHeapFreeRatio=10",
@@ -49,7 +49,7 @@ public interface JarInJarHelper {
                     "-Xmx512m",
                     "-jar", extractedJarPath.toAbsolutePath().toString(),
                     "-jarPath", extractedJarPath.toAbsolutePath().toString(),
-                    "-parentPID", Objects.toString(ProcessHandle.current().pid()),
+                    "-parentPID", Objects.toString(ProcessHelper.getCurrentPid()),
                     "-platform", PlatformHelp.platform.toString(),
                     "-loaderJarName", PlatformHelp.loaderJarName,
                     "-minecraftVersion", PlatformHelp.minecraftVersion,
@@ -59,7 +59,7 @@ public interface JarInJarHelper {
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
                     "-lwjglNatives", locateNatives(),
-                    "-processor", new SystemInfo().getHardware().getProcessor().getProcessorIdentifier().getName()
+                    "-processor", ProcessHelper.getProcessorName()
             );
             crashAssistantAppProcessBuilder.start();
             ProblematicModsConfig.crashIfProblematicMod();
@@ -93,10 +93,17 @@ public interface JarInJarHelper {
             /* ---------- File name ---------- */
             final String fileName;
             switch (osDir) {
-                case "windows" -> fileName = "lwjgl.dll";
-                case "linux" -> fileName = "liblwjgl.so";
-                case "macos" -> fileName = "liblwjgl.dylib";
-                default -> throw new IllegalStateException("Unexpected OS directory: " + osDir);
+                case "windows":
+                    fileName = "lwjgl.dll";
+                    break;
+                case "linux":
+                    fileName = "liblwjgl.so";
+                    break;
+                case "macos":
+                    fileName = "liblwjgl.dylib";
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected OS directory: " + osDir);
             }
 
             /* ---------- Complete resource path ---------- */
@@ -131,11 +138,11 @@ public interface JarInJarHelper {
                             path.getFileName().toString().startsWith("crash_assistant-") &&
                             path.getFileName().toString().endsWith(".jar"))
                     .map(ModDataParser::parseModData)
-                    .toList();
+                    .collect(Collectors.toList());
 
-            if (mods.size() < 2) return List.of();
-            List<Mod> modsWithSameModId = mods.stream().filter(mod -> Objects.equals(mod.getModId(), "crash_assistant")).toList();
-            String duplicatedMods = String.join("\n", mods.stream().map(Mod::getJarName).toList());
+            if (mods.size() < 2) return new ArrayList<>();
+            List<Mod> modsWithSameModId = mods.stream().filter(mod -> Objects.equals(mod.getModId(), "crash_assistant")).collect(Collectors.toList());
+            String duplicatedMods = String.join("\n", mods.stream().map(Mod::getJarName).collect(Collectors.toList()));
             if (modsWithSameModId.size() > 1) {
                 LOGGER.error("Found more than one mod with modid \"crash_assistant\". Crash Assistant is duplicated." + (crashIfDuplicated ? " Crashing!" : "") +
                         "\nDuplicated mods:\n" + duplicatedMods);
@@ -148,7 +155,7 @@ public interface JarInJarHelper {
             return mods;
         } catch (Exception e) {
             LOGGER.error("Error while checking duplicated mods", e);
-            return List.of();
+            return new ArrayList<>();
         }
     }
 
@@ -174,17 +181,17 @@ public interface JarInJarHelper {
                             Long start_time = Long.parseLong(processInfo.split("_")[1]);
                             Long app_pid;
                             try {
-                                app_pid = Long.parseLong(Files.readString(processInfoPath));
+                                app_pid = Long.parseLong(
+                                        new String(Files.readAllBytes(processInfoPath), StandardCharsets.UTF_8)
+                                );
                             } catch (IOException ex) {
                                 LOGGER.error("Error while reading " + processInfoPath + ". This should never happen:", ex);
                                 throw new RuntimeException(ex);
                             }
-                            Optional<ProcessHandle> minecraftProcess = ProcessHandle.of(minecraft_pid);
-                            Optional<ProcessHandle> appProcess = ProcessHandle.of(app_pid);
-                            if (appProcess.isPresent()
-                                    && !(minecraftProcess.isPresent() && minecraftProcess.get().info().startInstant().get().getEpochSecond() == start_time)) {
+                            if (ProcessHelper.isPresent(app_pid)
+                                    && !(ProcessHelper.isPresentAndNotReused(minecraft_pid, start_time))) {
                                 LOGGER.warn("Closed old CrashAssistantApp process to prevent confusing the player with window containing information from old crash.");
-                                appProcess.get().destroy();
+                                ProcessHelper.destroyPid(app_pid);
                                 new java.util.Timer().schedule(
                                         new java.util.TimerTask() {
                                             @Override
@@ -251,7 +258,8 @@ public interface JarInJarHelper {
             }
 
             try (InputStreamReader reader = new InputStreamReader(jarStream, StandardCharsets.UTF_8)) {
-                JsonElement jsonElement = JsonParser.parseReader(reader);
+                JsonParser parser = new JsonParser();
+                JsonElement jsonElement = parser.parse(reader);
                 if (jsonElement == null || !jsonElement.isJsonObject()) {
                     throw new IllegalStateException("JSON content is not a valid JSON object.");
                 }
@@ -271,7 +279,9 @@ public interface JarInJarHelper {
     static HashMap<String, String> readJsonFromFile(Path path) {
         try {
             try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                return convertJsonToMap(JsonParser.parseReader(reader).getAsJsonObject());
+                JsonParser parser = new JsonParser();
+                JsonElement jsonElement = parser.parse(reader);
+                return convertJsonToMap(jsonElement.getAsJsonObject());
             }
         } catch (JsonSyntaxException e) {
             LOGGER.error("Failed to read corrupted json from file '{}'. Renaming to .bak", path, e);
@@ -309,9 +319,9 @@ public interface JarInJarHelper {
 
     static Path getJarInJar(String name) throws IOException, URISyntaxException {
         //Idea taken from org.sinytra.connector.locator.EmbeddedDependencies#getJarInJar
-        Path pathInModFile = Path.of(JarInJarHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI()).resolve("META-INF/jarjar/" + name);
+        Path pathInModFile = Paths.get(JarInJarHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI()).resolve("META-INF/jarjar/" + name);
         URI filePathUri = new URI("jij:" + pathInModFile.toAbsolutePath().toUri().getRawSchemeSpecificPart()).normalize();
-        Map<String, ?> outerFsArgs = Map.of("packagePath", pathInModFile);
+        Map<String, ?> outerFsArgs = Collections.singletonMap("packagePath", pathInModFile);
         FileSystem zipFS = FileSystems.newFileSystem(filePathUri, outerFsArgs);
         return zipFS.getPath("/");
     }

@@ -46,10 +46,11 @@ public class ModListDiff {
                     .add(mod);
         }
 
-        var iterator = updatedPairCandidates.entrySet().iterator();
+        Iterator<Map.Entry<String, UpdatedPair>> iterator =
+                updatedPairCandidates.entrySet().iterator();
         while (iterator.hasNext()) {
-            var entry = iterator.next();
-            var pair = entry.getValue();
+            Map.Entry<String, UpdatedPair> entry = iterator.next();
+            UpdatedPair pair = entry.getValue();
 
             if (pair.getOldMods().isEmpty() || pair.getNewMods().isEmpty() ||
                     pair.getOldMods().equals(pair.getNewMods())) {

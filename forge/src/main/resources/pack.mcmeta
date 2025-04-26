@@ -1,7 +1,6 @@
 {
   "pack": {
     "description": "Crash Assistant",
-    "forge:data_pack_format": 9,
-    "pack_format": 8
+    "pack_format": 6
   }
 }

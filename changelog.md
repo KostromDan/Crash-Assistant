@@ -1,3 +1,7 @@
+1.7.16:
+
+- Small formulation fix.
+
 1.7.15:
 
 - Added privacy policy dialog. User must accept the privacy policy on the first upload.

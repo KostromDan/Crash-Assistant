@@ -73,7 +73,7 @@ public class LibrariesJarLocator {
         return Paths.get(URI.create(str));
     }
 
-    public static void setupLoaderJarName(Class cls) {
+    static void setupLoaderJarName(Class cls) {
         try {
             PlatformHelp.loaderJarName = Paths.get(getLibraryJarPath(cls)).getFileName().toString();
         } catch (URISyntaxException e) {
@@ -81,7 +81,7 @@ public class LibrariesJarLocator {
         }
     }
 
-    public static void setupLoaderJarName(String version) {
+    static void setupLoaderJarName(String version) {
         PlatformHelp.loaderJarName = version;
     }
 }

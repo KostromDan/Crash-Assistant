@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.function.Function;
 
@@ -239,6 +241,116 @@ public class CrashAssistantGUI {
         dialog.setVisible(true);
     }
 
+    /**
+     * Shows a dialog asking the user to accept the privacy policy for uploading logs.
+     * If the user has already accepted the privacy policy, the dialog is not shown and the function returns true.
+     *
+     * @return true if the user accepts the privacy policy or has already accepted it, false otherwise
+     */
+    public static boolean showPrivacyPolicyDialog() {
+        // Check if the user has already accepted the privacy policy
+        if (Objects.equals(CrashAssistantLocalConfig.get("privacy.accepted_privacy_info"), true)) {
+            return true;
+        }
+
+        // Create a new JFrame for the dialog
+        JFrame dialogFrame = new JFrame(LanguageProvider.get("gui.privacy.logs_upload_title"));
+
+        // Create the question text with a link to the privacy policy
+        String question = LanguageProvider.get("gui.privacy.logs_upload_question", new HashMap<String, String>() {{
+            put("$LINK.PRIVACY_POLICY$", LanguageProvider.get("gui.privacy.privacy_policy"));
+        }});
+        // Create an editor pane with the question text
+        JEditorPane editorPane = getEditorPane(question, true);
+
+        // Wrap the editor pane in a panel with a border and padding
+        JPanel textPanel = new JPanel(new BorderLayout());
+        textPanel.add(editorPane, BorderLayout.CENTER);
+
+        // Create the "Don't show again" checkbox
+        JCheckBox dontShowAgainCheck = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+        dontShowAgainCheck.setSelected(true);
+
+        // Create the Accept and Decline buttons
+        JButton acceptButton = new JButton(LanguageProvider.get("gui.privacy.logs_upload_accept"));
+        JButton declineButton = new JButton(LanguageProvider.get("gui.privacy.logs_upload_decline"));
+
+        // Create a panel for the buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        buttonPanel.add(acceptButton);
+        buttonPanel.add(declineButton);
+
+        // Create a panel for the checkbox
+        JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        checkboxPanel.add(dontShowAgainCheck);
+
+        // Create a panel for the bottom components (checkbox and buttons)
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(checkboxPanel, BorderLayout.NORTH);
+        bottomPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Create the main panel
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.add(textPanel, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        // Set up the dialog frame
+        dialogFrame.setContentPane(mainPanel);
+        dialogFrame.pack();
+        dialogFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        dialogFrame.setLocationRelativeTo(null);
+
+        // Create a variable to store the result
+        final boolean[] result = {false};
+
+        // Add action listeners to the buttons
+        acceptButton.addActionListener(e -> {
+            // Save the user's choice if "Don't show again" is selected
+            if (dontShowAgainCheck.isSelected()) {
+                CrashAssistantLocalConfig.set("privacy.accepted_privacy_info", true);
+            }
+            result[0] = true;
+            dialogFrame.dispose();
+        });
+
+        declineButton.addActionListener(e -> {
+            // Save the user's choice if "Don't show again" is selected
+            if (dontShowAgainCheck.isSelected()) {
+                CrashAssistantLocalConfig.set("privacy.accepted_privacy_info", false);
+            }
+            result[0] = false;
+            dialogFrame.dispose();
+        });
+
+        // Add a window listener to handle the case when the dialog is closed without clicking a button
+        dialogFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                // If the dialog is closed without clicking a button, consider it as declined
+                if (dialogFrame.isVisible()) {
+                    result[0] = false;
+                    dialogFrame.dispose();
+                }
+            }
+        });
+
+        // Show the dialog and wait for it to be closed
+        dialogFrame.setVisible(true);
+
+        // Wait for the dialog to be closed
+        while (dialogFrame.isVisible()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        return result[0];
+    }
+
 
     public static void resize() {
         frame.setSize(Math.max(Math.max(fileListPanel.getFileListPanel().getPreferredSize().width + 12, controlPanel.getPanel().getPreferredSize().width) + 26, labelPanel.getPreferredSize().width + 20),
@@ -358,6 +470,9 @@ public class CrashAssistantGUI {
                     }
                 } else if ("CONFIG.text.support_name".equals(description)) {
                     componentToHighlight = controlPanel.requestHelpButton;
+                } else if ("PRIVACY_POLICY".equals(description)) {
+                    showLogsPrivacyInfo();
+                    return;
                 } else if (e.getURL() != null) {
                     try {
                         Desktop.getDesktop().browse(e.getURL().toURI());

@@ -225,6 +225,13 @@ public class ControlPanel {
             if (generatedMsg == null) {
                 uploadAllButton.setText(LanguageProvider.get("gui.uploading"));
                 for (FilePanel panel : fileListPanel.filePanelList) {
+                    while (panel.getLastError() != null && !panel.isUploadButtonEnabled()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
                     panel.uploadFile(false);
                 }
                 outerLoop:

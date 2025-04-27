@@ -143,11 +143,12 @@ public class CrashAssistantGUI {
         }).start();
     }
 
-    private void addFileMenu() {
+    private static void addFileMenu() {
         // Initialize menu bar and main menus
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu(LanguageProvider.get("gui.menu.file"));
         JMenu analysisMenu = new JMenu(LanguageProvider.get("gui.menu.analysis"));
+        JMenu privacyMenu = new JMenu(LanguageProvider.get("gui.menu.privacy"));
 
         // File menu items
 
@@ -204,10 +205,30 @@ public class CrashAssistantGUI {
         analysisItem.addActionListener(e -> CreateDependencies.showCreateAnalysisDialog(frame));
         analysisMenu.add(analysisItem);
 
+        // Privacy menu items
+        JMenuItem logsPrivacyItem = new JMenuItem(LanguageProvider.get("gui.menu.privacy.logs_info"));
+        logsPrivacyItem.addActionListener(e -> showLogsPrivacyInfo());
+        privacyMenu.add(logsPrivacyItem);
+
         // Add menus to menu bar and set to frame
         menuBar.add(fileMenu);
         menuBar.add(analysisMenu);
+        menuBar.add(privacyMenu);
         frame.setJMenuBar(menuBar);
+    }
+
+    private static void showLogsPrivacyInfo() {
+        String privacyInfo = LanguageProvider.get("gui.privacy.logs_info");
+        JOptionPane optionPane = new JOptionPane(
+                getEditorPane(privacyInfo, true, 600),
+                JOptionPane.INFORMATION_MESSAGE,
+                JOptionPane.DEFAULT_OPTION
+        );
+        JDialog dialog = optionPane.createDialog(
+                frame,
+                LanguageProvider.get("gui.privacy.title")
+        );
+        dialog.setVisible(true);
     }
 
 
@@ -431,6 +452,3 @@ public class CrashAssistantGUI {
                 langFunc.apply("gui.title_crashed_without_report");
     }
 }
-
-
-

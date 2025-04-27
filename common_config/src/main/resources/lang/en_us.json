@@ -58,11 +58,13 @@
   "gui.error_open_explorer": "Error opening file explorer: %s",
   "gui.menu.file": "File",
   "gui.menu.analysis": "Analysis",
+  "gui.menu.privacy": "Privacy",
   "gui.menu.file.open_config": "Open $LANG.gui.window_name$ config",
   "gui.menu.file.open_mods_folder": "Open mods folder",
   "gui.menu.file.open_config_folder": "Open config folder",
   "gui.menu.file.open_modpack_folder": "Open game folder",
   "gui.menu.analysis.create_dependencies": "Create mod addons compatibility",
+  "gui.menu.privacy.logs_info": "Uploading logs privacy information",
   "warnings.atio6axx": "The <strong>atio6axx</strong> \"Problematic frame\" in a <strong>$LOG_FILENAME$</strong> file, is part of the <strong>AMD</strong> driver for the GPU,\nthere's a bad version of the AMD drivers that instantly crashes on an OpenGL task.\nReinstall/Fresh install your drivers from $LINK.AMD_SUPPORT$\n<strong>IF</strong> you do not have an <strong>AMD GPU</strong>, then you need to set your system to be using that GPU\ninstead of the AMD integrated GPU on the CPU, steps below.\n$LINK.HOW_FORCE_APP_USE_DISCRETE_GPU$",
   "warnings.nvoglv64": "The <strong>nvoglv64</strong> \"Problematic frame\" in a <strong>$LOG_FILENAME$</strong> file, is part of the <strong>Nvidia</strong> driver for the GPU.\nThis can be an issue with your current Nvidia card driver.\nReinstall/Fresh install your drivers from $LINK.NVIDIA_DRIVERS$",
   "warnings.jemalloc": "The <strong>jemalloc</strong> \"Problematic frame\" in <strong>$LOG_FILENAME$</strong> indicates an issue with the jemalloc memory allocator.\nTo resolve this, add the following argument to your JVM args:\n<strong>-Dorg.lwjgl.system.allocator=system</strong>",
@@ -134,5 +136,7 @@
   "msg.mb": "MB",
   "msg.k_lines": "k lines",
   "msg.intel_corrupted_notification": " can be reason of crash",
-  "msg.found_potential_crash_reason": " with $COUNT$ log analysis result(s)."
+  "msg.found_potential_crash_reason": " with $COUNT$ log analysis result(s).",
+  "gui.privacy.title": "Privacy Information",
+  "gui.privacy.logs_info": "<h2>Privacy:</h2>Logs are uploaded <strong>only when the user explicitly chooses to do so</strong> and are sent to <a href='https://mclo.gs'>mclo.gs</a>, a log-sharing service created by Aternos.<br><br>Before a log is published, <code>mclo.gs</code> automatically <strong>redacts sensitive information</strong>—such as access tokens, IP addresses, usernames and etc—so it's safe to share. See their <a href='https://aternos.gmbh/en/mclogs/privacy'>privacy policy</a> for details.<br><br>Because the mobile interface of <code>mclo.gs</code> is inconvenient, the generated link is—by default—<strong>wrapped</strong> through <strong>gnomebot.dev</strong>.\nFor example: <code>https://mclo.gs/X</code> → <code>https://gnomebot.dev/paste/mclogs/X</code><br><br>This behavior is configurable. gnomebot.dev, created by <strong>LatvianModder</strong>—the developer behind the <strong>KubeJS</strong> mod and several <strong>FTB</strong> modpacks—is an open-source <strong>log viewer</strong> that fetches the log, applies cleaner formatting for readability, and does <strong>not</strong> store its content beyond a brief 5-minute cache.<br><br>Until you share the link, no one except you and the <code>mclo.gs</code> administrators can access your logs."
 }

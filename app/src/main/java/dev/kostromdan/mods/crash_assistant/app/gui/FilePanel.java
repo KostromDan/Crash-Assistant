@@ -135,6 +135,10 @@ public class FilePanel {
         return lastError;
     }
 
+    public boolean isUploadButtonEnabled() {
+        return uploadButton.isEnabled();
+    }
+
     private void uploadFile() {
         uploadFile(true);
     }

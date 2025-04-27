@@ -1,27 +1,36 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
-import oshi.SystemInfo;
-
-import java.time.Instant;
 import java.util.Optional;
-import java.lang.ProcessHandle;
+
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import oshi.SystemInfo;
+import oshi.software.os.OSProcess;
+import oshi.software.os.OperatingSystem;
 
 /**
  * Static helpers for working with OS processes.
- * Uses Java's ProcessHandle API for cross-platform support.
+ * Uses OSHI under the hood for true cross-platform support.
  */
 public final class ProcessHelper {
+    private static final SystemInfo SYSTEM_INFO = new SystemInfo();
+    private static final OperatingSystem OS = SYSTEM_INFO.getOperatingSystem();
 
     private ProcessHelper() { /* no instantiation */ }
 
+    // ==== JNA kill() interface ====
+    private interface CLibrary extends Library {
+        CLibrary INSTANCE = Native.loadLibrary("c", CLibrary.class);
+        int kill(int pid, int sig);
+    }
 
     /**
      * @return this JVM's PID, or -1 on failure
      */
     public static long getCurrentPid() {
         try {
-            return ProcessHandle.current().pid();
-        } catch (SecurityException e) {
+            return OS.getProcessId();
+        } catch (UnsatisfiedLinkError | SecurityException e) {
             return -1;
         }
     }
@@ -39,9 +48,9 @@ public final class ProcessHelper {
      * @return its start time in milliseconds since the epoch, or -1 if not found
      */
     public static long getStartTime(long pid) {
-        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
-        if (processHandle.isEmpty()) return -1;
-        return processHandle.get().info().startInstant().map(Instant::toEpochMilli).orElse(-1L);
+        OSProcess p = OS.getProcess((int) pid);
+        if (p == null) return -1;
+        return p.getStartTime() * 1_000L;
     }
 
     /**
@@ -49,9 +58,12 @@ public final class ProcessHelper {
      * @return its executable command (full path), wrapped in Optional, or empty if not found
      */
     public static Optional<String> getCommand(long pid) {
-        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
-        if (processHandle.isEmpty()) return Optional.empty();
-        return processHandle.get().info().command();
+        OSProcess p = OS.getProcess((int) pid);
+        if (p == null) return Optional.empty();
+        String cmd = p.getPath();
+        return (cmd == null || cmd.isEmpty())
+                ? Optional.empty()
+                : Optional.of(cmd);
     }
 
     /**
@@ -67,8 +79,8 @@ public final class ProcessHelper {
      * @return true if the terminate call was successful
      */
     public static boolean destroyPid(long pid) {
-        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
-        return processHandle.map(handle -> handle.destroy()).orElse(false);
+        // SIGTERM == 15
+        return CLibrary.INSTANCE.kill((int) pid, 15) == 0;
     }
 
     /**
@@ -76,7 +88,7 @@ public final class ProcessHelper {
      * @return true if a process with that PID exists right now
      */
     public static boolean isPresent(long pid) {
-        return ProcessHandle.of(pid).isPresent();
+        return OS.getProcess((int) pid) != null;
     }
 
     /**
@@ -88,8 +100,9 @@ public final class ProcessHelper {
      * @return true if still present and its startTime ≥ originalStart
      */
     public static boolean isPresentAndNotReused(long pid, long originalStart) {
-        if (!isPresent(pid)) return false;
-        long nowStart = getStartTime(pid);
+        OSProcess p = OS.getProcess((int) pid);
+        if (p == null) return false;
+        long nowStart = p.getStartTime() * 1_000L;
         return nowStart == originalStart;
     }
 

@@ -1,3 +1,7 @@
+1.7.14:
+
+- Added a privacy information tab in a menu about mclo.gs to prevent potential issues.
+
 1.7.13:
 
 - Improved Log Analysis: ResourceLocationException, MissingEmbeddiumForOculus, Create6Addons

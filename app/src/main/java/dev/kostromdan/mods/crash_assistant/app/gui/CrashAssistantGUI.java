@@ -5,7 +5,6 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;

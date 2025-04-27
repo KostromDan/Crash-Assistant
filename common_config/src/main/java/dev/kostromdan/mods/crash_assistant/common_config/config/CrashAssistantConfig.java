@@ -69,6 +69,10 @@ public class CrashAssistantConfig {
         addOption("general.upload_all_animated_border",
                 "Animate border to request user attention even more.",
                 true);
+        addOption("general.enable_privacy_policy_acceptance",
+                "Before uploading the first log, requires the user to accept the privacy policy.\n" +
+                        "Disabling this option may be illegal in some countries if you are modpack creator. Disable at your own risk.",
+                true);
         ArrayList<String> defaultBlacklistedLogs = new ArrayList<>();
         addOption("general.blacklisted_logs",
                 "List of blacklisted log files (checked with startswith()). This files won't show in GUI logs list.",

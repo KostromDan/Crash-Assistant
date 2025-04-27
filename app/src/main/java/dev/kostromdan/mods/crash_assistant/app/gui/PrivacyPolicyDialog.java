@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 
@@ -12,10 +13,10 @@ import java.util.Objects;
  * A dialog for showing and handling the privacy policy acceptance.
  */
 public class PrivacyPolicyDialog {
-    
+
     // Static boolean to track if the dialog should be shown during the current launch
     private static boolean acceptedForCurrentLaunch = false;
-    
+
     /**
      * Shows a dialog asking the user to accept the privacy policy for uploading logs.
      * If the user has already accepted the privacy policy, the dialog is not shown and the function returns true.
@@ -27,9 +28,14 @@ public class PrivacyPolicyDialog {
         if (Objects.equals(CrashAssistantLocalConfig.get("privacy.accepted_privacy_info"), true)) {
             return true;
         }
-        
+
         // Check if the user has accepted for the current launch
         if (acceptedForCurrentLaunch) {
+            return true;
+        }
+
+        // Check if privacy policy acceptance disabled in config.
+        if (!CrashAssistantConfig.getBoolean("general.enable_privacy_policy_acceptance")) {
             return true;
         }
 

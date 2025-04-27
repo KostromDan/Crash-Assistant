@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.exceptions.DeclinedException;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
@@ -235,9 +236,13 @@ public class ControlPanel {
                     for (FilePanel filePanel : fileListPanel.filePanelList) {
                         Log log = filePanel.getLog();
                         if (filePanel.getLastError() != null) {
+                            String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError();
+                            if (filePanel.getLastError() instanceof DeclinedException) {
+                                message = filePanel.getLastError().getMessage();
+                            }
                             JOptionPane.showMessageDialog(
                                     panel,
-                                    LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError(),
+                                    message,
                                     LanguageProvider.get("gui.failed_to_upload_file") + "!",
                                     JOptionPane.ERROR_MESSAGE
                             );

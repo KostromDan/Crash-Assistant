@@ -140,5 +140,10 @@
   "gui.privacy.title": "Privacy Information",
   "gui.privacy.mclogs_privacy_info": "<h2>Privacy:</h2>Logs are uploaded <strong>only when the user explicitly chooses to do so</strong> and are sent to mclo.gs, a log-sharing service created by Aternos.\n\nBefore a log is published, <code>mclo.gs</code> automatically <strong>redacts sensitive information</strong>—such as access tokens, IP addresses, usernames and etc—so it's safe to share. See their $LINK.MCLOGS_PRIVACY_POLICY$ for details.$GNOMEBOT_PRIVACY_INFO$\n\nUntil you share the link, no one except you and the <code>mclo.gs</code> administrators can access your logs.",
   "gui.privacy.gnomebot_privacy_info": "\n\nBecause the mobile interface of <code>mclo.gs</code> is inconvenient, the generated link is—by default—<strong>wrapped</strong> through <strong>gnomebot.dev</strong>.\nFor example: <code>https://mclo.gs/X</code> → <code>https://gnomebot.dev/paste/mclogs/X</code>\n\nThis behavior is configurable. gnomebot.dev, created by <strong>LatvianModder</strong>—the developer behind the <strong>KubeJS</strong> mod and several <strong>FTB</strong> modpacks—is an open-source <strong>log viewer</strong> that fetches the log, applies cleaner formatting for readability, and does <strong>not</strong> store its content beyond a brief 5-minute cache.",
-  "gui.privacy.privacy_policy": "privacy policy"
+  "gui.privacy.privacy_policy": "privacy policy",
+  "gui.privacy.logs_upload_title": "Privacy Policy Acceptance",
+  "gui.privacy.logs_upload_question": "Do you accept the $LINK.PRIVACY_POLICY$ of uploading logs?",
+  "gui.privacy.declined": "Failed to upload log because you declined the privacy policy, try again.",
+  "gui.privacy.logs_upload_accept": "Accept",
+  "gui.privacy.logs_upload_decline": "Decline"
 }

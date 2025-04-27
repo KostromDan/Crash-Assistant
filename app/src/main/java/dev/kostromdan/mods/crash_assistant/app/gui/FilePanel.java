@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.exceptions.DeclinedException;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
@@ -22,7 +23,6 @@ import java.util.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 public class FilePanel {
@@ -32,6 +32,7 @@ public class FilePanel {
     private final JButton uploadButton;
     private final JButton browserButton;
     private Exception lastError = null;
+    private static final Set<FilePanel> awaitingPrivacyPolicyDialogs = Collections.synchronizedSet(new HashSet<>());
     private final Log log;
 
     public FilePanel(Log log) {
@@ -151,6 +152,18 @@ public class FilePanel {
                 uploadButton.setText(LanguageProvider.get("gui.uploading"));
 
                 try {
+                    awaitingPrivacyPolicyDialogs.add(this);
+                    synchronized (FileListPanel.class) {
+                        if (!awaitingPrivacyPolicyDialogs.contains(this)) {
+                            throw new DeclinedException(LanguageProvider.get("gui.privacy.declined"));
+                        }
+
+                        if (!CrashAssistantGUI.showPrivacyPolicyDialog()) {
+                            awaitingPrivacyPolicyDialogs.clear();
+                            throw new DeclinedException(LanguageProvider.get("gui.privacy.declined"));
+                        }
+                    }
+
                     String oldText = uploadButton.getText();
 
                     if (!fromButton && log.getType() == LogType.CRASH_ASSISTANT) {
@@ -201,16 +214,20 @@ public class FilePanel {
                     } else {
                         throw new UploadException("An error occurred when uploading file: " + responseFirstLines.getError());
                     }
-                } catch (IOException | ExecutionException | InterruptedException | UploadException e) {
+                } catch (Exception e) {
                     {
                         lastError = e;
                         CrashAssistantApp.LOGGER.info("Failed to upload file \"" + log.getPath() + "\": ", e);
                         uploadButton.setText(LanguageProvider.get("gui.error"));
                         CrashAssistantGUI.highlightButton(uploadButton, new Color(255, 100, 100), 2600);
                         if (fromButton) {
+                            String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e;
+                            if (e instanceof DeclinedException) {
+                                message = e.getMessage();
+                            }
                             JOptionPane.showMessageDialog(
                                     panel,
-                                    LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e,
+                                    message,
                                     LanguageProvider.get("gui.failed_to_upload_file") + "!",
                                     JOptionPane.ERROR_MESSAGE
                             );

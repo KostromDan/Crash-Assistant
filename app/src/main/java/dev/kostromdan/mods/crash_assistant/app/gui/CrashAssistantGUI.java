@@ -218,7 +218,9 @@ public class CrashAssistantGUI {
     }
 
     private static void showLogsPrivacyInfo() {
-        String privacyInfo = LanguageProvider.get("gui.privacy.logs_info");
+        String privacyInfo = LanguageProvider.get("gui.privacy.logs_info", new HashMap<String, String>() {{
+            put("$LINK.MCLOGS_PRIVACY_POLICY$", LanguageProvider.get("gui.privacy.privacy_policy"));
+        }});
         JOptionPane optionPane = new JOptionPane(
                 getEditorPane(privacyInfo, true, 600),
                 JOptionPane.INFORMATION_MESSAGE,

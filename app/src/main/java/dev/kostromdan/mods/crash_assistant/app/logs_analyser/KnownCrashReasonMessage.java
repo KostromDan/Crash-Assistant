@@ -6,7 +6,6 @@ import gs.mclo.api.response.insights.Problem;
 import gs.mclo.api.response.insights.Solution;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class KnownCrashReasonMessage {
     private static final Comparator<KnownCrashReasonMessage> CRASH_REASON_COMPARATOR = Comparator
@@ -55,7 +54,7 @@ public class KnownCrashReasonMessage {
 
     public static void addCodexMessage(Log log, Problem problem, String url) {
         int line = problem.getEntry().getLines()[0].getNumber();
-        String solutions = String.join("\n", Arrays.stream(problem.getSolutions()).map(Solution::getMessage).collect(Collectors.toList()));
+        String solutions = String.join("\n", Arrays.stream(problem.getSolutions()).map(Solution::getMessage).toList());
         String crashAssistantAnalysisOfCodex = LogAnalyser.analyseCodexMessage(problem.getMessage() + "\n" + solutions);
         String msg = LanguageProvider.get("warnings.codex")
                 .replaceAll("\\$PROBLEM\\$", problem.getMessage())

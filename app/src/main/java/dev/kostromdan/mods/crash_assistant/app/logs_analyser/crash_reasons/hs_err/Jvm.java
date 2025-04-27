@@ -13,7 +13,7 @@ public class Jvm extends KnownCrashReason {
     public Jvm() {
         super(
                 LogType.HS_ERR,
-                LanguageProvider.get("warnings.jvm", new HashMap<String, String>() {{
+                LanguageProvider.get("warnings.jvm", new HashMap<>() {{
                             put("$LINK.RESULTS_OF_MEMORY_DIAGNOSTICS$", LanguageProvider.get("warnings_common.instruction"));
                         }})
                         .replace("$HALF_OF_PROCESSORS$",

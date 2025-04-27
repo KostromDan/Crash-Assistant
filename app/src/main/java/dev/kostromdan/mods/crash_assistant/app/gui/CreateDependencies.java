@@ -3,7 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
@@ -67,7 +67,7 @@ public class CreateDependencies {
 
     public static String getJDepsPath() {
         // Option 1: Derive from java binary location.
-        String javaBinaryPath = JavaBinaryLocator.getJavaBinary();
+        String javaBinaryPath = JavaBinaryLocator.getJavaBinary(ProcessHandle.current());
         if (javaBinaryPath.contains("javaw")) {
             javaBinaryPath = javaBinaryPath.replace("javaw", "java");
         }
@@ -266,7 +266,7 @@ public class CreateDependencies {
 
             List<Mod> modsToAnalyze = ModListUtils.getCurrentModList(true).stream()
                     .filter(mod -> !Objects.equals(mod.getModId(), "create"))
-                    .collect(Collectors.toList());
+                    .toList();
             int totalMods = modsToAnalyze.size();
 
             if (totalMods == 0) {

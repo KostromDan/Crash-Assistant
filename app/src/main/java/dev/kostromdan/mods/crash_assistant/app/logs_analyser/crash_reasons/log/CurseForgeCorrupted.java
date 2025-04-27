@@ -12,7 +12,7 @@ public class CurseForgeCorrupted extends KnownCrashReason {
     public CurseForgeCorrupted() {
         super(
                 LogType.LOG,
-                LanguageProvider.get("warnings.curseforge_corrupted", new HashMap<String, String>() {{
+                LanguageProvider.get("warnings.curseforge_corrupted", new HashMap<>() {{
                     put("$LINK.ATL$", "ATLauncher");
                 }}),
                 "Missing or unsupported mandatory dependencies:\\R\\s*Mod ID: 'minecraft', Requested by: .*?, Actual version: '\\[MISSING\\]'",

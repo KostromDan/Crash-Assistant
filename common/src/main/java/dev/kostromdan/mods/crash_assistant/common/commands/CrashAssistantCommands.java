@@ -31,12 +31,12 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class CrashAssistantCommands {
-    public static final HashMap<String, String> supportedCrashCommands = new HashMap<String,String>() {{
+    public static final HashMap<String, String> supportedCrashCommands = new HashMap<>() {{
         put("game", "Minecraft");
         put("jvm", "JVM");
         put("no_crash", "noCrash");
     }};
-    public static final HashSet<String> supportedCrashArgs = new HashSet<String>() {{
+    public static final HashSet<String> supportedCrashArgs = new HashSet<>() {{
         add("--withThreadDump");
         add("--withHeapDump");
         add("--GCBeforeHeapDump");
@@ -315,9 +315,9 @@ public class CrashAssistantCommands {
         public TextComponent toComponent() {
             TextComponent msg = new TextComponent("");
             for (ColoredString cs : sb) {
-                TextComponent part = new TextComponent(cs.getText());
-                if (!cs.getColor().isEmpty()) {
-                    ChatFormatting color = ChatFormatting.valueOf(cs.getColor().toUpperCase());
+                TextComponent part = new TextComponent(cs.text());
+                if (!cs.color().isEmpty()) {
+                    ChatFormatting color = ChatFormatting.valueOf(cs.color().toUpperCase());
                     part.setStyle(Style.EMPTY.withColor(color));
                 }
                 msg.append(part);

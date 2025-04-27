@@ -1,13 +1,16 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
-import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Objects;
 
 public class Boot {
     public static String log4jApi = null;
@@ -24,7 +27,7 @@ public class Boot {
 
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        APP_ARGS = Arrays.asList(args);
+        APP_ARGS = List.of(args);
         for (int i = 0; i < args.length; i++) {
             if ("-log4jApi".equals(args[i]) && i + 1 < args.length) {
                 log4jApi = args[i + 1];
@@ -83,7 +86,7 @@ public class Boot {
             }
 
             List<String> argsList = new ArrayList<>();
-            argsList.add(JavaBinaryLocator.getJavaBinary());
+            argsList.add(JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
             argsList.addAll(JVM_ARGS);
             argsList.add("-jar");
             argsList.add(jarPath);

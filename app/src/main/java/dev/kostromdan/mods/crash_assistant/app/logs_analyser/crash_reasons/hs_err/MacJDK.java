@@ -13,7 +13,7 @@ public class MacJDK extends KnownCrashReason {
     public MacJDK() {
         super(
                 LogType.HS_ERR,
-                LanguageProvider.get("warnings.macjdk", new HashMap<String, String>() {{
+                LanguageProvider.get("warnings.macjdk", new HashMap<>() {{
                     put("$LINK.AZUL_DOWNLOAD$", LanguageProvider.get("warnings_common.here"));
                     put("$LINK.ATL$", "ATLauncher");
                 }})

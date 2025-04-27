@@ -65,7 +65,7 @@ public class ModDataParser {
         try (RandomAccessFile raf = new RandomAccessFile(cacheFilePath.toFile(), "r");
              FileChannel channel = raf.getChannel();
              FileLock lock = channel.lock(0, Long.MAX_VALUE, true)) {
-            String json = new String(Files.readAllBytes(cacheFilePath), StandardCharsets.UTF_8);
+            String json = Files.readString(cacheFilePath);
             return GSON.fromJson(json, Mod.class);
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed to read or parse cache file for " + jarPath, e);

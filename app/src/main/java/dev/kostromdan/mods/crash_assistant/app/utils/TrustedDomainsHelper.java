@@ -4,7 +4,7 @@ import java.net.URI;
 import java.util.HashSet;
 
 public class TrustedDomainsHelper {
-    private static final HashSet<String> trustedDomains = new HashSet<String>(){{
+    private static final HashSet<String> trustedDomains = new HashSet<>(){{
         add("discord.gg");
         add("discord.com");
         add("discordapp.com");

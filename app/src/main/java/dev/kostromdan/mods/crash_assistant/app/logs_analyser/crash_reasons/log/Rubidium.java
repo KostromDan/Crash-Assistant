@@ -13,7 +13,7 @@ public class Rubidium extends KnownCrashReason {
     public Rubidium() {
         super(
                 LogType.LOG,
-                LanguageProvider.get("warnings.rubidium", new HashMap<String, String>() {{
+                LanguageProvider.get("warnings.rubidium", new HashMap<>() {{
                     put("$LINK.EMBEDDIUM$", "Embeddium");
                 }})
         );

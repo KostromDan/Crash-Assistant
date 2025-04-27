@@ -3,14 +3,13 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.nio.file.Paths;
-import java.util.Arrays;
+import java.nio.file.Path;
 import java.util.List;
 
 public class IntegratedGPUWarning extends JFrame {
@@ -31,7 +30,7 @@ public class IntegratedGPUWarning extends JFrame {
         String content = LanguageProvider.get("warnings.integrated_gpu")
                 .replace("$I_GPU$", integratedGPU)
                 .replace("$D_GPUS$", String.join("\n", dedicatedGPUs))
-                .replace("$JAVA_PATH$", Paths.get(JavaBinaryLocator.getJavaBinary())
+                .replace("$JAVA_PATH$", Path.of(JavaBinaryLocator.getJavaBinary(ProcessHandle.current()))
                         .toAbsolutePath().toString());
 
         // Editor pane with HTML content.
@@ -114,7 +113,7 @@ public class IntegratedGPUWarning extends JFrame {
         // Show the warning with sample data.
         showIfNotDisabled(
                 "Intel HD Graphics",
-                Arrays.asList("NVIDIA GTX 1080", "AMD Radeon RX 580")
+                List.of("NVIDIA GTX 1080", "AMD Radeon RX 580")
         );
 
     }

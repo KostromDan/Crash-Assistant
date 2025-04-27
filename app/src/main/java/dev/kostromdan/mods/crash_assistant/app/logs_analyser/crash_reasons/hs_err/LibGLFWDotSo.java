@@ -13,7 +13,7 @@ public class LibGLFWDotSo extends KnownCrashReason {
     public LibGLFWDotSo() {
         super(
                 LogType.HS_ERR,
-                LanguageProvider.get("warnings.libglfw_so", new HashMap<String, String>() {{
+                LanguageProvider.get("warnings.libglfw_so", new HashMap<>() {{
                     put("$LINK.GLFW_DOWNLOAD$", LanguageProvider.get("warnings_common.repository"));
                 }})
         );

@@ -1,7 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.common_config.communication;
 
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -51,16 +50,16 @@ public final class ProcessSignalIO {
      * If the target file already exists, it will be overwritten.
      */
     public static void post(String name, String data) {
-        String fileName = name + "_pid" + ProcessHelper.getCurrentPid() + ".tmp";
+        String fileName = name + "_pid" + ProcessHandle.current().pid() + ".tmp";
         Path filePath = BASE_DIR.resolve(fileName);
         try {
-            Files.write(
+            Files.writeString(
                     filePath,
-                    data.getBytes(StandardCharsets.UTF_8),
+                    data,
+                    StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING,
-                    StandardOpenOption.WRITE
-            );
+                    StandardOpenOption.WRITE);
         } catch (IOException e) {
             JarInJarHelper.LOGGER.error("Error while saving data to {}", fileName, e);
         }
@@ -80,8 +79,8 @@ public final class ProcessSignalIO {
             return Optional.empty();
         }
         try {
-            byte[] bytes = Files.readAllBytes(filePath);
-            return Optional.of(new String(bytes, StandardCharsets.UTF_8));
+            String content = Files.readString(filePath, StandardCharsets.UTF_8);
+            return Optional.of(content);
         } catch (IOException e) {
             JarInJarHelper.LOGGER.error("Error while reading data from {}", fileName, e);
             return Optional.empty();
@@ -110,13 +109,13 @@ public final class ProcessSignalIO {
         String fileName = name + ".info";
         Path filePath = BASE_DIR.resolve(fileName);
         try {
-            Files.write(
+            Files.writeString(
                     filePath,
-                    data.getBytes(StandardCharsets.UTF_8),
+                    data,
+                    StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING,
-                    StandardOpenOption.WRITE
-            );
+                    StandardOpenOption.WRITE);
         } catch (IOException e) {
             JarInJarHelper.LOGGER.error("Error while saving info to {}", fileName, e);
         }
@@ -136,8 +135,8 @@ public final class ProcessSignalIO {
             return Optional.empty();
         }
         try {
-            byte[] bytes = Files.readAllBytes(filePath);
-            return Optional.of(new String(bytes, StandardCharsets.UTF_8));
+            String content = Files.readString(filePath, StandardCharsets.UTF_8);
+            return Optional.of(content);
         } catch (IOException e) {
             JarInJarHelper.LOGGER.error("Error while reading info from {}", fileName, e);
             return Optional.empty();

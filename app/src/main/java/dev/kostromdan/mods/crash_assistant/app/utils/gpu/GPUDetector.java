@@ -10,8 +10,8 @@ import java.util.List;
 
 public class GPUDetector {
     /**
-     * Detects GPUs using Vulkan and returns a list of GPU classes.
-     * Each class contains the GPU's type and name.
+     * Detects GPUs using Vulkan and returns a list of GPU records.
+     * Each record contains the GPU's type and name.
      *
      * @return a List of GPU objects representing the detected GPUs
      * @throws RuntimeException if Vulkan instance creation or device enumeration fails
@@ -63,7 +63,7 @@ public class GPUDetector {
                     type = RendererType.UNKNOWN;
                 }
 
-                // Add GPU class to the list
+                // Add GPU record to the list
                 gpus.add(new GPU(type, deviceName));
             }
         }

@@ -10,7 +10,7 @@ import java.util.HashSet;
 public class OutOfMemoryError extends KnownCrashReason {
     public OutOfMemoryError() {
         super(
-                new HashSet<LogType>() {{
+                new HashSet<>() {{
                     add(LogType.LOG);
                     add(LogType.CRASH_REPORT);
                 }},

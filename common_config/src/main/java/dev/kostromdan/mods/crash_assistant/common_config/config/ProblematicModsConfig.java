@@ -21,7 +21,7 @@ public class ProblematicModsConfig {
     /**
      * Loads and returns a list of problematic mod configurations from the JSON config file.
      *
-     * @return List of ProblematicMod classes representing problematic mods
+     * @return List of ProblematicMod records representing problematic mods
      */
     public static List<ProblematicMod> getProblematicModsFromConfig() {
         try {
@@ -48,7 +48,7 @@ public class ProblematicModsConfig {
         setUpDefaultConfig(config);
         config.save();
 
-        // Read the config and build the list of ProblematicMod classes
+        // Read the config and build the list of ProblematicMod records
         List<ProblematicMod> problematicMods = new ArrayList<>();
         for (Map.Entry<String, Object> entry : config.valueMap().entrySet()) {
             String modid = entry.getKey();
@@ -77,17 +77,17 @@ public class ProblematicModsConfig {
         LinkedHashSet<Mod> currentMods = ModListUtils.getCurrentModList(true);
 
         Map<String, ProblematicMod> configMap = problematicMods.stream()
-                .collect(Collectors.toMap(ProblematicMod::getModid, pm -> pm));
+                .collect(Collectors.toMap(ProblematicMod::modid, pm -> pm));
 
         return currentMods.stream()
                 .filter(mod -> configMap.containsKey(mod.getModId()))
                 .map(mod -> {
                     ProblematicMod fromConfig = configMap.get(mod.getModId());
                     return new ProblematicMod(
-                            fromConfig.getModid(),
+                            fromConfig.modid(),
                             mod,
-                            fromConfig.isShouldCrashOnStartup(),
-                            fromConfig.getMsg()
+                            fromConfig.should_crash_on_startup(),
+                            fromConfig.msg()
                     );
                 })
                 .collect(Collectors.toList());
@@ -111,15 +111,15 @@ public class ProblematicModsConfig {
 
     public static void crashIfProblematicMod() {
         List<ProblematicMod> problematicModsFromConfig = getProblematicModsFromConfig();
-        if (problematicModsFromConfig.stream().noneMatch(ProblematicMod::isShouldCrashOnStartup)) return;
+        if (problematicModsFromConfig.stream().noneMatch(ProblematicMod::should_crash_on_startup)) return;
 
         List<ProblematicMod> problematicMods = getCurrentProblematicMods();
         boolean shouldCrash = false;
         for (ProblematicMod mod : problematicMods) {
-            if (mod.isShouldCrashOnStartup()) {
+            if (mod.should_crash_on_startup()) {
                 shouldCrash = true;
-                Mod currentMod = mod.getCurrentMod();
-                JarInJarHelper.LOGGER.error("Detected " + currentMod.getJarName() + "(modId: " + mod.getModid() + ") in current modlist. It marked as incompatible with this modpack(" + CONFIG_PATH + "). Crashing game and starting Crash Assistant.");
+                Mod currentMod = mod.currentMod();
+                JarInJarHelper.LOGGER.error("Detected " + currentMod.getJarName() + "(modId: " + mod.modid() + ") in current modlist. It marked as incompatible with this modpack(" + CONFIG_PATH + "). Crashing game and starting Crash Assistant.");
             }
         }
         if (shouldCrash) {
@@ -128,35 +128,13 @@ public class ProblematicModsConfig {
     }
 
     /**
-     * Class representing a problematic mod with its configuration.
+     * Record representing a problematic mod with its configuration.
      */
-    public static class ProblematicMod {
-        private final String modid;
-        private final Mod currentMod;
-        private final boolean shouldCrashOnStartup;
-        private final String msg;
-
-        public ProblematicMod(String modid, Mod currentMod, boolean shouldCrashOnStartup, String msg) {
-            this.modid = modid;
-            this.currentMod = currentMod;
-            this.shouldCrashOnStartup = shouldCrashOnStartup;
-            this.msg = msg;
-        }
-
-        public String getModid() {
-            return modid;
-        }
-
-        public Mod getCurrentMod() {
-            return currentMod;
-        }
-
-        public boolean isShouldCrashOnStartup() {
-            return shouldCrashOnStartup;
-        }
-
-        public String getMsg() {
-            return msg;
-        }
+    public record ProblematicMod(
+            String modid,
+            Mod currentMod,
+            boolean should_crash_on_startup,
+            String msg
+    ) {
     }
 }

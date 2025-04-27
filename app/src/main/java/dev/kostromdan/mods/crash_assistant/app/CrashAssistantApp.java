@@ -12,9 +12,8 @@ import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSi
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -51,7 +50,7 @@ public class CrashAssistantApp {
         LOGGER.info("CrashAssistantApp running: program args: {}", Boot.APP_ARGS);
 
         LOGGER.info("CrashAssistantApp running from: {}", Paths.get("").toAbsolutePath().toString());
-        LOGGER.info("JAVA: {}", JavaBinaryLocator.getJavaBinary());
+        LOGGER.info("JAVA: {}", JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
 
         parentPID = -1;
         for (int i = 0; i < args.length; i++) {
@@ -78,7 +77,7 @@ public class CrashAssistantApp {
         String currentProcessData = Objects.toString(parentPID) + "_" + Objects.toString(Instant.ofEpochMilli(parentStarted).getEpochSecond());
         Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");
         try {
-            Files.write(currentProcessDataPath, Long.toString(ProcessHelper.getCurrentPid()).getBytes());
+            Files.write(currentProcessDataPath, Long.toString(ProcessHandle.current().pid()).getBytes());
         } catch (IOException ignored) {
         }
 
@@ -143,20 +142,20 @@ public class CrashAssistantApp {
                     List<String> dedicatedGpus = new ArrayList<>();
                     Optional<GPU> foundGPU = Optional.empty();
                     for (GPU gpu : gpus) {
-                        if (gpu.getType() == RendererType.DEDICATED) {
-                            dedicatedGpus.add(gpu.getName());
+                        if (gpu.type() == RendererType.DEDICATED) {
+                            dedicatedGpus.add(gpu.name());
                         }
-                        if (gpu.getName().contains(renderer) || renderer.contains(gpu.getName())) {
+                        if (gpu.name().contains(renderer) || renderer.contains(gpu.name())) {
                             foundGPU = Optional.of(gpu);
                         }
                     }
                     if (foundGPU.isPresent() &&
-                            foundGPU.get().getType() == RendererType.INTEGRATED &&
+                            foundGPU.get().type() == RendererType.INTEGRATED &&
                             !dedicatedGpus.isEmpty()) {
                         LOGGER.warn("Detected Minecraft running on integrated GPU:\n" +
                                 "{},\n" +
                                 "while one or more dedicated exists:\n" +
-                                "{}", foundGPU.get().getName(), String.join("\n", dedicatedGpus));
+                                "{}", foundGPU.get().name(), String.join("\n", dedicatedGpus));
                         if (Objects.equals(CrashAssistantLocalConfig.get("integrated_gpu.dont_show_again"), true)) {
                             CrashAssistantApp.LOGGER.warn("integrated_gpu.dont_show_again is true. Prevented GUI warn.");
                             return;
@@ -164,7 +163,7 @@ public class CrashAssistantApp {
                         try {
                             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.IntegratedGPUWarning");
                             Method method = clazz.getMethod("showIfNotDisabled", String.class, List.class);
-                            method.invoke(null, foundGPU.get().getName(), dedicatedGpus);
+                            method.invoke(null, foundGPU.get().name(), dedicatedGpus);
                         } catch (Exception e) {
                             LOGGER.error("Exception while showing IntegratedGPUWarning:", e);
                         }

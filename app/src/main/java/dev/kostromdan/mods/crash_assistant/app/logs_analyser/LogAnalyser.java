@@ -15,13 +15,12 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class LogAnalyser {
     private static final List<KnownCrashReason> registeredReasons = new ArrayList<>();
     private static final List<CodexAnalysis> registeredCodexReasons = new ArrayList<>();
     private static boolean reasonsRegistered = false;
-    public static final HashSet<LogType> CodexSupportedLogTypes = new HashSet<LogType>() {{
+    public static final HashSet<LogType> CodexSupportedLogTypes = new HashSet<>() {{
         add(LogType.LOG);
         add(LogType.CRASH_REPORT);
     }};
@@ -100,7 +99,7 @@ public class LogAnalyser {
                 .filter(reason ->
                         reason.getLogTypes().contains(log.getType()) &&
                                 !disabledCrashReasons.contains(reason.getClass().getSimpleName())
-                ).collect(Collectors.toList());
+                ).toList();
 
         for (KnownCrashReason reason : registeredReasonsForThisLog) {
             pool.submit(() -> {

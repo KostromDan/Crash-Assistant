@@ -158,7 +158,7 @@ public class FilePanel {
                             throw new DeclinedException(LanguageProvider.get("gui.privacy.declined"));
                         }
 
-                        if (!CrashAssistantGUI.showPrivacyPolicyDialog()) {
+                        if (!PrivacyPolicyDialog.showPrivacyPolicyDialog()) {
                             awaitingPrivacyPolicyDialogs.clear();
                             throw new DeclinedException(LanguageProvider.get("gui.privacy.declined"));
                         }
@@ -219,7 +219,7 @@ public class FilePanel {
                         lastError = e;
                         CrashAssistantApp.LOGGER.info("Failed to upload file \"" + log.getPath() + "\": ", e);
                         uploadButton.setText(LanguageProvider.get("gui.error"));
-                        CrashAssistantGUI.highlightButton(uploadButton, new Color(255, 100, 100), 2600);
+                        CrashAssistantGUI.highlightButton(uploadButton, new Color(255, 100, 100), 3000);
                         if (fromButton) {
                             String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e;
                             if (e instanceof DeclinedException) {
@@ -257,7 +257,7 @@ public class FilePanel {
 
                 if (linkToCopy != null) {
                     uploadButton.setText(LanguageProvider.get("gui.copied"));
-                    CrashAssistantGUI.highlightButton(uploadButton, new Color(100, 255, 100), 2600);
+                    CrashAssistantGUI.highlightButton(uploadButton, new Color(100, 255, 100), 3000);
                     uploadButton.setEnabled(false);
                 }
             }

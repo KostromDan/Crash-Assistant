@@ -1,3 +1,11 @@
+1.7.15:
+
+- Added privacy policy dialog. User must accept the privacy policy on the first upload.
+- Added a config option to disable privacy policy acceptance with a warning about potential legal issues in some countries.
+- Improved privacy information dialog.
+- Improved text of Privacy Policy to match GDPR.
+- Fixed a rare synchronization bug in a file upload process.
+
 1.7.14:
 
 - Added a privacy information tab in a menu about mclo.gs to prevent potential issues.

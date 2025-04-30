@@ -144,6 +144,7 @@
   "gui.privacy.logs_upload_title": "Privacy Policy Acceptance",
   "gui.privacy.logs_upload_question": "Do you accept the $LINK.PRIVACY_POLICY$ of uploading logs?",
   "gui.privacy.declined": "Failed to upload log because you declined the privacy policy, try again.",
+  "gui.privacy.remember_my_choice": "Remember my choice",
   "gui.privacy.logs_upload_accept": "Accept",
   "gui.privacy.logs_upload_decline": "Decline"
 }

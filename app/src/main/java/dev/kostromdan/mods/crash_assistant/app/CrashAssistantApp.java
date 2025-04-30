@@ -39,6 +39,7 @@ public class CrashAssistantApp {
     public static String renderer = null;
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
+    public static boolean stopFunctionFired = false;
     public static long terminatedProcessesLocationEndTime = 0;
 
 
@@ -254,7 +255,8 @@ public class CrashAssistantApp {
 
         LogsList.addIfExistsAndModified(new Log(LogType.CRASH_ASSISTANT, Paths.get("logs", "crash_assistant", "crash_assistant_app.log")));
 
-        if (!ProcessSignalIO.exists("normal_stop", parentPID)) {
+        stopFunctionFired = ProcessSignalIO.exists("normal_stop", parentPID);
+        if (!stopFunctionFired) {
             crashed = true;
         }
 
@@ -263,6 +265,8 @@ public class CrashAssistantApp {
 
         joinedWorldSuccessfully = ProcessSignalIO.exists("joined_world", parentPID);
         LOGGER.info("Joined world successfully: {}", joinedWorldSuccessfully);
+
+        LOGGER.info("Stop function of Minecraft fired: {}", stopFunctionFired);
 
 
         startLocatingTerminatedProcesses();

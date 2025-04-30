@@ -54,7 +54,7 @@ public class PrivacyPolicyDialog {
         textPanel.add(editorPane, BorderLayout.CENTER);
 
         // Create the "Don't show again" checkbox
-        JCheckBox dontShowAgainCheck = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+        JCheckBox dontShowAgainCheck = new JCheckBox(LanguageProvider.get("gui.privacy.remember_my_choice"));
         dontShowAgainCheck.setSelected(true);
 
         // Create the Accept and Decline buttons

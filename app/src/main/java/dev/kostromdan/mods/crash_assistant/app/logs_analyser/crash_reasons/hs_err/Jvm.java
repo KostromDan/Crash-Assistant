@@ -30,8 +30,16 @@ public class Jvm extends KnownCrashReason {
 
         String additionalInfo = "";
         if (VersionUtils.inRange(PlatformHelp.javaVersion, "17.0.7", "17.0.9")) {
-            additionalInfo += LanguageProvider.get("warnings.jvm.17_0_8");
+            additionalInfo += LanguageProvider.get("warnings.jvm.17_0_8", new HashMap<String, String>() {{
+                put("$LINK.ATL$", "ATLauncher");
+                put("$LINK.ADOPTIUM_JDK$", LanguageProvider.get("warnings_common.here"));
+            }});
         }
+
+        if (!additionalInfo.isEmpty()) {
+            additionalInfo = "<span style=\"color:green\">" + additionalInfo + "</span>\n\n";
+        }
+        message = message.replace("$FIRST_PRIORITY_WARNINGS$", additionalInfo);
         return true;
     }
 }

@@ -10,10 +10,10 @@ public class LogAnalysisUtils {
     public static synchronized Optional<String> getProblematicFrameString(Log log) {
         ifBlock:
         if (!analysedForProblematicFrame) {
-            analysedForProblematicFrame = true;
             if (log.getType() != LogType.HS_ERR) {
                 break ifBlock;
             }
+            analysedForProblematicFrame = true;
             List<String> lines = log.getReader().getAllLinesList();
             boolean found = false;
             for (String line : lines) {

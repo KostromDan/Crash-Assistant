@@ -73,6 +73,8 @@ public class CrashAssistantApp {
             }
         }
 
+        LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
+
         parentStarted = ProcessHelper.getStartTime(parentPID);
 
         String currentProcessData = Objects.toString(parentPID) + "_" + Objects.toString(Instant.ofEpochMilli(parentStarted).getEpochSecond());

@@ -131,6 +131,7 @@ public class LogAnalyser {
         if (reasonsRegistered) {
             return;
         }
+        registerKnownCrashReason(new AlLibAlcCleanup());
         registerKnownCrashReason(new Atio6axx());
         registerKnownCrashReason(new InsufficientMemory());
         registerKnownCrashReason(new Jemalloc());

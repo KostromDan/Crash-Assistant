@@ -28,41 +28,65 @@ public class MissingUnsupportedDependencies extends KnownCrashReason {
         List<String> lines = log.getReader().getAllLinesList();
         List<String> problemLines = new ArrayList<>();
         HashSet<String> modIds = new HashSet<>();
+        List<String> modIdsToJarNames = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
-            if (line.contains("Missing or unsupported mandatory dependencies:")) {
-                if (line.contains("]: ")) {
-                    line = line.split("]: ")[1];
-                }
+            if (line.contains("Missing or unsupported mandatory dependencies:") ||
+                    line.contains("Conflicts between mods:") ||
+                    line.contains("Unsupported installed optional dependencies:") ||
+                    line.contains("Incompatibilities between mods:")
+            ) {
+                if (!line.contains("]: ")) continue;
+                if (i + 1 >= lines.size()) continue;
+                if (!isMessageLine(lines.get(i + 1))) continue;
+
+                line = line.split("]: ")[1];
                 problemLines.add(line);
                 for (int j = i + 1; j < lines.size(); j++) {
                     String line2 = lines.get(j);
-                    if (line2.isEmpty() || !(line2.charAt(0) == ' ' || line2.charAt(0) == '\t')) {
+                    if (!isMessageLine(line2)) {
                         break;
                     }
                     problemLines.add(line2.replaceFirst("^[ \t]+", "&nbsp;&nbsp;&nbsp;&nbsp;"));
                     modIds.addAll(getModIdsFromLine(line2));
                 }
-                message = message.replace("$LINE_FROM_LOG$", String.join("\n", problemLines));
-                List<String> modIdsToJarNames = new ArrayList<>();
-                ModListUtils.getCurrentModList(true).stream().forEach(mod -> {
-                    if (modIds.contains(mod.getModId())) {
-                        modIdsToJarNames.add(mod.getModId() + " -> " + mod.getJarName());
-                    }
-                });
-                message = message.replace("$MODIDS_TO_JARNAMES$", String.join("\n", modIdsToJarNames));
-                return true;
             }
         }
-        return false;
+        if (problemLines.isEmpty()) return false;
+        message = message.replace("$LINE_FROM_LOG$", String.join("\n", problemLines));
+        ModListUtils.getCurrentModList(true).stream().forEach(mod -> {
+            if (modIds.contains(mod.getModId())) {
+                modIdsToJarNames.add(mod.getModId() + " -> " + mod.getJarName());
+            }
+        });
+        message = message.replace("$MODIDS_TO_JARNAMES$", String.join("\n", modIdsToJarNames));
+        return true;
     }
+
+    public static boolean isMessageLine(String line) {
+        if (line.isEmpty()) {
+            return false;
+        }
+        char firstChar = line.charAt(0);
+        if (firstChar != ' ' && firstChar != '\t') {
+            return false;
+        }
+        if (line.contains("Issues may arise. Continue at your own risk.")) {
+            return false;
+        }
+        return true;
+    }
+
 
     public static List<String> getModIdsFromLine(String line) {
         List<String> modIds = new ArrayList<>();
         String[] splitLine = line.split("'");
         for (int i = 0; i < splitLine.length; i++) {
             String currentLine = splitLine[i];
-            if ((currentLine.endsWith("Mod ID: ") || currentLine.endsWith("Requested by: ")) && i + 1 < splitLine.length) {
+            if ((currentLine.endsWith("Mod ID: ") ||
+                    currentLine.endsWith("Requested by: ") ||
+                    currentLine.endsWith("Mod ") ||
+                    currentLine.endsWith("discourages ")) && i + 1 < splitLine.length) {
                 modIds.add(splitLine[i + 1]);
             }
         }

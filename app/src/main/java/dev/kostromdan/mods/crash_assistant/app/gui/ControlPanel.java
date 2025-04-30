@@ -375,10 +375,9 @@ public class ControlPanel {
         sb.append("\n");
 
         if (CrashAssistantConfig.getBoolean("generated_message.put_problematic_frame_to_message")) {
-            if (LogAnalysisUtils.problematicFrame.isPresent()) {
+            if (LogAnalysisUtils.problematicFrameFullString.isPresent()) {
                 sb.append("```java\n");
-                sb.append("# Problematic frame:\n");
-                sb.append(LogAnalysisUtils.problematicFrame.get());
+                sb.append(LogAnalysisUtils.problematicFrameFullString.get());
                 sb.append("\n```");
             }
 

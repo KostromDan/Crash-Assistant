@@ -27,9 +27,13 @@ public class LogAnalysisUtils {
                             frame = lines.get(i + 2);
                             fullString += "\n" + frame;
                         }
-                        problematicFrameFullString = Optional.of(fullString);
                         problematicFrame = Optional.of(frame);
+                        problematicFrameFullString = Optional.of(fullString);
                     }
+                    break ifBlock;
+                } else if (line.contains("# There is insufficient memory for the Java Runtime Environment to continue.")) {
+                    problematicFrame = Optional.of(line);
+                    problematicFrameFullString = Optional.of(line);
                     break ifBlock;
                 }
             }

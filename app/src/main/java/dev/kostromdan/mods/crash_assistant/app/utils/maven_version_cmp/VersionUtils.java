@@ -53,4 +53,18 @@ public final class VersionUtils {
         ComparableVersion v2 = new ComparableVersion(version2);
         return v1.compareTo(v2) == 0;
     }
+
+    /**
+     * Returns true if the version is within the specified range (inclusive).
+     * @param version The version to check
+     * @param minVersion The minimum version (inclusive)
+     * @param maxVersion The maximum version (inclusive)
+     * @return true if the version is within the range
+     */
+    public static boolean inRange(String version, String minVersion, String maxVersion) {
+        ComparableVersion v = new ComparableVersion(version);
+        ComparableVersion min = new ComparableVersion(minVersion);
+        ComparableVersion max = new ComparableVersion(maxVersion);
+        return v.compareTo(min) >= 0 && v.compareTo(max) <= 0;
+    }
 }

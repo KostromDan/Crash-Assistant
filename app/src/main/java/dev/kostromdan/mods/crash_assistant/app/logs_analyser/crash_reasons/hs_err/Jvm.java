@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalysisUtils;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
+import dev.kostromdan.mods.crash_assistant.app.utils.maven_version_cmp.VersionUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
@@ -19,11 +20,18 @@ public class Jvm extends KnownCrashReason {
                         .replace("$HALF_OF_PROCESSORS$",
                                 String.valueOf(Runtime.getRuntime().availableProcessors() / 2))
         );
+        this.conflictingReasons.add("AlLibAlcCleanup");
     }
 
     @Override
     public boolean matches(Log log) {
         if (!PlatformHelp.isWindows()) return false;
-        return LogAnalysisUtils.hsErrContainsOneOfFrames(log, "jvm.dll");
+        if (!LogAnalysisUtils.hsErrContainsOneOfFrames(log, "jvm.dll")) return false;
+
+        String additionalInfo = "";
+        if (VersionUtils.inRange(PlatformHelp.javaVersion, "17.0.7", "17.0.9")) {
+            additionalInfo += LanguageProvider.get("warnings.jvm.17_0_8");
+        }
+        return true;
     }
 }

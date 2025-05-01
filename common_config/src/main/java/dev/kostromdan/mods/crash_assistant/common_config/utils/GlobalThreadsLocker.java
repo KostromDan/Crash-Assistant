@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>
  * Usage example:
  * <pre>
- * AllThreadsLocker lock = new AllThreadsLocker();
+ * GlobalThreadsLocker lock = new GlobalThreadsLocker();
  * try {
  *     lock.lock();
  *     // Perform operations while all threads are locked
@@ -16,11 +16,11 @@ import java.util.concurrent.locks.ReentrantLock;
  * }
  * </pre>
  */
-public class AllThreadsLocker {
+public class GlobalThreadsLocker {
     private final ReentrantLock lock = new ReentrantLock();
     private final ThreadGroup rootThreadGroup;
 
-    public AllThreadsLocker() {
+    public GlobalThreadsLocker() {
         // Get the root thread group
         ThreadGroup root = Thread.currentThread().getThreadGroup();
         while (root.getParent() != null) {

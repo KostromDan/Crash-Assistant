@@ -29,7 +29,7 @@ public class CrashAssistantTransformationService implements ITransformationServi
 
     @Override
     public @NotNull String name() {
-        return "crash_assistant";
+        return "AAA_crash_assistant";
     }
 
     @Override

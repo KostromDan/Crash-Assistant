@@ -61,6 +61,7 @@ public class CreateDependencies {
             new ProcessBuilder(jdepsPath, "-version").start();
             return true;
         } catch (IOException ex) {
+            CrashAssistantApp.LOGGER.warn("Error while trying jdeps path: {}\n{}", jdepsPath, ex.getMessage());
             return false;
         }
     }

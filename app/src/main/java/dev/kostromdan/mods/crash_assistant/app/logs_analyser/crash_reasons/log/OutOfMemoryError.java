@@ -14,7 +14,7 @@ public class OutOfMemoryError extends KnownCrashReason {
                     add(LogType.LOG);
                     add(LogType.CRASH_REPORT);
                 }},
-                LanguageProvider.get("warnings.out_of_memory_error") + InsufficientMemory.getEndRecommendations(),
+                InsufficientMemory.applyEndRecommendations(LanguageProvider.get("warnings.out_of_memory_error")),
                 "java\\.lang\\.OutOfMemoryError"
         );
     }

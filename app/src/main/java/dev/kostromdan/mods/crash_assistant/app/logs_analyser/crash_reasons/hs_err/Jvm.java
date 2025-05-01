@@ -37,7 +37,7 @@ public class Jvm extends KnownCrashReason {
         }
 
         if (!additionalInfo.isEmpty()) {
-            additionalInfo = "<span style=\"color:green\">" + additionalInfo + "</span>\n\n";
+            additionalInfo = "<span style=\"color:green\">" + additionalInfo + "</span>\n";
         }
         message = message.replace("$FIRST_PRIORITY_WARNINGS$", additionalInfo);
         return true;

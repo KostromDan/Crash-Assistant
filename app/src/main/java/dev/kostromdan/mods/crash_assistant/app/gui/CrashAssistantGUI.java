@@ -7,6 +7,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.MalwareMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
@@ -136,6 +137,7 @@ public class CrashAssistantGUI {
 
         controlPanel.updateModListInfo();
         showCrashAssistantDuplicatedWarning();
+        showMalwareModsWarning();
         IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         IntelChipBugWarning.showIfAffected(false);
         new Thread(() -> {
@@ -289,13 +291,13 @@ public class CrashAssistantGUI {
     }
 
     public static void showCrashAssistantDuplicatedWarning() {
-        ControlPanel.stopMovingToTop = true;
         synchronized (KnownCrashReasonMessage.class) {
             try {
                 if (PlatformHelp.platform != PlatformHelp.FORGE &&
                         PlatformHelp.platform != PlatformHelp.NEOFORGE) return;
                 List<Mod> mods = JarInJarHelper.checkDuplicatedCrashAssistantMod(false);
                 if (mods.size() < 2) return;
+                ControlPanel.stopMovingToTop = true;
                 SwingUtilities.invokeAndWait(() -> {
                     JOptionPane optionPane = new JOptionPane(
                             CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.duplicated_mod_warn") +
@@ -311,6 +313,92 @@ public class CrashAssistantGUI {
                 });
             } catch (Exception e) {
                 CrashAssistantApp.LOGGER.error("Error while showing crash assistant duplicated warning: ", e);
+            }
+        }
+    }
+
+    public static void showMalwareModsWarning() {
+        synchronized (KnownCrashReasonMessage.class) {
+            try {
+                Optional<MalwareMod> malwareMod = JarInJarHelper.checkForMalwareMods(false);
+                if (!malwareMod.isPresent()) return;
+                List<Mod> detectedMods = malwareMod.get().getDetectedMods();
+                if (detectedMods.isEmpty()) return;
+                ControlPanel.stopMovingToTop = true;
+                SwingUtilities.invokeAndWait(() -> {
+                    JButton removeButton = new JButton("Remove Malware Mods");
+                    removeButton.addActionListener(e -> {
+                        try {
+                            boolean allDeleted = true;
+                            for (Mod mod : detectedMods) {
+                                String jarName = mod.getJarName();
+                                File modsDir = new File("mods");
+                                File modFile = new File(modsDir, jarName);
+
+                                if (modFile.exists()) {
+                                    if (modFile.delete()) {
+                                        CrashAssistantApp.LOGGER.info("Successfully deleted malware mod: {}", jarName);
+                                    } else {
+                                        CrashAssistantApp.LOGGER.error("Failed to delete malware mod: {}", jarName);
+                                        allDeleted = false;
+                                    }
+                                } else {
+                                    CrashAssistantApp.LOGGER.error("Could not find malware mod file: {}", jarName);
+                                    allDeleted = false;
+                                }
+                            }
+
+                            if (allDeleted) {
+                                JOptionPane.showMessageDialog(
+                                        frame,
+                                        CrashAssistantGUI.getEditorPane("Malware mods have been removed. Please restart your game.", false),
+                                        "Malware Mods Removed",
+                                        JOptionPane.INFORMATION_MESSAGE
+                                );
+                            } else {
+                                JOptionPane.showMessageDialog(
+                                        frame,
+                                        CrashAssistantGUI.getEditorPane("Some malware mods could not be removed. Please delete them manually from your mods folder.", false),
+                                        "Warning",
+                                        JOptionPane.WARNING_MESSAGE
+                                );
+                            }
+                        } catch (Exception ex) {
+                            CrashAssistantApp.LOGGER.error("Error while removing malware mod: ", ex);
+                            JOptionPane.showMessageDialog(
+                                    frame,
+                                    CrashAssistantGUI.getEditorPane("Failed to remove malware mod: " + ex.getMessage(), false),
+                                    "Error",
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+                        }
+                    });
+
+                    Object[] options = {removeButton, "Close"};
+                    JOptionPane optionPane = new JOptionPane(
+                            CrashAssistantGUI.getEditorPane("<h2>Warning: Malware or malware-like mod detected!</h2>\n" +
+                                    "Crash Assistant prevented launch to prevent <strong>potential infection</strong>.\n" +
+                                    "Malware mod:\n" +
+                                    "<strong>" + String.join("\n", detectedMods.stream().map(Mod::getJarName).toList()) + "</strong>" +
+                                    "\n\n" +
+                                    "<h4><strong>Why Crash Assistant marked this mod as malware?:</strong></h4>" +
+                                    malwareMod.get().getExplainMessage() +
+                                    "\n\n" +
+                                    "This mod may harm your computer or steal your information. It is recommended to remove it.", true, 600),
+                            JOptionPane.WARNING_MESSAGE,
+                            JOptionPane.DEFAULT_OPTION,
+                            null,
+                            options,
+                            options[0]
+                    );
+                    JDialog dialog = optionPane.createDialog(
+                            frame,
+                            "Malware Mods Detected"
+                    );
+                    dialog.setVisible(true);
+                });
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.error("Error while showing malware mod warning: ", e);
             }
         }
     }

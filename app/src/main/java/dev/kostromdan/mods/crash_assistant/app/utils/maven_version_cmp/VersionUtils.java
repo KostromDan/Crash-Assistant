@@ -56,6 +56,7 @@ public final class VersionUtils {
 
     /**
      * Returns true if the version is within the specified range (inclusive).
+     * For some cursed version formats this may become exclusive.
      * @param version The version to check
      * @param minVersion The minimum version (inclusive)
      * @param maxVersion The maximum version (inclusive)

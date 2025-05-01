@@ -21,8 +21,7 @@ public class nglMultiDrawElementsBaseVertex extends KnownCrashReason {
     @Override
     public boolean matches(Log log) {
         if (!PlatformHelp.isWindows()) return false;
-        if (!LogAnalysisUtils.hsErrContainsOneOfFrames(log, "0x0000")) return false;
-        if (!LogAnalysisUtils.problematicFrame.get().startsWith("# C  0x0")) return false;
+        if (!LogAnalysisUtils.hsErrContainsOneOfFrames(log, "# C  0x0000")) return false;
         return super.matches(log);
     }
 }

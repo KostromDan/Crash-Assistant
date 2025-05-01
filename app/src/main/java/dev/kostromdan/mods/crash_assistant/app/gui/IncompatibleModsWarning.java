@@ -22,14 +22,13 @@ public class IncompatibleModsWarning {
      * @param parent The parent component for the dialog (can be null for centered dialogs)
      */
     public static void showWarnings(Component parent) {
-        ControlPanel.stopMovingToTop = true;
-
         synchronized (KnownCrashReasonMessage.class) {
             try {
                 List<ProblematicModsConfig.ProblematicMod> currentProblematicMods = ProblematicModsConfig.getCurrentProblematicMods();
 
                 SwingUtilities.invokeAndWait(() -> {
                     for (ProblematicModsConfig.ProblematicMod problematicMod : currentProblematicMods) {
+                        ControlPanel.stopMovingToTop = true;
                         CrashAssistantApp.LOGGER.info("Showing IncompatibleModsWarning about {}", problematicMod.currentMod().getJarName());
 
                         String[] options = {

@@ -1,3 +1,18 @@
+1.7.17:
+
+- Added malware mods detector to protect users from potentially harmful mods.
+- Added new log analysis for nglMultiDrawElementsBaseVertex errors (graphics driver issues).
+- Added new log analysis for OpenAL audio library errors (alc_cleanup).
+- Significantly improved MissingUnsupportedDependencies warn, now detects a lot more messages.
+- Improved Problematic frame location logic. Added handling of some cursed scenario.
+- Improved InsufficientMemory analysis. Improved message. Added additional message and detection of page files disabled. Added instructions on how to enable back page files.
+- Improved jvm.dll crash detection with specific handling for Java 17.0.8.
+- Updated privacy dialog with "Remember my choice" option instead of "Don't show again".
+- Added logging of Java version for better debugging.
+- Added logging of stop function fired boolean.
+- Added jdeps locating logging.
+- Small fixes and improvements.
+
 1.7.16:
 
 - Small formulation fix.

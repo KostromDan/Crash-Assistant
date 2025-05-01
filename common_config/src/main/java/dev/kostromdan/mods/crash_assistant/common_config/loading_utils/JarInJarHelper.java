@@ -8,7 +8,6 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.MalwareMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.GlobalThreadsLocker;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -176,24 +175,17 @@ public interface JarInJarHelper {
             List<Path> modPaths = getModJarPathsContainingPart(malwareMod.getJarNamePart());
             if (modPaths.isEmpty()) continue;
 
-            GlobalThreadsLocker lock = new GlobalThreadsLocker(); // Coremods are loaded async, so to prevent potential infection, we're locking all threads.
-            try {
-                if (crashIfMalwareDetected) lock.lock();
-                List<Mod> mods = mapPathsToMods(modPaths).stream().filter(mod -> Objects.equals(mod.getModId(), malwareMod.getModId())).toList();
-                if (mods.isEmpty()) continue;
-                malwareMod.addDetectedMods(mods);
+            List<Mod> mods = mapPathsToMods(modPaths).stream().filter(mod -> Objects.equals(mod.getModId(), malwareMod.getModId())).toList();
+            if (mods.isEmpty()) continue;
+            malwareMod.addDetectedMods(mods);
 
-                if (crashIfMalwareDetected) {
-                    JarInJarHelper.LOGGER.error("Crash Assistant detected malware or malware-like mod(s), crashing to prevent potential issues:\n{}",
-                            String.join("\n", mods.stream().map(Mod::getJarName).toList()));
-                    launchCrashAssistantApp("UNKNOWN");
-                    System.exit(-1);
-                }
-                return Optional.of(malwareMod);
-            } finally {
-                if (crashIfMalwareDetected) lock.unlock();
+            if (crashIfMalwareDetected) {
+                JarInJarHelper.LOGGER.error("Crash Assistant detected malware or malware-like mod(s), crashing to prevent potential issues:\n{}",
+                        String.join("\n", mods.stream().map(Mod::getJarName).toList()));
+                launchCrashAssistantApp("client");
+                System.exit(-1);
             }
-
+            return Optional.of(malwareMod);
         }
         return Optional.empty();
     }

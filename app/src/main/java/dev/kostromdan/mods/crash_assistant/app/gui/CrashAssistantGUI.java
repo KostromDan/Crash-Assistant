@@ -327,6 +327,27 @@ public class CrashAssistantGUI {
                 ControlPanel.stopMovingToTop = true;
                 SwingUtilities.invokeAndWait(() -> {
                     JButton removeButton = new JButton("Remove Malware Mods");
+                    Object[] options = {removeButton, "Close"};
+                    JOptionPane optionPane = new JOptionPane(
+                            CrashAssistantGUI.getEditorPane("<h2>Warning: Malware or malware-like mod detected!</h2>\n" +
+                                    "Crash Assistant prevented launch to prevent <strong>potential infection</strong>.\n" +
+                                    "Malware mod:\n" +
+                                    "<strong>" + String.join("\n", detectedMods.stream().map(Mod::getJarName).toList()) + "</strong>" +
+                                    "\n\n" +
+                                    "<h4><strong>Why Crash Assistant marked this mod as malware?:</strong></h4>" +
+                                    malwareMod.get().getExplainMessage() +
+                                    "\n\n" +
+                                    "This mod may harm your computer or steal your information. It is recommended to remove it.", true, 600),
+                            JOptionPane.WARNING_MESSAGE,
+                            JOptionPane.DEFAULT_OPTION,
+                            null,
+                            options,
+                            options[0]
+                    );
+                    JDialog dialog = optionPane.createDialog(
+                            frame,
+                            "Malware Mods Detected"
+                    );
                     removeButton.addActionListener(e -> {
                         try {
                             boolean allDeleted = true;
@@ -355,6 +376,7 @@ public class CrashAssistantGUI {
                                         "Malware Mods Removed",
                                         JOptionPane.INFORMATION_MESSAGE
                                 );
+                                dialog.dispose();
                             } else {
                                 JOptionPane.showMessageDialog(
                                         frame,
@@ -373,28 +395,6 @@ public class CrashAssistantGUI {
                             );
                         }
                     });
-
-                    Object[] options = {removeButton, "Close"};
-                    JOptionPane optionPane = new JOptionPane(
-                            CrashAssistantGUI.getEditorPane("<h2>Warning: Malware or malware-like mod detected!</h2>\n" +
-                                    "Crash Assistant prevented launch to prevent <strong>potential infection</strong>.\n" +
-                                    "Malware mod:\n" +
-                                    "<strong>" + String.join("\n", detectedMods.stream().map(Mod::getJarName).toList()) + "</strong>" +
-                                    "\n\n" +
-                                    "<h4><strong>Why Crash Assistant marked this mod as malware?:</strong></h4>" +
-                                    malwareMod.get().getExplainMessage() +
-                                    "\n\n" +
-                                    "This mod may harm your computer or steal your information. It is recommended to remove it.", true, 600),
-                            JOptionPane.WARNING_MESSAGE,
-                            JOptionPane.DEFAULT_OPTION,
-                            null,
-                            options,
-                            options[0]
-                    );
-                    JDialog dialog = optionPane.createDialog(
-                            frame,
-                            "Malware Mods Detected"
-                    );
                     dialog.setVisible(true);
                 });
             } catch (Exception e) {

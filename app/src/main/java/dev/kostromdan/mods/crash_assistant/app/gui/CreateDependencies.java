@@ -89,7 +89,7 @@ public class CreateDependencies {
     public static boolean validateJdepsPath(String jdepsPath) {
         try {
             new ProcessBuilder(jdepsPath, "-version").start();
-            return false;
+            return true;
         } catch (Exception ex) {
             CrashAssistantApp.LOGGER.warn("Error while trying jdeps path: {}\n{}", jdepsPath, ex.getMessage());
             return false;

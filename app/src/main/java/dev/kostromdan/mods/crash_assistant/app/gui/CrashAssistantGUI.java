@@ -337,7 +337,7 @@ public class CrashAssistantGUI {
                                     "<h4><strong>Why Crash Assistant marked this mod as malware?:</strong></h4>" +
                                     malwareMod.get().getExplainMessage() +
                                     "\n\n" +
-                                    "This mod may harm your computer or steal your information. It is recommended to remove it.", true, 600),
+                                    "Mods marked as malware may harm your computer or steal your information. It is highly recommended to remove them.", true, 600),
                             JOptionPane.WARNING_MESSAGE,
                             JOptionPane.DEFAULT_OPTION,
                             null,

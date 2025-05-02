@@ -13,6 +13,7 @@ public class LogComparator implements Comparator<Log> {
             LogType.DEBUG_LOG,
             LogType.HS_ERR,
             LogType.CRASH_REPORT,
+            LogType.DISCONNECT_CLIENT,
             LogType.WIN_EVENT,
             LogType.LAUNCHER_LOG,
             LogType.KUBE_JS,

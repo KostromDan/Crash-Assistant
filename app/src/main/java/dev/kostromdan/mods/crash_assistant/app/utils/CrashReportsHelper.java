@@ -6,60 +6,40 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.function.Predicate;
 
 public class CrashReportsHelper {
-    private static final HashSet<Path> knownCrashReports = new HashSet<>();
 
     /**
-     * Caches the current set of crash reports to identify new reports later.
-     * This method updates the known crash reports list with all crash reports
-     * available in the directory at the time of invocation.
-     */
-    public static void cacheKnownCrashReports() {
-        knownCrashReports.addAll(getCrashReports());
-    }
-
-    /**
-     * Scans the crash reports directory for any new reports that were not
-     * previously cached. New crash reports are identified as files present
-     * in the directory but missing from the known crash reports set.
+     * Retrieves all relevant files from the specified directory that were modified
+     * after the parent process started and match the provided filename filter.
      *
-     * @return A set of paths representing the newly discovered crash reports.
-     */
-    public static HashSet<Path> scanForNewCrashReports() {
-        HashSet<Path> newCrashReports = getCrashReports();
-        newCrashReports.removeAll(knownCrashReports);
-        return newCrashReports;
-    }
-
-    /**
-     * Retrieves all crash reports currently present in the crash reports directory.
-     * This method scans the directory for files and returns their paths in a set.
-     *
-     * @return A set of paths representing all crash reports in the directory.
+     * @param dir The directory to scan for files
+     * @param filenameFilter A predicate that tests if a filename should be included
+     * @return A set of paths representing all relevant files in the directory.
      * If the directory does not exist or an error occurs, an empty set is returned.
      */
-    public static HashSet<Path> getCrashReports() {
-        HashSet<Path> locatedCrashReports = new HashSet<>();
-
-        Path dir = Paths.get("crash-reports");
+    public static HashSet<Path> getRelevantFiles(Path dir, Predicate<String> filenameFilter) {
+        HashSet<Path> relevantFiles = new HashSet<>();
 
         if (!Files.exists(dir)) {
-            return locatedCrashReports;
+            return relevantFiles;
         }
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
             for (Path entry : stream) {
-                if (Files.isRegularFile(entry)) {
-                    locatedCrashReports.add(entry);
+                if (Files.isRegularFile(entry) && 
+                    entry.getFileName() != null && 
+                    filenameFilter.test(entry.getFileName().toString()) &&
+                    entry.toFile().lastModified() >= CrashAssistantApp.parentStarted) {
+                    relevantFiles.add(entry);
                 }
             }
         } catch (IOException e) {
-            CrashAssistantApp.LOGGER.error("Error while scanning crash reports: ", e);
+            CrashAssistantApp.LOGGER.error("Error while scanning files in " + dir + ": ", e);
             return new HashSet<>();
         }
-        return locatedCrashReports;
+        return relevantFiles;
     }
 }

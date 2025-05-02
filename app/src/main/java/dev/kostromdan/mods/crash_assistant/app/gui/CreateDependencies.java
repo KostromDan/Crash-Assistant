@@ -6,6 +6,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import javax.swing.*;
 import javax.swing.text.DefaultCaret;
@@ -60,23 +61,13 @@ public class CreateDependencies {
         try {
             new ProcessBuilder(jdepsPath, "-version").start();
             return true;
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             CrashAssistantApp.LOGGER.warn("Error while trying jdeps path: {}\n{}", jdepsPath, ex.getMessage());
             return false;
         }
     }
 
-    public static String getJDepsPath() {
-        // Option 1: Derive from java binary location.
-        String javaBinaryPath = JavaBinaryLocator.getJavaBinary(ProcessHandle.current());
-        if (javaBinaryPath.contains("javaw")) {
-            javaBinaryPath = javaBinaryPath.replace("javaw", "java");
-        }
-        String jdepsPath = javaBinaryPath.replaceAll("(?<=[/\\\\])java(\\.exe)?$", "jdeps$1");
-        if (validateJdepsPath(jdepsPath)) return jdepsPath;
-
-        // Option 2: Use JAVA_HOME environment variable.
-        String javaHome = System.getenv("JAVA_HOME");
+    public static String transformJavaHomeToJdepsPath(String javaHome) {
         if (javaHome != null && !javaHome.isEmpty()) {
             String osName = System.getProperty("os.name").toLowerCase();
             // Check if javaHome already ends with 'bin'
@@ -85,27 +76,87 @@ public class CreateDependencies {
             }
             if (javaHome.endsWith("bin")) {
                 if (osName.contains("win")) {
-                    jdepsPath = javaHome + File.separator + "jdeps.exe";
+                    return javaHome + File.separator + "jdeps.exe";
                 } else {
-                    jdepsPath = javaHome + File.separator + "jdeps";
-                }
-                if (validateJdepsPath(jdepsPath)) {
-                    return jdepsPath;
+                    return javaHome + File.separator + "jdeps";
                 }
             } else {
                 // Otherwise, append bin directory.
                 if (osName.contains("win")) {
-                    jdepsPath = javaHome + File.separator + "bin" + File.separator + "jdeps.exe";
+                    return javaHome + File.separator + "bin" + File.separator + "jdeps.exe";
                 } else {
-                    jdepsPath = javaHome + File.separator + "bin" + File.separator + "jdeps";
-                }
-                if (validateJdepsPath(jdepsPath)) {
-                    return jdepsPath;
+                    return javaHome + File.separator + "bin" + File.separator + "jdeps";
                 }
             }
         }
+        return null;
+    }
 
-        // Option 3: Fall back to using just "jdeps" command.
+    public static String transformJavaBinaryPathToJdepsPath(String javaBinaryPath) {
+        return javaBinaryPath.replaceAll("(?<=[/\\\\])java(\\.exe)?$", "jdeps$1");
+    }
+
+    public static String getJDepsPath() {
+        // Option 1: Derive from java binary location.
+        String javaBinaryPath = JavaBinaryLocator.getJavaBinary(ProcessHandle.current());
+        if (javaBinaryPath.contains("javaw")) {
+            javaBinaryPath = javaBinaryPath.replace("javaw", "java");
+        }
+        String jdepsPath = transformJavaBinaryPathToJdepsPath(javaBinaryPath);
+        if (validateJdepsPath(jdepsPath)) return jdepsPath;
+
+        // Option 2: Use JAVA_HOME environment variable.
+        String javaHome = System.getenv("JAVA_HOME");
+        CrashAssistantApp.LOGGER.info("System.getenv(\"JAVA_HOME\"): {}", javaHome);
+        String javaHomeToJdepsPath = transformJavaHomeToJdepsPath(javaHome);
+        if (validateJdepsPath(javaHomeToJdepsPath)) {
+            return javaHomeToJdepsPath;
+        }
+
+        // Option 3: Try to get JAVA_HOME from echo command.
+        try {
+            ProcessBuilder processBuilder;
+            if (PlatformHelp.isWindows()) {
+                processBuilder = new ProcessBuilder("cmd.exe", "/c", "echo %JAVA_HOME%");
+            } else {
+                processBuilder = new ProcessBuilder("/bin/sh", "-c", "echo $JAVA_HOME");
+            }
+            Process process = processBuilder.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String echoOutput = reader.readLine();
+            CrashAssistantApp.LOGGER.info("Echo JAVA_HOME output: {}", echoOutput);
+
+            String echoJdepsPath = transformJavaHomeToJdepsPath(echoOutput);
+            if (validateJdepsPath(echoJdepsPath)) {
+                return echoJdepsPath;
+            }
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.warn("Error while trying to get JAVA_HOME from echo: {}", e.getMessage());
+        }
+
+        // Option 4: Try to get Java from java command location.
+        try {
+            ProcessBuilder processBuilder;
+            String osName = System.getProperty("os.name").toLowerCase();
+            if (osName.contains("win")) {
+                processBuilder = new ProcessBuilder("cmd.exe", "/c", "where java");
+            } else {
+                processBuilder = new ProcessBuilder("/bin/sh", "-c", "which java");
+            }
+            Process process = processBuilder.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String javaPath = reader.readLine();
+            CrashAssistantApp.LOGGER.info("Java command location: {}", javaPath);
+
+            String cmdJdepsPath = transformJavaBinaryPathToJdepsPath(javaPath);
+            if (validateJdepsPath(cmdJdepsPath)) {
+                return cmdJdepsPath;
+            }
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.warn("Error while trying to get Java from command location: {}", e.getMessage());
+        }
+
+        // Option 5: Using just "jdeps" command.
         if (validateJdepsPath("jdeps")) {
             return "jdeps";
         }

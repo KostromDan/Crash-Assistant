@@ -6,6 +6,7 @@ public enum LogType {
     LAUNCHER_LOG,
     CRASH_REPORT,
     HS_ERR,
+    DISCONNECT_CLIENT,
     WIN_EVENT,
     MOD_LIST,
     KUBE_JS,

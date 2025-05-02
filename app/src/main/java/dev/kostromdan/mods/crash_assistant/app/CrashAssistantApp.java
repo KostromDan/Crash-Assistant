@@ -89,7 +89,6 @@ public class CrashAssistantApp {
 
         WinEventCleaner.cleanOldWinEventFiles();
 
-        CrashReportsHelper.cacheKnownCrashReports();
         HsErrHelper.removeHsErrLog(parentPID);
 
         LOGGER.info("CrashAssistantApp started successfully. Waiting for PID " + parentPID + " to stop.");
@@ -197,13 +196,19 @@ public class CrashAssistantApp {
             LogsList.addIfExistsAndModified(new Log(LogType.HS_ERR, hsErrLog.get()));
         }
 
-        HashSet<Path> newCrashReports = CrashReportsHelper.scanForNewCrashReports();
+        HashSet<Path> newCrashReports = CrashReportsHelper.getRelevantFiles(Paths.get("crash-reports"), path -> true);
         if (!newCrashReports.isEmpty()) {
             crashed = true;
             crashed_with_report = true;
             for (Path path : newCrashReports) {
                 LogsList.addIfExistsAndModified(new Log(LogType.CRASH_REPORT, path));
             }
+        }
+
+        HashSet<Path> disconnectsClient = CrashReportsHelper.getRelevantFiles(Paths.get("minecraft", "debug"),
+                path -> path.startsWith("disconnect-") && path.endsWith("-client.txt"));
+        for (Path path : disconnectsClient) {
+            LogsList.addIfExistsAndModified(new Log(LogType.DISCONNECT_CLIENT, path));
         }
 
 

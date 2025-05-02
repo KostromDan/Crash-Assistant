@@ -9,7 +9,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import javax.swing.*;
-import javax.swing.text.DefaultCaret;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -31,6 +31,35 @@ public class CreateDependencies {
     private static volatile boolean isCancelled = false;
     private static final List<Process> runningProcesses = Collections.synchronizedList(new ArrayList<>());
     private static ExecutorService executor; // Declared as a static field
+    
+    // Style constants
+    private static final Color ERROR_COLOR = Color.RED;
+    private static final Color NORMAL_COLOR = Color.BLACK;
+    private static final Color CREATE_MOD_COLOR = Color.BLUE;
+    
+    /**
+     * Appends styled text to a JTextPane
+     * @param textPane the JTextPane to append text to
+     * @param text the text to append
+     * @param color the color to use for the text
+     */
+    private static void appendStyledText(JTextPane textPane, String text, Color color) {
+        StyledDocument doc = textPane.getStyledDocument();
+        Style style = textPane.addStyle("Color Style", null);
+        StyleConstants.setForeground(style, color);
+        
+        try {
+            doc.insertString(doc.getLength(), text, style);
+        } catch (BadLocationException e) {
+            CrashAssistantApp.LOGGER.error("Error appending styled text: ", e);
+            // Fallback to normal append without styling
+            try {
+                doc.insertString(doc.getLength(), text, null);
+            } catch (BadLocationException ignored) {
+                // If even this fails, we can't do much
+            }
+        }
+    }
 
     public static List<Mod> getCurrentCreateMods() {
         return ModListUtils.getCurrentModList(true).stream()
@@ -60,7 +89,7 @@ public class CreateDependencies {
     public static boolean validateJdepsPath(String jdepsPath) {
         try {
             new ProcessBuilder(jdepsPath, "-version").start();
-            return true;
+            return false;
         } catch (Exception ex) {
             CrashAssistantApp.LOGGER.warn("Error while trying jdeps path: {}\n{}", jdepsPath, ex.getMessage());
             return false;
@@ -210,7 +239,7 @@ public class CreateDependencies {
         JLabel headerLabel = new JLabel(
                 "<html>"
                         + "Wait for analysis to finish.<br>"
-                        + "Try removing/updating/downgrading all mods detected below to match the current Create mod version.<br>" +
+                        + "Try removing/updating/downgrading all <font color='red'>problematic mods</font> detected below to match the current <font color='#0000FF'>Create mod</font> version.<br>" +
                         "&nbsp;"
                         + "</html>"
         );
@@ -235,13 +264,13 @@ public class CreateDependencies {
 
         dialog.add(headerPanel, BorderLayout.NORTH);
 
-        // Text area for results
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
-        textArea.setCaretPosition(0);
-        DefaultCaret caret = (DefaultCaret) textArea.getCaret();
+        // Text pane for results with styled text
+        JTextPane textPane = new JTextPane();
+        textPane.setEditable(false);
+        textPane.setCaretPosition(0);
+        DefaultCaret caret = (DefaultCaret) textPane.getCaret();
         caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-        JScrollPane scrollPane = new JScrollPane(textArea);
+        JScrollPane scrollPane = new JScrollPane(textPane);
         dialog.add(scrollPane, BorderLayout.CENTER);
 
         dialog.setSize(900, 500);
@@ -282,7 +311,7 @@ public class CreateDependencies {
                         "Make sure to select JAVA_HOME check box in the installation settings.")
                         .replace("$LINK.ADOPTIUM_JDK$", LinksProvider.ADOPTIUM_JDK.getLink());
                 SwingUtilities.invokeLater(() -> {
-                    textArea.append(message);
+                    appendStyledText(textPane, message, NORMAL_COLOR);
                     CrashAssistantApp.LOGGER.info(message.trim());
                     addOkButton(dialog);
                 });
@@ -294,7 +323,7 @@ public class CreateDependencies {
             if (createMods.isEmpty()) {
                 SwingUtilities.invokeLater(() -> {
                     String message = "No Create mod found.\n";
-                    textArea.append(message);
+                    appendStyledText(textPane, message, NORMAL_COLOR);
                     CrashAssistantApp.LOGGER.info(message.trim());
                     addOkButton(dialog);
                 });
@@ -305,7 +334,7 @@ public class CreateDependencies {
                         createMods.stream().map(Mod::getJarName).collect(Collectors.joining(", ")) + "\n" +
                         "Analysis cannot proceed with multiple Create mods.\n";
                 SwingUtilities.invokeLater(() -> {
-                    textArea.append(message);
+                    appendStyledText(textPane, message, ERROR_COLOR);
                     CrashAssistantApp.LOGGER.info(message.trim());
                     addOkButton(dialog);
                 });
@@ -324,7 +353,7 @@ public class CreateDependencies {
             if (totalMods == 0) {
                 SwingUtilities.invokeLater(() -> {
                     String message = "No mods to analyze.\n";
-                    textArea.append(message);
+                    appendStyledText(textPane, message, NORMAL_COLOR);
                     CrashAssistantApp.LOGGER.info(message.trim());
                     addOkButton(dialog);
                 });
@@ -388,14 +417,27 @@ public class CreateDependencies {
 
                     if (!invalidDeps.isEmpty()) {
                         missingClassesMap.put(mod, invalidDeps);
-                        String message = String.format(
-                                "Found %d Create mod class dependency(ies) in %s, which are missing from the current %s\n",
-                                invalidDeps.size(), mod.getJarName(), createMod.getJarName()
-                        );
+                        final String jarName = mod.getJarName();
+                        final int depCount = invalidDeps.size();
+                        final String createJarName = createMod.getJarName();
+                        
                         SwingUtilities.invokeLater(() -> {
                             if (!isCancelled) {
-                                textArea.append(message);
-                                CrashAssistantApp.LOGGER.info(message.trim());
+                                // Mark class count and problematic mod name in red, Create mod name in blue
+                                appendStyledText(textPane, "Found ", NORMAL_COLOR);
+                                appendStyledText(textPane, String.valueOf(depCount), ERROR_COLOR);
+                                appendStyledText(textPane, " Create mod class dependency(ies) in ", NORMAL_COLOR);
+                                appendStyledText(textPane, jarName, ERROR_COLOR);
+                                appendStyledText(textPane, ", which are missing from the current ", NORMAL_COLOR);
+                                appendStyledText(textPane, createJarName, CREATE_MOD_COLOR);
+                                appendStyledText(textPane, "\n", NORMAL_COLOR);
+                                
+                                // Log the complete message
+                                String logMessage = String.format(
+                                        "Found %d Create mod class dependency(ies) in %s, which are missing from the current %s",
+                                        depCount, jarName, createJarName
+                                );
+                                CrashAssistantApp.LOGGER.info(logMessage);
                             }
                         });
                     }
@@ -424,32 +466,46 @@ public class CreateDependencies {
                     currentJarLabel.setText("Current mod: None");
 
                     if (missingClassesMap.isEmpty()) {
-                        String message = String.format(
-                                "Haven't found in any mod, Create mod class dependency(ies), which are missing from the current %s\n",
-                                createMod.getJarName()
+                        String createJarName = createMod.getJarName();
+                        appendStyledText(textPane, "Haven't found in any mod, Create mod class dependency(ies), which are missing from the current ", NORMAL_COLOR);
+                        appendStyledText(textPane, createJarName, CREATE_MOD_COLOR);
+                        appendStyledText(textPane, "\n", NORMAL_COLOR);
+                        
+                        // Log the complete message
+                        String logMessage = String.format(
+                                "Haven't found in any mod, Create mod class dependency(ies), which are missing from the current %s",
+                                createJarName
                         );
-                        textArea.append(message);
-                        CrashAssistantApp.LOGGER.info(message.trim());
+                        CrashAssistantApp.LOGGER.info(logMessage);
                     } else {
-                        StringBuilder detailedMessage = new StringBuilder();
-                        detailedMessage.append("\n\n\nDetailed walkthrough of mods which rely on missing Create mod classes:\n");
+                        // Header for detailed results
+                        appendStyledText(textPane, "\n\n\nDetailed walkthrough of mods which rely on missing Create mod classes:\n", NORMAL_COLOR);
+                        
                         List<Mod> sortedMods = new ArrayList<>(missingClassesMap.keySet());
                         sortedMods.sort(Comparator.comparing(Mod::getJarName));
-
+                    
                         for (Mod mod : sortedMods) {
                             Set<String> missingClasses = missingClassesMap.get(mod);
                             List<String> sortedClasses = new ArrayList<>(missingClasses);
                             Collections.sort(sortedClasses);
-
-                            detailedMessage.append(String.format(
+                    
+                            // Only mod name in red, surrounding text in normal color
+                            appendStyledText(textPane, "Mod: ", NORMAL_COLOR);
+                            appendStyledText(textPane, mod.getJarName(), ERROR_COLOR);
+                            appendStyledText(textPane, "\n", NORMAL_COLOR);
+                            
+                            // Missing classes in normal color
+                            appendStyledText(textPane, "Missing classes of create:\n", NORMAL_COLOR);
+                            appendStyledText(textPane, String.join("\n", sortedClasses) + "\n\n", NORMAL_COLOR);
+                            
+                            // Log the complete text for this mod
+                            String logMessage = String.format(
                                     "Mod: %s\nMissing classes of create:\n%s\n\n",
                                     mod.getJarName(),
                                     String.join("\n", sortedClasses)
-                            ));
+                            );
+                            CrashAssistantApp.LOGGER.info(logMessage.trim());
                         }
-                        String detailedText = detailedMessage.toString();
-                        textArea.append(detailedText);
-                        CrashAssistantApp.LOGGER.info(detailedText.trim());
                     }
                     addOkButton(dialog);
                 });

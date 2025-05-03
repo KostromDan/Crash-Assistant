@@ -7,6 +7,13 @@ import org.lwjgl.opengl.GL11C;
 public interface CurrentGPUDetector {
     static void writeCurrentGPU() {
         try {
+            // Vulkan always selects correct GPU, so this not needed.
+            try {
+                Class.forName("net.vulkanmod.Initializer");
+                return;
+            } catch (ClassNotFoundException ignored) {
+            }
+
             String renderer = GL11C.glGetString(GL11C.GL_RENDERER);
             if (renderer == null) {
                 return;

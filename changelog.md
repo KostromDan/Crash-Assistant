@@ -1,3 +1,11 @@
+1.7.18:
+
+- Improved jdeps location in CreateDependencies. Should fix all related issues.
+- Color found mod names in CreateDependencies for better readability and preventing confusion.
+- Refactored and improved Crash reports locating logic.
+- Added support of a new log type: Disconnect Client. minecraft/debug/disconnect-...-client.txt
+- Small fixes and improvements.
+
 1.7.17:
 
 - Added malware mods detector to protect users from potentially harmful mods.
@@ -5,7 +13,8 @@
 - Added new log analysis for OpenAL audio library errors (alc_cleanup).
 - Significantly improved MissingUnsupportedDependencies warn, now detects a lot more messages.
 - Improved Problematic frame location logic. Added handling of some cursed scenario.
-- Improved InsufficientMemory analysis. Improved message. Added additional message and detection of page files disabled. Added instructions on how to enable back page files.
+- Improved InsufficientMemory analysis. Improved message. Added additional message and detection of page files disabled.
+  Added instructions on how to enable back page files.
 - Improved jvm.dll crash detection with specific handling for Java 17.0.8.
 - Updated privacy dialog with "Remember my choice" option instead of "Don't show again".
 - Added logging of Java version for better debugging.
@@ -20,7 +29,8 @@
 1.7.15:
 
 - Added privacy policy dialog. User must accept the privacy policy on the first upload.
-- Added a config option to disable privacy policy acceptance with a warning about potential legal issues in some countries.
+- Added a config option to disable privacy policy acceptance with a warning about potential legal issues in some
+  countries.
 - Improved privacy information dialog.
 - Improved text of Privacy Policy to match GDPR.
 - Fixed a rare synchronization bug in a file upload process.

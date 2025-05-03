@@ -156,6 +156,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new OutOfMemoryError());
         registerKnownCrashReason(new ResourceLocationException());
         registerKnownCrashReason(new Rubidium());
+        registerKnownCrashReason(new Version1_21());
 
         registerKnownCrashReason(new WasClosedByWindows());
 

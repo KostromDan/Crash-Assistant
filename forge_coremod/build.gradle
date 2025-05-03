@@ -7,7 +7,7 @@ plugins {
 }
 
 base {
-    archivesName = "${mod_id}-forge-${minecraft_version}"
+    archivesName = "CrashAssistant-forge-${minecraft_version}"
 }
 
 configurations {
@@ -43,10 +43,6 @@ jar {
     exclude("crash_assistant.forge.mixins.json")
     exclude("dev/kostromdan/mods/crash_assistant/forge/**")
     exclude("dev/kostromdan/mods/crash_assistant/common/**")
-}
-
-base {
-    archivesName = "${mod_id}-forge-${minecraft_version}"
 }
 
 minecraft {

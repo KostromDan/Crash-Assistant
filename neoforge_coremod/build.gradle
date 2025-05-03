@@ -13,7 +13,7 @@ configurations {
 }
 
 base {
-    archivesName = "${mod_id}-neoforge-${minecraft_version}"
+    archivesName = "CrashAssistant-neoforge-${minecraft_version}"
 }
 
 dependencies {

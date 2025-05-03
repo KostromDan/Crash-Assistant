@@ -348,6 +348,18 @@ public class CrashAssistantGUI {
                             frame,
                             "Malware Mods Detected"
                     );
+
+                    // Add window listener to handle close button
+                    dialog.addWindowListener(new WindowAdapter() {
+                        @Override
+                        public void windowClosing(WindowEvent e) {
+                            synchronized (TerminatedProcessesFinder.class) {
+                                CrashAssistantApp.LOGGER.info("Malware mods dialog closed with window close button. Exiting with code 0.");
+                                System.exit(0);
+                            }
+                        }
+                    });
+
                     removeButton.addActionListener(e -> {
                         try {
                             boolean allDeleted = true;
@@ -376,7 +388,10 @@ public class CrashAssistantGUI {
                                         "Malware Mods Removed",
                                         JOptionPane.INFORMATION_MESSAGE
                                 );
-                                dialog.dispose();
+                                synchronized (TerminatedProcessesFinder.class) {
+                                    CrashAssistantApp.LOGGER.info("All malware mods deleted successfully. Exiting with code 0.");
+                                    System.exit(0);
+                                }
                             } else {
                                 JOptionPane.showMessageDialog(
                                         frame,
@@ -395,7 +410,14 @@ public class CrashAssistantGUI {
                             );
                         }
                     });
+
                     dialog.setVisible(true);
+
+                    // If we reach here, dialog was closed with the Close button
+                    synchronized (TerminatedProcessesFinder.class) {
+                        CrashAssistantApp.LOGGER.info("Malware mods dialog closed. Exiting with code 0.");
+                        System.exit(0);
+                    }
                 });
             } catch (Exception e) {
                 CrashAssistantApp.LOGGER.error("Error while showing malware mod warning: ", e);

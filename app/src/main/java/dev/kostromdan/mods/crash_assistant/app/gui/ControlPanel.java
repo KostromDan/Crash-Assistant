@@ -4,6 +4,8 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.DeclinedException;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParsingResult;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -21,10 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -375,9 +376,10 @@ public class ControlPanel {
         sb.append("\n");
 
         if (CrashAssistantConfig.getBoolean("generated_message.put_problematic_frame_to_message")) {
-            if (LogAnalysisUtils.problematicFrameFullString.isPresent()) {
+            Optional<HsErrParsingResult> parsingResult = HsErrParser.getCachedHsErrParsingResult();
+            if (parsingResult.isPresent() && parsingResult.get().getProblematicFrameFullString().isPresent()) {
                 sb.append("```java\n");
-                sb.append(LogAnalysisUtils.problematicFrameFullString.get());
+                sb.append(parsingResult.get().getProblematicFrameFullString().get());
                 sb.append("\n```");
             }
 

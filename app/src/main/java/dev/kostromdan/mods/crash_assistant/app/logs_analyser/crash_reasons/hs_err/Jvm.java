@@ -2,7 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_e
 
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalysisUtils;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.utils.maven_version_cmp.VersionUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -26,7 +26,7 @@ public class Jvm extends KnownCrashReason {
     @Override
     public boolean matches(Log log) {
         if (!PlatformHelp.isWindows()) return false;
-        if (!LogAnalysisUtils.hsErrContainsOneOfFrames(log, "jvm.dll")) return false;
+        if (!HsErrParser.hsErrContainsOneOfFrames(log, "jvm.dll")) return false;
 
         String additionalInfo = "";
         if (VersionUtils.inRange(PlatformHelp.javaVersion, "17.0.7", "17.0.9")) {

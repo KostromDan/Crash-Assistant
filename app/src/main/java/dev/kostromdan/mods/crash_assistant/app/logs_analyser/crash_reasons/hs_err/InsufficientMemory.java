@@ -1,16 +1,17 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_err;
 
-import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalysisUtils;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
-import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParsingResult;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
+import java.awt.desktop.OpenFilesEvent;
 import java.util.HashMap;
+import java.util.Optional;
 
 public class InsufficientMemory extends KnownCrashReason {
     public InsufficientMemory() {
@@ -32,26 +33,21 @@ public class InsufficientMemory extends KnownCrashReason {
 
     @Override
     public boolean matches(Log log) {
-        if (!LogAnalysisUtils.hsErrContainsOneOfFrames(log, "# There is insufficient memory for the Java Runtime Environment to continue."))
+        if (!HsErrParser.hsErrContainsOneOfFrames(log, "# There is insufficient memory for the Java Runtime Environment to continue."))
             return false;
         String additionalInfo = "";
 
-        String allLines = log.getReader().getAllLinesString();
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("Memory:.*?physical (\\d+)M.*?\\R.*?TotalPageFile size (\\d+)M", java.util.regex.Pattern.DOTALL);
-        java.util.regex.Matcher matcher = pattern.matcher(allLines);
-
-        if (matcher.find()) {
-            int physicalMemory = Integer.parseInt(matcher.group(1));
-            int pageFileSize = Integer.parseInt(matcher.group(2));
-            if (physicalMemory == pageFileSize) {
-                additionalInfo += LanguageProvider.get("warnings.insufficient_memory.page_file_disabled");
-            }
-
-            if (!additionalInfo.isEmpty()) {
-                additionalInfo = "<span style=\"color:green\">" + additionalInfo + "</span>\n";
-            }
-            message = message.replace("$FIRST_PRIORITY_WARNINGS$", additionalInfo);
+        Optional<HsErrParsingResult> hsErrParsingResult = HsErrParser.parseHsErr(log);
+        if (hsErrParsingResult.isPresent() && hsErrParsingResult.get().isPageFileDisabled()) {
+            additionalInfo += LanguageProvider.get("warnings.insufficient_memory.page_file_disabled");
         }
+
+        if (!additionalInfo.isEmpty()) {
+            additionalInfo = "<span style=\"color:green\">" + additionalInfo + "</span>\n";
+        }
+
+        message = message.replace("$FIRST_PRIORITY_WARNINGS$", additionalInfo);
+
 
         return true;
     }

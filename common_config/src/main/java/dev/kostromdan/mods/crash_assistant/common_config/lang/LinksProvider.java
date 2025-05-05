@@ -22,6 +22,10 @@ public enum LinksProvider {
     PRIVACY_POLICY(() -> "PRIVACY_POLICY"),
 
     // Mod links:
+    CRASH_ASSISTANT(() -> "https://www.curseforge.com/minecraft/mc-mods/crash-assistant"),
+    CRASH_ASSISTANT_DISCORD(() -> "https://discord.com/invite/dV8WFrJZK6"),
+    LAT_DISCORD(() -> "https://discord.gg/lat"),
+
     LITHOSTITCHED(() -> "https://www.curseforge.com/minecraft/mc-mods/lithostitched"),
     MODERN_FIX(() -> "https://www.curseforge.com/minecraft/mc-mods/modernfix"),
     FERRITE_CORE(() -> {

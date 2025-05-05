@@ -4,9 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
-import dev.kostromdan.mods.crash_assistant.app.gui.PrivacyPolicyDialog;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.MalwareMod;
@@ -237,8 +235,19 @@ public class CrashAssistantGUI {
 
         privacyInfo = privacyInfo.replace("$GNOMEBOT_ENABLED$", Objects.toString(isUploadingToGnome()));
 
+        JEditorPane editorPane = getEditorPane(privacyInfo, true, 600);
+
+        // Create a scroll pane with vertical scrolling only
+        JScrollPane scrollPane = new JScrollPane(editorPane);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new Dimension(editorPane.getPreferredSize().width, 500));
+
+        // Ensure scroll position starts at the top
+        SwingUtilities.invokeLater(() -> scrollPane.getVerticalScrollBar().setValue(0));
+
         JOptionPane optionPane = new JOptionPane(
-                getEditorPane(privacyInfo, true, 600),
+                scrollPane,
                 JOptionPane.INFORMATION_MESSAGE,
                 JOptionPane.DEFAULT_OPTION
         );

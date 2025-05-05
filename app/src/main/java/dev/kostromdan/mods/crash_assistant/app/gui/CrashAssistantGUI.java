@@ -363,6 +363,7 @@ public class CrashAssistantGUI {
 
                     removeButton.addActionListener(e -> {
                         try {
+                            dialog.setAlwaysOnTop(false);
                             boolean allDeleted = true;
                             for (Mod mod : detectedMods) {
                                 String jarName = mod.getJarName();

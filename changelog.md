@@ -1,3 +1,13 @@
+1.7.19:
+
+- Compat with Vulkan mod.
+- "1.21" compat. 
+- 1.21 log analysis. With suggestion to switch to 1.21.1, 1.21.4 / 1.21.5, as 1.21 is abandoned and not supported.
+- Refactor hs_err parsing logic into a dedicated parser.
+- Added to the generated message if InsufficientMemory, memory settings (pages size, etc).
+- Pass parent started time as arg to prevent mismatch if the game crashed too early.
+- Small fixes and improvements.
+
 1.7.18:
 
 - Improved jdeps location in CreateDependencies. Should fix all related issues.

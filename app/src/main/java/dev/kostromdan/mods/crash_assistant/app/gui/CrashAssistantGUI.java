@@ -348,6 +348,7 @@ public class CrashAssistantGUI {
                             frame,
                             "Malware Mods Detected"
                     );
+                    dialog.setAlwaysOnTop(true);
 
                     // Add window listener to handle close button
                     dialog.addWindowListener(new WindowAdapter() {

@@ -14,6 +14,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLo
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -54,10 +55,14 @@ public class CrashAssistantApp {
         LOGGER.info("JAVA: {}", JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
 
         parentPID = -1;
+        parentStarted = -1;
         for (int i = 0; i < args.length; i++) {
             if ("-parentPID".equals(args[i]) && i + 1 < args.length) {
                 parentPID = Long.parseLong(args[i + 1]);
                 LOGGER.info("Parent PID: {}", parentPID);
+            } else if ("-parentStarted".equals(args[i]) && i + 1 < args.length) {
+                parentStarted = Long.parseLong(args[i + 1]);
+                LOGGER.info("Parent started: {}", parentStarted);
             } else if ("-platform".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.platform = Enum.valueOf(PlatformHelp.class, args[i + 1]);
                 LOGGER.info("Platform: {}", PlatformHelp.platform);
@@ -74,8 +79,6 @@ public class CrashAssistantApp {
         }
 
         LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
-
-        parentStarted = ProcessHelper.getStartTime(parentPID);
 
         String currentProcessData = Objects.toString(parentPID) + "_" + Objects.toString(Instant.ofEpochMilli(parentStarted).getEpochSecond());
         Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");

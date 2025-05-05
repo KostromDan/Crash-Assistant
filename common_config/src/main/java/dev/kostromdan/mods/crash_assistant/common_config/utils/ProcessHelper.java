@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.app.utils;
+package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
 import java.time.Instant;
 import java.util.Optional;

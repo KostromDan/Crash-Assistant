@@ -1,3 +1,9 @@
+1.7.20:
+
+- Significantly improved Privacy Policy text to prevent potential GDPR issues.
+- Moved Privacy Policy to the scrollPane to prevent issues on small displays.
+- Add an option for resetting the privacy policy contest to prevent potential GDPR issues. 
+
 1.7.19:
 
 - Compat with Vulkan mod.

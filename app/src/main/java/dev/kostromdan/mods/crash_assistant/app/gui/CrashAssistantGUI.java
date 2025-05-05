@@ -4,7 +4,9 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
+import dev.kostromdan.mods.crash_assistant.app.gui.PrivacyPolicyDialog;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.MalwareMod;
@@ -212,6 +214,11 @@ public class CrashAssistantGUI {
         JMenuItem logsPrivacyItem = new JMenuItem(LanguageProvider.get("gui.menu.privacy.logs_info"));
         logsPrivacyItem.addActionListener(e -> showLogsPrivacyInfo());
         privacyMenu.add(logsPrivacyItem);
+
+        // Reset consent menu item
+        JMenuItem resetConsentItem = new JMenuItem(LanguageProvider.get("gui.menu.privacy.reset_consent"));
+        resetConsentItem.addActionListener(e -> PrivacyPolicyDialog.resetPrivacyConsent());
+        privacyMenu.add(resetConsentItem);
 
         // Add menus to menu bar and set to frame
         menuBar.add(fileMenu);

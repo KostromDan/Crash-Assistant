@@ -8,6 +8,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.MalwareMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,6 +52,7 @@ public interface JarInJarHelper {
                     "-jar", extractedJarPath.toAbsolutePath().toString(),
                     "-jarPath", extractedJarPath.toAbsolutePath().toString(),
                     "-parentPID", Objects.toString(ProcessHandle.current().pid()),
+                    "-parentStarted", Objects.toString(ProcessHelper.getStartTime(ProcessHandle.current().pid())),
                     "-platform", PlatformHelp.platform.toString(),
                     "-loaderJarName", PlatformHelp.loaderJarName,
                     "-minecraftVersion", PlatformHelp.minecraftVersion,

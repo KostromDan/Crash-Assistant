@@ -102,4 +102,43 @@ public class HsErrParsingResult {
                 && physicalMemory.equals(pageFileSize);
     }
 
+//    /**
+//     * Counts how many of the provided frames match the problematic frame.
+//     *
+//     * @param frames The frames to check against the problematic frame
+//     * @return The number of frames that match the problematic frame
+//     */
+//    public int countMatchedFrames(String... frames) {
+//        Optional<String> problematicFrame = getProblematicFrame();
+//        if (problematicFrame.isEmpty()) {
+//            return 0;
+//        }
+//        int count = 0;
+//        for (String frame : frames) {
+//            if (problematicFrame.get().contains(frame)) {
+//                count++;
+//            }
+//        }
+//        return count;
+//    }
+//
+//    /**
+//     * Checks if the problematic frame contains at least one of the provided frames.
+//     *
+//     * @param frames The frames to check against the problematic frame
+//     * @return true if at least one frame matches, false otherwise
+//     */
+//    public boolean hsErrContainsOneOfFrames(String... frames) {
+//        return countMatchedFrames(frames) > 0;
+//    }
+//
+//    /**
+//     * Checks if the problematic frame contains all of the provided frames.
+//     *
+//     * @param frames The frames to check against the problematic frame
+//     * @return true if all frames match, false otherwise
+//     */
+//    public boolean hsErrContainsAllOfFrames(String... frames) {
+//        return countMatchedFrames(frames) == frames.length;
+//    }
 }

@@ -115,4 +115,50 @@ public class PrivacyPolicyDialog {
 
         return result[0];
     }
+
+    /**
+     * Resets the privacy consent settings according to the following rules:
+     * 1. If privacy.accepted_privacy_info is true, remove it from local config
+     * 2. If acceptedForCurrentLaunch is true, set it to false
+     * 3. If general.enable_privacy_policy_acceptance is false, set it to true
+     * 4. If none of the above conditions are met, show a notification
+     */
+    public static void resetPrivacyConsent() {
+        boolean changesApplied = false;
+
+        // Check if privacy.accepted_privacy_info is true and remove it if so
+        if (Objects.equals(CrashAssistantLocalConfig.get("privacy.accepted_privacy_info"), true)) {
+            CrashAssistantLocalConfig.set("privacy.accepted_privacy_info", null);
+            changesApplied = true;
+        }
+
+        // Check if acceptedForCurrentLaunch is true and set it to false if so
+        if (acceptedForCurrentLaunch) {
+            acceptedForCurrentLaunch = false;
+            changesApplied = true;
+        }
+
+        // Check if general.enable_privacy_policy_acceptance is true and set it to false if so
+        if (!CrashAssistantConfig.getBoolean("general.enable_privacy_policy_acceptance")) {
+            CrashAssistantConfig.set("general.enable_privacy_policy_acceptance", true);
+            changesApplied = true;
+        }
+
+        // Show a notification based on whether changes were applied
+        if (changesApplied) {
+            JOptionPane.showMessageDialog(
+                    null,
+                    LanguageProvider.get("gui.privacy.consent_reset_success"),
+                    LanguageProvider.get("gui.privacy.title"),
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } else {
+            JOptionPane.showMessageDialog(
+                    null,
+                    LanguageProvider.get("gui.privacy.consent_not_given"),
+                    LanguageProvider.get("gui.privacy.title"),
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        }
+    }
 }

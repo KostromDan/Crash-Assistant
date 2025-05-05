@@ -64,7 +64,7 @@
   "gui.menu.file.open_config_folder": "Open config folder",
   "gui.menu.file.open_modpack_folder": "Open game folder",
   "gui.menu.analysis.create_dependencies": "Create mod addons compatibility",
-  "gui.menu.privacy.logs_info": "Uploading logs privacy information",
+  "gui.menu.privacy.logs_info": "Crash Assistant Privacy Policy",
   "warnings.alc_cleanup": "The <strong>AL lib: (EE) alc_cleanup: 1 device not closed</strong> error in <strong>$LOG_FILENAME$</strong> indicates an issue with the OpenAL audio library.\nThis is a known bug that sometimes occurs.\nTo fix this add the following JVM argument:\n<strong>-Xms2G</strong>\nMake sure not to confuse <strong>-Xms</strong> with <strong>-Xmx</strong>. If the <strong>-Xms</strong> argument is already present in your JVM arguments, modify it instead of adding a new one.",
   "warnings.0x0000": "Your problem is caused by a graphics driver error. To fix it follow this instruction:\n\n$LANG.warnings_common.drivers$",
   "warnings.atio6axx": "The <strong>atio6axx</strong> \"Problematic frame\" in a <strong>$LOG_FILENAME$</strong> file, is part of the <strong>AMD</strong> driver for the GPU,\nthere's a bad version of the AMD drivers that instantly crashes on an OpenGL task.\nReinstall/Fresh install your drivers from $LINK.AMD_SUPPORT$\n<strong>IF</strong> you do not have an <strong>AMD GPU</strong>, then you need to set your system to be using that GPU\ninstead of the AMD integrated GPU on the CPU, steps below.\n$LINK.HOW_FORCE_APP_USE_DISCRETE_GPU$",
@@ -152,5 +152,8 @@
   "gui.privacy.declined": "Failed to upload log because you declined the privacy policy, try again.",
   "gui.privacy.remember_my_choice": "Remember my choice",
   "gui.privacy.logs_upload_accept": "Accept",
-  "gui.privacy.logs_upload_decline": "Decline"
+  "gui.privacy.logs_upload_decline": "Decline",
+  "gui.menu.privacy.reset_consent": "Reset Privacy Policy consent",
+  "gui.privacy.consent_reset_success": "Privacy Policy consent has been reset successfully.",
+  "gui.privacy.consent_not_given": "You have not given Privacy Policy consent or it has already been revoked."
 }

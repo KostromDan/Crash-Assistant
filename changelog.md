@@ -1,3 +1,8 @@
+1.7.22:
+
+- Added new JavaTooHigh log analysis (hs_err).
+- Small fixes and improvements.
+
 1.7.21:
 
 - Fixed some issues.

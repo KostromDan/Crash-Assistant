@@ -345,15 +345,18 @@ public class CrashAssistantGUI {
                     JButton removeButton = new JButton("Remove Malware Mods");
                     Object[] options = {removeButton, "Close"};
                     JOptionPane optionPane = new JOptionPane(
-                            CrashAssistantGUI.getEditorPane("<h2>Warning: Malware or malware-like mod detected!</h2>\n" +
-                                    "Crash Assistant prevented launch to prevent <strong>potential infection</strong>.\n" +
-                                    "Malware mod:\n" +
-                                    "<strong>" + String.join("\n", detectedMods.stream().map(Mod::getJarName).toList()) + "</strong>" +
-                                    "\n\n" +
-                                    "<h4><strong>Why Crash Assistant marked this mod as malware?:</strong></h4>" +
-                                    malwareMod.get().getExplainMessage() +
-                                    "\n\n" +
-                                    "Mods marked as malware may harm your computer or steal your information. It is highly recommended to remove them.", true, 600),
+                            CrashAssistantGUI.getEditorPane(
+                                    "<h2>Warning: Malware or malware‑like mod detected!</h2>\n" +
+                                            "Crash Assistant blocked the launch to avoid <strong>potential infection or leakage of your personal data.</strong>\n" +
+                                            "Malware mod:\n" +
+                                            "<strong>" + String.join("<br/>", detectedMods.stream().map(Mod::getJarName).toList()) + "</strong>" +
+                                            "\n\n" +
+                                            "<h4><strong>Why did Crash Assistant mark this mod as malware?</strong></h4>" +
+                                            malwareMod.get().getExplainMessage() +
+                                            "\n\n" +
+                                            "Mods marked as malware can compromise your computer or steal your information. It is strongly recommended to remove them.",
+                                    true,
+                                    600),
                             JOptionPane.WARNING_MESSAGE,
                             JOptionPane.DEFAULT_OPTION,
                             null,

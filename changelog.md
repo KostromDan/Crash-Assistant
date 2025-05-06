@@ -1,3 +1,7 @@
+1.7.21:
+
+- Fixed some issues.
+
 1.7.20:
 
 - Significantly improved Privacy Policy text to prevent potential GDPR issues.

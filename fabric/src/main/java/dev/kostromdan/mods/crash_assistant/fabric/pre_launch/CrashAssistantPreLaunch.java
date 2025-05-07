@@ -14,7 +14,6 @@ public class CrashAssistantPreLaunch implements PreLaunchEntrypoint {
 
     @Override
     public void onPreLaunch() {
-        JarInJarHelper.checkForIncompatibleMods(true);
         String launchTarget = FabricLoader.getInstance().getEnvironmentType().toString();
         FabricLoader.getInstance().getModContainer("minecraft")
                 .ifPresent(container -> {
@@ -27,5 +26,6 @@ public class CrashAssistantPreLaunch implements PreLaunchEntrypoint {
         }
         LibrariesJarLocator.setupLoaderJarName(FabricLoader.class);
         JarInJarHelper.launchCrashAssistantApp(launchTarget);
+        JarInJarHelper.checkForIncompatibleMods(true);
     }
 }

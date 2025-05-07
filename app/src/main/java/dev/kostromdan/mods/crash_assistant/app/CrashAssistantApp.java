@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -72,6 +73,9 @@ public class CrashAssistantApp {
             } else if ("-minecraftVersion".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.minecraftVersion = args[i + 1];
                 LOGGER.info("minecraftVersion: {}", PlatformHelp.minecraftVersion);
+            } else if ("-childProcessesPIDs".equals(args[i]) && i + 1 < args.length) {
+                PlatformHelp.childProcessesPIDs = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
+                LOGGER.info("childProcessesPIDs: {}", PlatformHelp.childProcessesPIDs);
             } else if ("-crashAssistantJarName".equals(args[i]) && i + 1 < args.length) {
                 crashAssistantJarName = args[i + 1];
                 LOGGER.info("crashAssistantJarName: {}", crashAssistantJarName);

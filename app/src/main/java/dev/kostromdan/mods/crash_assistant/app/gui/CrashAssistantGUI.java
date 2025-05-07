@@ -393,8 +393,37 @@ public class CrashAssistantGUI {
                                     if (modFile.delete()) {
                                         CrashAssistantApp.LOGGER.info("Successfully deleted malware mod: {}", jarName);
                                     } else {
-                                        CrashAssistantApp.LOGGER.error("Failed to delete malware mod: {}", jarName);
-                                        allDeleted = false;
+                                        boolean destroyAttemptSuccess = false;
+                                        ifBlock:
+                                        if (!Objects.equals(PlatformHelp.childProcessesPIDs, "UNDEFINED")) {
+                                            String[] childProcessesData = PlatformHelp.childProcessesPIDs.split("\\n");
+                                            if (childProcessesData.length != 1) break ifBlock;
+                                            long childProcessPID = Long.parseLong(childProcessesData[0].split(":")[0]);
+                                            long childProcessStart = Long.parseLong(childProcessesData[0].split(":")[1]);
+                                            Optional<ProcessHandle> childProcessOptional = ProcessHandle.of(childProcessPID);
+                                            if (childProcessOptional.isEmpty()) break ifBlock;
+                                            ProcessHandle childProcess = childProcessOptional.get();
+                                            if (childProcess.info().startInstant().get().toEpochMilli() != childProcessStart) break ifBlock;
+                                            childProcess.destroyForcibly();
+
+                                            long startDeleteTime = System.currentTimeMillis();
+                                            while (System.currentTimeMillis() - startDeleteTime < 5000) {
+                                                if (modFile.delete()) {
+                                                    CrashAssistantApp.LOGGER.info("Successfully deleted malware mod after retry: {}", jarName);
+                                                    destroyAttemptSuccess = true;
+                                                    break;
+                                                }
+                                                try {
+                                                    Thread.sleep(100);
+                                                } catch (InterruptedException ignored) {
+                                                }
+                                            }
+
+                                        }
+                                        if (!destroyAttemptSuccess) {
+                                            CrashAssistantApp.LOGGER.error("Failed to delete malware mod: {}", jarName);
+                                            allDeleted = false;
+                                        }
                                     }
                                 } else {
                                     CrashAssistantApp.LOGGER.error("Could not find malware mod file: {}", jarName);
@@ -431,7 +460,7 @@ public class CrashAssistantGUI {
                             );
                         }
                     });
-
+                    frame.setVisible(false);
                     dialog.setVisible(true);
 
                     // If we reach here, dialog was closed with the Close button

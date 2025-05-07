@@ -13,8 +13,10 @@ public class IncompatibleMod {
         add(new IncompatibleMod(
                 "crashdetectormc",
                 "crashdetector",
-                "Mods are doing very similar function and implemented very similar. Where is no reason to have both. Remove one of them.\n" +
-                        "We know crashes caused by compatibility issues and we(crash assistant developers) have intent on fixing them since there is a lot of drama."
+                "These mods perform very similar functions and are implemented in very similar ways.\n" +
+                        "There is no reason to have both. Please remove one of them.\n" +
+                        "We (crash assistant developers) are aware of crashes caused by compatibility issues\nbut we have no intention of fixing them as there is too much drama involved.\n" +
+                        "And as mentioned above, since the mods have very similar functionality and concepts,\nthere's no reason to have both. Read descriptions of both and choose one closer to your needs."
         ));
     }};
 

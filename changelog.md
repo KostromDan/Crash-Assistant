@@ -1,3 +1,9 @@
+1.7.23:
+
+- Quick fix to match CurseForge request.
+- Include analysis ids in a message.
+- Small fixes and improvements.
+
 1.7.22:
 
 - Added new JavaTooHigh log analysis (hs_err).

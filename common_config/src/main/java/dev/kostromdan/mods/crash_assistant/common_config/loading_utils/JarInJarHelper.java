@@ -4,7 +4,7 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.MalwareMod;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -173,28 +173,29 @@ public interface JarInJarHelper {
         }
     }
 
-    static Optional<MalwareMod> checkForMalwareMods(boolean crashIfMalwareDetected) {
-        for (MalwareMod malwareMod : MalwareMod.malwareMods) {
-            List<Path> modPaths = getModJarPathsContainingPart(malwareMod.getJarNamePart());
+    static Optional<IncompatibleMod> checkForIncompatibleMods(boolean crashIfIncompatibleModDetected) {
+        for (IncompatibleMod incompatibleMod : IncompatibleMod.incompatibleMods) {
+            List<Path> modPaths = getModJarPathsContainingPart(incompatibleMod.getJarNamePart());
             if (modPaths.isEmpty()) continue;
 
-            List<Mod> mods = mapPathsToMods(modPaths).stream().filter(mod -> Objects.equals(mod.getModId(), malwareMod.getModId())).toList();
+            List<Mod> mods = mapPathsToMods(modPaths).stream().filter(mod -> Objects.equals(mod.getModId(), incompatibleMod.getModId())).toList();
             if (mods.isEmpty()) continue;
-            malwareMod.addDetectedMods(mods);
+            incompatibleMod.addDetectedMods(mods);
 
-            if (crashIfMalwareDetected) {
+            if (crashIfIncompatibleModDetected) {
                 String childProcess = String.join("\n", ProcessHandle.current().children().map(child -> child.pid() + ":" + child.info().startInstant().get().toEpochMilli()).toList());
                 if (!childProcess.isEmpty()) {
                     PlatformHelp.childProcessesPIDs = childProcess;
                 }
                 LOGGER.info(childProcess);
-
-                JarInJarHelper.LOGGER.error("Crash Assistant detected malware or malware-like mod(s), crashing to prevent potential issues:\n{}",
-                        String.join("\n", mods.stream().map(Mod::getJarName).toList()));
-                launchCrashAssistantApp("client");
+                try {
+                    JarInJarHelper.LOGGER.error("Crash Assistant detected incompatible mod(s), crashing to prevent potential issues:\n{}",
+                            Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).getFileName().toString() + " and " + String.join(", ", mods.stream().map(Mod::getJarName).toList()) + "are incompatible. Remove one of them.");
+                } catch (Exception ignored) {
+                }
                 System.exit(-1);
             }
-            return Optional.of(malwareMod);
+            return Optional.of(incompatibleMod);
         }
         return Optional.empty();
     }

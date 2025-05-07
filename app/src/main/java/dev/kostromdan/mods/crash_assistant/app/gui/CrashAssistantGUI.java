@@ -343,7 +343,8 @@ public class CrashAssistantGUI {
                 ControlPanel.stopMovingToTop = true;
                 SwingUtilities.invokeAndWait(() -> {
                     JButton removeButton = new JButton("Close " + detectedMods.get(0).getJarName() + " and remove.");
-                    Object[] options = {removeButton, "Close"};
+                    JButton removeCAButton = new JButton("Close " + CrashAssistantApp.crashAssistantJarName + " and remove.");
+                    Object[] options = {removeButton, removeCAButton, "Close"};
                     JOptionPane optionPane = new JOptionPane(
                             CrashAssistantGUI.getEditorPane(
                                     "<h2>Warning: incompatible mod(s) detected!</h2>\n" +
@@ -352,9 +353,7 @@ public class CrashAssistantGUI {
                                             "<strong>" + String.join(", ", detectedMods.stream().map(Mod::getJarName).toList()) + "</strong>" +
                                             " are incompatible. You should remove one them!" +
                                             "<h4><strong>Why did Crash Assistant mark this mod as incompatible?</strong></h4>" +
-                                            incompatibleMod.get().getExplainMessage() +
-                                            "\n\n" +
-                                            "",
+                                            incompatibleMod.get().getExplainMessage(),
                                     true,
                                     600),
                             JOptionPane.WARNING_MESSAGE,
@@ -456,6 +455,56 @@ public class CrashAssistantGUI {
                             JOptionPane.showMessageDialog(
                                     frame,
                                     CrashAssistantGUI.getEditorPane("Failed to remove incompatible mod: " + ex.getMessage(), false),
+                                    "Error",
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+                        }
+                    });
+                    
+                    removeCAButton.addActionListener(e -> {
+                        try {
+                            dialog.setAlwaysOnTop(false);
+                            String jarName = CrashAssistantApp.crashAssistantJarName;
+                            File modsDir = new File("mods");
+                            File modFile = new File(modsDir, jarName);
+                            
+                            if (modFile.exists()) {
+                                if (modFile.delete()) {
+                                    CrashAssistantApp.LOGGER.info("Successfully deleted Crash Assistant mod: {}", jarName);
+                                    JOptionPane.showMessageDialog(
+                                            frame,
+                                            CrashAssistantGUI.getEditorPane("Crash Assistant has been removed. Please restart your game.", false),
+                                            "Crash Assistant Removed",
+                                            JOptionPane.INFORMATION_MESSAGE
+                                    );
+                                } else {
+                                    CrashAssistantApp.LOGGER.error("Failed to delete Crash Assistant mod: {}", jarName);
+                                    JOptionPane.showMessageDialog(
+                                            frame,
+                                            CrashAssistantGUI.getEditorPane("Failed to remove Crash Assistant. Please delete it manually from your mods folder.", false),
+                                            "Warning",
+                                            JOptionPane.WARNING_MESSAGE
+                                    );
+                                }
+                            } else {
+                                CrashAssistantApp.LOGGER.error("Could not find Crash Assistant mod file: {}", jarName);
+                                JOptionPane.showMessageDialog(
+                                        frame,
+                                        CrashAssistantGUI.getEditorPane("Could not find Crash Assistant mod file. It may have been moved or renamed.", false),
+                                        "Warning",
+                                        JOptionPane.WARNING_MESSAGE
+                                );
+                            }
+                            
+                            synchronized (TerminatedProcessesFinder.class) {
+                                CrashAssistantApp.LOGGER.info("Exiting after Crash Assistant removal attempt. Exiting with code 0.");
+                                System.exit(0);
+                            }
+                        } catch (Exception ex) {
+                            CrashAssistantApp.LOGGER.error("Error while removing Crash Assistant mod: ", ex);
+                            JOptionPane.showMessageDialog(
+                                    frame,
+                                    CrashAssistantGUI.getEditorPane("Failed to remove Crash Assistant mod: " + ex.getMessage(), false),
                                     "Error",
                                     JOptionPane.ERROR_MESSAGE
                             );

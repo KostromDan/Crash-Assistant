@@ -56,6 +56,7 @@ public interface JarInJarHelper {
                     "-platform", PlatformHelp.platform.toString(),
                     "-loaderJarName", PlatformHelp.loaderJarName,
                     "-minecraftVersion", PlatformHelp.minecraftVersion,
+                    "-childProcessesPIDs", Base64.getEncoder().encodeToString(PlatformHelp.childProcessesPIDs.getBytes(StandardCharsets.UTF_8)),
                     "-crashAssistantJarName", crashAssistantJarName,
                     "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
@@ -182,6 +183,12 @@ public interface JarInJarHelper {
             malwareMod.addDetectedMods(mods);
 
             if (crashIfMalwareDetected) {
+                String childProcess = String.join("\n", ProcessHandle.current().children().map(child -> child.pid() + ":" + child.info().startInstant().get().toEpochMilli()).toList());
+                if (!childProcess.isEmpty()) {
+                    PlatformHelp.childProcessesPIDs = childProcess;
+                }
+                LOGGER.info(childProcess);
+
                 JarInJarHelper.LOGGER.error("Crash Assistant detected malware or malware-like mod(s), crashing to prevent potential issues:\n{}",
                         String.join("\n", mods.stream().map(Mod::getJarName).toList()));
                 launchCrashAssistantApp("client");

@@ -14,7 +14,7 @@ public class CrashAssistantPreLaunch implements PreLaunchEntrypoint {
 
     @Override
     public void onPreLaunch() {
-        JarInJarHelper.checkForMalwareMods(true);
+        JarInJarHelper.checkForIncompatibleMods(true);
         String launchTarget = FabricLoader.getInstance().getEnvironmentType().toString();
         FabricLoader.getInstance().getModContainer("minecraft")
                 .ifPresent(container -> {

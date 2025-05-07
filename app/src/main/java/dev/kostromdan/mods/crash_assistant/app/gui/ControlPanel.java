@@ -382,7 +382,6 @@ public class ControlPanel {
                 sb.append(parsingResult.get().getProblematicFrameFullString().get());
                 sb.append("\n```");
             }
-
         }
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             sb.append("\n");

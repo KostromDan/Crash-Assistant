@@ -23,7 +23,7 @@ public class CrashAssistantTransformationService implements ITransformationServi
     public static final Logger LOGGER = LoggerFactory.getLogger("CrashAssistantTransformationService");
 
     static {
-        JarInJarHelper.checkForMalwareMods(true);
+        JarInJarHelper.checkForIncompatibleMods(true);
     }
 
     @Override

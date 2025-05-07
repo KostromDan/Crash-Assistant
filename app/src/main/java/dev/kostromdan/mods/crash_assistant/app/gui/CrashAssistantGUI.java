@@ -7,7 +7,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.MalwareMod;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
@@ -137,7 +137,7 @@ public class CrashAssistantGUI {
 
         controlPanel.updateModListInfo();
         showCrashAssistantDuplicatedWarning();
-        showMalwareModsWarning();
+        showIncompatibleModsWarning();
         IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         IntelChipBugWarning.showIfAffected(false);
         new Thread(() -> {
@@ -333,28 +333,28 @@ public class CrashAssistantGUI {
         }
     }
 
-    public static void showMalwareModsWarning() {
+    public static void showIncompatibleModsWarning() {
         synchronized (KnownCrashReasonMessage.class) {
             try {
-                Optional<MalwareMod> malwareMod = JarInJarHelper.checkForMalwareMods(false);
-                if (!malwareMod.isPresent()) return;
-                List<Mod> detectedMods = malwareMod.get().getDetectedMods();
+                Optional<IncompatibleMod> incompatibleMod = JarInJarHelper.checkForIncompatibleMods(false);
+                if (!incompatibleMod.isPresent()) return;
+                List<Mod> detectedMods = incompatibleMod.get().getDetectedMods();
                 if (detectedMods.isEmpty()) return;
                 ControlPanel.stopMovingToTop = true;
                 SwingUtilities.invokeAndWait(() -> {
-                    JButton removeButton = new JButton("Remove Malware Mods and their Processes (if they exist)");
+                    JButton removeButton = new JButton("Close " + detectedMods.get(0).getJarName() + " and remove.");
                     Object[] options = {removeButton, "Close"};
                     JOptionPane optionPane = new JOptionPane(
                             CrashAssistantGUI.getEditorPane(
-                                    "<h2>Warning: Malware or malware‑like mod detected!</h2>\n" +
-                                            "Crash Assistant blocked the launch to avoid <strong>potential infection or leakage of your personal data.</strong>\n" +
-                                            "Malware mod:\n" +
-                                            "<strong>" + String.join("<br/>", detectedMods.stream().map(Mod::getJarName).toList()) + "</strong>" +
+                                    "<h2>Warning: incompatible mod(s) detected!</h2>\n" +
+                                            "Crash Assistant blocked the launch to avoid <strong>potential issues.</strong>\n" +
+                                            CrashAssistantApp.crashAssistantJarName + " and " +
+                                            "<strong>" + String.join(", ", detectedMods.stream().map(Mod::getJarName).toList()) + "</strong>" +
+                                            " are incompatible. You should remove one them!" +
+                                            "<h4><strong>Why did Crash Assistant mark this mod as incompatible?</strong></h4>" +
+                                            incompatibleMod.get().getExplainMessage() +
                                             "\n\n" +
-                                            "<h4><strong>Why did Crash Assistant mark this mod as malware or malware‑like?</strong></h4>" +
-                                            malwareMod.get().getExplainMessage() +
-                                            "\n\n" +
-                                            "Mods marked as malware or malware‑like can compromise your computer, steal your information or perform actions with your personal data with major GDPR violations. It is strongly recommended to remove them.",
+                                            "",
                                     true,
                                     600),
                             JOptionPane.WARNING_MESSAGE,
@@ -365,7 +365,7 @@ public class CrashAssistantGUI {
                     );
                     JDialog dialog = optionPane.createDialog(
                             frame,
-                            "Malware Mods Detected"
+                            "Incompatible Mods Detected"
                     );
                     dialog.setAlwaysOnTop(true);
 
@@ -374,7 +374,7 @@ public class CrashAssistantGUI {
                         @Override
                         public void windowClosing(WindowEvent e) {
                             synchronized (TerminatedProcessesFinder.class) {
-                                CrashAssistantApp.LOGGER.info("Malware mods dialog closed with window close button. Exiting with code 0.");
+                                CrashAssistantApp.LOGGER.info("Incompatible mods dialog closed with window close button. Exiting with code 0.");
                                 System.exit(0);
                             }
                         }
@@ -391,7 +391,7 @@ public class CrashAssistantGUI {
 
                                 if (modFile.exists()) {
                                     if (modFile.delete()) {
-                                        CrashAssistantApp.LOGGER.info("Successfully deleted malware mod: {}", jarName);
+                                        CrashAssistantApp.LOGGER.info("Successfully deleted incompatible mod: {}", jarName);
                                     } else {
                                         boolean destroyAttemptSuccess = false;
                                         ifBlock:
@@ -403,13 +403,14 @@ public class CrashAssistantGUI {
                                             Optional<ProcessHandle> childProcessOptional = ProcessHandle.of(childProcessPID);
                                             if (childProcessOptional.isEmpty()) break ifBlock;
                                             ProcessHandle childProcess = childProcessOptional.get();
-                                            if (childProcess.info().startInstant().get().toEpochMilli() != childProcessStart) break ifBlock;
+                                            if (childProcess.info().startInstant().get().toEpochMilli() != childProcessStart)
+                                                break ifBlock;
                                             childProcess.destroyForcibly();
 
                                             long startDeleteTime = System.currentTimeMillis();
                                             while (System.currentTimeMillis() - startDeleteTime < 5000) {
                                                 if (modFile.delete()) {
-                                                    CrashAssistantApp.LOGGER.info("Successfully deleted malware mod after retry: {}", jarName);
+                                                    CrashAssistantApp.LOGGER.info("Successfully deleted incompatible mod after retry: {}", jarName);
                                                     destroyAttemptSuccess = true;
                                                     break;
                                                 }
@@ -421,12 +422,12 @@ public class CrashAssistantGUI {
 
                                         }
                                         if (!destroyAttemptSuccess) {
-                                            CrashAssistantApp.LOGGER.error("Failed to delete malware mod: {}", jarName);
+                                            CrashAssistantApp.LOGGER.error("Failed to delete incompatible mod: {}", jarName);
                                             allDeleted = false;
                                         }
                                     }
                                 } else {
-                                    CrashAssistantApp.LOGGER.error("Could not find malware mod file: {}", jarName);
+                                    CrashAssistantApp.LOGGER.error("Could not find incompatible mod file: {}", jarName);
                                     allDeleted = false;
                                 }
                             }
@@ -434,27 +435,27 @@ public class CrashAssistantGUI {
                             if (allDeleted) {
                                 JOptionPane.showMessageDialog(
                                         frame,
-                                        CrashAssistantGUI.getEditorPane("Malware mods have been removed. Please restart your game.", false),
-                                        "Malware Mods Removed",
+                                        CrashAssistantGUI.getEditorPane("Incompatible mods have been removed. Please restart your game.", false),
+                                        "Incompatible Mods Removed",
                                         JOptionPane.INFORMATION_MESSAGE
                                 );
                                 synchronized (TerminatedProcessesFinder.class) {
-                                    CrashAssistantApp.LOGGER.info("All malware mods deleted successfully. Exiting with code 0.");
+                                    CrashAssistantApp.LOGGER.info("All incompatible mods deleted successfully. Exiting with code 0.");
                                     System.exit(0);
                                 }
                             } else {
                                 JOptionPane.showMessageDialog(
                                         frame,
-                                        CrashAssistantGUI.getEditorPane("Some malware mods could not be removed. Please delete them manually from your mods folder.", false),
+                                        CrashAssistantGUI.getEditorPane("Some incompatible mods could not be removed. Please delete them manually from your mods folder.", false),
                                         "Warning",
                                         JOptionPane.WARNING_MESSAGE
                                 );
                             }
                         } catch (Exception ex) {
-                            CrashAssistantApp.LOGGER.error("Error while removing malware mod: ", ex);
+                            CrashAssistantApp.LOGGER.error("Error while removing incompatible mod: ", ex);
                             JOptionPane.showMessageDialog(
                                     frame,
-                                    CrashAssistantGUI.getEditorPane("Failed to remove malware mod: " + ex.getMessage(), false),
+                                    CrashAssistantGUI.getEditorPane("Failed to remove incompatible mod: " + ex.getMessage(), false),
                                     "Error",
                                     JOptionPane.ERROR_MESSAGE
                             );
@@ -465,12 +466,12 @@ public class CrashAssistantGUI {
 
                     // If we reach here, dialog was closed with the Close button
                     synchronized (TerminatedProcessesFinder.class) {
-                        CrashAssistantApp.LOGGER.info("Malware mods dialog closed. Exiting with code 0.");
+                        CrashAssistantApp.LOGGER.info("Incompatible mods dialog closed. Exiting with code 0.");
                         System.exit(0);
                     }
                 });
             } catch (Exception e) {
-                CrashAssistantApp.LOGGER.error("Error while showing malware mod warning: ", e);
+                CrashAssistantApp.LOGGER.error("Error while showing incompatible mod warning: ", e);
             }
         }
     }

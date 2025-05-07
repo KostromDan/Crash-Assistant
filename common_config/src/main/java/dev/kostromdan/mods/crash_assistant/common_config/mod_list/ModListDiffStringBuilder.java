@@ -50,11 +50,18 @@ public class ModListDiffStringBuilder {
     }
 
     public String toAnsi() {
+        return toAnsi(false);
+    }
+
+    public String toAnsi(boolean withoutFirstString) {
         StringBuilder result = new StringBuilder();
-        result.append(ModListDiff.getFilePrefix());
-        result.append(ModListDiff.getFirstString(true, false, null));
-        result.append("\n```ansi\n");
-        boolean first = true;
+        if (!withoutFirstString) {
+            result.append(ModListDiff.getFilePrefix());
+            result.append(ModListDiff.getFirstString(true, false, null));
+            result.append("\n");
+        }
+        result.append("```ansi\n");
+        boolean first = !withoutFirstString;
         for (ColoredString cs : sb) {
             if (first) {
                 first = false;

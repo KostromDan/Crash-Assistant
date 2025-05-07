@@ -344,9 +344,9 @@ public class ControlPanel {
                     continue;
                 }
             }
-            if (log.getType() == LogType.CRASH_ASSISTANT && !KnownCrashReasonMessage.getAllMessages().isEmpty()) {
+            if (log.getType() == LogType.CRASH_ASSISTANT && !KnownCrashReasonMessage.getAllMessages().isEmpty() && !CrashAssistantConfig.getBoolean("generated_message.put_analysis_result_to_message")) {
                 logs.add(formatSingleLogMessage(log) + LanguageProvider.getMsgLang("msg.found_potential_crash_reason")
-                        .replaceAll("\\$COUNT\\$", Integer.toString(KnownCrashReasonMessage.getAllMessages().size())));
+                        .replaceAll("\\$COUNT\\$", Integer.toString(KnownCrashReasonMessage.getUniqueMessages().size())));
                 continue;
             }
             if (log.getLinkToUploadedLastLines() == null) {
@@ -382,6 +382,25 @@ public class ControlPanel {
                 sb.append(parsingResult.get().getProblematicFrameFullString().get());
                 sb.append("\n```");
             }
+        }
+        if (!KnownCrashReasonMessage.getAllMessages().isEmpty() && CrashAssistantConfig.getBoolean("generated_message.put_analysis_result_to_message")) {
+            ModListDiffStringBuilder analysis_sb = new ModListDiffStringBuilder();
+            HashMap<KnownCrashReason, List<Log>> reasonToLogs = KnownCrashReasonMessage.getUniqueMessages();
+            if (!sb.toString().endsWith("\n")) {
+                sb.append("\n");
+            }
+            analysis_sb.append(LanguageProvider.getMsgLang("msg.found_analysis_1"), false);
+            analysis_sb.append(Integer.toString(reasonToLogs.size()), "blue", false);
+            analysis_sb.append(LanguageProvider.getMsgLang("msg.found_analysis_2"));
+
+            for (Map.Entry<KnownCrashReason, List<Log>> entry : reasonToLogs.entrySet()) {
+                analysis_sb.append(entry.getKey().getClass().getSimpleName(), "blue", false);
+                analysis_sb.append(LanguageProvider.getMsgLang("msg.found_analysis_in") + entry.getValue().stream()
+                        .map(Log::getFileName)
+                        .collect(Collectors.joining(", ")));
+            }
+            
+            sb.append(analysis_sb.toAnsi(true).trim());
         }
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             sb.append("\n");

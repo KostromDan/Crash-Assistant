@@ -6,6 +6,7 @@ import gs.mclo.api.response.insights.Problem;
 import gs.mclo.api.response.insights.Solution;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class KnownCrashReasonMessage {
     private static final Comparator<KnownCrashReasonMessage> CRASH_REASON_COMPARATOR = Comparator
@@ -21,6 +22,10 @@ public class KnownCrashReasonMessage {
     private final Log log;
     private final KnownCrashReason reason;
     private boolean isCodexMessage = false;
+    
+    public Log getLog() {
+        return log;
+    }
 
     public KnownCrashReasonMessage(Log log, KnownCrashReason reason) {
         this.shownWarn = false;
@@ -46,6 +51,34 @@ public class KnownCrashReasonMessage {
 
     public static Set<KnownCrashReasonMessage> getAllMessages() {
         return crashReasonMessages;
+    }
+
+    public static HashMap<KnownCrashReason, List<Log>> getUniqueMessages() {
+        HashMap<String, List<KnownCrashReasonMessage>> messagesByReasonType = new HashMap<>();
+        HashMap<KnownCrashReason, List<Log>> result = new HashMap<>();
+        
+        // Group messages by reason class name (lowercase)
+        for (KnownCrashReasonMessage message : crashReasonMessages) {
+            String reasonType = message.getReason().getClass().getSimpleName().toLowerCase();
+            messagesByReasonType.computeIfAbsent(reasonType, k -> new ArrayList<>()).add(message);
+        }
+        
+        // For each unique reason type, select the first message and collect all associated logs
+        for (List<KnownCrashReasonMessage> messages : messagesByReasonType.values()) {
+            if (!messages.isEmpty()) {
+                KnownCrashReasonMessage firstMessage = messages.get(0);
+                KnownCrashReason reason = firstMessage.getReason();
+                
+                // Collect all logs for this reason type
+                List<Log> logs = messages.stream()
+                        .map(KnownCrashReasonMessage::getLog)
+                        .collect(Collectors.toList());
+                
+                result.put(reason, logs);
+            }
+        }
+        
+        return result;
     }
 
     public static void addCrashReasonMessage(KnownCrashReasonMessage msg) {

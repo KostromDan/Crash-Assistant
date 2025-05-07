@@ -133,6 +133,9 @@ public class CrashAssistantConfig {
         addOption("generated_message.put_problematic_frame_to_message",
                 "Puts problematic frame from hs_err to message.",
                 true);
+        addOption("generated_message.put_analysis_result_to_message",
+                "Puts analysis result(names of crash reasons) to message, instead of just count.",
+                true);
 
         config.setComment("modpack_modlist", "Settings of modlist feature.\n" +
                 "Adds in generated msg block about which mods modpack user added/removed/updated.\n" +

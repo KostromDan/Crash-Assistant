@@ -342,16 +342,16 @@ public class CrashAssistantGUI {
                 if (detectedMods.isEmpty()) return;
                 ControlPanel.stopMovingToTop = true;
                 SwingUtilities.invokeAndWait(() -> {
-                    JButton removeButton = new JButton("Close " + detectedMods.get(0).getJarName() + " and remove.");
-                    JButton removeCAButton = new JButton("Close " + CrashAssistantApp.crashAssistantJarName + " and remove.");
-                    Object[] options = {removeButton, removeCAButton, "Close"};
+                    JButton removeIncompatibleButton = new JButton("Close " + detectedMods.get(0).getModId() + " and remove.");
+                    JButton removeCrashAssistantButton = new JButton("Close crash_assistant and remove.");
+                    Object[] options = {removeIncompatibleButton, removeCrashAssistantButton, "Close"};
                     JOptionPane optionPane = new JOptionPane(
                             CrashAssistantGUI.getEditorPane(
                                     "<h2>Warning: incompatible mod(s) detected!</h2>\n" +
-                                            "Crash Assistant blocked the launch to avoid <strong>potential issues.</strong>\n" +
-                                            CrashAssistantApp.crashAssistantJarName + " and " +
+                                            "<strong>" + CrashAssistantApp.crashAssistantJarName + "</strong>" + " and " +
                                             "<strong>" + String.join(", ", detectedMods.stream().map(Mod::getJarName).toList()) + "</strong>" +
-                                            " are incompatible. You should remove one them!" +
+                                            " are incompatible.\n" +
+                                            "You should remove one them!" +
                                             "<h4><strong>Why did Crash Assistant mark this mod as incompatible?</strong></h4>" +
                                             incompatibleMod.get().getExplainMessage(),
                                     true,
@@ -379,7 +379,7 @@ public class CrashAssistantGUI {
                         }
                     });
 
-                    removeButton.addActionListener(e -> {
+                    removeIncompatibleButton.addActionListener(e -> {
                         try {
                             dialog.setAlwaysOnTop(false);
                             boolean allDeleted = true;
@@ -460,14 +460,14 @@ public class CrashAssistantGUI {
                             );
                         }
                     });
-                    
-                    removeCAButton.addActionListener(e -> {
+
+                    removeCrashAssistantButton.addActionListener(e -> {
                         try {
                             dialog.setAlwaysOnTop(false);
                             String jarName = CrashAssistantApp.crashAssistantJarName;
                             File modsDir = new File("mods");
                             File modFile = new File(modsDir, jarName);
-                            
+
                             if (modFile.exists()) {
                                 if (modFile.delete()) {
                                     CrashAssistantApp.LOGGER.info("Successfully deleted Crash Assistant mod: {}", jarName);
@@ -495,7 +495,7 @@ public class CrashAssistantGUI {
                                         JOptionPane.WARNING_MESSAGE
                                 );
                             }
-                            
+
                             synchronized (TerminatedProcessesFinder.class) {
                                 CrashAssistantApp.LOGGER.info("Exiting after Crash Assistant removal attempt. Exiting with code 0.");
                                 System.exit(0);

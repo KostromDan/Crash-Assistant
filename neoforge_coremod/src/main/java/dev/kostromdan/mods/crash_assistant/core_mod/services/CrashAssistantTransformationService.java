@@ -23,9 +23,6 @@ import java.util.Set;
 public class CrashAssistantTransformationService implements ITransformationService {
     public static final Logger LOGGER = LoggerFactory.getLogger("CrashAssistantTransformationService");
 
-    static {
-        JarInJarHelper.checkForMalwareMods(true);
-    }
 
     @Override
     public @NotNull String name() {
@@ -39,6 +36,7 @@ public class CrashAssistantTransformationService implements ITransformationServi
         PlatformHelp.minecraftVersion = FMLLoader.versionInfo().mcVersion();
         LibrariesJarLocator.setupLoaderJarName("neoforge-" + FMLLoader.versionInfo().neoForgeVersion());
         JarInJarHelper.launchCrashAssistantApp(launchTarget);
+        JarInJarHelper.checkForIncompatibleMods(true);
         JarInJarHelper.checkDuplicatedCrashAssistantMod(true);
     }
 

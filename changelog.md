@@ -1,3 +1,7 @@
+1.7.23.1:
+
+- 1.18.2 branch-only. I forgot to cherry-pick one commit which must be part of 1.7.23 update.
+
 1.7.23:
 
 - Quick fix to match CurseForge request.

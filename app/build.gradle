@@ -73,6 +73,7 @@ shadowJar {
         exclude(dependency('commons-io:commons-io:2.15.1'))
         exclude("windows/**")
         exclude '**/*.dll', '**/*.so', '**/*.dylib', '**/*.sha1', '**/*.git'
+        exclude(project(':common_config'))
     }
 }
 

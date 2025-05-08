@@ -200,6 +200,12 @@ public class CrashAssistantConfig {
                         "On first world join of modpack creator if set to false shows greeting, then self enables.",
                 false);
 
+        config.setComment("compatibility", "Checks crash_assistant compatibility with other incompatible mods.\n" +
+                "Highly unrecommended to disable!");
+        addOption("compatibility.enabled",
+                "Enable feature.",
+                true);
+
 
         HashSet<String> toRemove = new HashSet<>();
         config.valueMap().forEach((key, value) -> {

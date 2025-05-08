@@ -41,6 +41,12 @@ public interface JarInJarHelper {
                     + Objects.toString(currentProcess.info().startInstant().get().getEpochSecond());
             Path extractedJarPath = extractJarInJar("app.jar", currentProcessData + "_app.jar");
 
+            String childProcess = String.join("\n", ProcessHandle.current().children().map(child -> child.pid() + ":" + child.info().startInstant().get().toEpochMilli()).toList());
+            if (!childProcess.isEmpty()) {
+                PlatformHelp.childProcessesPIDs = childProcess;
+            }
+            LOGGER.info(childProcess);
+
             ProcessBuilder crashAssistantAppProcessBuilder = new ProcessBuilder(
                     JavaBinaryLocator.getJavaBinary(currentProcess),
                     "-XX:+UseSerialGC",
@@ -183,17 +189,22 @@ public interface JarInJarHelper {
             incompatibleMod.addDetectedMods(mods);
 
             if (crashIfIncompatibleModDetected) {
-                String childProcess = String.join("\n", ProcessHandle.current().children().map(child -> child.pid() + ":" + child.info().startInstant().get().toEpochMilli()).toList());
-                if (!childProcess.isEmpty()) {
-                    PlatformHelp.childProcessesPIDs = childProcess;
-                }
-                LOGGER.info(childProcess);
+                String incompatibleModsString = String.join(", ", mods.stream().map(Mod::getJarName).toList());
+                String crashAssistantString = "Crash Assistant";
                 try {
-                    JarInJarHelper.LOGGER.error("Crash Assistant detected incompatible mod(s), crashing to prevent potential issues:\n{}",
-                            Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).getFileName().toString() + " and " + String.join(", ", mods.stream().map(Mod::getJarName).toList()) + "are incompatible. Remove one of them.");
+                    crashAssistantString = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).getFileName().toString();
                 } catch (Exception ignored) {
                 }
-                System.exit(-1);
+                String incompatibleMessage = crashAssistantString + " and " + incompatibleModsString + "are incompatible.";
+                if (CrashAssistantConfig.getBoolean("compatibility.enabled")) {
+                    JarInJarHelper.LOGGER.error("Crash Assistant detected incompatible mod(s), crashing to prevent potential issues:\n{}",
+                            incompatibleMessage + " Remove one of them.");
+                    System.exit(-1);
+                } else {
+                    JarInJarHelper.LOGGER.warn("Crash Assistant detected incompatible mod(s). Compatibility check is disabled! Issues may arise!\n{}",
+                            incompatibleMessage + " Continue at your own risk!");
+                }
+
             }
             return Optional.of(incompatibleMod);
         }

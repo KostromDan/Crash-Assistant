@@ -10,14 +10,17 @@ public class IncompatibleMod {
     private final String explainMessage;
     private final List<Mod> detectedMods = new ArrayList<>();
     public static final HashSet<IncompatibleMod> incompatibleMods = new HashSet<IncompatibleMod>() {{
-//        add(new IncompatibleMod(
-//                "crashdetectormc",
-//                "crashdetector",
-//                "These mods perform very similar functions and are implemented in very similar ways.\n" +
-//                        "There is no reason to have both. Please remove one of them.\n" +
-//                        "We (crash assistant developers) are aware of crashes caused by compatibility issues\nbut we have no intention of fixing them as there is too much drama involved.\n" +
-//                        "And as mentioned above, since the mods have very similar functionality and concepts,\nthere's no reason to have both. Read descriptions of both and choose one closer to your needs."
-//        ));
+        add(new IncompatibleMod(
+                "crashdetectormc",
+                "crashdetector",
+                "These mods perform very similar functions and are implemented in very similar ways.\n" +
+                        "There is no reason to have both. Please remove one of them.\n" +
+                        "Both of mods are eating some RAM and system resources, both starting gui's after crash.\n" +
+                        "It can be incontinent to have like 5 crash screens after crash. From CA, from CD, from launcher, etc.\n" +
+                        "Also we (crash assistant developers) are aware of crashes caused by compatibility issues\nbut we have no intention of fixing them as there is too much drama involved.\n" +
+                        "And as mentioned above, since the mods have very similar functionality and concepts,\nthere's no reason to have both. Read descriptions of both and choose one closer to your needs.\n" +
+                        "You can disable compatibility check in crash_assistant config but you've been warned about potential issues!"
+        ));
     }};
 
 

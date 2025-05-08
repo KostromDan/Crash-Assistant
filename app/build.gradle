@@ -72,6 +72,7 @@ shadowJar {
         exclude(dependency('com.google.code.gson:.*'))
         exclude(dependency('commons-io:commons-io:2.15.1'))
         exclude("windows/**")
+        exclude(project(':common_config'))
     }
 }
 

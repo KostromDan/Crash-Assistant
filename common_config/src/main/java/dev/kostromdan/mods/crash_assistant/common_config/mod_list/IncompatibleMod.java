@@ -15,11 +15,11 @@ public class IncompatibleMod {
                 "crashdetector",
                 "These mods perform very similar functions and are implemented in very similar ways.\n" +
                         "There is no reason to have both. Please remove one of them.\n" +
-                        "Both of mods are eating some RAM and system resources, both starting gui's after crash.\n" +
-                        "It can be incontinent to have like 5 crash screens after crash. From CA, from CD, from launcher, etc.\n" +
-                        "Also we (crash assistant developers) are aware of crashes caused by compatibility issues\nbut we have no intention of fixing them as there is too much drama involved.\n" +
-                        "And as mentioned above, since the mods have very similar functionality and concepts,\nthere's no reason to have both. Read descriptions of both and choose one closer to your needs.\n" +
-                        "You can disable compatibility check in crash_assistant config but you've been warned about potential issues!"
+                        "Both mods consume RAM and system resources, and both display GUIs after a crash.\n" +
+                        "It can be inconvenient to have multiple crash screens appear after a crash - from Crash Assistant, Crash Detector, launcher, etc.\n" +
+                        "We (Crash Assistant developers) are aware of crashes caused by compatibility issues,\nbut we have no intention of fixing them as there is too much drama involved.\n" +
+                        "As mentioned above, since the mods have very similar functionality and concepts,\nthere's no reason to have both. Please read the descriptions of both and choose the one that better suits your needs.\n" +
+                        "You can disable the compatibility check in the Crash Assistant config, but be aware that you have been warned about potential issues and inconveniences!"
         ));
     }};
 

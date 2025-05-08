@@ -37,7 +37,7 @@ public class CrashAssistantApp {
     public static long parentPID;
     public static long parentStarted;
     public static boolean crashed_with_report = false;
-    public static String crashAssistantJarName = null;
+    public static String crashAssistantJarName = Boot.crashAssistantModJarPath == null ? null : Paths.get(Boot.crashAssistantModJarPath).getFileName().toString();
     public static String renderer = null;
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
@@ -76,12 +76,9 @@ public class CrashAssistantApp {
             } else if ("-childProcessesPIDs".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.childProcessesPIDs = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
                 LOGGER.info("childProcessesPIDs: {}", PlatformHelp.childProcessesPIDs);
-            } else if ("-crashAssistantJarName".equals(args[i]) && i + 1 < args.length) {
-                crashAssistantJarName = args[i + 1];
-                LOGGER.info("crashAssistantJarName: {}", crashAssistantJarName);
             }
         }
-
+        LOGGER.info("crashAssistantJarName: {}", crashAssistantJarName);
         LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
 
         String currentProcessData = Objects.toString(parentPID) + "_" + Objects.toString(Instant.ofEpochMilli(parentStarted).getEpochSecond());

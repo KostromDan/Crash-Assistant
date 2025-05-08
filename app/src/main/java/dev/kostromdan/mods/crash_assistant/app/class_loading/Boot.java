@@ -20,6 +20,7 @@ public class Boot {
     public static String lwjglNatives = null;
     public static String processor = null;
     public static String jarPath = null;
+    public static String crashAssistantModJarPath = null;
     public static boolean recursiveStart = false;
     public static String serialisedGPUs = null;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -43,6 +44,8 @@ public class Boot {
                 processor = args[i + 1];
             } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
                 jarPath = args[i + 1];
+            } else if ("-crashAssistantModJarPath".equals(args[i]) && i + 1 < args.length) {
+                crashAssistantModJarPath = args[i + 1];
             } else if ("-serialisedGPUs".equals(args[i]) && i + 1 < args.length) {
                 serialisedGPUs = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
             } else if ("-recursiveStart".equals(args[i])) {
@@ -61,6 +64,7 @@ public class Boot {
         CrashAssistantAgent.appendJarFile(log4jCore);
         CrashAssistantAgent.appendJarFile(googleGson);
         CrashAssistantAgent.appendJarFile(commonIo);
+        CrashAssistantAgent.appendJarFile(crashAssistantModJarPath);
         if (lwjglNatives != null && !Objects.equals(lwjglNatives, "UNDEFINED") && !recursiveStart) {
             CrashAssistantAgent.appendJarFile(lwjglNatives);
         } else {
@@ -115,6 +119,7 @@ public class Boot {
         if (commonIo == null) missingParameters.add("-commonIo");
         if (processor == null) missingParameters.add("-processor");
         if (jarPath == null) missingParameters.add("-jarPath");
+        if (crashAssistantModJarPath == null) missingParameters.add("-crashAssistantModJarPath");
         return missingParameters;
     }
 }

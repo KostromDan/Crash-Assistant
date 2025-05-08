@@ -33,7 +33,8 @@ public interface JarInJarHelper {
             return;
         }
         try {
-            String crashAssistantJarName = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).getFileName().toString();
+            Path crashAssistantModJarPath = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).toAbsolutePath();
+            String crashAssistantJarName = crashAssistantModJarPath.getFileName().toString();
             LOGGER.info("Launching CrashAssistantApp ({})", crashAssistantJarName);
 
             ProcessHandle currentProcess = ProcessHandle.current();
@@ -57,7 +58,7 @@ public interface JarInJarHelper {
                     "-loaderJarName", PlatformHelp.loaderJarName,
                     "-minecraftVersion", PlatformHelp.minecraftVersion,
                     "-childProcessesPIDs", Base64.getEncoder().encodeToString(PlatformHelp.childProcessesPIDs.getBytes(StandardCharsets.UTF_8)),
-                    "-crashAssistantJarName", crashAssistantJarName,
+                    "-crashAssistantModJarPath", crashAssistantModJarPath.toString(),
                     "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),

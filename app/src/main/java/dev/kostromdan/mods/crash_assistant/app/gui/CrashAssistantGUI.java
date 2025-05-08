@@ -340,6 +340,7 @@ public class CrashAssistantGUI {
                 if (!incompatibleMod.isPresent()) return;
                 List<Mod> detectedMods = incompatibleMod.get().getDetectedMods();
                 if (detectedMods.isEmpty()) return;
+                if (!CrashAssistantConfig.getBoolean("compatibility.enabled")) return;
                 ControlPanel.stopMovingToTop = true;
                 SwingUtilities.invokeAndWait(() -> {
                     JButton removeIncompatibleButton = new JButton("Close " + detectedMods.get(0).getModId() + " and remove.");

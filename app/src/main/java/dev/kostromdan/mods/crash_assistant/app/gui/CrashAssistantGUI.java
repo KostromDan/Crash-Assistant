@@ -7,6 +7,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -469,25 +470,7 @@ public class CrashAssistantGUI {
                             File modsDir = new File("mods");
                             File modFile = new File(modsDir, jarName);
 
-                            if (modFile.exists()) {
-                                if (modFile.delete()) {
-                                    CrashAssistantApp.LOGGER.info("Successfully deleted Crash Assistant mod: {}", jarName);
-                                    JOptionPane.showMessageDialog(
-                                            frame,
-                                            CrashAssistantGUI.getEditorPane("Crash Assistant has been removed. Please restart your game.", false),
-                                            "Crash Assistant Removed",
-                                            JOptionPane.INFORMATION_MESSAGE
-                                    );
-                                } else {
-                                    CrashAssistantApp.LOGGER.error("Failed to delete Crash Assistant mod: {}", jarName);
-                                    JOptionPane.showMessageDialog(
-                                            frame,
-                                            CrashAssistantGUI.getEditorPane("Failed to remove Crash Assistant. Please delete it manually from your mods folder.", false),
-                                            "Warning",
-                                            JOptionPane.WARNING_MESSAGE
-                                    );
-                                }
-                            } else {
+                            if (!modFile.exists()) {
                                 CrashAssistantApp.LOGGER.error("Could not find Crash Assistant mod file: {}", jarName);
                                 JOptionPane.showMessageDialog(
                                         frame,
@@ -495,17 +478,38 @@ public class CrashAssistantGUI {
                                         "Warning",
                                         JOptionPane.WARNING_MESSAGE
                                 );
+                                return;
                             }
 
+                            // Get the current process ID
+                            long currentPID = ProcessHandle.current().pid();
+
+                            // Get the path to the current JAR
+                            String classPath = System.getProperty("java.class.path");
+
+                            // Build the command to start the remover process
+                            ProcessBuilder processBuilder = new ProcessBuilder(
+                                    JavaBinaryLocator.getJavaBinary(ProcessHandle.current()),
+                                    "-cp",
+                                    classPath,
+                                    "dev.kostromdan.mods.crash_assistant.app.remover.ModRemover",
+                                    modFile.getAbsolutePath(),
+                                    String.valueOf(currentPID)
+                            );
+
+                            // Start the remover process
+                            processBuilder.start();
+
+                            // Exit the current process
                             synchronized (TerminatedProcessesFinder.class) {
-                                CrashAssistantApp.LOGGER.info("Exiting after Crash Assistant removal attempt. Exiting with code 0.");
+                                CrashAssistantApp.LOGGER.info("Exiting to allow Crash Assistant removal. Exiting with code 0.");
                                 System.exit(0);
                             }
                         } catch (Exception ex) {
-                            CrashAssistantApp.LOGGER.error("Error while removing Crash Assistant mod: ", ex);
+                            CrashAssistantApp.LOGGER.error("Error while setting up Crash Assistant removal: ", ex);
                             JOptionPane.showMessageDialog(
                                     frame,
-                                    CrashAssistantGUI.getEditorPane("Failed to remove Crash Assistant mod: " + ex.getMessage(), false),
+                                    CrashAssistantGUI.getEditorPane("Failed to set up Crash Assistant removal: " + ex.getMessage(), false),
                                     "Error",
                                     JOptionPane.ERROR_MESSAGE
                             );

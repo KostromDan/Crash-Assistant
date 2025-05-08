@@ -34,8 +34,7 @@ public interface JarInJarHelper {
         }
         try {
             Path crashAssistantModJarPath = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).toAbsolutePath();
-            String crashAssistantJarName = crashAssistantModJarPath.getFileName().toString();
-            LOGGER.info("Launching CrashAssistantApp ({})", crashAssistantJarName);
+            LOGGER.info("Launching CrashAssistantApp ({})", crashAssistantModJarPath.getFileName().toString());
 
             ProcessHandle currentProcess = ProcessHandle.current();
             String currentProcessData = Objects.toString(currentProcess.pid()) + "_"

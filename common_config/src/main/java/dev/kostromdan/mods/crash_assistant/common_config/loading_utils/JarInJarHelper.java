@@ -24,14 +24,16 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
 
-public interface JarInJarHelper {
-    Logger LOGGER = LogManager.getLogger("CrashAssistantJarInJarHelper");
+public class JarInJarHelper {
+    public static Logger LOGGER = LogManager.getLogger("CrashAssistantJarInJarHelper");
+    public static boolean isClient = false;
 
-    static void launchCrashAssistantApp(String launchTarget) {
+    public static void launchCrashAssistantApp(String launchTarget) {
         if (!launchTarget.toLowerCase().contains("client")) {
             LOGGER.warn("launchTarget: " + launchTarget + ". Crash Assistant is client only mod. Mod will do nothing!");
             return;
         }
+        isClient = true;
         try {
             Path crashAssistantModJarPath = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).toAbsolutePath();
             LOGGER.info("Launching CrashAssistantApp ({})", crashAssistantModJarPath.getFileName().toString());
@@ -45,7 +47,6 @@ public interface JarInJarHelper {
             if (!childProcess.isEmpty()) {
                 PlatformHelp.childProcessesPIDs = childProcess;
             }
-            LOGGER.info(childProcess);
 
             ProcessBuilder crashAssistantAppProcessBuilder = new ProcessBuilder(
                     JavaBinaryLocator.getJavaBinary(currentProcess),
@@ -79,7 +80,7 @@ public interface JarInJarHelper {
     }
 
 
-    static String locateNatives() {
+    public static String locateNatives() {
         try {
             // Normalise OS/arch strings
             String osName = System.getProperty("os.name").toLowerCase(Locale.ROOT);
@@ -133,7 +134,7 @@ public interface JarInJarHelper {
         }
     }
 
-    static List<Path> getModJarPathsContainingPart(String part) {
+    public static List<Path> getModJarPathsContainingPart(String part) {
         try {
             return Files.list(Paths.get("mods"))
                     .filter(path -> Files.isRegularFile(path) &&
@@ -145,18 +146,18 @@ public interface JarInJarHelper {
         }
     }
 
-    static List<Mod> mapPathsToMods(List<Path> paths) {
+    public static List<Mod> mapPathsToMods(List<Path> paths) {
         return paths.stream()
                 .map(ModDataParser::parseModData)
                 .toList();
     }
 
-    static List<Mod> getModsContainingPart(String part) {
+    public static List<Mod> getModsContainingPart(String part) {
         return mapPathsToMods(getModJarPathsContainingPart(part));
     }
 
 
-    static List<Mod> checkDuplicatedCrashAssistantMod(boolean crashIfDuplicated) {
+    public static List<Mod> checkDuplicatedCrashAssistantMod(boolean crashIfDuplicated) {
         try {
             List<Mod> mods = getModsContainingPart("crash_assistant-");
 
@@ -179,7 +180,10 @@ public interface JarInJarHelper {
         }
     }
 
-    static Optional<IncompatibleMod> checkForIncompatibleMods(boolean crashIfIncompatibleModDetected) {
+    public static Optional<IncompatibleMod> checkForIncompatibleMods(boolean crashIfIncompatibleModDetected) {
+        if (!isClient && crashIfIncompatibleModDetected) {
+            return Optional.empty();
+        }
         for (IncompatibleMod incompatibleMod : IncompatibleMod.incompatibleMods) {
             List<Path> modPaths = getModJarPathsContainingPart(incompatibleMod.getJarNamePart());
             if (modPaths.isEmpty()) continue;
@@ -211,7 +215,7 @@ public interface JarInJarHelper {
         return Optional.empty();
     }
 
-    static Path extractJarInJar(String embeddedName, String outputName) throws IOException {
+    public static Path extractJarInJar(String embeddedName, String outputName) throws IOException {
         Path outputDirectory = Paths.get("local", "crash_assistant");
         if (!Files.exists(outputDirectory)) {
             Files.createDirectories(outputDirectory);
@@ -277,7 +281,7 @@ public interface JarInJarHelper {
         return extractedJarPath;
     }
 
-    static void unzipFromJar(String embeddedPath, Path extractedPath) {
+    public static void unzipFromJar(String embeddedPath, Path extractedPath) {
         if (!embeddedPath.startsWith("/")) {
             embeddedPath = "/" + embeddedPath;
         }
@@ -299,7 +303,7 @@ public interface JarInJarHelper {
         }
     }
 
-    static HashMap<String, String> readJsonFromJar(String embeddedPath) {
+    public static HashMap<String, String> readJsonFromJar(String embeddedPath) {
         if (!embeddedPath.startsWith("/")) {
             embeddedPath = "/" + embeddedPath;
         }
@@ -327,7 +331,7 @@ public interface JarInJarHelper {
     }
 
 
-    static HashMap<String, String> readJsonFromFile(Path path) {
+    public static HashMap<String, String> readJsonFromFile(Path path) {
         try {
             try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
                 return convertJsonToMap(JsonParser.parseReader(reader).getAsJsonObject());
@@ -347,7 +351,7 @@ public interface JarInJarHelper {
         return new HashMap<>();
     }
 
-    static void writeJsonToFile(Map<String, String> json, Path path) {
+    public static void writeJsonToFile(Map<String, String> json, Path path) {
         try {
             try (FileWriter writer = new FileWriter(path.toFile())) {
                 Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -358,7 +362,7 @@ public interface JarInJarHelper {
         }
     }
 
-    static HashMap<String, String> convertJsonToMap(JsonObject json) {
+    public static HashMap<String, String> convertJsonToMap(JsonObject json) {
         HashMap<String, String> values = new HashMap<>();
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             values.put(entry.getKey(), entry.getValue().getAsString());
@@ -366,7 +370,7 @@ public interface JarInJarHelper {
         return values;
     }
 
-    static Path getJarInJar(String name) throws IOException, URISyntaxException {
+    public static Path getJarInJar(String name) throws IOException, URISyntaxException {
         //Idea taken from org.sinytra.connector.locator.EmbeddedDependencies#getJarInJar
         Path pathInModFile = Path.of(JarInJarHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI()).resolve("META-INF/jarjar/" + name);
         URI filePathUri = new URI("jij:" + pathInModFile.toAbsolutePath().toUri().getRawSchemeSpecificPart()).normalize();

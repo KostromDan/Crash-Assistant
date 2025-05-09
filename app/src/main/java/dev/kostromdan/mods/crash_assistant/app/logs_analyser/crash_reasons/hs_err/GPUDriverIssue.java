@@ -3,25 +3,31 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_e
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 
-public class nglMultiDrawElementsBaseVertex extends KnownCrashReason {
-    public nglMultiDrawElementsBaseVertex() {
+public class GPUDriverIssue extends KnownCrashReason {
+    public GPUDriverIssue() {
         super(
                 LogType.HS_ERR,
-                GPUDriverIssue.formatGPUDriverIssueMsg(LanguageProvider.get("warnings.0x0000")),
-                "Java frames:.*\\R.*org\\.lwjgl\\.opengl\\.GL32C\\.nglMultiDrawElementsBaseVertex\\(IJIJIJ\\)V.*"
+                formatGPUDriverIssueMsg(LanguageProvider.get("warnings.gpu_driver_issue"))
         );
     }
 
     @Override
     public boolean matches(Log log) {
         if (!PlatformHelp.isWindows()) return false;
-        if (!HsErrParser.hsErrContainsOneOfFrames(log, "# C  0x0000")) return false;
-        return super.matches(log);
+        if (HsErrParser.hsErrContainsOneOfFrames(log, "glfw.dll")) {
+            message = message.replace("$PROBLEMATIC_FRAME$", "glfw.dll");
+            return true;
+        }
+        return false;
+    }
+
+    public static String formatGPUDriverIssueMsg(String originalMessage) {
+        return originalMessage.replace("$CURRENT_GPU$", CrashAssistantApp.renderer != null ? CrashAssistantApp.renderer : "UNDEFINED");
     }
 }

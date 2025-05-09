@@ -492,7 +492,7 @@ public class CrashAssistantGUI {
                                     JavaBinaryLocator.getJavaBinary(ProcessHandle.current()),
                                     "-cp",
                                     classPath,
-                                    "dev.kostromdan.mods.crash_assistant.app.remover.ModRemover",
+                                    "dev.kostromdan.mods.crash_assistant.app.utils.ModRemover",
                                     modFile.getAbsolutePath(),
                                     String.valueOf(currentPID)
                             );

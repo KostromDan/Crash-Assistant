@@ -1,3 +1,11 @@
+1.7.25:
+
+- Added new LanguageProviderMismatch log analysis.
+- New Analysis for GPU driver issues log analysis.
+  Improved old messages.
+- Add some code for further modloading analysis.
+- Small fixes and improvements.
+
 1.7.24:
 
 - Prevent duplicated code in app and mod part to reduce mod size.

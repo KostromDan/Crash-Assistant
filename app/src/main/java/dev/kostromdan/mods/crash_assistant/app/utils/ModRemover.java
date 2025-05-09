@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.app.remover;
+package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import javax.swing.*;
 import java.io.File;

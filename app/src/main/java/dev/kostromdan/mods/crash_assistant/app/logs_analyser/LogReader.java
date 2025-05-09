@@ -151,6 +151,34 @@ public class LogReader {
         }
     }
 
+    /**
+     * Returns the last n lines from the log file as a list of strings.
+     * If n is greater than the number of available lines, all lines are returned.
+     *
+     * @param n number of lines to return
+     * @return list of last n lines
+     */
+    public synchronized List<String> getLastNLines(int n) {
+        List<String> allLines = getAllLinesList();
+        if (allLines.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        int startIndex = Math.max(0, allLines.size() - n);
+        return new ArrayList<>(allLines.subList(startIndex, allLines.size()));
+    }
+
+    /**
+     * Returns the last line from the log file.
+     * If the log file is empty, returns an empty string.
+     *
+     * @return the last line or empty string if file is empty
+     */
+    public synchronized String getLastLine() {
+        List<String> lastLine = getLastNLines(1);
+        return !lastLine.isEmpty() ? lastLine.get(0) : "";
+    }
+
     public int getCountedLines() {
         return countedLines;
     }

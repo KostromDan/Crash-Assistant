@@ -1,3 +1,9 @@
+1.7.26:
+
+- Added couple of new supported langs in WasClosedByWindows error message log analysis.
+- Marked mod as release, since I haven't seen any issues for a long time and haven't made any breaking changes
+  since the mod's creation. There is no reason to mark it as beta.
+
 1.7.25:
 
 - Added new LanguageProviderMismatch log analysis.
@@ -36,12 +42,12 @@
 
 - Significantly improved Privacy Policy text to prevent potential GDPR issues.
 - Moved Privacy Policy to the scrollPane to prevent issues on small displays.
-- Add an option for resetting the privacy policy contest to prevent potential GDPR issues. 
+- Add an option for resetting the privacy policy contest to prevent potential GDPR issues.
 
 1.7.19:
 
 - Compat with Vulkan mod.
-- "1.21" compat. 
+- "1.21" compat.
 - 1.21 log analysis. With suggestion to switch to 1.21.1, 1.21.4 / 1.21.5, as 1.21 is abandoned and not supported.
 - Refactor hs_err parsing logic into a dedicated parser.
 - Added to the generated message if InsufficientMemory, memory settings (pages size, etc).

@@ -150,6 +150,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new DiskSpaceEnded());
         registerKnownCrashReason(new DuplicatedMods());
         registerKnownCrashReason(new KubeJSDataPack());
+        registerKnownCrashReason(new LanguageProviderMismatch());
         registerKnownCrashReason(new MissingEmbeddiumForOculus());
         registerKnownCrashReason(new MissingUnsupportedDependencies());
         registerKnownCrashReason(new ModernFixWatchDog());

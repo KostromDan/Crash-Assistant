@@ -52,3 +52,16 @@ TimeCreated           Id LevelDisplayName Message
                                           Windows ed è stato chiuso. Per verificare se sono disponibili ulteriori
                                           informazioni sul problema, controllare la cronologia dei problemi nel
                                           pannello di controllo Sicurezza e manutenzione.
+   ProviderName: Application Hang
+TimeCreated           Id LevelDisplayName Message
+-----------           -- ---------------- -------
+09.05.2025 20:44:40 1002 Błędy            Program javaw.exe w wersji **.**.**.** przestał współpracować z systemem Windows
+                                           i został zamknięty. Aby zobaczyć, czy jest dostępnych więcej informacji doty
+                                          czących tego problemu, sprawdź historię problemów w oknie Zabezpieczenia i ko
+                                          nserwacja w Panelu sterowania.
+   ProviderName: Application Hang
+TimeCreated           Id LevelDisplayName Message
+-----------           -- ---------------- -------
+09.05.2025 12:56:36 1002 Fehler           Das Programm javaw.exe Version **.**.**.** hat aufgehört mit Windows zu
+                                          interagieren und wurde geschlossen. Weitere Informationen zum Problem finden
+                                          Sie im Problemverlauf in der Systemsteuerung „Sicherheit und Wartung“.

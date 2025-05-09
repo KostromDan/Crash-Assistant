@@ -15,13 +15,15 @@ public class WasClosedByWindows extends KnownCrashReason {
             "Программа java\\w*(?:\\.\\w+)? версии \\S+ перестала взаимодействовать с Windows и была закрыта\\.",
             "Le programme java\\w*(?:\\.\\w+)? version \\S+ a cessé d'interagir avec Windows eta été fermé\\.",
             "Das Programm java\\w*(?:\\.\\w+)? Version \\S+ hat die Interaktion mit Windowsbeendet und wurde geschlossen\\.",
+            "Das Programm java\\w*(?:\\.\\w+)? Version \\S+ hat aufgehört mit Windows zu interagieren und wurde geschlossen\\.",
             "El programa java\\w*(?:\\.\\w+)? versión \\S+ dejó de interactuar con Windowsy se cerró\\.",
             "Programmet java\\w*(?:\\.\\w+)?, version \\S+ avslutades eftersom det slutade samverka med Windows\\.",
             "Programma java\\w*(?:\\.\\w+)? versie \\S+ communiceert niet meer met Windows en is gesloten\\.",
             "프로그램 java\\w*(?:\\.\\w+)? 버전 \\S+이\\(가\\) Windows와의 상호 작용을 중지하고 닫혔습니다\\.",
             "Verze \\S+ programu java\\w*(?:\\.\\w+)? ukončila interakci se systémem Windows a byla ukončena\\.",
             "O programa java\\w*(?:\\.\\w+)? versão \\S+ interagiu com o Windows e foi fechado\\.",
-            "Il programma java\\w*(?:\\.\\w+)? versione \\S+ interrotto l'interazione con Windows ed è stato chiuso\\."
+            "Il programma java\\w*(?:\\.\\w+)? versione \\S+ interrotto l'interazione con Windows ed è stato chiuso\\.",
+            "Program java\\w*(?:\\.\\w+)? w wersji \\S+ przestał współpracować z systemem Windows i został zamknięty\\."
     ).map(WasClosedByWindows::removeSpacesAndEndLines).toList();
 
     public static String removeSpacesAndEndLines(String s) {

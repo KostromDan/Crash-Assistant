@@ -14,7 +14,7 @@ public class WasClosedByWindows extends KnownCrashReason {
             "The program java\\w*(?:\\.\\w+)? version \\S+ stopped interacting with Windowsand was closed\\.",
             "Программа java\\w*(?:\\.\\w+)? версии \\S+ перестала взаимодействовать с Windows и была закрыта\\.",
             "Le programme java\\w*(?:\\.\\w+)? version \\S+ a cessé d'interagir avec Windows eta été fermé\\.",
-            "Das Programm java\\w*(?:\\.\\w+)? Version \\S+ hat die Interaktion mit Windowsbeendet und wurde geschlossen\\.",
+            "Das Programm java\\w*(?:\\.\\w+)? Version \\S+ hat die Interaktion mit Windows beendet und wurde geschlossen\\.",
             "Das Programm java\\w*(?:\\.\\w+)? Version \\S+ hat aufgehört mit Windows zu interagieren und wurde geschlossen\\.",
             "El programa java\\w*(?:\\.\\w+)? versión \\S+ dejó de interactuar con Windowsy se cerró\\.",
             "Programmet java\\w*(?:\\.\\w+)?, version \\S+ avslutades eftersom det slutade samverka med Windows\\.",

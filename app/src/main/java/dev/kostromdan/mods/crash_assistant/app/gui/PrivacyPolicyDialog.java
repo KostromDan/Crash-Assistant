@@ -39,49 +39,51 @@ public class PrivacyPolicyDialog {
             return true;
         }
 
-        // Create a new JFrame for the dialog
-        JFrame dialogFrame = new JFrame(LanguageProvider.get("gui.privacy.logs_upload_title"));
+        JFrame ownerFrame = CrashAssistantGUI.getFrame();
 
+        JDialog dialog = new JDialog(ownerFrame, LanguageProvider.get("gui.privacy.logs_upload_title"), true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+    
         // Create the question text with a link to the privacy policy
         String question = LanguageProvider.get("gui.privacy.logs_upload_question", new HashMap<String, String>() {{
             put("$LINK.PRIVACY_POLICY$", LanguageProvider.get("gui.privacy.privacy_policy"));
         }});
         // Create an editor pane with the question text
         JEditorPane editorPane = CrashAssistantGUI.getEditorPane(question, true);
-
+    
         // Wrap the editor pane in a panel with a border and padding
         JPanel textPanel = new JPanel(new BorderLayout());
         textPanel.add(editorPane, BorderLayout.CENTER);
-
+    
         // Create the "Don't show again" checkbox
         JCheckBox dontShowAgainCheck = new JCheckBox(LanguageProvider.get("gui.privacy.remember_my_choice"));
         dontShowAgainCheck.setSelected(true);
-
+    
         // Create the Accept and Decline buttons
         JButton acceptButton = new JButton(LanguageProvider.get("gui.privacy.logs_upload_accept"));
         JButton declineButton = new JButton(LanguageProvider.get("gui.privacy.logs_upload_decline"));
-
+    
         // Create a panel for the buttons and checkbox (now on the same level)
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         buttonPanel.add(dontShowAgainCheck); // Add checkbox to the left of buttons
         buttonPanel.add(acceptButton);
         buttonPanel.add(declineButton);
-
+    
         // Create the main panel
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainPanel.add(textPanel, BorderLayout.CENTER);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Set up the dialog frame
-        dialogFrame.setContentPane(mainPanel);
-        dialogFrame.pack();
-        dialogFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        dialogFrame.setLocationRelativeTo(null);
-
+    
+        // Set up the dialog
+        dialog.setContentPane(mainPanel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(ownerFrame);
+        dialog.setResizable(false);
+    
         // Create a variable to store the result
         final boolean[] result = {false};
-
+    
         // Add action listeners to the buttons
         acceptButton.addActionListener(e -> {
             // Save the user's choice if "Don't show again" is selected
@@ -92,26 +94,16 @@ public class PrivacyPolicyDialog {
                 acceptedForCurrentLaunch = true;
             }
             result[0] = true;
-            dialogFrame.dispose();
+            dialog.dispose();
         });
-
+    
         declineButton.addActionListener(e -> {
             result[0] = false;
-            dialogFrame.dispose();
+            dialog.dispose();
         });
-
-        // Show the dialog
-        dialogFrame.setVisible(true);
-
-        // Wait for the dialog to be closed
-        while (dialogFrame.isVisible()) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
+    
+        // Show the dialog and wait until it's closed
+        dialog.setVisible(true);
 
         return result[0];
     }
@@ -144,17 +136,20 @@ public class PrivacyPolicyDialog {
             changesApplied = true;
         }
 
+        // Get the main GUI frame as owner
+        JFrame ownerFrame = CrashAssistantGUI.getFrame();
+    
         // Show a notification based on whether changes were applied
         if (changesApplied) {
             JOptionPane.showMessageDialog(
-                    null,
+                    ownerFrame,
                     LanguageProvider.get("gui.privacy.consent_reset_success"),
                     LanguageProvider.get("gui.privacy.title"),
                     JOptionPane.INFORMATION_MESSAGE
             );
         } else {
             JOptionPane.showMessageDialog(
-                    null,
+                    ownerFrame,
                     LanguageProvider.get("gui.privacy.consent_not_given"),
                     LanguageProvider.get("gui.privacy.title"),
                     JOptionPane.INFORMATION_MESSAGE

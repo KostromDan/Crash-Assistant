@@ -677,4 +677,8 @@ public class CrashAssistantGUI {
                 langFunc.apply("gui.title_crashed_with_report") :
                 langFunc.apply("gui.title_crashed_without_report");
     }
+
+    public static JFrame getFrame() {
+        return frame;
+    }
 }

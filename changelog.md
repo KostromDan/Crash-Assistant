@@ -1,3 +1,12 @@
+1.7.27:
+
+- Updated Privacy policy text to be more clear and prevent potential issues.
+- Fixed Privacy Policy dialog was not a child of the main frame which caused, so it can be hidden under the main frame,
+  which confused users, caused to think GUI "stuck". While it was waiting for acceptance of hidden under the main frame
+  Privacy Policy dialog.
+- Added missing space in one lang of WasClosedByWindows log analysis.
+- Small fixes and improvements.
+
 1.7.26:
 
 - Added couple of new supported langs in WasClosedByWindows error message log analysis.

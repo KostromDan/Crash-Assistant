@@ -28,7 +28,7 @@
   "gui.copy_split_log_dialog_title": "Selección de parte del registro",
   "gui.disable_mod": "Deshabilitar módulo",
   "gui.duplicated_mod": "Módulo Crash Assistant duplicado detectado",
-  "gui.duplicated_mod_warn": "Se detectaron varios módulos con el id \"crash_assistant\", deja solo uno de ellos:\n",
+  "gui.duplicated_mod_warn": "Se detectaron varios módulos con el id \"crash_assistant\", deja solo uno de ellos:\n$MODS$",
   "gui.error": "¡Error!",
   "gui.error_delete_mod_exception": "Error al eliminar el archivo del módulo: %s",
   "gui.error_disable_mod_exception": "Error al deshabilitar el archivo del módulo: %s",

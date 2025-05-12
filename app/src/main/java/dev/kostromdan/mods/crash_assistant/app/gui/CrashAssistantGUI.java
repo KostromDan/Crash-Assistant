@@ -318,8 +318,9 @@ public class CrashAssistantGUI {
                 ControlPanel.stopMovingToTop = true;
                 SwingUtilities.invokeAndWait(() -> {
                     JOptionPane optionPane = new JOptionPane(
-                            CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.duplicated_mod_warn") +
-                                    String.join("\n", mods.stream().map(Mod::getJarName).toList()), false),
+                            CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.duplicated_mod_warn")
+                                            .replace("$MODS$", String.join("\n", mods.stream().map(Mod::getJarName).toList())),
+                                    false),
                             JOptionPane.WARNING_MESSAGE,
                             JOptionPane.DEFAULT_OPTION
                     );

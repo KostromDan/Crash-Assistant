@@ -30,7 +30,7 @@
   "gui.delayed": "延迟中...",
   "gui.disable_mod": "禁用模组",
   "gui.duplicated_mod": "检测到崩溃助手模组重复",
-  "gui.duplicated_mod_warn": "如果您在尝试运行整合包时看到此消息，这意味着整合包\n安装已损坏（可能由于不正确的更新）。要修复此问题，您需要重新安装整合包。\n\n检测到多个具有相同mod_id \"crash_assistant\"的模组，请只保留其中一个：\n",
+  "gui.duplicated_mod_warn": "检测到多个具有相同mod_id \"crash_assistant\"的模组，请只保留其中一个：\n$MODS$\n\n如果您在尝试运行整合包时看到此消息，这意味着整合包\n安装已损坏（可能由于不正确的更新）。要修复此问题，您需要重新安装整合包。",
   "gui.error": "错误！",
   "gui.error_delete_mod_exception": "删除模组文件时出错：%s",
   "gui.error_disable_mod_exception": "禁用模组文件时出错：%s",

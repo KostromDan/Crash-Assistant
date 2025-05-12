@@ -135,10 +135,11 @@ public class JarInJarHelper {
     }
 
     public static List<Path> getModJarPathsContainingPart(String part) {
+
         try {
             return Files.list(Paths.get("mods"))
                     .filter(path -> Files.isRegularFile(path) &&
-                            path.getFileName().toString().toLowerCase().contains(part) &&
+                            path.getFileName().toString().toLowerCase().contains(part.toLowerCase()) &&
                             path.getFileName().toString().endsWith(".jar"))
                     .toList();
         } catch (Exception e) {
@@ -152,15 +153,18 @@ public class JarInJarHelper {
                 .toList();
     }
 
-    public static List<Mod> getModsContainingPart(String part) {
-        return mapPathsToMods(getModJarPathsContainingPart(part));
+    public static List<Mod> getModsContainingPart(String... parts) {
+        Set<Mod> resultSet = new HashSet<>();
+        for (String part : parts) {
+            resultSet.addAll(mapPathsToMods(getModJarPathsContainingPart(part)));
+        }
+        return new ArrayList<>(resultSet);
     }
 
 
     public static List<Mod> checkDuplicatedCrashAssistantMod(boolean crashIfDuplicated) {
         try {
-            List<Mod> mods = getModsContainingPart("crash_assistant-");
-
+            List<Mod> mods = getModsContainingPart("crash_assistant-", "CrashAssistant-");
             if (mods.size() < 2) return List.of();
             List<Mod> modsWithSameModId = mods.stream().filter(mod -> Objects.equals(mod.getModId(), "crash_assistant")).toList();
             String duplicatedMods = String.join("\n", mods.stream().map(Mod::getJarName).toList());

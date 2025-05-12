@@ -57,8 +57,8 @@ public class PrivacyPolicyDialog {
         textPanel.add(editorPane, BorderLayout.CENTER);
     
         // Create the "Remember my choice" checkbox
-        JCheckBox RememberMyChoiceCheck = new JCheckBox(LanguageProvider.get("gui.privacy.remember_my_choice"));
-        RememberMyChoiceCheck.setSelected(true);
+        JCheckBox rememberMyChoiceCheck = new JCheckBox(LanguageProvider.get("gui.privacy.remember_my_choice"));
+        rememberMyChoiceCheck.setSelected(true);
     
         // Create the Accept and Decline buttons
         JButton acceptButton = new JButton(LanguageProvider.get("gui.privacy.logs_upload_accept"));
@@ -66,7 +66,7 @@ public class PrivacyPolicyDialog {
     
         // Create a panel for the buttons and checkbox (now on the same level)
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        buttonPanel.add(RememberMyChoiceCheck); // Add checkbox to the left of buttons
+        buttonPanel.add(rememberMyChoiceCheck); // Add checkbox to the left of buttons
         buttonPanel.add(acceptButton);
         buttonPanel.add(declineButton);
     
@@ -88,7 +88,7 @@ public class PrivacyPolicyDialog {
         // Add action listeners to the buttons
         acceptButton.addActionListener(e -> {
             // Save the user's choice if "Remember my choice" is selected
-            if (RememberMyChoiceCheck.isSelected()) {
+            if (rememberMyChoiceCheck.isSelected()) {
                 CrashAssistantLocalConfig.set("privacy.accepted_privacy_info", true);
                 CrashAssistantApp.LOGGER.info("User accepted privacy policy.");
             } else {

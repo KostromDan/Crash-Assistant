@@ -227,7 +227,7 @@ public class CrashAssistantGUI {
     }
 
     private static void showLogsPrivacyInfo() {
-        String privacyInfo = LanguageProvider.get("gui.privacy.mclogs_privacy_info", new HashMap<String, String>() {{
+        String privacyInfo = LanguageProvider.get("gui.privacy.crash_assistant_privacy_info", new HashMap<String, String>() {{
             put("$LINK.MCLOGS_PRIVACY_POLICY$", LanguageProvider.get("gui.privacy.privacy_policy"));
             put("$LINK.CRASH_ASSISTANT$", LanguageProvider.get("gui.privacy.mod_description"));
             put("$LINK.CRASH_ASSISTANT_DISCORD$", "discord");

@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
@@ -24,7 +25,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.Timer;
 import java.util.function.Function;
 
@@ -227,12 +227,13 @@ public class CrashAssistantGUI {
     }
 
     private static void showLogsPrivacyInfo() {
-        String privacyInfo = LanguageProvider.get("gui.privacy.crash_assistant_privacy_info", new HashMap<String, String>() {{
-            put("$LINK.MCLOGS_PRIVACY_POLICY$", LanguageProvider.get("gui.privacy.privacy_policy"));
-            put("$LINK.CRASH_ASSISTANT$", LanguageProvider.get("gui.privacy.mod_description"));
-            put("$LINK.CRASH_ASSISTANT_DISCORD$", "discord");
-            put("$LINK.LAT_DISCORD$", "discord");
-        }});
+        String privacyInfo = Lang.applyPlaceHolders("<h2>$LANG.gui.privacy.crash_assistant_privacy_policy.version_text$ $LANG.gui.privacy.crash_assistant_privacy_policy.version$</h2>$LANG.gui.privacy.crash_assistant_privacy_policy.crash_assistant$ $LANG.gui.privacy.crash_assistant_privacy_policy.mclogs$ $LANG.gui.privacy.crash_assistant_privacy_policy.gnomebot$ $LANG.gui.privacy.crash_assistant_privacy_policy.validity$ $LANG.gui.privacy.crash_assistant_privacy_policy.reset$ $LANG.gui.privacy.crash_assistant_privacy_policy.volume$",
+                new HashMap<String, String>() {{
+                    put("$LINK.MCLOGS_PRIVACY_POLICY$", LanguageProvider.get("gui.privacy.privacy_policy"));
+                    put("$LINK.CRASH_ASSISTANT$", LanguageProvider.get("gui.privacy.mod_description"));
+                    put("$LINK.CRASH_ASSISTANT_DISCORD$", "discord");
+                    put("$LINK.LAT_DISCORD$", "discord");
+                }});
 
         privacyInfo = privacyInfo.replace("$GNOMEBOT_ENABLED$", Objects.toString(isUploadingToGnome()));
 

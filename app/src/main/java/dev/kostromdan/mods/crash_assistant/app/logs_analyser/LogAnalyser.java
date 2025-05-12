@@ -134,6 +134,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new AlLibAlcCleanup());
         registerKnownCrashReason(new Atio6axx());
         registerKnownCrashReason(new GPUDriverIssue());
+        registerKnownCrashReason(new Ig7icd64());
         registerKnownCrashReason(new InsufficientMemory());
         registerKnownCrashReason(new JavaTooHigh());
         registerKnownCrashReason(new Jemalloc());

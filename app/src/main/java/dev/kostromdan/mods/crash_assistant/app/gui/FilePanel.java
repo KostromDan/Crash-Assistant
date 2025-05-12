@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 public class FilePanel {
@@ -161,9 +162,14 @@ public class FilePanel {
                         if (!awaitingPrivacyPolicyDialogs.contains(this)) {
                             throw new DeclinedException(LanguageProvider.get("gui.privacy.declined"));
                         }
-
-                        if (!PrivacyPolicyDialog.showPrivacyPolicyDialog()) {
-                            awaitingPrivacyPolicyDialogs.clear();
+                        AtomicBoolean accepted = new AtomicBoolean(true);
+                        SwingUtilities.invokeAndWait(() -> {
+                            if (!PrivacyPolicyDialog.showPrivacyPolicyDialog()) {
+                                awaitingPrivacyPolicyDialogs.clear();
+                                accepted.set(false);
+                            }
+                        });
+                        if (!accepted.get()) {
                             throw new DeclinedException(LanguageProvider.get("gui.privacy.declined"));
                         }
                     }

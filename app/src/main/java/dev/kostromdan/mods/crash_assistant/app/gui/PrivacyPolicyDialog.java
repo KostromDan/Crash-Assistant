@@ -26,7 +26,7 @@ public class PrivacyPolicyDialog {
      */
     public static boolean showPrivacyPolicyDialog() {
         // Check if the user has already accepted the privacy policy
-        if (Objects.equals(CrashAssistantLocalConfig.get("privacy.accepted_privacy_info"), true)) {
+        if (Objects.equals(CrashAssistantLocalConfig.get("privacy.accepted_privacy_info"), LanguageProvider.get("gui.privacy.crash_assistant_privacy_policy.version"))) {
             return true;
         }
 
@@ -44,52 +44,53 @@ public class PrivacyPolicyDialog {
 
         JDialog dialog = new JDialog(ownerFrame, LanguageProvider.get("gui.privacy.logs_upload_title"), true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-    
+
         // Create the question text with a link to the privacy policy
-        String question = LanguageProvider.get("gui.privacy.logs_upload_question", new HashMap<String, String>() {{
+        String question = CrashAssistantLocalConfig.get("privacy.accepted_privacy_info") == null ? "" : LanguageProvider.get("gui.privacy.logs_upload_question_changed") + "\n";
+        question += LanguageProvider.get("gui.privacy.logs_upload_question", new HashMap<String, String>() {{
             put("$LINK.PRIVACY_POLICY$", LanguageProvider.get("gui.privacy.privacy_policy"));
         }});
         // Create an editor pane with the question text
         JEditorPane editorPane = CrashAssistantGUI.getEditorPane(question, true);
-    
+
         // Wrap the editor pane in a panel with a border and padding
         JPanel textPanel = new JPanel(new BorderLayout());
         textPanel.add(editorPane, BorderLayout.CENTER);
-    
+
         // Create the "Remember my choice" checkbox
         JCheckBox rememberMyChoiceCheck = new JCheckBox(LanguageProvider.get("gui.privacy.remember_my_choice"));
         rememberMyChoiceCheck.setSelected(true);
-    
+
         // Create the Accept and Decline buttons
         JButton acceptButton = new JButton(LanguageProvider.get("gui.privacy.logs_upload_accept"));
         JButton declineButton = new JButton(LanguageProvider.get("gui.privacy.logs_upload_decline"));
-    
+
         // Create a panel for the buttons and checkbox (now on the same level)
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         buttonPanel.add(rememberMyChoiceCheck); // Add checkbox to the left of buttons
         buttonPanel.add(acceptButton);
         buttonPanel.add(declineButton);
-    
+
         // Create the main panel
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainPanel.add(textPanel, BorderLayout.CENTER);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-    
+
         // Set up the dialog
         dialog.setContentPane(mainPanel);
         dialog.pack();
         dialog.setLocationRelativeTo(ownerFrame);
         dialog.setResizable(false);
-    
+
         // Create a variable to store the result
         final boolean[] result = {false};
-    
+
         // Add action listeners to the buttons
         acceptButton.addActionListener(e -> {
             // Save the user's choice if "Remember my choice" is selected
             if (rememberMyChoiceCheck.isSelected()) {
-                CrashAssistantLocalConfig.set("privacy.accepted_privacy_info", true);
+                CrashAssistantLocalConfig.set("privacy.accepted_privacy_info", LanguageProvider.get("gui.privacy.crash_assistant_privacy_policy.version"));
                 CrashAssistantApp.LOGGER.info("User accepted privacy policy.");
             } else {
                 // Set the static boolean to true if the user accepted but didn't check "Remember my choice"
@@ -99,12 +100,12 @@ public class PrivacyPolicyDialog {
             result[0] = true;
             dialog.dispose();
         });
-    
+
         declineButton.addActionListener(e -> {
             result[0] = false;
             dialog.dispose();
         });
-    
+
         // Show the dialog and wait until it's closed
         dialog.setVisible(true);
 
@@ -121,8 +122,8 @@ public class PrivacyPolicyDialog {
     public static void resetPrivacyConsent() {
         boolean changesApplied = false;
 
-        // Check if privacy.accepted_privacy_info is true and remove it if so
-        if (Objects.equals(CrashAssistantLocalConfig.get("privacy.accepted_privacy_info"), true)) {
+        // Check if privacy.accepted_privacy_info is not null and remove it if so
+        if (CrashAssistantLocalConfig.get("privacy.accepted_privacy_info") != null) {
             CrashAssistantLocalConfig.set("privacy.accepted_privacy_info", null);
             changesApplied = true;
         }
@@ -141,7 +142,7 @@ public class PrivacyPolicyDialog {
 
         // Get the main GUI frame as owner
         JFrame ownerFrame = CrashAssistantGUI.getFrame();
-    
+
         // Show a notification based on whether changes were applied
         if (changesApplied) {
             JOptionPane.showMessageDialog(

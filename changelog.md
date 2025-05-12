@@ -1,3 +1,16 @@
+1.7.28:
+
+- Updated Privacy Policy text to be more clear and prevent potential issues.
+- If user accepted old version of Privacy Policy, now will be notified about it and need to accept it again.
+- Fixed deadlock instead of showing Privacy Policy acceptance dialog. (was rare)
+- Added logging of accepting Privacy Policy.
+- Added new analysis of hs_err `Ig7icd64` (old Intel integrated GPU driver crashes).
+- Sorted lang files by keys to make it easier to maintain.
+- Split lang of privacy policy to couple new keys to prevent too long line, which caused difficulties in editing it.
+- Got rid of `aaa_` prefix for priority in coremod name, since it's not needed anymore.
+- Fixed broken crash assistant duplicated check due to mod rename in 1.7.18.
+- Improved formulation of crash assistant duplicated check.
+
 1.7.27:
 
 - Updated Privacy policy text to be more clear and prevent potential issues.

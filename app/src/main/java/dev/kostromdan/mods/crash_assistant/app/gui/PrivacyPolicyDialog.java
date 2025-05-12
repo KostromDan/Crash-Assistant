@@ -114,7 +114,7 @@ public class PrivacyPolicyDialog {
 
     /**
      * Resets the privacy consent settings according to the following rules:
-     * 1. If privacy.accepted_privacy_info is true, remove it from local config
+     * 1. If privacy.accepted_privacy_info is not null, remove it from local config
      * 2. If acceptedForCurrentLaunch is true, set it to false
      * 3. If general.enable_privacy_policy_acceptance is false, set it to true
      * 4. If none of the above conditions are met, show a notification

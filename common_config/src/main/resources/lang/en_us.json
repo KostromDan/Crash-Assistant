@@ -30,7 +30,7 @@
   "gui.delayed": "Delayed...",
   "gui.disable_mod": "Disable mod",
   "gui.duplicated_mod": "Detected duplicated Crash Assistant mod",
-  "gui.duplicated_mod_warn": "If you are seeing this message while trying to run the modpack,it means the modpack\ninstallation is corrupted (possibly due to an incorrect update). To fix this, you need to reinstall the modpack.\n\nDetected multiple mods with mod_id \"crash_assistant\", leave only one of them:\n",
+  "gui.duplicated_mod_warn": "Detected multiple mods with mod_id \"crash_assistant\", leave only one of them:\n$MODS$\n\nIf you are seeing this message while trying to run the modpack,it means the modpack\ninstallation is corrupted (possibly due to an incorrect update). To fix this, you need to reinstall the modpack.",
   "gui.error": "Error!",
   "gui.error_delete_mod_exception": "Error deleting mod file: %s",
   "gui.error_disable_mod_exception": "Error disabling mod file: %s",

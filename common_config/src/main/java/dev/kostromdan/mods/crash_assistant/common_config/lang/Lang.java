@@ -35,7 +35,7 @@ public class Lang {
             return value;
         }
         value = applyPlaceHolder("$CONFIG.", value, CrashAssistantConfig::get, placeHoldersSurroundedWithHref);
-        value = applyPlaceHolder("$LANG.", value, LanguageProvider::get, placeHoldersSurroundedWithHref);
+        value = applyPlaceHolder("$LANG.", value, (key) -> LanguageProvider.get(key, placeHoldersSurroundedWithHref), placeHoldersSurroundedWithHref);
         value = applyPlaceHolder("$BCC.", value, Lang::getBCCValue, placeHoldersSurroundedWithHref);
         value = applyPlaceHolder("$LINK.", value, LinksProvider::getLinkByKey, placeHoldersSurroundedWithHref);
         return value;

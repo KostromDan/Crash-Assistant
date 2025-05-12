@@ -135,7 +135,6 @@ public class JarInJarHelper {
     }
 
     public static List<Path> getModJarPathsContainingPart(String part) {
-
         try {
             return Files.list(Paths.get("mods"))
                     .filter(path -> Files.isRegularFile(path) &&

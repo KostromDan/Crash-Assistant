@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
+import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -55,9 +56,9 @@ public class PrivacyPolicyDialog {
         JPanel textPanel = new JPanel(new BorderLayout());
         textPanel.add(editorPane, BorderLayout.CENTER);
     
-        // Create the "Don't show again" checkbox
-        JCheckBox dontShowAgainCheck = new JCheckBox(LanguageProvider.get("gui.privacy.remember_my_choice"));
-        dontShowAgainCheck.setSelected(true);
+        // Create the "Remember my choice" checkbox
+        JCheckBox RememberMyChoiceCheck = new JCheckBox(LanguageProvider.get("gui.privacy.remember_my_choice"));
+        RememberMyChoiceCheck.setSelected(true);
     
         // Create the Accept and Decline buttons
         JButton acceptButton = new JButton(LanguageProvider.get("gui.privacy.logs_upload_accept"));
@@ -65,7 +66,7 @@ public class PrivacyPolicyDialog {
     
         // Create a panel for the buttons and checkbox (now on the same level)
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        buttonPanel.add(dontShowAgainCheck); // Add checkbox to the left of buttons
+        buttonPanel.add(RememberMyChoiceCheck); // Add checkbox to the left of buttons
         buttonPanel.add(acceptButton);
         buttonPanel.add(declineButton);
     
@@ -86,12 +87,14 @@ public class PrivacyPolicyDialog {
     
         // Add action listeners to the buttons
         acceptButton.addActionListener(e -> {
-            // Save the user's choice if "Don't show again" is selected
-            if (dontShowAgainCheck.isSelected()) {
+            // Save the user's choice if "Remember my choice" is selected
+            if (RememberMyChoiceCheck.isSelected()) {
                 CrashAssistantLocalConfig.set("privacy.accepted_privacy_info", true);
+                CrashAssistantApp.LOGGER.info("User accepted privacy policy.");
             } else {
-                // Set the static boolean to true if the user accepted but didn't check "Don't show again"
+                // Set the static boolean to true if the user accepted but didn't check "Remember my choice"
                 acceptedForCurrentLaunch = true;
+                CrashAssistantApp.LOGGER.info("User accepted privacy policy (without checking \"Remember my choice\" checkbox).");
             }
             result[0] = true;
             dialog.dispose();

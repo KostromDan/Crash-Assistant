@@ -1,3 +1,15 @@
+1.8.0:
+
+- Decreased mod size by ~5 MB. From ~5.6 MB to ~650 KB. By removing Vulkan used for getting GPU list with their types,
+  used for showing a warning `if Minecraft is running on an integrated GPU while a dedicated GPU is available` feature.
+  This is a very common problem for Windows notebooks.
+- Vulkan logic was replaced with Windows only DirectX logic (~20 KB in jar zip).
+- Cross platform Vulkan logic will be still avalible. We will release soon small addon including just Vulkan lib.
+- And If Crash Assistant will see it, old Vulkan logic will be used.
+- Always print detected GPUs, since it can be used for finding reason of crash.
+- Enhance styling for Privacy Policy dialog buttons.
+- Small fixes and improvements.
+
 1.7.28:
 
 - Updated Privacy Policy text to be more clear and prevent potential issues.

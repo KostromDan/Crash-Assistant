@@ -49,14 +49,14 @@ public class GPUDetector {
             if (PlatformHelp.isWindows()) {
                 try {
                     serialisedGPUs += "Successfully detected GPUs using DirectX:\n";
-                    serialisedGPUs += DirectXGPUDetector.getSerialisedGPUs();
+                    serialisedGPUs += DirectXGPUDetectorCommon.getSerialisedGPUs();
                 } catch (Exception e) {
                     serialisedGPUs += "Error during DirectX GPU detection: " + e.getMessage() + "\n";
                 }
             } else {
                 serialisedGPUs += "DirectX GPU detection is not supported on non-Windows platforms\n" +
                         "If you want Minecraft running of integrated GPU while dedicated GPU exists warning feature work on your pc,\n" +
-                        "pls install our addon with Vulkan lib.";
+                        "pls install our addon with Vulkan lib (Crash Assistant cross platform integrated GPU detection addon).";
             }
         }
 

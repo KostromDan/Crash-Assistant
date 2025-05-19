@@ -53,7 +53,6 @@ public class CrashAssistantApp {
         LOGGER.info("CrashAssistantApp running: program args: {}", Boot.APP_ARGS);
 
         LOGGER.info("CrashAssistantApp running from: {}", Paths.get("").toAbsolutePath().toString());
-        LOGGER.info("JAVA: {}", JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
 
         parentPID = -1;
         parentStarted = -1;
@@ -79,6 +78,8 @@ public class CrashAssistantApp {
             }
         }
         LOGGER.info("crashAssistantJarName: {}", crashAssistantJarName);
+
+        LOGGER.info("Java path: {}", JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
         LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
 
         String currentProcessData = Objects.toString(parentPID) + "_" + Objects.toString(Instant.ofEpochMilli(parentStarted).getEpochSecond());

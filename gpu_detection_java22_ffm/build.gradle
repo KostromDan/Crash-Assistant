@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'dev.kostromdan.mods'
+version = ''
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(22)
+    }
+}
+
+shadowJar {
+    archiveClassifier.set('')
+}
+
+build.finalizedBy(shadowJar)

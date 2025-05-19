@@ -21,7 +21,7 @@ allprojects {
 }
 
 subprojects { subproject ->
-    if (!(subproject.name in ['app'])) {
+    if (!(subproject.name in ['app', 'gpu_detection_java22_ffm'])) {
         apply plugin: 'dev.architectury.loom'
         apply plugin: 'architectury-plugin'
         apply plugin: 'maven-publish'

@@ -82,6 +82,8 @@ public class CrashAssistantApp {
         LOGGER.info("Java path: {}", JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
         LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
 
+        LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
+
         String currentProcessData = Objects.toString(parentPID) + "_" + Objects.toString(Instant.ofEpochMilli(parentStarted).getEpochSecond());
         Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");
         try {
@@ -141,8 +143,7 @@ public class CrashAssistantApp {
         if (potentialRenderer.isPresent()) {
             try {
                 renderer = potentialRenderer.get();
-                LOGGER.info("Detected renderer:\n{}", renderer);
-                LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
+                LOGGER.info("Minecraft is running on renderer:\n{}", renderer);
 
                 if (Boot.serialisedGPUs != null) {
                     List<GPU> gpus = GPU.deserializeGPUs(Boot.serialisedGPUs);

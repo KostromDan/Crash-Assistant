@@ -27,12 +27,13 @@ public class GPUDetector {
         try {
             // Check if Vulkan and lwjglNatives are available
             if (ClassExistenceChecker.classExists("org.lwjgl.vulkan.VK10") && Boot.lwjglNatives != null) {
-                serialisedGPUs = VulkanGPUDetector.getSerialisedGPUs();
+                String vulkanResult = VulkanGPUDetector.getSerialisedGPUs();
 
                 // Check if the result is not empty
-                List<GPU> gpus = GPU.deserializeGPUs(serialisedGPUs);
+                List<GPU> gpus = GPU.deserializeGPUs(vulkanResult);
                 if (gpus != null && !gpus.isEmpty()) {
                     serialisedGPUs += "Successfully detected GPUs using Vulkan:\n";
+                    serialisedGPUs += vulkanResult;
                     vulkanSuccess = true;
                 } else {
                     serialisedGPUs += "Vulkan detection returned empty result, falling back to DirectX\n";

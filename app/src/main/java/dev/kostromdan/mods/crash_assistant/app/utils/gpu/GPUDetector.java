@@ -1,123 +1,71 @@
 package dev.kostromdan.mods.crash_assistant.app.utils.gpu;
 
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.*;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 
-import java.nio.IntBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Main GPU detection utility that tries different detection methods.
+ * First attempts to use Vulkan for GPU detection, and if that fails,
+ * falls back to DirectX.
+ */
 public class GPUDetector {
-    /**
-     * Detects GPUs using Vulkan and returns a list of GPU records.
-     * Each record contains the GPU's type and name.
-     *
-     * @return a List of GPU objects representing the detected GPUs
-     * @throws RuntimeException if Vulkan instance creation or device enumeration fails
-     */
-    public static List<GPU> detectGPUs() {
-        // Create Vulkan instance
-        VkInstance instance = createVulkanInstance();
-
-        // List to store detected GPUs
-        List<GPU> gpus = new ArrayList<>();
-
-        // Use MemoryStack for native memory allocation
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            // Get the number of physical devices
-            IntBuffer deviceCount = stack.mallocInt(1);
-            int err = VK10.vkEnumeratePhysicalDevices(instance, deviceCount, null);
-            if (err != VK10.VK_SUCCESS) {
-                throw new RuntimeException("Failed to enumerate physical devices: " + err);
-            }
-
-            // If no devices are found, return an empty list
-            if (deviceCount.get(0) == 0) {
-                VK10.vkDestroyInstance(instance, null);
-                return gpus;
-            }
-
-            // Allocate buffer for physical devices
-            PointerBuffer devices = stack.mallocPointer(deviceCount.get(0));
-            VK10.vkEnumeratePhysicalDevices(instance, deviceCount, devices);
-
-            // Iterate over devices and collect their properties
-            for (int i = 0; i < devices.capacity(); i++) {
-                VkPhysicalDevice device = new VkPhysicalDevice(devices.get(i), instance);
-                VkPhysicalDeviceProperties properties = VkPhysicalDeviceProperties.callocStack(stack);
-                VK10.vkGetPhysicalDeviceProperties(device, properties);
-
-                String deviceName = properties.deviceNameString();
-                int deviceType = properties.deviceType();
-
-                // Map Vulkan device type to RendererType
-                RendererType type;
-                if (deviceType == VK10.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
-                    type = RendererType.INTEGRATED;
-                } else if (deviceType == VK10.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-                    type = RendererType.DEDICATED;
-                } else if (deviceType == VK10.VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU) {
-                    type = RendererType.VIRTUAL_GPU;
-                } else {
-                    type = RendererType.UNKNOWN;
-                }
-
-                // Add GPU record to the list
-                gpus.add(new GPU(type, deviceName));
-            }
-        }
-
-        // Clean up Vulkan instance
-        VK10.vkDestroyInstance(instance, null);
-
-        return gpus;
-    }
 
     /**
-     * Creates a Vulkan instance for GPU detection.
+     * Returns a serialized string representation of detected GPUs.
+     * First tries to use Vulkan, and if that fails, falls back to DirectX.
      *
-     * @return the created VkInstance
-     * @throws RuntimeException if instance creation fails
+     * @return a serialized string representation of detected GPUs
      */
-    private static VkInstance createVulkanInstance() {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            // Application info
-            VkApplicationInfo appInfo = VkApplicationInfo.callocStack(stack)
-                    .sType(VK10.VK_STRUCTURE_TYPE_APPLICATION_INFO)
-                    .pApplicationName(stack.UTF8("GPU Detector"))
-                    .applicationVersion(VK10.VK_MAKE_VERSION(1, 0, 0))
-                    .pEngineName(stack.UTF8("No Engine"))
-                    .engineVersion(VK10.VK_MAKE_VERSION(1, 0, 0))
-                    .apiVersion(VK10.VK_API_VERSION_1_0);
-
-            // Instance create info
-            VkInstanceCreateInfo createInfo = VkInstanceCreateInfo.callocStack(stack)
-                    .sType(VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
-                    .pApplicationInfo(appInfo);
-
-            // Pointer to store the instance
-            PointerBuffer instancePtr = stack.mallocPointer(1);
-            if (VK10.vkCreateInstance(createInfo, null, instancePtr) != VK10.VK_SUCCESS) {
-                throw new RuntimeException("Failed to create Vulkan instance");
-            }
-
-            return new VkInstance(instancePtr.get(0), createInfo);
-        }
-    }
-
     public static String getSerialisedGPUs() {
-        List<GPU> gpus = GPUDetector.detectGPUs();
+        String serialisedGPUs = "";
+        boolean vulkanSuccess = false;
 
-        String serialisedGPUs = GPU.serializeGPUs(gpus);
+        // Try Vulkan first
+        try {
+            // Check if Vulkan and lwjglNatives are available
+            if (ClassExistenceChecker.classExists("org.lwjgl.vulkan.VK10") && Boot.lwjglNatives != null) {
+                serialisedGPUs = VulkanGPUDetector.getSerialisedGPUs();
 
-        System.out.println(serialisedGPUs);
+                // Check if the result is not empty
+                List<GPU> gpus = GPU.deserializeGPUs(serialisedGPUs);
+                if (gpus != null && !gpus.isEmpty()) {
+                    serialisedGPUs += "Successfully detected GPUs using Vulkan:\n";
+                    vulkanSuccess = true;
+                } else {
+                    serialisedGPUs += "Vulkan detection returned empty result, falling back to DirectX\n";
+                }
+            } else {
+                serialisedGPUs += "Vulkan classes or lwjglNatives not found, falling back to DirectX\n";
+            }
+        } catch (Exception e) {
+            serialisedGPUs += "Error during Vulkan GPU detection: " + e.getMessage() + ", falling back to DirectX\n";
+        }
+
+        // If Vulkan failed, try DirectX
+        if (!vulkanSuccess) {
+            if (PlatformHelp.isWindows()) {
+                try {
+                    serialisedGPUs += "Successfully detected GPUs using DirectX:\n";
+                    serialisedGPUs += DirectXGPUDetector.getSerialisedGPUs();
+                } catch (Exception e) {
+                    serialisedGPUs += "Error during DirectX GPU detection: " + e.getMessage() + "\n";
+                }
+            } else {
+                serialisedGPUs += "DirectX GPU detection is not supported on non-Windows platforms\n" +
+                        "If you want Minecraft running of integrated GPU while dedicated GPU exists warning feature work on your pc,\n" +
+                        "pls install our addon with Vulkan lib.";
+            }
+        }
 
         return serialisedGPUs;
     }
 
     public static void main(String[] args) { // Test
         String serialized = getSerialisedGPUs();
+        System.out.println(serialized);
         List<GPU> gpus = GPU.deserializeGPUs(serialized);
         System.out.println(gpus);
     }

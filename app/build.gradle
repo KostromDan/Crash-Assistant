@@ -77,8 +77,13 @@ shadowJar {
         exclude(dependency('commons-io:commons-io:2.15.1'))
         exclude(dependency('com.electronwill.night-config:.*'))
         exclude("windows/**")
-        exclude '**/*.dll', '**/*.so', '**/*.dylib', '**/*.sha1', '**/*.git'
+        exclude '**/*.so', '**/*.dylib', '**/*.sha1', '**/*.git'
+        exclude 'org/lwjgl/**'
         exclude(project(':common_config'))
+    }
+    exclude { details ->
+        def n = details.name.toLowerCase()
+        return n.endsWith('.dll') && n != 'gpu-detect-jni.dll'
     }
 }
 

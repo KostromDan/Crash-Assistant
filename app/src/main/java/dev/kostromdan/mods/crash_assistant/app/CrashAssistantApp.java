@@ -140,7 +140,7 @@ public class CrashAssistantApp {
         if (potentialRenderer.isPresent()) {
             try {
                 renderer = potentialRenderer.get();
-                LOGGER.info("Detected renderer: {}", renderer);
+                LOGGER.info("Detected renderer:\n{}", renderer);
                 LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
 
                 if (Boot.serialisedGPUs != null) {

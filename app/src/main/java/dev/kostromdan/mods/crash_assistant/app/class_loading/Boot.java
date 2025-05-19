@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -75,18 +76,16 @@ public class Boot {
          * If Minecraft JVM terminated by windows itself, all child processes will be also terminated.
          * So Crash Assistant can't be child process. This way we make Crash Assistant completely independent process.
          *
-         * Also, here we're locating GPUs with Vulkan, it's increasing heap before GUI start,
+         * Also, here we're locating GPUs with Vulkan or DirectX, it's increasing heap before GUI start,
          * so we're doing it on this TMP process, to not waste user resources on App avaiting stage.
          */
         if (!recursiveStart) {
-            if (lwjglNatives != null) {
-                try {
-                    Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPUDetector");
-                    Method mainMethod = crashAssistantAppClass.getMethod("getSerialisedGPUs");
-                    serialisedGPUs = (String) mainMethod.invoke(null);
-                } catch (Exception e) {
-                    e.printStackTrace(System.err);
-                }
+            try {
+                Class<?> GPUDetectorClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPUDetector");
+                Method getSerialisedGPUsMethod = GPUDetectorClass.getMethod("getSerialisedGPUs");
+                serialisedGPUs = (String) getSerialisedGPUsMethod.invoke(null);
+            } catch (Exception e) {
+                serialisedGPUs = ErrorUtils.getErrorMessageAndStackTrace(e);
             }
 
             List<String> argsList = new ArrayList<>();

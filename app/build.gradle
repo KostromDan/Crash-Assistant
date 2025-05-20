@@ -47,7 +47,6 @@ dependencies {
     implementation "org.lwjgl:lwjgl-vulkan:$lwjglVersion"
 
     implementation project(path: ':common_config')
-    implementation project(path: ':gpu_detection_java22_ffm')
 }
 
 jar {
@@ -68,7 +67,6 @@ shadowJar {
         into ""
     }
     dependsOn(':common_config:build')
-    dependsOn(':gpu_detection_java22_ffm:shadowJar')
     archiveClassifier.set('')
 
     // Relocate Night Config packages

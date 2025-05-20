@@ -49,7 +49,7 @@ public class GPUDetector {
         if (!vulkanSuccess) {
             if (PlatformHelp.isWindows()) {
                 try {
-                    String directXResult = DirectXGPUDetectorCommon.getSerialisedGPUs();
+                    String directXResult = DirectXGPUDetector.getSerialisedGPUs();
                     serialisedGPUs += "Successfully detected GPUs using DirectX:\n";
                     serialisedGPUs += directXResult;
                 } catch (Exception e) {

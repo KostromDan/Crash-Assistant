@@ -56,7 +56,7 @@ jar {
                 'Launcher-Agent-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
                 'Agent-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
                 'Premain-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
-                'Enable-Native-Access' : 'ALL-UNNAMED' // Java 25 to allow usage of FFM
+                'Enable-Native-Access': 'ALL-UNNAMED' // Java 22+ prevents warnings and upcoming JNI restrictions in Java 25+
         )
     }
 }

@@ -1,17 +1,23 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class Boot {
     public static String log4jApi = null;
@@ -66,8 +72,44 @@ public class Boot {
         CrashAssistantAgent.appendJarFile(googleGson);
         CrashAssistantAgent.appendJarFile(commonIo);
         CrashAssistantAgent.appendJarFile(crashAssistantModJarPath);
+        ifBlock:
         if (lwjglNatives != null && !Objects.equals(lwjglNatives, "UNDEFINED") && !recursiveStart) {
             CrashAssistantAgent.appendJarFile(lwjglNatives);
+
+            final String REQUIRED_VULKAN_ADDON_VERSION = "3.3.1";
+            List<Mod> vulkanAddons = JarInJarHelper.getModsContainingPart("CrashAssistant-VulkanGPUDetectionAddon-");
+            Mod VulkanAddon = vulkanAddons.stream()
+                    .filter(mod -> REQUIRED_VULKAN_ADDON_VERSION.equals(mod.getVersion()))
+                    .findFirst()
+                    .orElse(null);
+            if(VulkanAddon == null) break ifBlock;
+            
+            try {
+                Path libsFolder = Paths.get("local", "crash_assistant", "libs");
+                Files.createDirectories(libsFolder);
+                
+                try (JarFile vulkanAddonJar = new JarFile(Paths.get("mods", VulkanAddon.getJarName()).toFile())) {
+                    Enumeration<JarEntry> entries = vulkanAddonJar.entries();
+                    while (entries.hasMoreElements()) {
+                        JarEntry entry = entries.nextElement();
+                        String entryName = entry.getName();
+                        
+                        if (entryName.startsWith("META-INF/jarjar/") && entryName.endsWith(".jar")) {
+                            String jarFileName = entryName.substring(entryName.lastIndexOf('/') + 1);
+                            Path extractedJarPath = libsFolder.resolve(jarFileName);
+                            
+                            try (InputStream is = vulkanAddonJar.getInputStream(entry)) {
+                                Files.copy(is, extractedJarPath, StandardCopyOption.REPLACE_EXISTING);
+                                CrashAssistantAgent.appendJarFile(extractedJarPath.toAbsolutePath().toString());
+                            }
+                            break;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to extract jar from VulkanAddon: " + e.getMessage());
+                e.printStackTrace();
+            }
         } else {
             lwjglNatives = null;
         }

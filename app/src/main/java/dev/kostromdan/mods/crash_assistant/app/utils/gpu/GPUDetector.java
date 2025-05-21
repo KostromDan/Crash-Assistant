@@ -37,6 +37,9 @@ public class GPUDetector {
                     vulkanSuccess = true;
                 } else {
                     serialisedGPUs += "Vulkan detection returned empty result, falling back to DirectX\n";
+                    if (!vulkanResult.trim().isEmpty()) {
+                        serialisedGPUs += vulkanResult;
+                    }
                 }
             } else {
                 serialisedGPUs += "Vulkan classes or lwjglNatives not found, falling back to DirectX\n";
@@ -50,8 +53,18 @@ public class GPUDetector {
             if (PlatformHelp.isWindows()) {
                 try {
                     String directXResult = DirectXGPUDetector.getSerialisedGPUs();
-                    serialisedGPUs += "Successfully detected GPUs using DirectX:\n";
-                    serialisedGPUs += directXResult;
+
+                    // Check if the result is not empty
+                    List<GPU> gpus = GPU.deserializeGPUs(directXResult);
+                    if (gpus != null && !gpus.isEmpty()) {
+                        serialisedGPUs += "Successfully detected GPUs using DirectX:\n";
+                        serialisedGPUs += directXResult;
+                    } else {
+                        serialisedGPUs += "DirectX detection returned empty result, this shouldn't happen on modern versions of Windows.\n";
+                        if (!directXResult.trim().isEmpty()) {
+                            serialisedGPUs += directXResult;
+                        }
+                    }
                 } catch (Exception e) {
                     serialisedGPUs += "Error during DirectX GPU detection: " + e.getMessage() + "\n";
                 }

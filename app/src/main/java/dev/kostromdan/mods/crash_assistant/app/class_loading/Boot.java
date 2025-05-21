@@ -77,7 +77,7 @@ public class Boot {
             CrashAssistantAgent.appendJarFile(lwjglNatives);
 
             final String REQUIRED_VULKAN_ADDON_VERSION = "3.3.1";
-            List<Mod> vulkanAddons = JarInJarHelper.getModsContainingPart("CrashAssistant-VulkanGPUDetectionAddon-");
+            List<Mod> vulkanAddons = JarInJarHelper.getModsContainingPart("CrashAssistantVulkanGPUDetectionAddon-");
             Mod VulkanAddon = vulkanAddons.stream()
                     .filter(mod -> REQUIRED_VULKAN_ADDON_VERSION.equals(mod.getVersion()))
                     .findFirst()

@@ -16,8 +16,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class CrashAssistantConfig {
-    private static final Path CONFIG_PATH = Paths.get("config", "crash_assistant", "config.toml");
-    private static final Path CONFIG_LOCK_PATH = Paths.get("local", "crash_assistant", "CONFIG_LOCK.tmp");
+    private static final Path CONFIG_PATH = Paths.get("config", "crash_assistant", "config.toml").toAbsolutePath().normalize();
+    private static final Path CONFIG_LOCK_PATH = Paths.get("local", "crash_assistant", "CONFIG_LOCK.tmp").toAbsolutePath().normalize();
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static CommentedFileConfig config;
@@ -274,6 +274,9 @@ public class CrashAssistantConfig {
             }
         } catch (OverlappingFileLockException e) {   // already locked in *this* JVM
             body.run();                              // just run without new lock
+        } catch (NoSuchFileException e) {
+            LOGGER.warn("Cursed extreme rare issue! Maybe bug in JVM or FileSystem! File is missing, despite the fact we just created it. Dropping config access synchronisation logic! Issues may arise!", e);
+            body.run();
         } catch (IOException e) {
             throw new RuntimeException("Could not create or lock " + CONFIG_LOCK_PATH, e);
         }

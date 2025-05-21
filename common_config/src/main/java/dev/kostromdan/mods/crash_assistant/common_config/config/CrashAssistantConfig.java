@@ -9,8 +9,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -262,17 +263,20 @@ public class CrashAssistantConfig {
     }
 
 
-    public static synchronized void executeWithLock(Runnable function) {
+    public static void executeWithLock(Runnable body) {
         CONFIG_PATH.getParent().toFile().mkdirs();
         CONFIG_LOCK_PATH.toFile().getParentFile().mkdirs();
-        try (var lockChannel = FileChannel.open(CONFIG_LOCK_PATH, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-             var lock = lockChannel.lock()) {
-            function.run();
-            Files.deleteIfExists(CONFIG_LOCK_PATH);
-        } catch (OverlappingFileLockException e) { // Current JVM FileLock already locked, ignoring
-            function.run();
+        try {
+            try (FileChannel ch = FileChannel.open(CONFIG_LOCK_PATH, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                 FileLock ignored = ch.lock()) {
+                body.run();
+            }
+        } catch (OverlappingFileLockException e) {   // already locked in *this* JVM
+            body.run();                              // just run without new lock
+        } catch (NoSuchFileException e) {            // parent dir disappeared ⇢ retry once
+            executeWithLock(body);                   // tail-call retry (very cheap)
         } catch (IOException e) {
-            throw new RuntimeException("Error accessing or locking the tmp file.", e);
+            throw new RuntimeException("Could not create or lock " + CONFIG_LOCK_PATH, e);
         }
     }
 

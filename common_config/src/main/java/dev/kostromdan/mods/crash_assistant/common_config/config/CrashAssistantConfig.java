@@ -11,10 +11,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -264,17 +261,19 @@ public class CrashAssistantConfig {
 
 
     public static void executeWithLock(Runnable body) {
-        CONFIG_PATH.getParent().toFile().mkdirs();
-        CONFIG_LOCK_PATH.toFile().getParentFile().mkdirs();
         try {
+            Files.createDirectories(CONFIG_PATH.getParent());
+            Files.createDirectories(CONFIG_LOCK_PATH.getParent());
+            try {
+                Files.createFile(CONFIG_LOCK_PATH);
+            } catch (FileAlreadyExistsException ignored) {
+            }
             try (FileChannel ch = FileChannel.open(CONFIG_LOCK_PATH, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                  FileLock ignored = ch.lock()) {
                 body.run();
             }
         } catch (OverlappingFileLockException e) {   // already locked in *this* JVM
             body.run();                              // just run without new lock
-        } catch (NoSuchFileException e) {            // parent dir disappeared ⇢ retry once
-            executeWithLock(body);                   // tail-call retry (very cheap)
         } catch (IOException e) {
             throw new RuntimeException("Could not create or lock " + CONFIG_LOCK_PATH, e);
         }

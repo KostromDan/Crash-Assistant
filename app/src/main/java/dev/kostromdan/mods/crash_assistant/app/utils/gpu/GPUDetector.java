@@ -2,7 +2,6 @@ package dev.kostromdan.mods.crash_assistant.app.utils.gpu;
 
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
 import java.lang.reflect.Method;
@@ -28,7 +27,7 @@ public class GPUDetector {
         // Try Vulkan first
         try {
             // Check if Vulkan and lwjglNatives are available
-            if (ClassExistenceChecker.classExists("org.lwjgl.vulkan.VK10") && Boot.lwjglNatives != null) {
+            if (Boot.vulkanAddonLoaded) {
                 // Use reflection to access VulkanGPUDetector
                 Class<?> vulkanDetectorClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.VulkanGPUDetector");
                 Method getSerialisedGPUsMethod = vulkanDetectorClass.getMethod("getSerialisedGPUs");
@@ -47,7 +46,7 @@ public class GPUDetector {
                     }
                 }
             } else {
-                serialisedGPUs += "Vulkan classes or lwjglNatives not found, falling back to DirectX\n";
+                serialisedGPUs += "Vulkan GPU detection addon not found, falling back to DirectX\n";
             }
         } catch (Exception e) {
             serialisedGPUs += "Error during Vulkan GPU detection:\n" +

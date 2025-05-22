@@ -76,7 +76,7 @@ public class Boot {
         if (lwjglNatives != null && !Objects.equals(lwjglNatives, "UNDEFINED") && !recursiveStart) {
             CrashAssistantAgent.appendJarFile(lwjglNatives);
 
-            final String REQUIRED_VULKAN_ADDON_VERSION = "3.3.1";
+            final String REQUIRED_VULKAN_ADDON_VERSION = "3.3.3";
             List<Mod> vulkanAddons = JarInJarHelper.getModsContainingPart("CrashAssistantVulkanGPUDetectionAddon-");
             Mod VulkanAddon = vulkanAddons.stream()
                     .filter(mod -> REQUIRED_VULKAN_ADDON_VERSION.equals(mod.getVersion()))
@@ -102,7 +102,6 @@ public class Boot {
                                 Files.copy(is, extractedJarPath, StandardCopyOption.REPLACE_EXISTING);
                                 CrashAssistantAgent.appendJarFile(extractedJarPath.toAbsolutePath().toString());
                             }
-                            break;
                         }
                     }
                 }

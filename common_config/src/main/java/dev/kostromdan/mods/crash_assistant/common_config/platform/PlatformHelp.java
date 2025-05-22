@@ -22,7 +22,7 @@ public enum PlatformHelp {
     public static String minecraftVersion = "UNDEFINED";
     public static final String javaVersion = Runtime.version().toString();
     public static String childProcessesPIDs = "UNDEFINED";
-    private static final String OS = System.getProperty("os.name").toLowerCase(Locale.ROOT);
+    public static final String OS = System.getProperty("os.name").toLowerCase(Locale.ROOT);
 
 
     PlatformHelp(String helpLink, String helpName, String helpChannel) {

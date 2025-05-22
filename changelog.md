@@ -11,6 +11,7 @@
 - Log OS in the Crash Assistant log.
 - Improved error messages for GPU detection failures.
 - Removed Java 22 FFM-specific DirectX GPU Detection code, because JNI also will work perfectly.
+- Removed some parts of Vulkan I forgot to remove in the previous update (decreased mod size by ~20 KB).
 - Small fixes and improvements.
 
 1.8.0:

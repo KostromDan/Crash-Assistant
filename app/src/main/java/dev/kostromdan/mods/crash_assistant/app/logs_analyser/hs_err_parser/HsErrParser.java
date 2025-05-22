@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser;
 
+import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 
@@ -61,6 +63,7 @@ public class HsErrParser {
         String completeLines = memoryLine + "\n" + pageFileLine;
         if (isInsufficientMemory) {
             parsingResult.appendProblematicFrameFullString("\n...\n" + completeLines);
+            parsingResult.appendProblematicFrameFullString("\n...\n" + ControlPanel.getCurrentMemoryAgsMessage());
         }
 
         int physicalMemory = Integer.parseInt(matcher.group(2));

@@ -16,6 +16,7 @@ import org.apache.logging.log4j.core.Core;
 import oshi.SystemInfo;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -60,6 +61,8 @@ public class JarInJarHelper {
                     "-jarPath", extractedJarPath.toAbsolutePath().toString(),
                     "-parentPID", Objects.toString(ProcessHandle.current().pid()),
                     "-parentStarted", Objects.toString(ProcessHelper.getStartTime(ProcessHandle.current().pid())),
+                    "-parentXmx", getJvmArgValue("Xmx", "unknown"),
+                    "-parentXms", getJvmArgValue("Xms", "unknown"),
                     "-platform", PlatformHelp.platform.toString(),
                     "-loaderJarName", PlatformHelp.loaderJarName,
                     "-minecraftVersion", PlatformHelp.minecraftVersion,
@@ -324,5 +327,51 @@ public class JarInJarHelper {
         Map<String, ?> outerFsArgs = Map.of("packagePath", pathInModFile);
         FileSystem zipFS = FileSystems.newFileSystem(filePathUri, outerFsArgs);
         return zipFS.getPath("/");
+    }
+
+    /**
+     * Retrieves the value of a JVM argument from the current runtime.
+     *
+     * @param argName  The name of the JVM argument to retrieve (without the leading dash), e.g., "Xmx"
+     * @param fallback The fallback value to return if the argument is not found
+     * @return The value of the JVM argument if found, otherwise the fallback value
+     */
+    public static String getJvmArgValue(String argName, String fallback) {
+        try {
+            List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
+            for (String arg : inputArgs) {
+                if (arg.startsWith("-" + argName)) {
+                    // If the argument is in the form -Xmx512m, extract just the 512m part
+                    if (arg.length() > argName.length() + 1) {
+                        return arg.substring(argName.length() + 1);
+                    }
+                    return arg.substring(1); // Remove the leading dash if no value part
+                }
+            }
+
+            // For Xmx, use current allocated memory as fallback if requested
+            if (argName.equals("Xmx") && fallback.equals("unknown")) {
+                return formatMemorySize(Runtime.getRuntime().maxMemory());
+            }
+
+            return fallback;
+        } catch (Exception e) {
+            LOGGER.error("Error retrieving JVM argument {}: {}", argName, e.getMessage());
+            return fallback;
+        }
+    }
+
+    /**
+     * Formats memory size in bytes to a human-readable format suitable for Xmx/Xms arguments.
+     *
+     * @param bytes Memory size in bytes
+     * @return Formatted memory size (e.g., "512m", "2g")
+     */
+    private static String formatMemorySize(long bytes) {
+        if (bytes >= 1073741824) { // 1 GB
+            return (bytes / 1073741824) + "g";
+        } else {
+            return (bytes / 1048576) + "m"; // Convert to MB
+        }
     }
 }

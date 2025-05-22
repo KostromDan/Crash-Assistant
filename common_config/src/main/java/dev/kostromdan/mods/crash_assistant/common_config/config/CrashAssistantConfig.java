@@ -261,6 +261,7 @@ public class CrashAssistantConfig {
 
 
     public static void executeWithLock(Runnable body) {
+        Exception ex = null;
         try {
             Files.createDirectories(CONFIG_PATH.getParent());
             Files.createDirectories(CONFIG_LOCK_PATH.getParent());
@@ -270,7 +271,12 @@ public class CrashAssistantConfig {
             }
             try (FileChannel ch = FileChannel.open(CONFIG_LOCK_PATH, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                  FileLock ignored = ch.lock()) {
-                body.run();
+                try {
+                    body.run();
+                    return;
+                } catch (Exception e) {
+                    ex = e;
+                }
             }
         } catch (OverlappingFileLockException e) {   // already locked in *this* JVM
             body.run();                              // just run without new lock
@@ -279,6 +285,9 @@ public class CrashAssistantConfig {
             body.run();
         } catch (IOException e) {
             throw new RuntimeException("Could not create or lock " + CONFIG_LOCK_PATH, e);
+        }
+        if (ex != null) {
+            throw new RuntimeException("Exception while executing executeWithLock block:", ex);
         }
     }
 

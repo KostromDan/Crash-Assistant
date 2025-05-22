@@ -1,3 +1,18 @@
+1.8.1:
+
+- Pass parent Xmx and Xms args as params to a Crash Assistant process. Log them where.
+  As log often doesn't include them, but they can be extremely useful.
+- Add them to the generated message if OutOfMemory or InsufficientMemory.
+- Implemented loading of Vulkan GPU detection addon. (addon will be released soon)
+- Improved GPU detection with better error handling.
+- Changed DirectX GPU detection jni implementation to fix duplicated GPUs issue,
+  errors while creating a device also caused by duplicated GPUs.
+- Enhanced a config file locking mechanism for config access synchronization to fix super rare macOS issue.
+- Log OS in the Crash Assistant log.
+- Improved error messages for GPU detection failures.
+- Removed Java 22 FFM-specific DirectX GPU Detection code, because JNI also will work perfectly.
+- Small fixes and improvements.
+
 1.8.0:
 
 - Decreased mod size by ~5 MB. From ~5.6 MB to ~650 KB. By removing Vulkan used for getting GPU list with their types,

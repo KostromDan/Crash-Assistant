@@ -24,11 +24,11 @@ public class Boot {
     public static String log4jCore = null;
     public static String googleGson = null;
     public static String commonIo = null;
-    public static String lwjglNatives = null;
     public static String processor = null;
     public static String jarPath = null;
     public static String crashAssistantModJarPath = null;
     public static boolean recursiveStart = false;
+    public static boolean vulkanAddonLoaded = false;
     public static String serialisedGPUs = null;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
     public static List<String> APP_ARGS;
@@ -45,8 +45,6 @@ public class Boot {
                 googleGson = args[i + 1];
             } else if ("-commonIo".equals(args[i]) && i + 1 < args.length) {
                 commonIo = args[i + 1];
-            } else if ("-lwjglNatives".equals(args[i]) && i + 1 < args.length) {
-                lwjglNatives = args[i + 1];
             } else if ("-processor".equals(args[i]) && i + 1 < args.length) {
                 processor = args[i + 1];
             } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
@@ -72,46 +70,6 @@ public class Boot {
         CrashAssistantAgent.appendJarFile(googleGson);
         CrashAssistantAgent.appendJarFile(commonIo);
         CrashAssistantAgent.appendJarFile(crashAssistantModJarPath);
-        ifBlock:
-        if (lwjglNatives != null && !Objects.equals(lwjglNatives, "UNDEFINED") && !recursiveStart) {
-            CrashAssistantAgent.appendJarFile(lwjglNatives);
-
-            final String REQUIRED_VULKAN_ADDON_VERSION = "3.3.3";
-            List<Mod> vulkanAddons = JarInJarHelper.getModsContainingPart("CrashAssistantVulkanGPUDetectionAddon-");
-            Mod VulkanAddon = vulkanAddons.stream()
-                    .filter(mod -> REQUIRED_VULKAN_ADDON_VERSION.equals(mod.getVersion()))
-                    .findFirst()
-                    .orElse(null);
-            if(VulkanAddon == null) break ifBlock;
-            
-            try {
-                Path libsFolder = Paths.get("local", "crash_assistant", "libs");
-                Files.createDirectories(libsFolder);
-                
-                try (JarFile vulkanAddonJar = new JarFile(Paths.get("mods", VulkanAddon.getJarName()).toFile())) {
-                    Enumeration<JarEntry> entries = vulkanAddonJar.entries();
-                    while (entries.hasMoreElements()) {
-                        JarEntry entry = entries.nextElement();
-                        String entryName = entry.getName();
-                        
-                        if (entryName.startsWith("META-INF/jarjar/") && entryName.endsWith(".jar")) {
-                            String jarFileName = entryName.substring(entryName.lastIndexOf('/') + 1);
-                            Path extractedJarPath = libsFolder.resolve(jarFileName);
-                            
-                            try (InputStream is = vulkanAddonJar.getInputStream(entry)) {
-                                Files.copy(is, extractedJarPath, StandardCopyOption.REPLACE_EXISTING);
-                                CrashAssistantAgent.appendJarFile(extractedJarPath.toAbsolutePath().toString());
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                System.err.println("Failed to extract jar from VulkanAddon: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else {
-            lwjglNatives = null;
-        }
 
         /**
          * If Minecraft JVM terminated by windows itself, all child processes will be also terminated.
@@ -121,6 +79,7 @@ public class Boot {
          * so we're doing it on this TMP process, to not waste user resources on App avaiting stage.
          */
         if (!recursiveStart) {
+            loadVulkanAddon();
             try {
                 Class<?> GPUDetectorClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPUDetector");
                 Method getSerialisedGPUsMethod = GPUDetectorClass.getMethod("getSerialisedGPUs");
@@ -161,5 +120,41 @@ public class Boot {
         if (jarPath == null) missingParameters.add("-jarPath");
         if (crashAssistantModJarPath == null) missingParameters.add("-crashAssistantModJarPath");
         return missingParameters;
+    }
+
+    private static void loadVulkanAddon(){
+        List<Mod> vulkanAddons = JarInJarHelper.getModsContainingPart("CrashAssistantVulkanGPUDetectionAddon-");
+        Mod VulkanAddon = vulkanAddons.stream()
+                .findFirst()
+                .orElse(null);
+        if(VulkanAddon == null) return;
+
+        vulkanAddonLoaded = true;
+
+        try {
+            Path libsFolder = Paths.get("local", "crash_assistant", "libs");
+            Files.createDirectories(libsFolder);
+
+            try (JarFile vulkanAddonJar = new JarFile(Paths.get("mods", VulkanAddon.getJarName()).toFile())) {
+                Enumeration<JarEntry> entries = vulkanAddonJar.entries();
+                while (entries.hasMoreElements()) {
+                    JarEntry entry = entries.nextElement();
+                    String entryName = entry.getName();
+
+                    if (entryName.startsWith("META-INF/jarjar/") && entryName.endsWith(".jar")) {
+                        String jarFileName = entryName.substring(entryName.lastIndexOf('/') + 1);
+                        Path extractedJarPath = libsFolder.resolve(jarFileName);
+
+                        try (InputStream is = vulkanAddonJar.getInputStream(entry)) {
+                            Files.copy(is, extractedJarPath, StandardCopyOption.REPLACE_EXISTING);
+                            CrashAssistantAgent.appendJarFile(extractedJarPath.toAbsolutePath().toString());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to extract jar from VulkanAddon: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

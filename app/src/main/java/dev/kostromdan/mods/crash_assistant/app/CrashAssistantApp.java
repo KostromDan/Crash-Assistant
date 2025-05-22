@@ -79,6 +79,8 @@ public class CrashAssistantApp {
         }
         LOGGER.info("crashAssistantJarName: {}", crashAssistantJarName);
 
+        LOGGER.info("os.name: {}", PlatformHelp.OS);
+
         LOGGER.info("Java path: {}", JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
         LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
 

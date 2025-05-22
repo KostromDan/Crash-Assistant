@@ -25,6 +25,7 @@ public class Boot {
     public static String googleGson = null;
     public static String commonIo = null;
     public static String lwjglNatives = null;
+    public static String lwjglLib = null;
     public static String processor = null;
     public static String jarPath = null;
     public static String crashAssistantModJarPath = null;
@@ -47,6 +48,8 @@ public class Boot {
                 commonIo = args[i + 1];
             } else if ("-lwjglNatives".equals(args[i]) && i + 1 < args.length) {
                 lwjglNatives = args[i + 1];
+            } else if ("-lwjglLib".equals(args[i]) && i + 1 < args.length) {
+                lwjglLib = args[i + 1];
             } else if ("-processor".equals(args[i]) && i + 1 < args.length) {
                 processor = args[i + 1];
             } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
@@ -75,6 +78,7 @@ public class Boot {
         ifBlock:
         if (lwjglNatives != null && !Objects.equals(lwjglNatives, "UNDEFINED") && !recursiveStart) {
             CrashAssistantAgent.appendJarFile(lwjglNatives);
+            CrashAssistantAgent.appendJarFile(lwjglLib);
 
             final String REQUIRED_VULKAN_ADDON_VERSION = "3.3.1";
             List<Mod> vulkanAddons = JarInJarHelper.getModsContainingPart("CrashAssistantVulkanGPUDetectionAddon-");
@@ -158,6 +162,7 @@ public class Boot {
         if (log4jCore == null) missingParameters.add("-log4jCore");
         if (googleGson == null) missingParameters.add("-googleGson");
         if (commonIo == null) missingParameters.add("-commonIo");
+        if (lwjglLib == null) missingParameters.add("-lwjglLib");
         if (processor == null) missingParameters.add("-processor");
         if (jarPath == null) missingParameters.add("-jarPath");
         if (crashAssistantModJarPath == null) missingParameters.add("-crashAssistantModJarPath");

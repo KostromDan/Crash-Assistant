@@ -69,7 +69,6 @@ public class JarInJarHelper {
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    "-lwjglLib", LibrariesJarLocator.getLibraryJarPathFromResource("org/lwjgl/system/JNI.class"),
                     "-lwjglNatives", locateNatives(),
                     "-processor", new SystemInfo().getHardware().getProcessor().getProcessorIdentifier().getName()
             );

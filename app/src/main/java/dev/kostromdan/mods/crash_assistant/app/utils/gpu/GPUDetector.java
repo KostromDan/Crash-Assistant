@@ -3,7 +3,9 @@ package dev.kostromdan.mods.crash_assistant.app.utils.gpu;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -27,7 +29,10 @@ public class GPUDetector {
         try {
             // Check if Vulkan and lwjglNatives are available
             if (ClassExistenceChecker.classExists("org.lwjgl.vulkan.VK10") && Boot.lwjglNatives != null) {
-                String vulkanResult = VulkanGPUDetector.getSerialisedGPUs();
+                // Use reflection to access VulkanGPUDetector
+                Class<?> vulkanDetectorClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.VulkanGPUDetector");
+                Method getSerialisedGPUsMethod = vulkanDetectorClass.getMethod("getSerialisedGPUs");
+                String vulkanResult = (String) getSerialisedGPUsMethod.invoke(null);
 
                 // Check if the result is not empty
                 List<GPU> gpus = GPU.deserializeGPUs(vulkanResult);
@@ -45,14 +50,19 @@ public class GPUDetector {
                 serialisedGPUs += "Vulkan classes or lwjglNatives not found, falling back to DirectX\n";
             }
         } catch (Exception e) {
-            serialisedGPUs += "Error during Vulkan GPU detection: " + e.getMessage() + ", falling back to DirectX\n";
+            serialisedGPUs += "Error during Vulkan GPU detection:\n" +
+                    ErrorUtils.getErrorMessageAndStackTrace(e) + "\n" +
+                    "Falling back to DirectX.\n";
         }
 
         // If Vulkan failed, try DirectX
         if (!vulkanSuccess) {
             if (PlatformHelp.isWindows()) {
                 try {
-                    String directXResult = DirectXGPUDetector.getSerialisedGPUs();
+                    // Use reflection to access DirectXGPUDetector
+                    Class<?> directXDetectorClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.DirectXGPUDetector");
+                    Method getSerialisedGPUsMethod = directXDetectorClass.getMethod("getSerialisedGPUs");
+                    String directXResult = (String) getSerialisedGPUsMethod.invoke(null);
 
                     // Check if the result is not empty
                     List<GPU> gpus = GPU.deserializeGPUs(directXResult);
@@ -66,7 +76,8 @@ public class GPUDetector {
                         }
                     }
                 } catch (Exception e) {
-                    serialisedGPUs += "Error during DirectX GPU detection: " + e.getMessage() + "\n";
+                    serialisedGPUs += "Error during DirectX GPU detection:\n" +
+                            ErrorUtils.getErrorMessageAndStackTrace(e) + "\n";
                 }
             } else {
                 serialisedGPUs += "DirectX GPU detection is not supported on non-Windows platforms\n" +

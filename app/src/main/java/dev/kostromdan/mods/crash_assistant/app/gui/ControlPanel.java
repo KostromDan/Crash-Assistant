@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.DeclinedException;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParsingResult;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
@@ -398,8 +399,16 @@ public class ControlPanel {
                 analysis_sb.append(LanguageProvider.getMsgLang("msg.found_analysis_in") + entry.getValue().stream()
                         .map(Log::getFileName)
                         .collect(Collectors.joining(", ")));
+                if (entry.getKey() instanceof OutOfMemoryError) {
+                    analysis_sb.append(LanguageProvider.getMsgLang("warnings_common.memory_args").replace("$CURRENT_MEMORY_ARGS$", ""), false);
+                    analysis_sb.append("Xms: ", false);
+                    analysis_sb.append(CrashAssistantApp.parentXms, "red", false);
+                    analysis_sb.append(", Xmx: ", false);
+                    analysis_sb.append(CrashAssistantApp.parentXmx, "green");
+                    analysis_sb.append("");
+                }
             }
-            
+
             sb.append(analysis_sb.toAnsi(true).trim());
         }
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
@@ -460,5 +469,14 @@ public class ControlPanel {
         } else {
             throw new UploadException("An error occurred when uploading modlist diff: " + response.getError());
         }
+    }
+
+    public static String getCurrentMemoryArgsString() {
+        return "Xms: " + CrashAssistantApp.parentXms + ", Xmx: " + CrashAssistantApp.parentXmx;
+    }
+
+    public static String getCurrentMemoryAgsMessage() {
+        return LanguageProvider.getMsgLang("warnings_common.memory_args")
+                .replace("$CURRENT_MEMORY_ARGS$", getCurrentMemoryArgsString());
     }
 }

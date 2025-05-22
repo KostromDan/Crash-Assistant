@@ -69,68 +69,12 @@ public class JarInJarHelper {
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    "-lwjglNatives", locateNatives(),
                     "-processor", new SystemInfo().getHardware().getProcessor().getProcessorIdentifier().getName()
             );
             crashAssistantAppProcessBuilder.start();
             ProblematicModsConfig.crashIfProblematicMod();
         } catch (Exception e) {
             LOGGER.error("Error while launching GUI: ", e);
-        }
-    }
-
-
-    public static String locateNatives() {
-        try {
-            // Normalise OS/arch strings
-            String osName = System.getProperty("os.name").toLowerCase(Locale.ROOT);
-            String osArch = System.getProperty("os.arch").toLowerCase(Locale.ROOT);
-
-            /* ---------- OS directory ---------- */
-            final String osDir;
-            if (osName.contains("win")) osDir = "windows";
-            else if (osName.contains("mac")) osDir = "macos";
-            else if (osName.contains("nux")) osDir = "linux";     // covers “linux” & “gnu/linux”
-            else throw new UnsupportedOperationException("Unsupported OS: " + osName);
-
-            /* ---------- Arch directory ---------- */
-            final String archDir;
-            if (osArch.matches("^(x8664|amd64|x86_64)$")) archDir = "x64";
-            else if (osArch.matches("^(x86|i[3-6]86)$")) archDir = "x86";
-            else if (osArch.matches("^(aarch64|arm64)$")) archDir = "arm64";
-            else if (osArch.matches("^(arm|armv7l|arm32)$")) archDir = "arm32";
-            else throw new UnsupportedOperationException("Unsupported arch: " + osArch);
-
-            /* ---------- File name ---------- */
-            final String fileName;
-            switch (osDir) {
-                case "windows" -> fileName = "lwjgl.dll";
-                case "linux" -> fileName = "liblwjgl.so";
-                case "macos" -> fileName = "liblwjgl.dylib";
-                default -> throw new IllegalStateException("Unexpected OS directory: " + osDir);
-            }
-
-            /* ---------- Complete resource path ---------- */
-            String resourcePath = osDir + '/' + archDir + "/org/lwjgl/" + fileName;
-            try {
-                return LibrariesJarLocator.getLibraryJarPathFromResource(resourcePath);
-            } catch (Exception ex) { // Second attempt fallback. Mostly for 3.2.2
-                String lwjglJarPath = LibrariesJarLocator.getLibraryJarPathFromResource("org/lwjgl/system/JNI.class");
-                String lwjglJarPathWithoutJar = lwjglJarPath.substring(0, lwjglJarPath.length() - 4);
-                List<String> potentialPathStrings = new ArrayList<>();
-                potentialPathStrings.add(lwjglJarPathWithoutJar + "-natives-" + osDir + "-" + archDir + ".jar");
-                potentialPathStrings.add(lwjglJarPathWithoutJar + "-natives-" + osDir + ".jar");
-                for (String potentialPathString : potentialPathStrings) {
-                    Path finalNativesPath = Paths.get(potentialPathString);
-                    if (Files.isRegularFile(finalNativesPath)) {
-                        return finalNativesPath.toAbsolutePath().toString();
-                    }
-                }
-                throw ex;
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Error while locating LWJGL natives. No issues, but integrated‑GPU warning will be disabled. Seems like Crash Assistant issue, pls report.", e);
-            return "UNDEFINED";
         }
     }
 

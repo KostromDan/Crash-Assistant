@@ -1,6 +1,8 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log;
 
+import dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_err.InsufficientMemory;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -17,5 +19,12 @@ public class OutOfMemoryError extends KnownCrashReason {
                 InsufficientMemory.applyEndRecommendations(LanguageProvider.get("warnings.out_of_memory_error")),
                 "java\\.lang\\.OutOfMemoryError"
         );
+    }
+
+    @Override
+    public boolean matches(Log log) {
+        if (!super.matches(log)) return false;
+        message = message.replace("$CURRENT_MEMORY_ARGS$", "<strong>" + ControlPanel.getCurrentMemoryArgsString() + "</strong>");
+        return true;
     }
 }

@@ -257,7 +257,7 @@ public class CreateDependencies {
         // Option 7: Java path from local config.
         String valueFromConfig = (String) CrashAssistantLocalConfig.get("JDK_PATH");
         if (valueFromConfig != null && !valueFromConfig.isEmpty()) {
-            String jdepsPathFromLocalConfig = transformJavaBinaryPathToJdepsPath(valueFromConfig);
+            String jdepsPathFromLocalConfig = transformJavaHomeToJdepsPath(valueFromConfig);
             if (validateJdepsPath(jdepsPathFromLocalConfig)) {
                 return jdepsPathFromLocalConfig;
             }
@@ -402,16 +402,10 @@ public class CreateDependencies {
             // Check if JDK is available
             String jdepsPath = getJDepsPath();
             if (jdepsPath == null) {
-                String message = ("JDK is required for analysis of jar files. JRE is not suitable for this!\n" +
-                        "We've tried JAVA_HOME, jdeps cmd and java used for launching game.\n" +
-                        "The easiest way to fix this for you is installing JDK (not JRE) from:\n" +
-                        "$LINK.ADOPTIUM_JDK$\n" +
-                        "Make sure to select JAVA_HOME check box in the installation settings.")
-                        .replace("$LINK.ADOPTIUM_JDK$", LinksProvider.ADOPTIUM_JDK.getLink());
                 SwingUtilities.invokeLater(() -> {
-                    appendStyledText(textPane, message, NORMAL_COLOR);
-                    CrashAssistantApp.LOGGER.info(message.trim());
-                    addOkButton(dialog);
+                    // Show JDK warning dialog
+                    showJdepsWarn(parent, dialog);
+                    dialog.dispose();
                 });
                 return;
             }
@@ -595,5 +589,154 @@ public class CreateDependencies {
         okButton.addActionListener(e -> dialog.dispose());
         dialog.add(okButton, BorderLayout.SOUTH);
         dialog.revalidate();
+    }
+
+    /**
+     * Shows a warning dialog when JDK is not found
+     *
+     * @param parent the parent frame
+     * @param dialog the dialog to close after handling JDK installation
+     * @return true if JDK was successfully configured, false otherwise
+     */
+    private static boolean showJdepsWarn(JFrame parent, JDialog dialog) {
+        JDialog warnDialog = new JdkWarningDialog(parent, dialog);
+        warnDialog.setVisible(true);
+
+        // After dialog is closed, check if JDK path is now available
+        String jdepsPath = getJDepsPath();
+        return jdepsPath != null;
+    }
+
+    /**
+     * Dialog for JDK warning with options to install or select JDK
+     */
+    private static class JdkWarningDialog extends JDialog {
+        public JdkWarningDialog(JFrame parent, JDialog parentDialog) {
+            super(parent, "JDK Required", true);
+            setLayout(new BorderLayout());
+
+            // Create text pane for the warning message
+            String message = "<strong>JDK is required</strong> for analysis of jar files. <strong>JRE is not suitable</strong> for this!\n\n" +
+                    "We've tried JAVA_HOME, jdeps cmd and java used for launching game.\n\n" +
+                    "You have the following options:\n" +
+                    "1. Install JDK via winget (<strong>Oracle JDK 21</strong>)\n" +
+                    "2. Select an existing JDK installation directory\n" +
+                    "3. Close this dialog and install JDK manually from:\n" +
+                    "<a href=\"" + LinksProvider.ADOPTIUM_JDK.getLink() + "\">" + LinksProvider.ADOPTIUM_JDK.getLink() + "</a>\n" +
+                    "Make sure to select <strong>JAVA_HOME</strong> check box in the installation settings.\n\n\n" +
+                    "After any of this done, try to use this analysis again.";
+
+            JEditorPane textPane = CrashAssistantGUI.getEditorPane(message, true, 550);
+            JScrollPane scrollPane = new JScrollPane(textPane);
+            scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            add(scrollPane, BorderLayout.CENTER);
+
+            // Create button panel with three buttons
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+
+            // Install JDK via winget button
+            JButton installButton = new JButton("Install JDK via winget");
+            installButton.addActionListener(e -> {
+                try {
+                    // Show info message
+                    int option = JOptionPane.showConfirmDialog(
+                            this,
+                            "Installing JDK using winget. A console window will open to show progress.\n" +
+                                    "Installation will start after clicking OK.\n\n" +
+                                    "After finished, try analysis again.",
+                            "Installing JDK",
+                            JOptionPane.OK_CANCEL_OPTION,
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+
+                    if (option != JOptionPane.OK_OPTION) {
+                        return; // Don't proceed with installation if user cancels
+                    }
+
+                    // Run winget command to install JDK
+                    ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", "winget", "install", "--id=Oracle.JDK.21", "-e");
+                    pb.start();
+
+                    // Close this dialog
+                    dispose();
+
+                    // Close parent dialog
+                    if (parentDialog != null) {
+                        parentDialog.dispose();
+                    }
+                } catch (Exception ex) {
+                    CrashAssistantApp.LOGGER.error("Error installing JDK via winget: ", ex);
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Error installing JDK: " + ex.getMessage(),
+                            "Installation Error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            });
+            buttonPanel.add(installButton);
+
+            // Select JDK button
+            JButton selectButton = new JButton("Select JDK");
+            selectButton.addActionListener(e -> {
+                // Show info message
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Please specify path to JDK directory.",
+                        "Select JDK",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+                // Open folder selection dialog
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                fileChooser.setDialogTitle("Select JDK Directory");
+                fileChooser.setCurrentDirectory(new File("C:\\"));
+                fileChooser.setPreferredSize(new Dimension(600, 400));
+
+                if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    File selectedFolder = fileChooser.getSelectedFile();
+                    String jdkPath = selectedFolder.getAbsolutePath();
+
+                    // Save to local config
+                    CrashAssistantLocalConfig.set("JDK_PATH", jdkPath);
+
+                    // Show success message
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Success! Try analysis again.",
+                            "JDK Path Saved",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+
+                    // Close this dialog
+                    dispose();
+
+                    // Close parent dialog
+                    if (parentDialog != null) {
+                        parentDialog.dispose();
+                    }
+                }
+            });
+            buttonPanel.add(selectButton);
+
+            // Close button
+            JButton closeButton = new JButton("Close");
+            closeButton.addActionListener(e -> {
+                dispose();
+
+                // Close parent dialog
+                if (parentDialog != null) {
+                    parentDialog.dispose();
+                }
+            });
+            buttonPanel.add(closeButton);
+
+            add(buttonPanel, BorderLayout.SOUTH);
+
+            // Set dialog properties
+            setSize(600, 400);
+            setLocationRelativeTo(parent);
+        }
     }
 }

@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.utils.maven_version_cmp.ComparableVersion;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
@@ -13,7 +14,10 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
@@ -31,23 +35,24 @@ public class CreateDependencies {
     private static volatile boolean isCancelled = false;
     private static final List<Process> runningProcesses = Collections.synchronizedList(new ArrayList<>());
     private static ExecutorService executor; // Declared as a static field
-    
+
     // Style constants
     private static final Color ERROR_COLOR = Color.RED;
     private static final Color NORMAL_COLOR = Color.BLACK;
     private static final Color CREATE_MOD_COLOR = Color.BLUE;
-    
+
     /**
      * Appends styled text to a JTextPane
+     *
      * @param textPane the JTextPane to append text to
-     * @param text the text to append
-     * @param color the color to use for the text
+     * @param text     the text to append
+     * @param color    the color to use for the text
      */
     private static void appendStyledText(JTextPane textPane, String text, Color color) {
         StyledDocument doc = textPane.getStyledDocument();
         Style style = textPane.addStyle("Color Style", null);
         StyleConstants.setForeground(style, color);
-        
+
         try {
             doc.insertString(doc.getLength(), text, style);
         } catch (BadLocationException e) {
@@ -125,6 +130,18 @@ public class CreateDependencies {
         return javaBinaryPath.replaceAll("(?<=[/\\\\])java(\\.exe)?$", "jdeps$1");
     }
 
+    /**
+     * Removes vendor prefixes like "corretto-", "azul-", "jdk-" from the folder name
+     * before comparing versions.
+     *
+     * @param folderName The folder name to process
+     * @return The folder name without vendor prefix
+     */
+    private static String removeVendorPrefix(String folderName) {
+        // Remove vendor prefixes like "corretto-", "azul-", "jdk-"
+        return folderName.replaceAll("^[a-zA-Z]+-", "");
+    }
+
     public static String getJDepsPath() {
         // Option 1: Derive from java binary location.
         String javaBinaryPath = JavaBinaryLocator.getJavaBinary(ProcessHandle.current());
@@ -188,6 +205,52 @@ public class CreateDependencies {
         // Option 5: Using just "jdeps" command.
         if (validateJdepsPath("jdeps")) {
             return "jdeps";
+        }
+
+        // Option 6: Try to find Java installations in common directories
+        if (PlatformHelp.isWindows()) {
+            List<String> javaDirectories = new ArrayList<>();
+            javaDirectories.add("C:\\Program Files\\Java");
+            javaDirectories.add("C:\\Program Files\\Eclipse Adoptium");
+            javaDirectories.add(System.getProperty("user.home") + "\\.jdks");
+
+
+            List<File> javaFolders = new ArrayList<>();
+            for (String directory : javaDirectories) {
+                File dir = new File(directory);
+                if (dir.exists() && dir.isDirectory()) {
+                    File[] folders = dir.listFiles(File::isDirectory);
+                    if (folders != null) {
+                        for (File folder : folders) {
+                            javaFolders.add(folder);
+                        }
+                    }
+                }
+            }
+
+            // Sort folders by version (newer versions first)
+            javaFolders.sort((f1, f2) -> {
+                try {
+                    // Remove vendor prefixes like "corretto-", "azul-", "jdk-" before comparing
+                    String name1 = removeVendorPrefix(f1.getName());
+                    String name2 = removeVendorPrefix(f2.getName());
+
+                    ComparableVersion v1 = new ComparableVersion(name1);
+                    ComparableVersion v2 = new ComparableVersion(name2);
+                    return v2.compareTo(v1); // Reverse order to get newer versions first
+                } catch (Exception e) {
+                    CrashAssistantApp.LOGGER.warn("Error while comparing Java versions: {}", e.getMessage());
+                    return f1.getName().compareTo(f2.getName()); // Fallback to alphabetical order
+                }
+            });
+
+            // Try each folder
+            for (File folder : javaFolders) {
+                String folderJdepsPath = transformJavaHomeToJdepsPath(folder.getAbsolutePath());
+                if (validateJdepsPath(folderJdepsPath)) {
+                    return folderJdepsPath;
+                }
+            }
         }
 
         return null;
@@ -420,7 +483,7 @@ public class CreateDependencies {
                         final String jarName = mod.getJarName();
                         final int depCount = invalidDeps.size();
                         final String createJarName = createMod.getJarName();
-                        
+
                         SwingUtilities.invokeLater(() -> {
                             if (!isCancelled) {
                                 // Mark class count and problematic mod name in red, Create mod name in blue
@@ -431,7 +494,7 @@ public class CreateDependencies {
                                 appendStyledText(textPane, ", which are missing from the current ", NORMAL_COLOR);
                                 appendStyledText(textPane, createJarName, CREATE_MOD_COLOR);
                                 appendStyledText(textPane, "\n", NORMAL_COLOR);
-                                
+
                                 // Log the complete message
                                 String logMessage = String.format(
                                         "Found %d Create mod class dependency(ies) in %s, which are missing from the current %s",
@@ -470,7 +533,7 @@ public class CreateDependencies {
                         appendStyledText(textPane, "Haven't found in any mod, Create mod class dependency(ies), which are missing from the current ", NORMAL_COLOR);
                         appendStyledText(textPane, createJarName, CREATE_MOD_COLOR);
                         appendStyledText(textPane, "\n", NORMAL_COLOR);
-                        
+
                         // Log the complete message
                         String logMessage = String.format(
                                 "Haven't found in any mod, Create mod class dependency(ies), which are missing from the current %s",
@@ -480,24 +543,24 @@ public class CreateDependencies {
                     } else {
                         // Header for detailed results
                         appendStyledText(textPane, "\n\n\nDetailed walkthrough of mods which rely on missing Create mod classes:\n", NORMAL_COLOR);
-                        
+
                         List<Mod> sortedMods = new ArrayList<>(missingClassesMap.keySet());
                         sortedMods.sort(Comparator.comparing(Mod::getJarName));
-                    
+
                         for (Mod mod : sortedMods) {
                             Set<String> missingClasses = missingClassesMap.get(mod);
                             List<String> sortedClasses = new ArrayList<>(missingClasses);
                             Collections.sort(sortedClasses);
-                    
+
                             // Only mod name in red, surrounding text in normal color
                             appendStyledText(textPane, "Mod: ", NORMAL_COLOR);
                             appendStyledText(textPane, mod.getJarName(), ERROR_COLOR);
                             appendStyledText(textPane, "\n", NORMAL_COLOR);
-                            
+
                             // Missing classes in normal color
                             appendStyledText(textPane, "Missing classes of create:\n", NORMAL_COLOR);
                             appendStyledText(textPane, String.join("\n", sortedClasses) + "\n\n", NORMAL_COLOR);
-                            
+
                             // Log the complete text for this mod
                             String logMessage = String.format(
                                     "Mod: %s\nMissing classes of create:\n%s\n\n",

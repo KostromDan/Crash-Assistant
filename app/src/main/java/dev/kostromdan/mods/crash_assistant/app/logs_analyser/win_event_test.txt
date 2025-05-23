@@ -62,6 +62,13 @@ TimeCreated           Id LevelDisplayName Message
    ProviderName: Application Hang
 TimeCreated           Id LevelDisplayName Message
 -----------           -- ---------------- -------
+23.05.2025 20:04:49 1002 Błędy            Program javaw.exe w wersji **.**.**.** przestał korzystać z systemu Windows i zo
+                                          stał zamknięty. Aby sprawdzić, czy jest dostępnych więcej informacji o proble
+                                          mie, sprawdź historię problemów w panelu sterowania Zabezpieczenia i konserwa
+                                          cja.
+   ProviderName: Application Hang
+TimeCreated           Id LevelDisplayName Message
+-----------           -- ---------------- -------
 09.05.2025 12:56:36 1002 Fehler           Das Programm javaw.exe Version **.**.**.** hat aufgehört mit Windows zu
                                           interagieren und wurde geschlossen. Weitere Informationen zum Problem finden
                                           Sie im Problemverlauf in der Systemsteuerung „Sicherheit und Wartung“.

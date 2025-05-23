@@ -404,7 +404,9 @@ public class ControlPanel {
                     analysis_sb.append("Xms: ", false);
                     analysis_sb.append(CrashAssistantApp.parentXms, "red", false);
                     analysis_sb.append(", Xmx: ", false);
-                    analysis_sb.append(CrashAssistantApp.parentXmx, "green");
+                    analysis_sb.append(CrashAssistantApp.parentXmx, "green", false);
+                    analysis_sb.append(", systemRAM: ", false);
+                    analysis_sb.append(CrashAssistantApp.systemRAM, "blue");
                     analysis_sb.append("");
                 }
             }

@@ -63,6 +63,7 @@ public class JarInJarHelper {
                     "-parentStarted", Objects.toString(ProcessHelper.getStartTime(ProcessHandle.current().pid())),
                     "-parentXmx", getJvmArgValue("Xmx", "unknown"),
                     "-parentXms", getJvmArgValue("Xms", "unknown"),
+                    "-systemRAM", formatMemorySize(new SystemInfo().getHardware().getMemory().getTotal()),
                     "-platform", PlatformHelp.platform.toString(),
                     "-loaderJarName", PlatformHelp.loaderJarName,
                     "-minecraftVersion", PlatformHelp.minecraftVersion,
@@ -365,13 +366,18 @@ public class JarInJarHelper {
      * Formats memory size in bytes to a human-readable format suitable for Xmx/Xms arguments.
      *
      * @param bytes Memory size in bytes
-     * @return Formatted memory size (e.g., "512m", "2g")
+     * @return Formatted memory size (e.g., "512m", "2.5g")
      */
     private static String formatMemorySize(long bytes) {
         if (bytes >= 1073741824) { // 1 GB
-            return (bytes / 1073741824) + "g";
+            double gb = bytes / 1073741824.0;
+            // Format with one decimal place and remove trailing zero if it's a whole number
+            String formatted = String.format(Locale.US, "%.1f", gb).replace(".0", "");
+            return formatted + "g";
         } else {
-            return (bytes / 1048576) + "m"; // Convert to MB
+            double mb = bytes / 1048576.0;
+            String formatted = String.format(Locale.US, "%.1f", mb).replace(".0", "");
+            return formatted + "m"; // Convert to MB
         }
     }
 }

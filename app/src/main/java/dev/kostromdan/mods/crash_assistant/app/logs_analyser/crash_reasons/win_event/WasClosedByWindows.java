@@ -23,7 +23,8 @@ public class WasClosedByWindows extends KnownCrashReason {
             "Verze \\S+ programu java\\w*(?:\\.\\w+)? ukončila interakci se systémem Windows a byla ukončena\\.",
             "O programa java\\w*(?:\\.\\w+)? versão \\S+ interagiu com o Windows e foi fechado\\.",
             "Il programma java\\w*(?:\\.\\w+)? versione \\S+ interrotto l'interazione con Windows ed è stato chiuso\\.",
-            "Program java\\w*(?:\\.\\w+)? w wersji \\S+ przestał współpracować z systemem Windows i został zamknięty\\."
+            "Program java\\w*(?:\\.\\w+)? w wersji \\S+ przestał współpracować z systemem Windows i został zamknięty\\.",
+            "Program java\\w*(?:\\.\\w+)? w wersji \\S+ przestał korzystać z systemu Windows i został zamknięty\\."
     ).map(WasClosedByWindows::removeSpacesAndEndLines).toList();
 
     public static String removeSpacesAndEndLines(String s) {

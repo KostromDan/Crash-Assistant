@@ -1,3 +1,16 @@
+1.8.2:
+
+- Refactored in CreateDependencies JDK warning dialog with improved user interface and configuration options.
+- Added multiple new fallback options to locate JDK installations:
+    - Automatic detection of JDK in common installation directories.
+    - Support for selecting an existing JDK installation directory.
+    - Option to install Oracle JDK 21 via winget.
+    - Ability to save custom JDK path in local configuration.
+- Normalize GPU and renderer names for comparison, as DirectX and lwjgl can return in slightly different format.
+- Updated WasClosedByWindows crash reason detection for additional Polish message.
+- Add system RAM amount logging, as it can help in helping people with OutOfMemory errors.
+- Small fixes and improvements.
+
 1.8.1:
 
 - Pass parent Xmx and Xms args as params to a Crash Assistant process. Log them where.

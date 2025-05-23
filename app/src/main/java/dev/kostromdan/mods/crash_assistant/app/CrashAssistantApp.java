@@ -153,6 +153,7 @@ public class CrashAssistantApp {
         if (potentialRenderer.isPresent()) {
             try {
                 renderer = potentialRenderer.get();
+                String normalizedRenderer = removeSpacesAndLowerCase(renderer);
                 LOGGER.info("Minecraft is running on renderer:\n{}", renderer);
 
                 if (Boot.serialisedGPUs != null) {
@@ -163,7 +164,8 @@ public class CrashAssistantApp {
                         if (gpu.type() == RendererType.DEDICATED) {
                             dedicatedGpus.add(gpu.name());
                         }
-                        if (gpu.name().contains(renderer) || renderer.contains(gpu.name())) {
+                        String normalizedGpuName = removeSpacesAndLowerCase(gpu.name());
+                        if (normalizedGpuName.contains(normalizedRenderer) || normalizedRenderer.contains(normalizedGpuName)) {
                             foundGPU = Optional.of(gpu);
                         }
                     }
@@ -195,6 +197,10 @@ public class CrashAssistantApp {
     }
 
 
+    private static String removeSpacesAndLowerCase(String s) {
+        return s.toLowerCase().replace(" ", "");
+    }
+    
     private static void onMinecraftFinished() {
         GUIStartTime = Instant.now().toEpochMilli();
 

@@ -301,23 +301,6 @@ public class CreateDependencies {
 
         // Start analysis in a background thread
         new Thread(() -> {
-            // Check if JDK is available
-            String jdepsPath = getJDepsPath();
-            if (jdepsPath == null) {
-                String message = ("JDK is required for analysis of jar files. JRE is not suitable for this!\n" +
-                        "We've tried JAVA_HOME, jdeps cmd and java used for launching game.\n" +
-                        "The easiest way to fix this for you is installing JDK (not JRE) from:\n" +
-                        "$LINK.ADOPTIUM_JDK$\n" +
-                        "Make sure to select JAVA_HOME check box in the installation settings.")
-                        .replace("$LINK.ADOPTIUM_JDK$", LinksProvider.ADOPTIUM_JDK.getLink());
-                SwingUtilities.invokeLater(() -> {
-                    appendStyledText(textPane, message, NORMAL_COLOR);
-                    CrashAssistantApp.LOGGER.info(message.trim());
-                    addOkButton(dialog);
-                });
-                return;
-            }
-
             // Check for multiple Create mods
             List<Mod> createMods = getCurrentCreateMods();
             if (createMods.isEmpty()) {
@@ -335,6 +318,23 @@ public class CreateDependencies {
                         "Analysis cannot proceed with multiple Create mods.\n";
                 SwingUtilities.invokeLater(() -> {
                     appendStyledText(textPane, message, ERROR_COLOR);
+                    CrashAssistantApp.LOGGER.info(message.trim());
+                    addOkButton(dialog);
+                });
+                return;
+            }
+
+            // Check if JDK is available
+            String jdepsPath = getJDepsPath();
+            if (jdepsPath == null) {
+                String message = ("JDK is required for analysis of jar files. JRE is not suitable for this!\n" +
+                        "We've tried JAVA_HOME, jdeps cmd and java used for launching game.\n" +
+                        "The easiest way to fix this for you is installing JDK (not JRE) from:\n" +
+                        "$LINK.ADOPTIUM_JDK$\n" +
+                        "Make sure to select JAVA_HOME check box in the installation settings.")
+                        .replace("$LINK.ADOPTIUM_JDK$", LinksProvider.ADOPTIUM_JDK.getLink());
+                SwingUtilities.invokeLater(() -> {
+                    appendStyledText(textPane, message, NORMAL_COLOR);
                     CrashAssistantApp.LOGGER.info(message.trim());
                     addOkButton(dialog);
                 });

@@ -38,6 +38,7 @@ public class CrashAssistantApp {
     public static long parentStarted;
     public static String parentXms = null;
     public static String parentXmx = null;
+    public static String systemRAM = null;
     public static boolean crashed_with_report = false;
     public static String crashAssistantJarName = Boot.crashAssistantModJarPath == null ? null : Paths.get(Boot.crashAssistantModJarPath).getFileName().toString();
     public static String renderer = null;
@@ -71,6 +72,9 @@ public class CrashAssistantApp {
             } else if ("-parentXmx".equals(args[i]) && i + 1 < args.length) {
                 parentXmx = args[i + 1];
                 LOGGER.info("parentXmx: {}", parentXmx);
+            } else if ("-systemRAM".equals(args[i]) && i + 1 < args.length) {
+                systemRAM = args[i + 1];
+                LOGGER.info("systemRAM: {}", systemRAM);
             } else if ("-platform".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.platform = Enum.valueOf(PlatformHelp.class, args[i + 1]);
                 LOGGER.info("Platform: {}", PlatformHelp.platform);

@@ -78,7 +78,7 @@ public class CrashAssistantApp {
                 LOGGER.info("systemRAM: {}", systemRAM);
             } else if ("-processor".equals(args[i]) && i + 1 < args.length) {
                 processor = args[i + 1];
-                LOGGER.info("processor: {}", systemRAM);
+                LOGGER.info("processor: {}", processor);
             } else if ("-platform".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.platform = Enum.valueOf(PlatformHelp.class, args[i + 1]);
                 LOGGER.info("Platform: {}", PlatformHelp.platform);

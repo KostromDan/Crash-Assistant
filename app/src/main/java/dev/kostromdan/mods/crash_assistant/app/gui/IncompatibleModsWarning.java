@@ -29,7 +29,7 @@ public class IncompatibleModsWarning {
                 SwingUtilities.invokeAndWait(() -> {
                     for (ProblematicModsConfig.ProblematicMod problematicMod : currentProblematicMods) {
                         ControlPanel.stopMovingToTop = true;
-                        CrashAssistantApp.LOGGER.info("Showing IncompatibleModsWarning about {}", problematicMod.currentMod().getJarName());
+                        CrashAssistantApp.LOGGER.info("Showing IncompatibleModsWarning about {}", problematicMod.getCurrentMod().getJarName());
 
                         String[] options = {
                                 LanguageProvider.get("gui.remove_mod"),
@@ -41,7 +41,7 @@ public class IncompatibleModsWarning {
                         int choice = JOptionPane.showOptionDialog(
                                 parent,
                                 CrashAssistantGUI.getEditorPane(
-                                        (problematicMod.msg()).replaceAll("\\$JAR_NAME\\$", problematicMod.currentMod().getJarName()),
+                                        (problematicMod.getMsg()).replaceAll("\\$JAR_NAME\\$", problematicMod.getCurrentMod().getJarName()),
                                         true, 600
                                 ),
                                 LanguageProvider.get("gui.incompatible_mod"),
@@ -51,7 +51,7 @@ public class IncompatibleModsWarning {
                                 options,
                                 options[3]
                         );
-                        File file = Paths.get("mods", problematicMod.currentMod().getJarName()).toFile();
+                        File file = Paths.get("mods", problematicMod.getCurrentMod().getJarName()).toFile();
                         if (choice == 0) { // Remove mod
                             try {
                                 Files.delete(file.toPath());
@@ -97,7 +97,7 @@ public class IncompatibleModsWarning {
                                 );
                             }
                         }
-                        CrashAssistantApp.LOGGER.info("Shown IncompatibleModsWarning about {}", problematicMod.currentMod().getJarName());
+                        CrashAssistantApp.LOGGER.info("Shown IncompatibleModsWarning about {}", problematicMod.getCurrentMod().getJarName());
                     }
                 });
             } catch (Exception e) {

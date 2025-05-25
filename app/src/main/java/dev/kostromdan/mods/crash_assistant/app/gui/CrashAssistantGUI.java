@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class CrashAssistantGUI {
     private static JFrame frame = null;
@@ -320,7 +321,7 @@ public class CrashAssistantGUI {
                 SwingUtilities.invokeAndWait(() -> {
                     JOptionPane optionPane = new JOptionPane(
                             CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.duplicated_mod_warn")
-                                            .replace("$MODS$", String.join("\n", mods.stream().map(Mod::getJarName).toList())),
+                                            .replace("$MODS$", String.join("\n", mods.stream().map(Mod::getJarName).collect(Collectors.toList()))),
                                     false),
                             JOptionPane.WARNING_MESSAGE,
                             JOptionPane.DEFAULT_OPTION
@@ -354,7 +355,7 @@ public class CrashAssistantGUI {
                             CrashAssistantGUI.getEditorPane(
                                     "<h2>Warning: incompatible mod(s) detected!</h2>\n" +
                                             "<strong>" + CrashAssistantApp.crashAssistantJarName + "</strong>" + " and " +
-                                            "<strong>" + String.join(", ", detectedMods.stream().map(Mod::getJarName).toList()) + "</strong>" +
+                                            "<strong>" + String.join(", ", detectedMods.stream().map(Mod::getJarName).collect(Collectors.toList())) + "</strong>" +
                                             " are incompatible.\n" +
                                             "You should remove one them!" +
                                             "<h4><strong>Why did Crash Assistant mark this mod as incompatible?</strong></h4>" +

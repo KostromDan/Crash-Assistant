@@ -7,6 +7,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.RegexChecker;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class WasClosedByWindows extends KnownCrashReason {
@@ -26,7 +27,7 @@ public class WasClosedByWindows extends KnownCrashReason {
             "Il programma java\\w*(?:\\.\\w+)? versione \\S+ interrotto l'interazione con Windows ed è stato chiuso\\.",
             "Program java\\w*(?:\\.\\w+)? w wersji \\S+ przestał współpracować z systemem Windows i został zamknięty\\.",
             "Program java\\w*(?:\\.\\w+)? w wersji \\S+ przestał korzystać z systemu Windows i został zamknięty\\."
-    ).map(WasClosedByWindows::removeSpacesAndEndLines).toList();
+    ).map(WasClosedByWindows::removeSpacesAndEndLines).collect(Collectors.toList());
 
     public static String removeSpacesAndEndLines(String s) {
         return s.replaceAll("[ ]|\\s*\\n\\s*", "");

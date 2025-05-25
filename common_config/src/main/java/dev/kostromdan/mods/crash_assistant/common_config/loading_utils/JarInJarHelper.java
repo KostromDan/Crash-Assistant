@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class JarInJarHelper {
     public static Logger LOGGER = LogManager.getLogger("CrashAssistantJarInJarHelper");
@@ -89,7 +90,7 @@ public class JarInJarHelper {
                     .filter(path -> Files.isRegularFile(path) &&
                             path.getFileName().toString().toLowerCase().contains(part.toLowerCase()) &&
                             path.getFileName().toString().endsWith(".jar"))
-                    .toList();
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             return new ArrayList<>();
         }
@@ -98,7 +99,7 @@ public class JarInJarHelper {
     public static List<Mod> mapPathsToMods(List<Path> paths) {
         return paths.stream()
                 .map(ModDataParser::parseModData)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public static List<Mod> getModsContainingPart(String... parts) {
@@ -113,9 +114,9 @@ public class JarInJarHelper {
     public static List<Mod> checkDuplicatedCrashAssistantMod(boolean crashIfDuplicated) {
         try {
             List<Mod> mods = getModsContainingPart("crash_assistant-", "CrashAssistant-");
-            if (mods.size() < 2) return List.of();
-            List<Mod> modsWithSameModId = mods.stream().filter(mod -> Objects.equals(mod.getModId(), "crash_assistant")).toList();
-            String duplicatedMods = String.join("\n", mods.stream().map(Mod::getJarName).toList());
+            if (mods.size() < 2) return new ArrayList<>();
+            List<Mod> modsWithSameModId = mods.stream().filter(mod -> Objects.equals(mod.getModId(), "crash_assistant")).collect(Collectors.toList());
+            String duplicatedMods = String.join("\n", mods.stream().map(Mod::getJarName).collect(Collectors.toList()));
             if (modsWithSameModId.size() > 1) {
                 LOGGER.error("Found more than one mod with modid \"crash_assistant\". Crash Assistant is duplicated." + (crashIfDuplicated ? " Crashing!" : "") +
                         "\nDuplicated mods:\n" + duplicatedMods);
@@ -128,7 +129,7 @@ public class JarInJarHelper {
             return mods;
         } catch (Exception e) {
             LOGGER.error("Error while checking duplicated mods", e);
-            return List.of();
+            return new ArrayList<>();
         }
     }
 
@@ -140,12 +141,12 @@ public class JarInJarHelper {
             List<Path> modPaths = getModJarPathsContainingPart(incompatibleMod.getJarNamePart());
             if (modPaths.isEmpty()) continue;
 
-            List<Mod> mods = mapPathsToMods(modPaths).stream().filter(mod -> Objects.equals(mod.getModId(), incompatibleMod.getModId())).toList();
+            List<Mod> mods = mapPathsToMods(modPaths).stream().filter(mod -> Objects.equals(mod.getModId(), incompatibleMod.getModId())).collect(Collectors.toList());
             if (mods.isEmpty()) continue;
             incompatibleMod.addDetectedMods(mods);
 
             if (crashIfIncompatibleModDetected) {
-                String incompatibleModsString = String.join(", ", mods.stream().map(Mod::getJarName).toList());
+                String incompatibleModsString = String.join(", ", mods.stream().map(Mod::getJarName).collect(Collectors.toList()));
                 String crashAssistantString = "Crash Assistant";
                 try {
                     crashAssistantString = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).getFileName().toString();
@@ -324,7 +325,7 @@ public class JarInJarHelper {
 
     public static Path getJarInJar(String name) throws IOException, URISyntaxException {
         //Idea taken from org.sinytra.connector.locator.EmbeddedDependencies#getJarInJar
-        Path pathInModFile = Path.of(JarInJarHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI()).resolve("META-INF/jarjar/" + name);
+        Path pathInModFile = Paths.get(JarInJarHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI()).resolve("META-INF/jarjar/" + name);
         URI filePathUri = new URI("jij:" + pathInModFile.toAbsolutePath().toUri().getRawSchemeSpecificPart()).normalize();
         Map<String, ?> outerFsArgs = Map.of("packagePath", pathInModFile);
         FileSystem zipFS = FileSystems.newFileSystem(filePathUri, outerFsArgs);

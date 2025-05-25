@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -30,13 +31,13 @@ public class KnownCrashReason {
             add(logType);
         }};
         this.message = message;
-        this.patterns = List.of(patterns);
+        this.patterns = Arrays.asList(patterns);
     }
 
     protected KnownCrashReason(HashSet<LogType> logTypes, String message, String... patterns) {
         this.logTypes = logTypes;
         this.message = message;
-        this.patterns = List.of(patterns);
+        this.patterns = Arrays.asList(patterns);
     }
 
     HashSet<LogType> getLogTypes() {

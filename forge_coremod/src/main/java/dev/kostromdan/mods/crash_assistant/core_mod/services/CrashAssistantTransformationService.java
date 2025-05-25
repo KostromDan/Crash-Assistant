@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -46,6 +47,6 @@ public class CrashAssistantTransformationService implements ITransformationServi
 
     @Override
     public @NotNull List<ITransformer> transformers() {
-        return List.of();
+        return new ArrayList<>();
     }
 }

@@ -7,6 +7,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface FileUtils {
     static void removeTmpFiles(Path dir) {
@@ -60,7 +61,7 @@ public interface FileUtils {
     static boolean isCurseForgeEnv(){
         try {
             Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
-            List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).toList();
+            List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).collect(Collectors.toList());
             if (curseForgeDirContents.contains("instances") && curseForgeDirContents.contains("install")) {
                 return true;
             }

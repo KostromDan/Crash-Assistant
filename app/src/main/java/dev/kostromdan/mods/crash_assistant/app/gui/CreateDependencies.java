@@ -416,7 +416,7 @@ public class CreateDependencies {
 
             List<Mod> modsToAnalyze = ModListUtils.getCurrentModList(true).stream()
                     .filter(mod -> !Objects.equals(mod.getModId(), "create"))
-                    .toList();
+                    .collect(Collectors.toList());
             int totalMods = modsToAnalyze.size();
 
             if (totalMods == 0) {

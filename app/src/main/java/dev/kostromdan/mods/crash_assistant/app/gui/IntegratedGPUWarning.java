@@ -10,6 +10,8 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 public class IntegratedGPUWarning extends JFrame {
@@ -30,7 +32,7 @@ public class IntegratedGPUWarning extends JFrame {
         String content = LanguageProvider.get("warnings.integrated_gpu")
                 .replace("$I_GPU$", integratedGPU)
                 .replace("$D_GPUS$", String.join("\n", dedicatedGPUs))
-                .replace("$JAVA_PATH$", Path.of(JavaBinaryLocator.getJavaBinary())
+                .replace("$JAVA_PATH$", Paths.get(JavaBinaryLocator.getJavaBinary())
                         .toAbsolutePath().toString());
 
         // Editor pane with HTML content.
@@ -113,7 +115,7 @@ public class IntegratedGPUWarning extends JFrame {
         // Show the warning with sample data.
         showIfNotDisabled(
                 "Intel HD Graphics",
-                List.of("NVIDIA GTX 1080", "AMD Radeon RX 580")
+                Arrays.asList("NVIDIA GTX 1080", "AMD Radeon RX 580")
         );
 
     }

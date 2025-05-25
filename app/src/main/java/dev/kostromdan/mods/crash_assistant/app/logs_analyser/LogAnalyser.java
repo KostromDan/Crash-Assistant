@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class LogAnalyser {
     private static final List<KnownCrashReason> registeredReasons = new ArrayList<>();
@@ -99,7 +100,7 @@ public class LogAnalyser {
                 .filter(reason ->
                         reason.getLogTypes().contains(log.getType()) &&
                                 !disabledCrashReasons.contains(reason.getClass().getSimpleName())
-                ).toList();
+                ).collect(Collectors.toList());
 
         for (KnownCrashReason reason : registeredReasonsForThisLog) {
             pool.submit(() -> {

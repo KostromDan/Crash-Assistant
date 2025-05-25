@@ -145,7 +145,7 @@ public class CreateDependencies {
 
     public static String getJDepsPath() {
         // Option 1: Derive from java binary location.
-        String javaBinaryPath = JavaBinaryLocator.getJavaBinary(ProcessHandle.current());
+        String javaBinaryPath = JavaBinaryLocator.getJavaBinary();
         if (javaBinaryPath.contains("javaw")) {
             javaBinaryPath = javaBinaryPath.replace("javaw", "java");
         }

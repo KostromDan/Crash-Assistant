@@ -24,7 +24,6 @@ public class Boot {
     public static String log4jCore = null;
     public static String googleGson = null;
     public static String commonIo = null;
-    public static String processor = null;
     public static String jarPath = null;
     public static String crashAssistantModJarPath = null;
     public static boolean recursiveStart = false;
@@ -45,8 +44,6 @@ public class Boot {
                 googleGson = args[i + 1];
             } else if ("-commonIo".equals(args[i]) && i + 1 < args.length) {
                 commonIo = args[i + 1];
-            } else if ("-processor".equals(args[i]) && i + 1 < args.length) {
-                processor = args[i + 1];
             } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
                 jarPath = args[i + 1];
             } else if ("-crashAssistantModJarPath".equals(args[i]) && i + 1 < args.length) {
@@ -116,7 +113,6 @@ public class Boot {
         if (log4jCore == null) missingParameters.add("-log4jCore");
         if (googleGson == null) missingParameters.add("-googleGson");
         if (commonIo == null) missingParameters.add("-commonIo");
-        if (processor == null) missingParameters.add("-processor");
         if (jarPath == null) missingParameters.add("-jarPath");
         if (crashAssistantModJarPath == null) missingParameters.add("-crashAssistantModJarPath");
         return missingParameters;

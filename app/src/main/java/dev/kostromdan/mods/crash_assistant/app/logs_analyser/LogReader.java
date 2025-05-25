@@ -102,6 +102,7 @@ public class LogReader {
     /**
      * Different versions of common-io having different implementations, so we have to deal with it.
      */
+    @SuppressWarnings("deprecation")
     private ReversedLinesFileReader createReversedLinesFileReader() throws IOException {
         try {
             return ReversedLinesFileReader.builder()

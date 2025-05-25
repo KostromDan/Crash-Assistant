@@ -34,7 +34,7 @@ public class Boot {
 
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        APP_ARGS = List.of(args);
+        APP_ARGS = Arrays.asList(args);
         for (int i = 0; i < args.length; i++) {
             if ("-log4jApi".equals(args[i]) && i + 1 < args.length) {
                 log4jApi = args[i + 1];

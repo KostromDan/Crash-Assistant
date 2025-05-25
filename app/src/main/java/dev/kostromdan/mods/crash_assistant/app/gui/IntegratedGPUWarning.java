@@ -30,7 +30,7 @@ public class IntegratedGPUWarning extends JFrame {
         String content = LanguageProvider.get("warnings.integrated_gpu")
                 .replace("$I_GPU$", integratedGPU)
                 .replace("$D_GPUS$", String.join("\n", dedicatedGPUs))
-                .replace("$JAVA_PATH$", Path.of(JavaBinaryLocator.getJavaBinary(ProcessHandle.current()))
+                .replace("$JAVA_PATH$", Path.of(JavaBinaryLocator.getJavaBinary())
                         .toAbsolutePath().toString());
 
         // Editor pane with HTML content.

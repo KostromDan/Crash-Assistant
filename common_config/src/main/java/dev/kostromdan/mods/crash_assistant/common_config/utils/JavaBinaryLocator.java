@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
+package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
 import java.util.Optional;
 

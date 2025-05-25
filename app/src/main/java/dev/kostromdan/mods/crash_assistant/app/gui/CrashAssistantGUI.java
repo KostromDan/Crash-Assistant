@@ -491,7 +491,7 @@ public class CrashAssistantGUI {
 
                             // Build the command to start the remover process
                             ProcessBuilder processBuilder = new ProcessBuilder(
-                                    JavaBinaryLocator.getJavaBinary(ProcessHandle.current()),
+                                    JavaBinaryLocator.getJavaBinary(),
                                     "-cp",
                                     classPath,
                                     "dev.kostromdan.mods.crash_assistant.app.utils.ModRemover",

@@ -97,7 +97,7 @@ public class CrashAssistantApp {
 
         LOGGER.info("os.name: {}", PlatformHelp.OS);
 
-        LOGGER.info("Java path: {}", JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
+        LOGGER.info("Java path: {}", JavaBinaryLocator.getJavaBinary());
         LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
 
         LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);

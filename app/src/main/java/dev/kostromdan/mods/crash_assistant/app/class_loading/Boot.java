@@ -86,7 +86,7 @@ public class Boot {
             }
 
             List<String> argsList = new ArrayList<>();
-            argsList.add(JavaBinaryLocator.getJavaBinary(ProcessHandle.current()));
+            argsList.add(JavaBinaryLocator.getJavaBinary());
             argsList.addAll(JVM_ARGS);
             argsList.add("-jar");
             argsList.add(jarPath);

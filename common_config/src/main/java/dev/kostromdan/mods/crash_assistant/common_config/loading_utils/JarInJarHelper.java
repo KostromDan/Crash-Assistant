@@ -51,7 +51,7 @@ public class JarInJarHelper {
             }
 
             ProcessBuilder crashAssistantAppProcessBuilder = new ProcessBuilder(
-                    JavaBinaryLocator.getJavaBinary(currentProcess),
+                    JavaBinaryLocator.getJavaBinary(),
                     "-XX:+UseSerialGC",
                     "-XX:MaxHeapFreeRatio=30",
                     "-XX:MinHeapFreeRatio=10",

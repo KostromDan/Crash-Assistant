@@ -169,21 +169,21 @@ public class CrashAssistantApp {
                     List<String> dedicatedGpus = new ArrayList<>();
                     Optional<GPU> foundGPU = Optional.empty();
                     for (GPU gpu : gpus) {
-                        if (gpu.type() == RendererType.DEDICATED) {
-                            dedicatedGpus.add(gpu.name());
+                        if (gpu.getType() == RendererType.DEDICATED) {
+                            dedicatedGpus.add(gpu.getName());
                         }
-                        String normalizedGpuName = removeSpacesAndLowerCase(gpu.name());
+                        String normalizedGpuName = removeSpacesAndLowerCase(gpu.getName());
                         if (normalizedGpuName.contains(normalizedRenderer) || normalizedRenderer.contains(normalizedGpuName)) {
                             foundGPU = Optional.of(gpu);
                         }
                     }
                     if (foundGPU.isPresent() &&
-                            foundGPU.get().type() == RendererType.INTEGRATED &&
+                            foundGPU.get().getType() == RendererType.INTEGRATED &&
                             !dedicatedGpus.isEmpty()) {
                         LOGGER.warn("Detected Minecraft running on integrated GPU:\n" +
                                 "{},\n" +
                                 "while one or more dedicated exists:\n" +
-                                "{}", foundGPU.get().name(), String.join("\n", dedicatedGpus));
+                                "{}", foundGPU.get().getName(), String.join("\n", dedicatedGpus));
                         if (Objects.equals(CrashAssistantLocalConfig.get("integrated_gpu.dont_show_again"), true)) {
                             CrashAssistantApp.LOGGER.warn("integrated_gpu.dont_show_again is true. Prevented GUI warn.");
                             return;
@@ -191,7 +191,7 @@ public class CrashAssistantApp {
                         try {
                             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.IntegratedGPUWarning");
                             Method method = clazz.getMethod("showIfNotDisabled", String.class, List.class);
-                            method.invoke(null, foundGPU.get().name(), dedicatedGpus);
+                            method.invoke(null, foundGPU.get().getName(), dedicatedGpus);
                         } catch (Exception e) {
                             LOGGER.error("Exception while showing IntegratedGPUWarning:", e);
                         }

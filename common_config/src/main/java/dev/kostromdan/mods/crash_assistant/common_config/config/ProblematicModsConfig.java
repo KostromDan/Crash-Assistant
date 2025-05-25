@@ -9,10 +9,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ProblematicModsConfig {
@@ -77,17 +74,17 @@ public class ProblematicModsConfig {
         LinkedHashSet<Mod> currentMods = ModListUtils.getCurrentModList(true);
 
         Map<String, ProblematicMod> configMap = problematicMods.stream()
-                .collect(Collectors.toMap(ProblematicMod::modid, pm -> pm));
+                .collect(Collectors.toMap(ProblematicMod::getModid, pm -> pm));
 
         return currentMods.stream()
                 .filter(mod -> configMap.containsKey(mod.getModId()))
                 .map(mod -> {
                     ProblematicMod fromConfig = configMap.get(mod.getModId());
                     return new ProblematicMod(
-                            fromConfig.modid(),
+                            fromConfig.getModid(),
                             mod,
-                            fromConfig.should_crash_on_startup(),
-                            fromConfig.msg()
+                            fromConfig.isShouldCrashOnStartup(),
+                            fromConfig.getMsg()
                     );
                 })
                 .collect(Collectors.toList());
@@ -111,15 +108,15 @@ public class ProblematicModsConfig {
 
     public static void crashIfProblematicMod() {
         List<ProblematicMod> problematicModsFromConfig = getProblematicModsFromConfig();
-        if (problematicModsFromConfig.stream().noneMatch(ProblematicMod::should_crash_on_startup)) return;
+        if (problematicModsFromConfig.stream().noneMatch(ProblematicMod::isShouldCrashOnStartup)) return;
 
         List<ProblematicMod> problematicMods = getCurrentProblematicMods();
         boolean shouldCrash = false;
         for (ProblematicMod mod : problematicMods) {
-            if (mod.should_crash_on_startup()) {
+            if (mod.isShouldCrashOnStartup()) {
                 shouldCrash = true;
-                Mod currentMod = mod.currentMod();
-                JarInJarHelper.LOGGER.error("Detected " + currentMod.getJarName() + "(modId: " + mod.modid() + ") in current modlist. It marked as incompatible with this modpack(" + CONFIG_PATH + "). Crashing game and starting Crash Assistant.");
+                Mod currentMod = mod.getCurrentMod();
+                JarInJarHelper.LOGGER.error("Detected " + currentMod.getJarName() + "(modId: " + mod.getModid() + ") in current modlist. It marked as incompatible with this modpack(" + CONFIG_PATH + "). Crashing game and starting Crash Assistant.");
             }
         }
         if (shouldCrash) {
@@ -128,13 +125,66 @@ public class ProblematicModsConfig {
     }
 
     /**
-     * Record representing a problematic mod with its configuration.
+     * Class representing a problematic mod with its configuration.
      */
-    public record ProblematicMod(
-            String modid,
-            Mod currentMod,
-            boolean should_crash_on_startup,
-            String msg
-    ) {
+    public static class ProblematicMod {
+        private final String modid;
+        private final Mod currentMod;
+        private final boolean shouldCrashOnStartup;
+        private final String msg;
+
+        public ProblematicMod(
+                String modid,
+                Mod currentMod,
+                boolean shouldCrashOnStartup,
+                String msg
+        ) {
+            this.modid = modid;
+            this.currentMod = currentMod;
+            this.shouldCrashOnStartup = shouldCrashOnStartup;
+            this.msg = msg;
+        }
+
+        public String getModid() {
+            return modid;
+        }
+
+        public Mod getCurrentMod() {
+            return currentMod;
+        }
+
+        public boolean isShouldCrashOnStartup() {
+            return shouldCrashOnStartup;
+        }
+
+        public String getMsg() {
+            return msg;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ProblematicMod that = (ProblematicMod) o;
+            return shouldCrashOnStartup == that.shouldCrashOnStartup &&
+                    Objects.equals(modid, that.modid) &&
+                    Objects.equals(currentMod, that.currentMod) &&
+                    Objects.equals(msg, that.msg);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(modid, currentMod, shouldCrashOnStartup, msg);
+        }
+
+        @Override
+        public String toString() {
+            return "ProblematicMod{" +
+                    "modid='" + modid + '\'' +
+                    ", currentMod=" + currentMod +
+                    ", shouldCrashOnStartup=" + shouldCrashOnStartup +
+                    ", msg='" + msg + '\'' +
+                    '}';
+        }
     }
 }

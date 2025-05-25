@@ -315,13 +315,13 @@ public class CrashAssistantCommands {
         public TextComponent toComponent() {
             TextComponent msg = new TextComponent("");
             for (ColoredString cs : sb) {
-                TextComponent part = new TextComponent(cs.text());
-                if (!cs.color().isEmpty()) {
-                    ChatFormatting color = ChatFormatting.valueOf(cs.color().toUpperCase());
+                TextComponent part = new TextComponent(cs.getText());
+                if (!cs.getColor().isEmpty()) {
+                    ChatFormatting color = ChatFormatting.valueOf(cs.getColor().toUpperCase());
                     part.setStyle(Style.EMPTY.withColor(color));
                 }
                 msg.append(part);
-                if (cs.endsWithNewLine()) {
+                if (cs.isEndsWithNewLine()) {
                     msg.append(new TextComponent("\n"));
                 }
             }

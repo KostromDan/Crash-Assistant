@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ModListDiffStringBuilder {
     public List<ColoredString> sb;
@@ -29,8 +30,8 @@ public class ModListDiffStringBuilder {
     public String toText() {
         StringBuilder result = new StringBuilder();
         for (ColoredString cs : sb) {
-            result.append(cs.text());
-            if (cs.endsWithNewLine()) {
+            result.append(cs.getText());
+            if (cs.isEndsWithNewLine()) {
                 result.append("\n");
             }
         }
@@ -42,8 +43,8 @@ public class ModListDiffStringBuilder {
         result.append("<html><body style='font-family: Arial; font-size: 12px;white-space: nowrap;'>");
 
         for (ColoredString cs : sb) {
-            result.append("<span" + (cs.color.isEmpty() ? "" : " style='color: " + cs.color + ";'") + ">" + cs.text() + "</span>");
-            if (cs.endsWithNewLine()) result.append("<br>");
+            result.append("<span" + (cs.getColor().isEmpty() ? "" : " style='color: " + cs.getColor() + ";'") + ">" + cs.getText() + "</span>");
+            if (cs.isEndsWithNewLine()) result.append("<br>");
         }
         result.append("</body></html>");
         return result.toString();
@@ -67,20 +68,65 @@ public class ModListDiffStringBuilder {
                 first = false;
                 continue;
             }
-            if (!cs.color.isEmpty()) {
-                result.append(Enum.valueOf(AnsiColor.class, cs.color.toUpperCase()).getColorPrefix());
-                result.append(cs.text());
+            if (!cs.getColor().isEmpty()) {
+                result.append(Enum.valueOf(AnsiColor.class, cs.getColor().toUpperCase()).getColorPrefix());
+                result.append(cs.getText());
                 result.append(AnsiColor.postfix);
             } else {
-                result.append(cs.text());
+                result.append(cs.getText());
             }
-            if (cs.endsWithNewLine()) {
+            if (cs.isEndsWithNewLine()) {
                 result.append("\n");
             }
         }
         return result.toString().trim() + "\n```";
     }
 
-    public record ColoredString(String text, String color, boolean endsWithNewLine) {
+    public static class ColoredString {
+        private final String text;
+        private final String color;
+        private final boolean endsWithNewLine;
+
+        public ColoredString(String text, String color, boolean endsWithNewLine) {
+            this.text = text;
+            this.color = color;
+            this.endsWithNewLine = endsWithNewLine;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public String getColor() {
+            return color;
+        }
+
+        public boolean isEndsWithNewLine() {
+            return endsWithNewLine;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ColoredString that = (ColoredString) o;
+            return endsWithNewLine == that.endsWithNewLine &&
+                   Objects.equals(text, that.text) &&
+                   Objects.equals(color, that.color);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(text, color, endsWithNewLine);
+        }
+
+        @Override
+        public String toString() {
+            return "ColoredString{" +
+                   "text='" + text + '\'' +
+                   ", color='" + color + '\'' +
+                   ", endsWithNewLine=" + endsWithNewLine +
+                   '}';
+        }
     }
 }

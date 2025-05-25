@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import javax.swing.*;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
@@ -67,15 +68,14 @@ public class ModRemover {
     }
 
     private static boolean waitForProcessToExit(long pid) {
-        ProcessHandle processHandle = ProcessHandle.of(pid).orElse(null);
-        if (processHandle == null) {
+        if (!ProcessHelper.isProcessAlive(pid)) {
             // Process already exited or not found
             return true;
         }
 
         // Check if the process is still alive
         for (int i = 0; i < 30; i++) { // Wait up to 15 seconds
-            if (!processHandle.isAlive()) {
+            if (!ProcessHelper.isProcessAlive(pid)) {
                 return true;
             }
 

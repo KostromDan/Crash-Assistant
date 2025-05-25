@@ -1,7 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -30,11 +29,11 @@ public interface IntelCorruptedProcessorChecker {
     }
 
     static String extractModel() {
-        if (Boot.processor == null) {
+        if (CrashAssistantApp.processor == null) {
             return null;
         }
         var matcher = Pattern.compile("i[579]-\\d+[a-z]*", Pattern.CASE_INSENSITIVE)
-                .matcher(Boot.processor);
+                .matcher(CrashAssistantApp.processor);
         return matcher.find() ? matcher.group().toLowerCase() : null;
     }
 }

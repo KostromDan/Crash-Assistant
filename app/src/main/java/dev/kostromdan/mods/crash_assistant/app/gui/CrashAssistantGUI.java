@@ -8,7 +8,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
-import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;

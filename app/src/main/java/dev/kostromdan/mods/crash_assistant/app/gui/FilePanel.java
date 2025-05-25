@@ -9,10 +9,10 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalyser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
-import dev.kostromdan.mods.crash_assistant.app.utils.McLogsApiProvider;
+import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.ApiProvider;
+import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.Problem;
+import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.UploadLogResponse;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
-import gs.mclo.api.response.UploadLogResponse;
-import gs.mclo.api.response.insights.Problem;
 
 import javax.swing.*;
 import java.awt.*;
@@ -193,13 +193,13 @@ public class FilePanel {
                     uploadButton.setText(LanguageProvider.get("gui.preprocessing"));
                     log.getReader().readLogFile(true);
                     uploadButton.setText(oldText);
-                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = McLogsApiProvider.getMcLogsClient().uploadLog(log.getReader().getFirstLinesString());
+                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = ApiProvider.getMcLogsClient().uploadLog(log.getReader().getFirstLinesString());
 
                     String lastLines = log.getReader().getLastLinesString();
                     if (lastLines != null) {
-                        CompletableFuture<UploadLogResponse> completableResponseLastLines = McLogsApiProvider.getMcLogsClient().uploadLog(lastLines);
+                        CompletableFuture<UploadLogResponse> completableResponseLastLines = ApiProvider.getMcLogsClient().uploadLog(lastLines);
                         UploadLogResponse responseLastLines = completableResponseLastLines.get();
-                        responseLastLines.setClient(McLogsApiProvider.getMcLogsClient());
+                        responseLastLines.setClient(ApiProvider.getMcLogsClient());
                         if (responseLastLines.isSuccess()) {
                             log.setLinkToUploadedLastLines(CrashAssistantGUI.transformLink(responseLastLines.getUrl()));
                         } else {
@@ -207,14 +207,14 @@ public class FilePanel {
                         }
                     }
                     UploadLogResponse responseFirstLines = completableResponseFirstLines.get();
-                    responseFirstLines.setClient(McLogsApiProvider.getMcLogsClient());
+                    responseFirstLines.setClient(ApiProvider.getMcLogsClient());
 
 
                     if (responseFirstLines.isSuccess()) {
                         String link = CrashAssistantGUI.transformLink(responseFirstLines.getUrl());
                         if (LogAnalyser.CodexSupportedLogTypes.contains(log.getType())) {
                             synchronized (KnownCrashReasonMessage.class) {
-                                for (Problem problem : responseFirstLines.getInsights().get().getAnalysis().getProblems()) {
+                                for (Problem problem : responseFirstLines.getInsights().get().getProblems()) {
                                     KnownCrashReasonMessage.addCodexMessage(log, problem, link);
                                 }
                                 CrashAssistantGUI.showKnownCrashReasonsWarnings();

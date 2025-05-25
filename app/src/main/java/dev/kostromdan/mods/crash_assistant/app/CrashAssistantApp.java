@@ -102,10 +102,10 @@ public class CrashAssistantApp {
 
         LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
 
-        String currentProcessData = Objects.toString(parentPID) + "_" + Objects.toString(Instant.ofEpochMilli(parentStarted).getEpochSecond());
+        String currentProcessData = Objects.toString(parentPID) + "_" + parentStarted;
         Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");
         try {
-            Files.write(currentProcessDataPath, Long.toString(ProcessHandle.current().pid()).getBytes());
+            Files.write(currentProcessDataPath, Long.toString(ProcessHelper.getCurrentProcessId()).getBytes());
         } catch (IOException ignored) {
         }
 
@@ -120,7 +120,7 @@ public class CrashAssistantApp {
 
         while (true) {
             try {
-                if (parentStarted == -1 || parentStarted != ProcessHelper.getStartTime(parentPID)) {
+                if (parentStarted == -1 || parentStarted != ProcessHelper.getProcessStartTime(parentPID)) {
                     LOGGER.info("PID \"{}\" is not alive or reused by another process. Minecraft JVM appears to have stopped.", parentPID);
                     onMinecraftFinished();
                     return;
@@ -208,7 +208,7 @@ public class CrashAssistantApp {
     private static String removeSpacesAndLowerCase(String s) {
         return s.toLowerCase().replace(" ", "");
     }
-    
+
     private static void onMinecraftFinished() {
         GUIStartTime = Instant.now().toEpochMilli();
 

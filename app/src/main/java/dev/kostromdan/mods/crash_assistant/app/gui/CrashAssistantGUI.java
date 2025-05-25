@@ -9,6 +9,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -403,12 +404,10 @@ public class CrashAssistantGUI {
                                             if (childProcessesData.length != 1) break ifBlock;
                                             long childProcessPID = Long.parseLong(childProcessesData[0].split(":")[0]);
                                             long childProcessStart = Long.parseLong(childProcessesData[0].split(":")[1]);
-                                            Optional<ProcessHandle> childProcessOptional = ProcessHandle.of(childProcessPID);
-                                            if (childProcessOptional.isEmpty()) break ifBlock;
-                                            ProcessHandle childProcess = childProcessOptional.get();
-                                            if (childProcess.info().startInstant().get().toEpochMilli() != childProcessStart)
+                                            if (!ProcessHelper.isProcessAlive(childProcessPID)) break ifBlock;
+                                            if (ProcessHelper.getProcessStartTime(childProcessPID) != childProcessStart)
                                                 break ifBlock;
-                                            childProcess.destroyForcibly();
+                                            ProcessHelper.destroyProcessForcibly(childProcessPID);
 
                                             long startDeleteTime = System.currentTimeMillis();
                                             while (System.currentTimeMillis() - startDeleteTime < 5000) {
@@ -484,7 +483,7 @@ public class CrashAssistantGUI {
                             }
 
                             // Get the current process ID
-                            long currentPID = ProcessHandle.current().pid();
+                            long currentPID = ProcessHelper.getCurrentProcessId();
 
                             // Get the path to the current JAR
                             String classPath = System.getProperty("java.class.path");

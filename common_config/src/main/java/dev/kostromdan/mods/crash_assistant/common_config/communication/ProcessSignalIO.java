@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.communication;
 
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -50,7 +51,7 @@ public final class ProcessSignalIO {
      * If the target file already exists, it will be overwritten.
      */
     public static void post(String name, String data) {
-        String fileName = name + "_pid" + ProcessHandle.current().pid() + ".tmp";
+        String fileName = name + "_pid" + ProcessHelper.getCurrentProcessId() + ".tmp";
         Path filePath = BASE_DIR.resolve(fileName);
         try {
             Files.writeString(

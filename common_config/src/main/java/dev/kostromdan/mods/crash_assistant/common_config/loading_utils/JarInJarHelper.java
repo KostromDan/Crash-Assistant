@@ -40,12 +40,12 @@ public class JarInJarHelper {
             Path crashAssistantModJarPath = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).toAbsolutePath();
             LOGGER.info("Launching CrashAssistantApp ({})", crashAssistantModJarPath.getFileName().toString());
 
-            ProcessHandle currentProcess = ProcessHandle.current();
-            String currentProcessData = Objects.toString(currentProcess.pid()) + "_"
-                    + Objects.toString(currentProcess.info().startInstant().get().getEpochSecond());
+            long currentProcessId = ProcessHelper.getCurrentProcessId();
+            String currentProcessData = Objects.toString(currentProcessId) + "_"
+                    + Objects.toString(ProcessHelper.getProcessStartTime(currentProcessId));
             Path extractedJarPath = extractJarInJar("app.jar", currentProcessData + "_app.jar");
 
-            String childProcess = String.join("\n", ProcessHandle.current().children().map(child -> child.pid() + ":" + child.info().startInstant().get().toEpochMilli()).toList());
+            String childProcess = ProcessHelper.getChildProcessesInfo();
             if (!childProcess.isEmpty()) {
                 PlatformHelp.childProcessesPIDs = childProcess;
             }
@@ -60,8 +60,8 @@ public class JarInJarHelper {
                     "-Xmx512m",
                     "-jar", extractedJarPath.toAbsolutePath().toString(),
                     "-jarPath", extractedJarPath.toAbsolutePath().toString(),
-                    "-parentPID", Objects.toString(ProcessHandle.current().pid()),
-                    "-parentStarted", Objects.toString(ProcessHelper.getStartTime(ProcessHandle.current().pid())),
+                    "-parentPID", Objects.toString(ProcessHelper.getCurrentProcessId()),
+                    "-parentStarted", Objects.toString(ProcessHelper.getProcessStartTime(ProcessHelper.getCurrentProcessId())),
                     "-parentXms", getJvmArgValue("Xms", "unknown"),
                     "-parentXmx", getJvmArgValue("Xmx", "unknown"),
                     "-systemRAM", formatMemorySize(new SystemInfo().getHardware().getMemory().getTotal()),
@@ -194,12 +194,12 @@ public class JarInJarHelper {
                                 LOGGER.error("Error while reading " + processInfoPath + ". This should never happen:", ex);
                                 throw new RuntimeException(ex);
                             }
-                            Optional<ProcessHandle> minecraftProcess = ProcessHandle.of(minecraft_pid);
-                            Optional<ProcessHandle> appProcess = ProcessHandle.of(app_pid);
-                            if (appProcess.isPresent()
-                                    && !(minecraftProcess.isPresent() && minecraftProcess.get().info().startInstant().get().getEpochSecond() == start_time)) {
+                            boolean isAppProcessAlive = ProcessHelper.isProcessAlive(app_pid);
+                            long minecraftStartTime = ProcessHelper.getProcessStartTime(minecraft_pid);
+                            if (isAppProcessAlive
+                                    && !(ProcessHelper.isProcessAlive(minecraft_pid) && minecraftStartTime == start_time)) {
                                 LOGGER.warn("Closed old CrashAssistantApp process to prevent confusing the player with window containing information from old crash.");
-                                appProcess.get().destroy();
+                                ProcessHelper.destroyProcess(app_pid);
                                 new java.util.Timer().schedule(
                                         new java.util.TimerTask() {
                                             @Override

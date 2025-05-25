@@ -2,8 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.codex.CodexMessage;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
-import gs.mclo.api.response.insights.Problem;
-import gs.mclo.api.response.insights.Solution;
+import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.Problem;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,7 +21,7 @@ public class KnownCrashReasonMessage {
     private final Log log;
     private final KnownCrashReason reason;
     private boolean isCodexMessage = false;
-    
+
     public Log getLog() {
         return log;
     }
@@ -56,28 +55,28 @@ public class KnownCrashReasonMessage {
     public static HashMap<KnownCrashReason, List<Log>> getUniqueMessages() {
         HashMap<String, List<KnownCrashReasonMessage>> messagesByReasonType = new HashMap<>();
         HashMap<KnownCrashReason, List<Log>> result = new HashMap<>();
-        
+
         // Group messages by reason class name (lowercase)
         for (KnownCrashReasonMessage message : crashReasonMessages) {
             String reasonType = message.getReason().getClass().getSimpleName().toLowerCase();
             messagesByReasonType.computeIfAbsent(reasonType, k -> new ArrayList<>()).add(message);
         }
-        
+
         // For each unique reason type, select the first message and collect all associated logs
         for (List<KnownCrashReasonMessage> messages : messagesByReasonType.values()) {
             if (!messages.isEmpty()) {
                 KnownCrashReasonMessage firstMessage = messages.get(0);
                 KnownCrashReason reason = firstMessage.getReason();
-                
+
                 // Collect all logs for this reason type
                 List<Log> logs = messages.stream()
                         .map(KnownCrashReasonMessage::getLog)
                         .collect(Collectors.toList());
-                
+
                 result.put(reason, logs);
             }
         }
-        
+
         return result;
     }
 
@@ -86,8 +85,8 @@ public class KnownCrashReasonMessage {
     }
 
     public static void addCodexMessage(Log log, Problem problem, String url) {
-        int line = problem.getEntry().getLines()[0].getNumber();
-        String solutions = String.join("\n", Arrays.stream(problem.getSolutions()).map(Solution::getMessage).toList());
+        int line = problem.getLine();
+        String solutions = String.join("\n", problem.getSolutions());
         String crashAssistantAnalysisOfCodex = LogAnalyser.analyseCodexMessage(problem.getMessage() + "\n" + solutions);
         String msg = LanguageProvider.get("warnings.codex")
                 .replaceAll("\\$PROBLEM\\$", problem.getMessage())

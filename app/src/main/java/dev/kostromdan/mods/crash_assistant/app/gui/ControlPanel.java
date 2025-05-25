@@ -8,12 +8,13 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.O
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParsingResult;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
+import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.ApiProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
-import gs.mclo.api.response.UploadLogResponse;
+import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.UploadLogResponse;
 
 import javax.swing.*;
 import java.awt.*;
@@ -463,8 +464,8 @@ public class ControlPanel {
     }
 
     public static String uploadModlistDiff(String diff) throws ExecutionException, InterruptedException, UploadException {
-        UploadLogResponse response = McLogsApiProvider.getMcLogsClient().uploadLog(diff).get();
-        response.setClient(McLogsApiProvider.getMcLogsClient());
+        UploadLogResponse response = ApiProvider.getMcLogsClient().uploadLog(diff).get();
+        response.setClient(ApiProvider.getMcLogsClient());
 
         if (response.isSuccess()) {
             return CrashAssistantGUI.transformLink(response.getUrl());

@@ -2,16 +2,54 @@ package dev.kostromdan.mods.crash_assistant.app.utils.gpu;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Record representing a GPU with its type and name.
+ * Class representing a GPU with its type and name.
  */
-public record GPU(RendererType type, String name) {
+public class GPU {
+    private final RendererType type;
+    private final String name;
+
+    public GPU(RendererType type, String name) {
+        this.type = type;
+        this.name = name;
+    }
+
+    public RendererType getType() {
+        return type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GPU gpu = (GPU) o;
+        return type == gpu.type && Objects.equals(name, gpu.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, name);
+    }
+
+    @Override
+    public String toString() {
+        return "GPU{" +
+                "type=" + type +
+                ", name='" + name + '\'' +
+                '}';
+    }
+
     public static String serializeGPUs(List<GPU> gpus) {
         StringBuilder serializedGPUs = new StringBuilder();
 
         for (GPU gpu : gpus) {
-            serializedGPUs.append(gpu.type()).append(" : ").append(gpu.name()).append("\n");
+            serializedGPUs.append(gpu.getType()).append(" : ").append(gpu.getName()).append("\n");
         }
         return serializedGPUs.toString();
     }

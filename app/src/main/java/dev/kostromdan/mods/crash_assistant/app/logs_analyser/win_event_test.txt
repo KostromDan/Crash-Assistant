@@ -48,6 +48,13 @@ TimeCreated           Id LevelDisplayName Message
    ProviderName: Application Hang
 TimeCreated           Id LevelDisplayName Message
 -----------           -- ---------------- -------
+24/05/2025 14:25:35 1002 Erro             O programa javaw.exe versão **.**.**.** parou de interagir com o Windows e foi
+                                          fechado. Para ver se mais informações sobre o problema estão disponíveis,
+                                          verifique o histórico de problemas no painel de controle Segurança e
+                                          Manutenção.
+   ProviderName: Application Hang
+TimeCreated           Id LevelDisplayName Message
+-----------           -- ---------------- -------
 05/05/2025 23:04:53 1002 Errore           Il programma javaw.exe versione **.**.**.** interrotto l'interazione con
                                           Windows ed è stato chiuso. Per verificare se sono disponibili ulteriori
                                           informazioni sul problema, controllare la cronologia dei problemi nel

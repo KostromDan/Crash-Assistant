@@ -20,7 +20,7 @@ public interface ProcessHelper {
 
     static String getChildProcessesInfo() {
         return String.join("\n", ProcessHandle.current().children()
-                .map(child -> child.pid() + ": " + child.info().command().orElse("Unknown"))
+                .map(child -> child.pid() + ": " + child.info().startInstant().get().toEpochMilli())
                 .collect(Collectors.toList()));
     }
 

@@ -21,11 +21,11 @@ import java.util.Objects;
 public class Create6Addons extends KnownCrashReason {
     public Create6Addons() {
         super(
-                new HashSet<>() {{
+                new HashSet<LogType>() {{
                     add(LogType.LOG);
                     add(LogType.CRASH_REPORT);
                 }},
-                LanguageProvider.get("warnings.c6a", new HashMap<>() {{
+                LanguageProvider.get("warnings.c6a", new HashMap<String, String>() {{
                     put("$LINK.C6A$", LanguageProvider.get("warnings_common.here"));
                 }}),
                 "(?i)java\\.lang\\.(ClassNotFoundException|NoClassDefFoundError): com[./]simibubi[./]create[./](?!foundation[./]ponder[./]PonderWorld\\b)[^ ]+",

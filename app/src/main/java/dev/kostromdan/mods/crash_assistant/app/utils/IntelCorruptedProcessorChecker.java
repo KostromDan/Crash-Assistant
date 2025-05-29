@@ -2,11 +2,14 @@ package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public interface IntelCorruptedProcessorChecker {
-    Set<String> AFFECTED_MODELS = Set.of(
+    Set<String> AFFECTED_MODELS = new HashSet<String>(Arrays.asList(
             "i5-13600k", "i5-13600kf", "i5-14600k", "i5-14600kf",
             "i7-13700", "i7-13700f", "i7-13700k", "i7-13700kf", "i7-13790f",
             "i7-14700", "i7-14700f", "i7-14700k", "i7-14700kf", "i7-14790f",
@@ -16,7 +19,7 @@ public interface IntelCorruptedProcessorChecker {
             // but we've received reports indicating similar issues with these processors,
             // so they are considered affected.
             "i9-14900hx"
-    );
+    ));
 
     static boolean isAffectedProcessor() {
         try {
@@ -32,7 +35,7 @@ public interface IntelCorruptedProcessorChecker {
         if (CrashAssistantApp.processor == null) {
             return null;
         }
-        var matcher = Pattern.compile("i[579]-\\d+[a-z]*", Pattern.CASE_INSENSITIVE)
+        Matcher matcher = Pattern.compile("i[579]-\\d+[a-z]*", Pattern.CASE_INSENSITIVE)
                 .matcher(CrashAssistantApp.processor);
         return matcher.find() ? matcher.group().toLowerCase() : null;
     }

@@ -9,7 +9,6 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
-import java.awt.desktop.OpenFilesEvent;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -23,7 +22,7 @@ public class InsufficientMemory extends KnownCrashReason {
 
     public static String applyEndRecommendations(String message) {
         String endRecommendations = PlatformHelp.isLinkDefault() || ModListDiff.isModpackCreator() ?
-                LanguageProvider.get("warnings.insufficient_memory_indv", new HashMap<>() {{
+                LanguageProvider.get("warnings.insufficient_memory_indv", new HashMap<String, String>() {{
                     put("$LINK.MODERN_FIX$", "ModernFix");
                     put("$LINK.FERRITE_CORE$", "FerriteCore");
                 }}) :

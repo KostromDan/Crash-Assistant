@@ -16,7 +16,7 @@ public class RegexTest {
 
         String logContent;
         try {
-            logContent = removeSpacesAndEndLines(Files.readString(Paths.get(logFilePath)));
+            logContent = removeSpacesAndEndLines(new String(Files.readAllBytes(Paths.get(logFilePath))));
             System.out.println(logContent);
         } catch (IOException e) {
             System.err.println("Error reading log file: " + e.getMessage());

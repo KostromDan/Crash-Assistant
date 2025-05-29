@@ -190,7 +190,9 @@ public class JarInJarHelper {
                             Long start_time = Long.parseLong(processInfo.split("_")[1]);
                             Long app_pid;
                             try {
-                                app_pid = Long.parseLong(Files.readString(processInfoPath));
+                                byte[] bytes = Files.readAllBytes(processInfoPath);
+                                String content = new String(bytes, StandardCharsets.UTF_8);
+                                app_pid = Long.parseLong(content);
                             } catch (IOException ex) {
                                 LOGGER.error("Error while reading " + processInfoPath + ". This should never happen:", ex);
                                 throw new RuntimeException(ex);
@@ -267,7 +269,7 @@ public class JarInJarHelper {
             }
 
             try (InputStreamReader reader = new InputStreamReader(jarStream, StandardCharsets.UTF_8)) {
-                JsonElement jsonElement = JsonParser.parseReader(reader);
+                JsonElement jsonElement = new JsonParser().parse(reader);
                 if (jsonElement == null || !jsonElement.isJsonObject()) {
                     throw new IllegalStateException("JSON content is not a valid JSON object.");
                 }
@@ -287,7 +289,7 @@ public class JarInJarHelper {
     public static HashMap<String, String> readJsonFromFile(Path path) {
         try {
             try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                return convertJsonToMap(JsonParser.parseReader(reader).getAsJsonObject());
+                return convertJsonToMap(new JsonParser().parse(reader).getAsJsonObject());
             }
         } catch (JsonSyntaxException e) {
             LOGGER.error("Failed to read corrupted json from file '{}'. Renaming to .bak", path, e);
@@ -327,7 +329,7 @@ public class JarInJarHelper {
         //Idea taken from org.sinytra.connector.locator.EmbeddedDependencies#getJarInJar
         Path pathInModFile = Paths.get(JarInJarHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI()).resolve("META-INF/jarjar/" + name);
         URI filePathUri = new URI("jij:" + pathInModFile.toAbsolutePath().toUri().getRawSchemeSpecificPart()).normalize();
-        Map<String, ?> outerFsArgs = Map.of("packagePath", pathInModFile);
+        Map<String, Path> outerFsArgs = Collections.singletonMap("packagePath", pathInModFile);
         FileSystem zipFS = FileSystems.newFileSystem(filePathUri, outerFsArgs);
         return zipFS.getPath("/");
     }

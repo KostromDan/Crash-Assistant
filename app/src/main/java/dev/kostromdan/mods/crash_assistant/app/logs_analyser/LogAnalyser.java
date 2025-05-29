@@ -21,7 +21,7 @@ public class LogAnalyser {
     private static final List<KnownCrashReason> registeredReasons = new ArrayList<>();
     private static final List<CodexAnalysis> registeredCodexReasons = new ArrayList<>();
     private static boolean reasonsRegistered = false;
-    public static final HashSet<LogType> CodexSupportedLogTypes = new HashSet<>() {{
+    public static final HashSet<LogType> CodexSupportedLogTypes = new HashSet<LogType>() {{
         add(LogType.LOG);
         add(LogType.CRASH_REPORT);
     }};

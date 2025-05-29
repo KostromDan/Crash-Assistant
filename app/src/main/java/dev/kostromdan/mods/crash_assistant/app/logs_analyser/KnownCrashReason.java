@@ -13,7 +13,7 @@ public class KnownCrashReason {
     public static HashSet<KnownCrashReason> shownKnownCrashReasons = new HashSet<>();
 
     protected KnownCrashReason(LogType logType, String message, List<String> patterns) {
-        this.logTypes = new HashSet<>() {{
+        this.logTypes = new HashSet<LogType>() {{
             add(logType);
         }};
         this.message = message;
@@ -27,7 +27,7 @@ public class KnownCrashReason {
     }
 
     protected KnownCrashReason(LogType logType, String message, String... patterns) {
-        this.logTypes = new HashSet<>() {{
+        this.logTypes = new HashSet<LogType>() {{
             add(logType);
         }};
         this.message = message;

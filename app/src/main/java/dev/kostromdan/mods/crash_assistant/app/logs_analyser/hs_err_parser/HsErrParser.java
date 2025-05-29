@@ -27,7 +27,7 @@ public class HsErrParser {
                     if (i + 1 < lines.size()) {
                         String frame = lines.get(i + 1);
                         fullString += "\n" + frame;
-                        if (frame.strip().equals("#") && i + 2 < lines.size() && lines.get(i + 2).contains("error occurred during error reporting")) {
+                        if (frame.trim().equals("#") && i + 2 < lines.size() && lines.get(i + 2).contains("error occurred during error reporting")) {
                             frame = lines.get(i + 2);
                             fullString += "\n" + frame;
                         }
@@ -75,11 +75,11 @@ public class HsErrParser {
 
     public static int countMatchedFrames(Log log, String... frames) {
         Optional<HsErrParsingResult> parsingResult = parseHsErr(log);
-        if (parsingResult.isEmpty()) {
+        if (!parsingResult.isPresent()) {
             return 0;
         }
         Optional<String> problematicFrame = parsingResult.get().getProblematicFrame();
-        if (problematicFrame.isEmpty()) {
+        if (!problematicFrame.isPresent()) {
             return 0;
         }
         int count = 0;

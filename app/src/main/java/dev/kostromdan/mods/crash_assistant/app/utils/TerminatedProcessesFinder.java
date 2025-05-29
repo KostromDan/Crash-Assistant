@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,7 +32,7 @@ public class TerminatedProcessesFinder {
             }
 
             try {
-                String fileContents = Files.readString(path);
+                String fileContents = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
                 if (fileContents.contains("NoMatchingEventsFound") || fileContents.length() <= 8) {
                     Files.deleteIfExists(path);
                     return fileName;
@@ -47,7 +48,7 @@ public class TerminatedProcessesFinder {
                         "3) Look for the latest Error you have.\n \n "
                         + fileContents;
 
-                Files.writeString(path, output);
+                Files.write(path, output.getBytes(StandardCharsets.UTF_8));
             } catch (Exception ignored) {
             }
 

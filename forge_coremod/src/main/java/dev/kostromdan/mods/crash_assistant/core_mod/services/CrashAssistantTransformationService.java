@@ -7,9 +7,9 @@ import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarH
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import net.minecraftforge.fml.loading.FMLLoader;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.Set;
  * So we launch it from initialize of ITransformationService, the first point, we can launch it from forge mod.
  */
 public class CrashAssistantTransformationService implements ITransformationService {
-    public static final Logger LOGGER = LoggerFactory.getLogger("CrashAssistantTransformationService");
+    public static Logger LOGGER = LogManager.getLogger("CrashAssistantTransformationService");
 
 
     @Override

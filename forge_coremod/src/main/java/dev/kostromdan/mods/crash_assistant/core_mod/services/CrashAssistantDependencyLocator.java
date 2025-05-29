@@ -5,8 +5,8 @@ import net.minecraftforge.fml.loading.moddiscovery.AbstractJarFileLocator;
 import net.minecraftforge.fml.loading.moddiscovery.ModFile;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileParser;
 import net.minecraftforge.forgespi.locating.IModFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.Map;
  * Since forge doesn't load jar in jar mods from coremods, we should do it by ourselves.
  */
 public class CrashAssistantDependencyLocator extends AbstractJarFileLocator {
-    public static final Logger LOGGER = LoggerFactory.getLogger("CrashAssistantDependencyLocator");
+    public static Logger LOGGER = LogManager.getLogger("CrashAssistantDependencyLocator");
 
     @Override
     public List<IModFile> scanMods() {

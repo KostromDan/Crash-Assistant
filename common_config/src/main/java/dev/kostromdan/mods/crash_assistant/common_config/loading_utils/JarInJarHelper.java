@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import com.sun.management.OperatingSystemMXBean;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
@@ -59,13 +60,14 @@ public class JarInJarHelper {
                     "-XX:MaxGCPauseMillis=10000",
                     "-Xms8m",
                     "-Xmx512m",
+                    "-javaagent:" + extractedJarPath.toAbsolutePath().toString(),
                     "-jar", extractedJarPath.toAbsolutePath().toString(),
                     "-jarPath", extractedJarPath.toAbsolutePath().toString(),
                     "-parentPID", Objects.toString(ProcessHelper.getCurrentProcessId()),
                     "-parentStarted", Objects.toString(ProcessHelper.getProcessStartTime(ProcessHelper.getCurrentProcessId())),
                     "-parentXms", getJvmArgValue("Xms", "unknown"),
                     "-parentXmx", getJvmArgValue("Xmx", "unknown"),
-                    "-systemRAM", formatMemorySize(new SystemInfo().getHardware().getMemory().getTotal()),
+                    "-systemRAM", formatMemorySize(getTotalPhysicalMemory()),
                     "-platform", PlatformHelp.platform.toString(),
                     "-loaderJarName", PlatformHelp.loaderJarName,
                     "-minecraftVersion", PlatformHelp.minecraftVersion,
@@ -75,7 +77,7 @@ public class JarInJarHelper {
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    "-processor", new SystemInfo().getHardware().getProcessors()[0].getName()
+                    "-processor", String.format("%s", (new SystemInfo()).getHardware().getProcessors()[0]).replaceAll("\\s+", " ")
             );
             crashAssistantAppProcessBuilder.start();
             ProblematicModsConfig.crashIfProblematicMod();
@@ -83,6 +85,22 @@ public class JarInJarHelper {
             LOGGER.error("Error while launching GUI: ", e);
         }
     }
+
+    /**
+     * Returns the total physical memory (RAM) in bytes, or -1 if the value
+     * cannot be determined on the current JVM/OS.
+     */
+    public static long getTotalPhysicalMemory() {
+        try {
+            OperatingSystemMXBean osBean =
+                    (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            return osBean.getTotalPhysicalMemorySize();  // value in bytes
+        } catch (Throwable t) {
+            // Either the cast failed (non-HotSpot VM) or the method is unavailable
+            return -1L;
+        }
+    }
+
 
     public static List<Path> getModJarPathsContainingPart(String part) {
         try {

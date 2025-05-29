@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -33,11 +34,15 @@ public class CrashAssistantTransformationService implements ITransformationServi
     public void initialize(IEnvironment environment) {
         String launchTarget = environment.getProperty(IEnvironment.Keys.LAUNCHTARGET.get()).orElse("unknown");
         PlatformHelp.platform = PlatformHelp.FORGE;
+
         try {
-            PlatformHelp.minecraftVersion = FMLLoader.class.getField("mcVersion").get(null).toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            Field versionField = FMLLoader.class.getDeclaredField("mcVersion");
+            versionField.setAccessible(true);
+            PlatformHelp.minecraftVersion = String.valueOf(versionField.get(null));
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Unable to read Minecraft version from FMLLoader", e);
         }
+
         LibrariesJarLocator.setupLoaderJarName(FMLLoader.class);
         JarInJarHelper.launchCrashAssistantApp(launchTarget);
         JarInJarHelper.checkForIncompatibleMods(true);

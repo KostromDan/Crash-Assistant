@@ -19,7 +19,7 @@ repositories {
     }
 }
 
-def lwjglVersion = '3.3.1'
+def lwjglVersion = '3.1.0'
 def lwjglNatives = {
     def osName = System.getProperty('os.name').toLowerCase()
     if (osName.contains('win')) {

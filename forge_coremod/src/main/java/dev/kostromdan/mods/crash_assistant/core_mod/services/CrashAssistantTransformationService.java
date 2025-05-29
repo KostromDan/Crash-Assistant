@@ -7,7 +7,6 @@ import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarH
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import net.minecraftforge.fml.loading.FMLLoader;
-import net.minecraftforge.fml.loading.VersionInfo;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,11 +33,19 @@ public class CrashAssistantTransformationService implements ITransformationServi
     public void initialize(IEnvironment environment) {
         String launchTarget = environment.getProperty(IEnvironment.Keys.LAUNCHTARGET.get()).orElse("unknown");
         PlatformHelp.platform = PlatformHelp.FORGE;
-        PlatformHelp.minecraftVersion = FMLLoader.versionInfo().mcVersion();
-        LibrariesJarLocator.setupLoaderJarName(VersionInfo.class);
+        try {
+            PlatformHelp.minecraftVersion = FMLLoader.class.getField("mcVersion").get(null).toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        LibrariesJarLocator.setupLoaderJarName(FMLLoader.class);
         JarInJarHelper.launchCrashAssistantApp(launchTarget);
         JarInJarHelper.checkForIncompatibleMods(true);
         JarInJarHelper.checkDuplicatedCrashAssistantMod(true);
+    }
+
+    @Override
+    public void beginScanning(IEnvironment iEnvironment) {
     }
 
     @Override

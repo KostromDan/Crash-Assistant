@@ -1,3 +1,20 @@
+1.9.0:
+
+- Complete Java 8 backport to add 1.16.5 and older support.
+- Replaced external McLogs API dependency with custom implementation due to it being incompatible with Java 8.
+  Also should fix some connection issues on logs uploading.
+- Temporarily removed DirectX based gpu-detect-jni.dll due to CurseForge policy about DLLs which they are going to
+  change within a month.
+- Temporarily returned Vulkan to the app fatjar. Decreased version to 3.1.0 to decrease Vulkan size as much as possible.
+  Currently adds 1 MB to mod jar. Instead of 5 mb as was older.
+- Added support for MixerLogger.log log files.
+- Added support for an additional Portuguese error message in WasClosedByWindows log analysis.
+- Moved 'processor' field from Boot to CrashAssistantApp. Added logging of processor.
+- Fixed misordered JVM argument in JarInJarHelper command setup. Xms was above Xmx, which can be confusing while reading
+  log.
+- Introduced a new crash reason `FeatureOrderCycle` log analysis.
+- Introduced a new crash reason `ServerConfigCorrupted` log analysis.
+
 1.8.2:
 
 - Refactored in CreateDependencies missing JDK warning dialog with improved user interface and configuration options.

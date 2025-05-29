@@ -75,7 +75,7 @@ public class JarInJarHelper {
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    "-processor", new SystemInfo().getHardware().getProcessor().getProcessorIdentifier().getName()
+                    "-processor", new SystemInfo().getHardware().getProcessors()[0].getName()
             );
             crashAssistantAppProcessBuilder.start();
             ProblematicModsConfig.crashIfProblematicMod();

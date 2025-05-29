@@ -274,6 +274,8 @@ public class CrashAssistantApp {
         }
 
 
+        LogsList.addIfExistsAndModified(new Log(LogType.MIXER_LOGGER, Paths.get("logs", "MixerLogger.log")));
+
         LogsList.addIfExistsAndModified(new Log(LogType.KUBE_JS, "KubeJS: client.log", Paths.get("logs", "kubejs", "client.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.KUBE_JS, "KubeJS: server.log", Paths.get("logs", "kubejs", "server.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.KUBE_JS, "KubeJS: startup.log", Paths.get("logs", "kubejs", "startup.log")));

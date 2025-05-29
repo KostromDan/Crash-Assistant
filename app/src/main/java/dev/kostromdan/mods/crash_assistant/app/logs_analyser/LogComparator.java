@@ -16,6 +16,7 @@ public class LogComparator implements Comparator<Log> {
             LogType.DISCONNECT_CLIENT,
             LogType.WIN_EVENT,
             LogType.LAUNCHER_LOG,
+            LogType.MIXER_LOGGER,
             LogType.KUBE_JS,
             LogType.CRAFT_TWEAKER,
             LogType.REI,

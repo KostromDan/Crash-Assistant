@@ -8,6 +8,7 @@ public enum LogType {
     HS_ERR,
     DISCONNECT_CLIENT,
     WIN_EVENT,
+    MIXER_LOGGER,
     MOD_LIST,
     KUBE_JS,
     CRAFT_TWEAKER,

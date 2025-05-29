@@ -27,7 +27,7 @@ public class Boot {
     public static String jarPath = null;
     public static String crashAssistantModJarPath = null;
     public static boolean recursiveStart = false;
-    public static boolean vulkanAddonLoaded = false;
+    public static boolean vulkanAddonLoaded = true;
     public static String serialisedGPUs = null;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
     public static List<String> APP_ARGS;
@@ -119,38 +119,38 @@ public class Boot {
     }
 
     private static void loadVulkanAddon(){
-        List<Mod> vulkanAddons = JarInJarHelper.getModsContainingPart("CrashAssistantVulkanGPUDetectionAddon-");
-        Mod VulkanAddon = vulkanAddons.stream()
-                .findFirst()
-                .orElse(null);
-        if(VulkanAddon == null) return;
-
-        vulkanAddonLoaded = true;
-
-        try {
-            Path libsFolder = Paths.get("local", "crash_assistant", "libs");
-            Files.createDirectories(libsFolder);
-
-            try (JarFile vulkanAddonJar = new JarFile(Paths.get("mods", VulkanAddon.getJarName()).toFile())) {
-                Enumeration<JarEntry> entries = vulkanAddonJar.entries();
-                while (entries.hasMoreElements()) {
-                    JarEntry entry = entries.nextElement();
-                    String entryName = entry.getName();
-
-                    if (entryName.startsWith("META-INF/jarjar/") && entryName.endsWith(".jar")) {
-                        String jarFileName = entryName.substring(entryName.lastIndexOf('/') + 1);
-                        Path extractedJarPath = libsFolder.resolve(jarFileName);
-
-                        try (InputStream is = vulkanAddonJar.getInputStream(entry)) {
-                            Files.copy(is, extractedJarPath, StandardCopyOption.REPLACE_EXISTING);
-                            CrashAssistantAgent.appendJarFile(extractedJarPath.toAbsolutePath().toString());
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to extract jar from VulkanAddon: " + e.getMessage());
-            e.printStackTrace();
-        }
+//        List<Mod> vulkanAddons = JarInJarHelper.getModsContainingPart("CrashAssistantVulkanGPUDetectionAddon-");
+//        Mod VulkanAddon = vulkanAddons.stream()
+//                .findFirst()
+//                .orElse(null);
+//        if(VulkanAddon == null) return;
+//
+//        vulkanAddonLoaded = true;
+//
+//        try {
+//            Path libsFolder = Paths.get("local", "crash_assistant", "libs");
+//            Files.createDirectories(libsFolder);
+//
+//            try (JarFile vulkanAddonJar = new JarFile(Paths.get("mods", VulkanAddon.getJarName()).toFile())) {
+//                Enumeration<JarEntry> entries = vulkanAddonJar.entries();
+//                while (entries.hasMoreElements()) {
+//                    JarEntry entry = entries.nextElement();
+//                    String entryName = entry.getName();
+//
+//                    if (entryName.startsWith("META-INF/jarjar/") && entryName.endsWith(".jar")) {
+//                        String jarFileName = entryName.substring(entryName.lastIndexOf('/') + 1);
+//                        Path extractedJarPath = libsFolder.resolve(jarFileName);
+//
+//                        try (InputStream is = vulkanAddonJar.getInputStream(entry)) {
+//                            Files.copy(is, extractedJarPath, StandardCopyOption.REPLACE_EXISTING);
+//                            CrashAssistantAgent.appendJarFile(extractedJarPath.toAbsolutePath().toString());
+//                        }
+//                    }
+//                }
+//            }
+//        } catch (Exception e) {
+//            System.err.println("Failed to extract jar from VulkanAddon: " + e.getMessage());
+//            e.printStackTrace();
+//        }
     }
 }

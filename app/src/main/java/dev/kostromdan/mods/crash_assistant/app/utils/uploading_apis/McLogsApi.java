@@ -59,7 +59,7 @@ public class McLogsApi implements UploadingApi {
                 connection.setDoOutput(true);
 
                 // Prepare the request body
-                String content = "content=" + URLEncoder.encode(finalText, StandardCharsets.UTF_8);
+                String content = "content=" + URLEncoder.encode(finalText, StandardCharsets.UTF_8.name());
                 byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
                 int totalBytes = contentBytes.length;
 

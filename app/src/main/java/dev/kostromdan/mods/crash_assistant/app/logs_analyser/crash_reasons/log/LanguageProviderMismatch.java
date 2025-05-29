@@ -14,7 +14,7 @@ import java.util.List;
 public class LanguageProviderMismatch extends KnownCrashReason {
     public LanguageProviderMismatch() {
         super(
-                new HashSet<>() {{
+                new HashSet<LogType>() {{
                     add(LogType.LOG);
                     add(LogType.CRASH_REPORT);
                 }},

@@ -325,8 +325,8 @@ public class CrashAssistantConfig {
     public static long getCommentsHash() {
         long hash = 0;
         hash += config.commentMap().hashCode();
-        for (var entry : config.valueMap().entrySet()) {
-            var value = entry.getValue();
+        for (Map.Entry<String, Object> entry : config.valueMap().entrySet()) {
+            Object value = entry.getValue();
             if (value instanceof AbstractCommentedConfig) {
                 hash += ((AbstractCommentedConfig) value).commentMap().hashCode();
             }

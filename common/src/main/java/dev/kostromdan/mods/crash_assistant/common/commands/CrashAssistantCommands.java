@@ -305,13 +305,13 @@ public class CrashAssistantCommands {
         public MutableComponent toComponent() {
             MutableComponent msg = Component.empty();
             for (ColoredString cs : sb) {
-                if (cs.color().isEmpty()) {
-                    msg.append(cs.text());
+                if (cs.getColor().isEmpty()) {
+                    msg.append(cs.getText());
                 } else {
-                    msg.append(Component.literal(cs.text()).withStyle(
-                            style -> style.withColor(Enum.valueOf(ChatFormatting.class, cs.color().toUpperCase()))));
+                    msg.append(Component.literal(cs.getText()).withStyle(
+                            style -> style.withColor(Enum.valueOf(ChatFormatting.class, cs.getColor().toUpperCase()))));
                 }
-                if (cs.endsWithNewLine()) {
+                if (cs.isEndsWithNewLine()) {
                     msg.append("\n");
                 }
             }

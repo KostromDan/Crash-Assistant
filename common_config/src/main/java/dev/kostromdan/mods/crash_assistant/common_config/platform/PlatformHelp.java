@@ -20,7 +20,7 @@ public enum PlatformHelp {
     public static PlatformHelp platform = UNKNOWN;
     public static String loaderJarName = "UNDEFINED";
     public static String minecraftVersion = "UNDEFINED";
-    public static final String javaVersion = Runtime.version().toString();
+    public static final String javaVersion = System.getProperty("java.runtime.version", "UNDEFINED");
     public static String childProcessesPIDs = "UNDEFINED";
     public static final String OS = System.getProperty("os.name").toLowerCase(Locale.ROOT);
 

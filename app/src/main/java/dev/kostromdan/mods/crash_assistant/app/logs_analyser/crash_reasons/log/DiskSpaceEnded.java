@@ -9,7 +9,7 @@ import java.util.HashSet;
 public class DiskSpaceEnded extends KnownCrashReason {
     public DiskSpaceEnded() {
         super(
-                new HashSet<>() {{
+                new HashSet<LogType>() {{
                     add(LogType.LOG);
                     add(LogType.CRASH_REPORT);
                 }},

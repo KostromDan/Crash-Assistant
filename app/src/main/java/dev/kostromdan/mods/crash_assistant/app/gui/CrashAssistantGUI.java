@@ -62,7 +62,7 @@ public class CrashAssistantGUI {
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         titleLabel.setFont(titleLabel.getFont().deriveFont(16f));
 
-        HashMap<String, String> hrefOptions = new HashMap<>() {{
+        HashMap<String, String> hrefOptions = new HashMap<String, String>() {{
             put("$CONFIG.text.support_name$", null);
             put("$LANG.gui.upload_all_comment$", null);
         }};

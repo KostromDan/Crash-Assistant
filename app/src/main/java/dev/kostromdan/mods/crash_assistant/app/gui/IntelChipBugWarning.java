@@ -111,7 +111,7 @@ public class IntelChipBugWarning {
             }
 
             JEditorPane textPane = CrashAssistantGUI.getEditorPane(
-                    LanguageProvider.get("gui.intel_corrupted_msg", new HashMap<>() {{
+                    LanguageProvider.get("gui.intel_corrupted_msg", new HashMap<String, String>() {{
                         put("$LINK.INTEL_CHIP_BUG_FAQ$", "FAQ");
                     }}), true);
             textPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));

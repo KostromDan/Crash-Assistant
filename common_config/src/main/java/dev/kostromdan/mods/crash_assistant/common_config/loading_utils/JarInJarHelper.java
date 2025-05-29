@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import com.sun.management.OperatingSystemMXBean;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
@@ -65,7 +66,7 @@ public class JarInJarHelper {
                     "-parentStarted", Objects.toString(ProcessHelper.getProcessStartTime(ProcessHelper.getCurrentProcessId())),
                     "-parentXms", getJvmArgValue("Xms", "unknown"),
                     "-parentXmx", getJvmArgValue("Xmx", "unknown"),
-                    "-systemRAM", formatMemorySize(new SystemInfo().getHardware().getMemory().getTotal()),
+                    "-systemRAM", formatMemorySize(getTotalPhysicalMemory()),
                     "-platform", PlatformHelp.platform.toString(),
                     "-loaderJarName", PlatformHelp.loaderJarName,
                     "-minecraftVersion", PlatformHelp.minecraftVersion,
@@ -83,6 +84,22 @@ public class JarInJarHelper {
             LOGGER.error("Error while launching GUI: ", e);
         }
     }
+
+    /**
+     * Returns the total physical memory (RAM) in bytes, or -1 if the value
+     * cannot be determined on the current JVM/OS.
+     */
+    public static long getTotalPhysicalMemory() {
+        try {
+            OperatingSystemMXBean osBean =
+                    (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            return osBean.getTotalPhysicalMemorySize();  // value in bytes
+        } catch (Throwable t) {
+            // Either the cast failed (non-HotSpot VM) or the method is unavailable
+            return -1L;
+        }
+    }
+
 
     public static List<Path> getModJarPathsContainingPart(String part) {
         try {

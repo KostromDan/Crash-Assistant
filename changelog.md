@@ -1,3 +1,7 @@
+1.9.1:
+
+- Fixed bug in essential mod modid parsing.
+
 1.9.0:
 
 - Complete Java 8 backport to add 1.16.5 and older support.

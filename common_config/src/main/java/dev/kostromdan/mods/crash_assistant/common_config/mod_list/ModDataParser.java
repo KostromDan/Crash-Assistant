@@ -154,7 +154,7 @@ public class ModDataParser {
                     JarInJarHelper.LOGGER.warn("Error while trying to parse " + resourcePath + " of " + jarPath.getFileName().toString() + ": ", e);
                 }
             }
-            if (jarPath.getFileName().toString().startsWith("essential") && jarFile.getJarEntry("essential-loader.properties") != null) {
+            if (jarPath.getFileName().toString().toLowerCase().contains("essential") && jarFile.getJarEntry("essential-loader.properties") != null) {
                 return new Mod(jarPath.getFileName().toString(), "essential-container", null);
             }
         } catch (Exception ignored) {

@@ -1,33 +1,44 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
+import java.time.Instant;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public interface ProcessHelper {
     static long getCurrentProcessId() {
-        return 12345L; // Return constant process ID
+        return ProcessHandle.current().pid();
     }
 
     static boolean isProcessAlive(long pid) {
-        return true; // Always return true
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        return processHandle.isPresent() && processHandle.get().isAlive();
     }
 
     static Optional<String> getCurrentProcessCommand() {
-        return Optional.of("java"); // Return constant command
+        return ProcessHandle.current().info().command();
     }
 
     static String getChildProcessesInfo() {
-        return "12346: 1600000000000\n12347: 1600000000001"; // Return constant child process info
+        return String.join("\n", ProcessHandle.current().children()
+                .map(child -> child.pid() + ": " + child.info().startInstant().get().toEpochMilli())
+                .collect(Collectors.toList()));
     }
 
     static boolean destroyProcess(long pid) {
-        return true; // Always return true
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        if (processHandle.isEmpty()) return false;
+        return processHandle.get().destroy();
     }
 
     static boolean destroyProcessForcibly(long pid) {
-        return true; // Always return true
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        if (processHandle.isEmpty()) return false;
+        return processHandle.get().destroyForcibly();
     }
 
     static long getProcessStartTime(long pid) {
-        return System.currentTimeMillis() - 3600000; // Return current time minus one hour
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        if (processHandle.isEmpty()) return -1;
+        return processHandle.get().info().startInstant().map(Instant::toEpochMilli).orElse(-1L);
     }
 }

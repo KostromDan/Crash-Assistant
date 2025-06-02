@@ -73,7 +73,6 @@ shadowJar {
 
     dependencies {
         exclude(dependency('org.apache.logging.log4j:.*'))
-        exclude(dependency('com.google.code.gson:.*'))
         exclude(dependency('commons-io:commons-io:2.15.1'))
         exclude(dependency('com.electronwill.night-config:.*'))
         exclude(project(':common_config'))

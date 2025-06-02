@@ -22,7 +22,6 @@ import java.util.jar.JarFile;
 public class Boot {
     public static String log4jApi = null;
     public static String log4jCore = null;
-    public static String googleGson = null;
     public static String commonIo = null;
     public static String jna = null;
     public static String jnaPlatform = null;
@@ -43,8 +42,6 @@ public class Boot {
                 log4jApi = args[i + 1];
             } else if ("-log4jCore".equals(args[i]) && i + 1 < args.length) {
                 log4jCore = args[i + 1];
-            } else if ("-googleGson".equals(args[i]) && i + 1 < args.length) {
-                googleGson = args[i + 1];
             } else if ("-commonIo".equals(args[i]) && i + 1 < args.length) {
                 commonIo = args[i + 1];
             } else if ("-jna".equals(args[i]) && i + 1 < args.length) {
@@ -71,7 +68,6 @@ public class Boot {
 
         CrashAssistantAgent.appendJarFile(log4jApi);
         CrashAssistantAgent.appendJarFile(log4jCore);
-        CrashAssistantAgent.appendJarFile(googleGson);
         CrashAssistantAgent.appendJarFile(commonIo);
         CrashAssistantAgent.appendJarFile(jna);
         CrashAssistantAgent.appendJarFile(jnaPlatform);
@@ -120,7 +116,6 @@ public class Boot {
         List<String> missingParameters = new ArrayList<>();
         if (log4jApi == null) missingParameters.add("-log4jApi");
         if (log4jCore == null) missingParameters.add("-log4jCore");
-        if (googleGson == null) missingParameters.add("-googleGson");
         if (commonIo == null) missingParameters.add("-commonIo");
         if (jna == null) missingParameters.add("-jna");
         if (jnaPlatform == null) missingParameters.add("-jnaPlatform");

@@ -44,7 +44,7 @@ public class JarInJarHelper {
 
             long currentProcessId = ProcessHelper.getCurrentProcessId();
             String currentProcessData = Objects.toString(currentProcessId) + "_"
-                    + Objects.toString(ProcessHelper.getProcessStartTime(currentProcessId));
+                    + Objects.toString(ProcessHelper.getCurrentProcessStartTime());
             Path extractedJarPath = extractJarInJar("app.jar", currentProcessData + "_app.jar");
 
             String childProcess = ProcessHelper.getChildProcessesInfo();
@@ -63,7 +63,7 @@ public class JarInJarHelper {
                     "-jar", extractedJarPath.toAbsolutePath().toString(),
                     "-jarPath", extractedJarPath.toAbsolutePath().toString(),
                     "-parentPID", Objects.toString(ProcessHelper.getCurrentProcessId()),
-                    "-parentStarted", Objects.toString(ProcessHelper.getProcessStartTime(ProcessHelper.getCurrentProcessId())),
+                    "-parentStarted", Objects.toString(ProcessHelper.getCurrentProcessStartTime()),
                     "-parentXms", getJvmArgValue("Xms", "unknown"),
                     "-parentXmx", getJvmArgValue("Xmx", "unknown"),
                     "-systemRAM", formatMemorySize(getTotalPhysicalMemory()),

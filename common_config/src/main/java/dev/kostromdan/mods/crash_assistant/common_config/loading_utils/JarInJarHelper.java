@@ -69,9 +69,6 @@ public class JarInJarHelper {
                     "-jarPath", extractedJarPath.toAbsolutePath().toString(),
                     "-parentPID", Objects.toString(ProcessHelper.getCurrentProcessId()),
                     "-parentStarted", Objects.toString(ProcessHelper.getCurrentProcessStartTime()),
-                    "-parentXms", getJvmArgValue("Xms", "unknown"),
-                    "-parentXmx", getJvmArgValue("Xmx", "unknown"),
-                    "-systemRAM", formatMemorySize(getTotalPhysicalMemory()),
                     "-platform", PlatformHelp.platform.toString(),
                     "-loaderJarName", PlatformHelp.loaderJarName,
                     "-minecraftVersion", PlatformHelp.minecraftVersion,
@@ -83,7 +80,10 @@ public class JarInJarHelper {
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
                     "-jna", LibrariesJarLocator.getLibraryJarPath(Memory.class),
                     "-jnaPlatform", LibrariesJarLocator.getLibraryJarPath(Tlhelp32.class),
-                    "-processor", getProcessorName()
+                    "-parentXms", getJvmArgValue("Xms", "unknown"),
+                    "-parentXmx", getJvmArgValue("Xmx", "unknown"),
+                    "-systemRAM", formatMemorySize(getTotalPhysicalMemory()),
+                    "-processor", Base64.getEncoder().encodeToString(getProcessorName().getBytes(StandardCharsets.UTF_8))
             );
             LOGGER.info("Starting CrashAssistantApp with command: {}", String.join(" ", crashAssistantAppProcessBuilder.command()));
 

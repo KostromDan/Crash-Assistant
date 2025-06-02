@@ -28,7 +28,7 @@ public class ProcessHelper {
             }
         }
 
-        impl = tempImpl;
+        impl = new ProcessHandleWinImpl();
     }
 
     /**

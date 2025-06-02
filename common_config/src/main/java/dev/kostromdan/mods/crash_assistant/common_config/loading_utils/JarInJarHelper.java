@@ -77,11 +77,11 @@ public class JarInJarHelper {
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    "-processor", String.format("%s", (new SystemInfo()).getHardware().getProcessors()[0]).replaceAll("\\s+", " ")
+                    "-processor", getProcessorName()
             );
             crashAssistantAppProcessBuilder.start();
             ProblematicModsConfig.crashIfProblematicMod();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error("Error while launching GUI: ", e);
         }
     }
@@ -101,6 +101,14 @@ public class JarInJarHelper {
         }
     }
 
+    public static String getProcessorName(){
+        try{
+            return String.format("%s", (new SystemInfo()).getHardware().getProcessors()[0]).replaceAll("\\s+", " ");
+        }catch (Throwable e){
+            LOGGER.error("Error while getting processor name:", e);
+            return "UNKNOWN";
+        }
+    }
 
     public static List<Path> getModJarPathsContainingPart(String part) {
         try {

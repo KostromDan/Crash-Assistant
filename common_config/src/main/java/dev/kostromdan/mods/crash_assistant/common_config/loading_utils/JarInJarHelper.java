@@ -2,8 +2,6 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import com.sun.jna.Memory;
-import com.sun.jna.platform.win32.Tlhelp32;
 import com.sun.management.OperatingSystemMXBean;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
@@ -20,8 +18,6 @@ import org.apache.logging.log4j.core.Core;
 import oshi.SystemInfo;
 
 import java.io.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -80,31 +76,9 @@ public class JarInJarHelper {
                     "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
                     "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
                     "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    "-jna", LibrariesJarLocator.getLibraryJarPath(Memory.class),
-                    "-jnaPlatform", LibrariesJarLocator.getLibraryJarPath(Tlhelp32.class),
                     "-processor", getProcessorName()
             );
-            LOGGER.info("Starting CrashAssistantApp with command: {}", String.join(" ", crashAssistantAppProcessBuilder.command()));
-
-            crashAssistantAppProcessBuilder.redirectErrorStream(true);
-            Process process = crashAssistantAppProcessBuilder.start();
-            new java.util.Timer().schedule(
-                    new java.util.TimerTask() {
-                        @Override
-                        public void run() {
-                            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                                String line;
-                                while ((line = reader.readLine()) != null) {
-                                    LOGGER.info("[CrashAssistantApp] {}", line);
-                                }
-                            } catch (IOException e) {
-                                LOGGER.error("Error reading process output:", e);
-                            }
-                        }
-                    },
-                    5000
-            );
-
+            crashAssistantAppProcessBuilder.start();
             ProblematicModsConfig.crashIfProblematicMod();
         } catch (Throwable e) {
             LOGGER.error("Error while launching GUI: ", e);

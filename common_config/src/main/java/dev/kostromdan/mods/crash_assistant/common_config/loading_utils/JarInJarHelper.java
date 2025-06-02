@@ -85,27 +85,7 @@ public class JarInJarHelper {
                     "-systemRAM", formatMemorySize(getTotalPhysicalMemory()),
                     "-processor", Base64.getEncoder().encodeToString(getProcessorName().getBytes(StandardCharsets.UTF_8))
             );
-            LOGGER.info("Starting CrashAssistantApp with command: {}", String.join(" ", crashAssistantAppProcessBuilder.command()));
-
-            crashAssistantAppProcessBuilder.redirectErrorStream(true);
-            Process process = crashAssistantAppProcessBuilder.start();
-            new java.util.Timer().schedule(
-                    new java.util.TimerTask() {
-                        @Override
-                        public void run() {
-                            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                                String line;
-                                while ((line = reader.readLine()) != null) {
-                                    LOGGER.info("[CrashAssistantApp] {}", line);
-                                }
-                            } catch (IOException e) {
-                                LOGGER.error("Error reading process output:", e);
-                            }
-                        }
-                    },
-                    5000
-            );
-
+            crashAssistantAppProcessBuilder.start();
             ProblematicModsConfig.crashIfProblematicMod();
         } catch (Throwable e) {
             LOGGER.error("Error while launching GUI: ", e);

@@ -1,109 +1,49 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
+import java.lang.ProcessHandle;
+import java.time.Instant;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-/**
- * Utility class for process management operations.
- * This class delegates to an appropriate implementation based on the
- * availability of ProcessHandle and the operating system.
- */
 public class ProcessHelper {
-    private static final ProcessHelperImpl impl;
-
-    static {
-        ProcessHelperImpl tempImpl = null;
-
-        // Try to use ProcessHandle via reflection first
-        try {
-            Class.forName("java.lang.ProcessHandle");
-            tempImpl = new ProcessHelperProcessHandleImpl();
-        } catch (Exception e) {
-            // ProcessHandle not available, use OS-specific implementation
-            String osName = System.getProperty("os.name").toLowerCase();
-            if (osName.contains("win")) {
-                tempImpl = new ProcessHandleWinImpl();
-            } else {
-                // Assume Unix/Linux for all other OS
-                tempImpl = new ProcessHandleUnixImpl();
-            }
-        }
-
-        impl = tempImpl;
-    }
-
-    /**
-     * Gets the current process ID.
-     *
-     * @return the current process ID
-     */
     public static long getCurrentProcessId() {
-        return impl.getCurrentProcessId();
+        return ProcessHandle.current().pid();
     }
 
-    /**
-     * Gets the command used to start the current process.
-     *
-     * @return an Optional containing the command, or empty if not available
-     */
     public static Optional<String> getCurrentProcessCommand() {
-        return impl.getCurrentProcessCommand();
+        return ProcessHandle.current().info().command();
     }
 
-    /**
-     * Gets the start time of the current process in milliseconds since epoch.
-     *
-     * @return the start time, or -1 if not available
-     */
     public static long getCurrentProcessStartTime() {
-        return impl.getCurrentProcessStartTime();
+        return ProcessHandle.current().info().startInstant().map(Instant::toEpochMilli).orElse(-1L);
     }
 
-    /**
-     * Gets the start time of a process with the specified ID.
-     *
-     * @param pid the process ID
-     * @return the start time in milliseconds since epoch, or -1 if not available
-     */
     public static long getProcessStartTime(long pid) {
-        return impl.getProcessStartTime(pid);
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        if (processHandle.isEmpty()) return -1;
+        return processHandle.get().info().startInstant().map(Instant::toEpochMilli).orElse(-1L);
     }
 
-    /**
-     * Checks if a process with the specified ID is alive.
-     *
-     * @param pid the process ID
-     * @return true if the process is alive, false otherwise
-     */
     public static boolean isProcessAlive(long pid) {
-        return impl.isProcessAlive(pid);
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        return processHandle.isPresent() && processHandle.get().isAlive();
     }
 
-    /**
-     * Gets information about child processes of the current process.
-     *
-     * @return a string containing information about child processes
-     */
     public static String getChildProcessesInfo() {
-        return impl.getChildProcessesInfo();
+        return String.join("\n", ProcessHandle.current().children()
+                .map(child -> child.pid() + ": " + child.info().startInstant().get().toEpochMilli())
+                .collect(Collectors.toList()));
     }
 
-    /**
-     * Attempts to destroy a process with the specified ID.
-     *
-     * @param pid the process ID
-     * @return true if the process was successfully destroyed, false otherwise
-     */
     public static boolean destroyProcess(long pid) {
-        return impl.destroyProcess(pid);
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        if (processHandle.isEmpty()) return false;
+        return processHandle.get().destroy();
     }
 
-    /**
-     * Attempts to forcibly destroy a process with the specified ID.
-     *
-     * @param pid the process ID
-     * @return true if the process was successfully destroyed, false otherwise
-     */
     public static boolean destroyProcessForcibly(long pid) {
-        return impl.destroyProcessForcibly(pid);
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        if (processHandle.isEmpty()) return false;
+        return processHandle.get().destroyForcibly();
     }
 }

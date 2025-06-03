@@ -19,6 +19,7 @@ dependencies {
     forge "net.minecraftforge:forge:$rootProject.forge_version"
     implementation project(path: ':common_config')
     shadowBundle project(path: ':common_config')
+    shadowBundle project(path: ':forge')
     shadowBundle 'com.electronwill.night-config:toml:3.6.4'
     shadowBundle 'com.electronwill.night-config:json:3.6.4'
 }
@@ -41,12 +42,6 @@ remapJar {
     dependsOn(':app:shadowJar', ':forge:build')
 
     from(project(':app').tasks.shadowJar) {
-        into 'META-INF/jarjar'
-    }
-    from(project(':forge').tasks.remapJar) {
-        rename { String fileName ->
-            "crash_assistant-forge.jar"
-        }
         into 'META-INF/jarjar'
     }
     from(zipTree(project(':forge').tasks.remapJar.archiveFile.get().asFile)) {

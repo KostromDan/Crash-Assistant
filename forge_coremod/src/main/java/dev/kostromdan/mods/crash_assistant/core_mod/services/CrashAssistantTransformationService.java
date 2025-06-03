@@ -6,6 +6,7 @@ import cpw.mods.modlauncher.api.ITransformer;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.core_mod.utils.IModLocatorInjector;
 import net.minecraftforge.fml.loading.FMLLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,7 +55,8 @@ public class CrashAssistantTransformationService implements ITransformationServi
     }
 
     @Override
-    public void onLoad(IEnvironment env, Set<String> otherServices) {
+    public void onLoad(IEnvironment env, Set<String> otherServices){
+        IModLocatorInjector.inject();
     }
 
     @Override

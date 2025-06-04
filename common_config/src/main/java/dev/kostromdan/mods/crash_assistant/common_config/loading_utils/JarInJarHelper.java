@@ -205,45 +205,52 @@ public class JarInJarHelper {
             if (Files.isRegularFile(path) && fileName.endsWith("app.jar")) {
                 String processInfo = fileName.split("_app.jar")[0];
                 Path processInfoPath = outputDirectory.resolve(processInfo + ".info");
+
+                if (Files.exists(processInfoPath)) {
+                    if (CrashAssistantConfig.getBoolean("general.kill_old_app")) {
+                        Long minecraft_pid = Long.parseLong(processInfo.split("_")[0]);
+                        Long start_time = Long.parseLong(processInfo.split("_")[1]);
+                        Long app_pid;
+                        Long app_start_time = null;
+                        try {
+                            byte[] bytes = Files.readAllBytes(processInfoPath);
+                            String content = new String(bytes, StandardCharsets.UTF_8);
+                            if (content.contains(" : ")) {
+                                app_pid = Long.parseLong(content.split(" : ")[0].trim());
+                                app_start_time = Long.parseLong(content.split(" : ")[1].trim());
+                            } else {
+                                app_pid = Long.parseLong(content);
+                            }
+                        } catch (IOException ex) {
+                            LOGGER.error("Error while reading " + processInfoPath + ". This should never happen:", ex);
+                            throw new RuntimeException(ex);
+                        }
+                        boolean isAppProcessAlive = ProcessHelper.isProcessAlive(app_pid);
+                        long minecraftStartTime = ProcessHelper.getProcessStartTime(minecraft_pid);
+                        if (isAppProcessAlive && (app_start_time == null || app_start_time == ProcessHelper.getProcessStartTime(app_pid))
+                                && !(ProcessHelper.isProcessAlive(minecraft_pid) && minecraftStartTime == start_time)) {
+                            LOGGER.warn("Closed old CrashAssistantApp process to prevent confusing the player with window containing information from old crash.");
+                            ProcessHelper.destroyProcess(app_pid);
+                            new java.util.Timer().schedule(
+                                    new java.util.TimerTask() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                Files.deleteIfExists(path);
+                                                Files.deleteIfExists(processInfoPath);
+                                            } catch (IOException ignored) {
+                                            }
+                                        }
+                                    },
+                                    5000
+                            );
+                        }
+                    }
+                }
                 try {
                     Files.deleteIfExists(path);
                     Files.deleteIfExists(processInfoPath);
-                } catch (IOException e) {
-                    if (Files.exists(processInfoPath)) {
-                        if (CrashAssistantConfig.getBoolean("general.kill_old_app")) {
-                            Long minecraft_pid = Long.parseLong(processInfo.split("_")[0]);
-                            Long start_time = Long.parseLong(processInfo.split("_")[1]);
-                            Long app_pid;
-                            try {
-                                byte[] bytes = Files.readAllBytes(processInfoPath);
-                                String content = new String(bytes, StandardCharsets.UTF_8);
-                                app_pid = Long.parseLong(content);
-                            } catch (IOException ex) {
-                                LOGGER.error("Error while reading " + processInfoPath + ". This should never happen:", ex);
-                                throw new RuntimeException(ex);
-                            }
-                            boolean isAppProcessAlive = ProcessHelper.isProcessAlive(app_pid);
-                            long minecraftStartTime = ProcessHelper.getProcessStartTime(minecraft_pid);
-                            if (isAppProcessAlive
-                                    && !(ProcessHelper.isProcessAlive(minecraft_pid) && minecraftStartTime == start_time)) {
-                                LOGGER.warn("Closed old CrashAssistantApp process to prevent confusing the player with window containing information from old crash.");
-                                ProcessHelper.destroyProcess(app_pid);
-                                new java.util.Timer().schedule(
-                                        new java.util.TimerTask() {
-                                            @Override
-                                            public void run() {
-                                                try {
-                                                    Files.deleteIfExists(path);
-                                                    Files.deleteIfExists(processInfoPath);
-                                                } catch (IOException ignored) {
-                                                }
-                                            }
-                                        },
-                                        5000
-                                );
-                            }
-                        }
-                    }
+                } catch (IOException ignored) {
                 }
             } else if (Files.isRegularFile(path) && fileName.endsWith(".info") && fileName.contains("_")) {
                 String processInfo = fileName.split("\\.info")[0];

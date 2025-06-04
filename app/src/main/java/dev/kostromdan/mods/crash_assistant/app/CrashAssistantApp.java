@@ -12,8 +12,8 @@ import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSi
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -105,7 +105,7 @@ public class CrashAssistantApp {
         String currentProcessData = Objects.toString(parentPID) + "_" + parentStarted;
         Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");
         try {
-            Files.write(currentProcessDataPath, Long.toString(ProcessHelper.getCurrentProcessId()).getBytes());
+            Files.write(currentProcessDataPath, (ProcessHelper.getCurrentProcessId() + " : " + ProcessHelper.getCurrentProcessStartTime()).getBytes());
         } catch (IOException ignored) {
         }
 

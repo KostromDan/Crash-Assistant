@@ -36,6 +36,12 @@ shadowJar {
     archiveClassifier.set('dev-shadow')
     configurations = [project.configurations.shadowBundle]
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
+
+    manifest {
+        attributes(
+                'MixinConfigs': 'crash_assistant.mixins.json,crash_assistant-forge.mixins.json'
+        )
+    }
 }
 
 remapJar {

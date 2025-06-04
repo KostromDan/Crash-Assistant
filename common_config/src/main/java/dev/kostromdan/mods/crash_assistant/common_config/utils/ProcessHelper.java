@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+
 import java.util.Optional;
 
 /**
@@ -20,15 +22,18 @@ public class ProcessHelper {
         } catch (Exception e) {
             // ProcessHandle not available, use OS-specific implementation
             String osName = System.getProperty("os.name").toLowerCase();
-            if (osName.contains("win")) {
+            if (PlatformHelp.isWindows()) {
                 tempImpl = new ProcessHandleWinImpl();
-            } else {
-                // Assume Unix/Linux for all other OS
-                tempImpl = new ProcessHandleUnixImpl();
+            } else if (PlatformHelp.isLinux()) {
+                // Assume Unix/macOS/Linux for all other OS
+                tempImpl = new ProcessHandleLinuxImpl();
+            } else if (PlatformHelp.isMacOS()) {
+                tempImpl = new ProcessHandleMacOSImpl();
+
             }
         }
 
-        impl = new ProcessHandleWinImpl();
+        impl = tempImpl;
     }
 
     /**

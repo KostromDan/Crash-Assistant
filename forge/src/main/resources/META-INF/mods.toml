@@ -3,6 +3,9 @@ loaderVersion = "[36,)"
 issueTrackerURL = "https://github.com/KostromDan/Crash-Assistant/issues"
 license = "GNU LGPLv3"
 
+# Declare mixin configs
+mixin = ["crash_assistant.mixins.json", "crash_assistant-forge.mixins.json"]
+
 [[mods]]
 modId = "crash_assistant"
 version = "${version}"

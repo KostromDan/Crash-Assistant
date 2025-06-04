@@ -58,6 +58,8 @@ public class CrashAssistantApp {
 
         LOGGER.info("CrashAssistantApp running from: {}", Paths.get("").toAbsolutePath().toString());
 
+        LOGGER.info("crashAssistantJarName: {}", crashAssistantJarName);
+
         parentPID = -1;
         parentStarted = -1;
         for (int i = 0; i < args.length; i++) {
@@ -77,7 +79,7 @@ public class CrashAssistantApp {
                 systemRAM = args[i + 1];
                 LOGGER.info("systemRAM: {}", systemRAM);
             } else if ("-processor".equals(args[i]) && i + 1 < args.length) {
-                processor = args[i + 1];
+                processor = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
                 LOGGER.info("processor: {}", processor);
             } else if ("-platform".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.platform = Enum.valueOf(PlatformHelp.class, args[i + 1]);
@@ -93,14 +95,13 @@ public class CrashAssistantApp {
                 LOGGER.info("childProcessesPIDs: {}", PlatformHelp.childProcessesPIDs);
             }
         }
-        LOGGER.info("crashAssistantJarName: {}", crashAssistantJarName);
+        LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
 
         LOGGER.info("os.name: {}", PlatformHelp.OS);
 
         LOGGER.info("Java path: {}", JavaBinaryLocator.getJavaBinary());
         LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
 
-        LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
 
         String currentProcessData = Objects.toString(parentPID) + "_" + parentStarted;
         Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");

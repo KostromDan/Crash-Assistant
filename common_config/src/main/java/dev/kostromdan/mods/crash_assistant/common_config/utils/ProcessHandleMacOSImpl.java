@@ -90,8 +90,7 @@ public class ProcessHandleMacOSImpl extends ProcessHandleUnixAbstractImpl {
             } finally {
                 p.destroy();
             }
-        } catch (Throwable e) {
-            JarInJarHelper.LOGGER.error("Unable to determine executable path for PID {}", pid, e);
+        } catch (Throwable ignored) {
         }
 
 

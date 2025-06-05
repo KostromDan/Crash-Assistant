@@ -29,7 +29,6 @@ public class ProcessHelper {
                 tempImpl = new ProcessHandleLinuxImpl();
             } else if (PlatformHelp.isMacOS()) {
                 tempImpl = new ProcessHandleMacOSImpl();
-
             }
         }
 

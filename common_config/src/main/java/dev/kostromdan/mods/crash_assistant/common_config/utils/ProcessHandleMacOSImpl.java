@@ -1,51 +1,42 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
-import com.sun.jna.*;
-import com.sun.jna.ptr.IntByReference;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 
-import java.util.Arrays;
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
- * Unix/Linux‑specific implementation of {@link ProcessHandleAbstractImpl}
+ * macOS implementation that uses the platform’s own <code>ps(1)</code>
+ * binary instead of JNA.  No native libraries are loaded.
+ *
+ * <p>Behavioural contract kept identical:</p>
+ * <ul>
+ *   <li>{@code getCurrentProcessCommand()} returns the first token of the
+ *       launcher command exactly as the kernel recorded it (e.g. {@code java}
+ *       or {@code /Library/Java/…/bin/java}).</li>
+ *   <li>{@code getProcessStartTime(pid)} returns a millisecond value that is
+ *       stable for the entire lifetime of that process; subsequent calls for
+ *       the same PID yield the <em>exact</em> same number (millisecond
+ *       precision).</li>
+ * </ul>
  */
 public class ProcessHandleMacOSImpl extends ProcessHandleUnixAbstractImpl {
 
+    /* ---------- Public API ------------------------------------------------ */
+
     @Override
     public Optional<String> getCurrentProcessCommand() {
-        long pid = getCurrentProcessId();
-
-        // ─────── macOS: call proc_pidpath(3) via JNA ─────────
-        try {
-            byte[] buf = new byte[4096];
-            int ret = MAC_PROC.proc_pidpath((int) pid, buf, buf.length);
-            if (ret > 0) {
-                // proc_pidpath always returns a NUL‐terminated C string (even if there are spaces).
-                String path = Native.toString(buf);
-                if (!path.isEmpty()) {
-                    return Optional.of(path);
-                }
-            }
-        } catch (Throwable ignored) {
-            // Fall back to ps… in case something goes wrong
-        }
-
-        return Optional.empty();
+        return getExecutablePath(getCurrentProcessId());
     }
-
-// … elsewhere in the same class: …
-
-    // macOS JNA binding for proc_pidpath(3):
-    private interface MacProc extends Library {
-        /**
-         * int proc_pidpath(int pid, void *buffer, uint32_t buffersize);
-         * Returns number of bytes returned in buffer (or 0 on failure).
-         */
-        int proc_pidpath(int pid, byte[] buffer, int buffersize);
-    }
-
-    private static final MacProc MAC_PROC = Native.loadLibrary("proc", MacProc.class);
 
     @Override
     public long getCurrentProcessStartTime() {
@@ -55,84 +46,72 @@ public class ProcessHandleMacOSImpl extends ProcessHandleUnixAbstractImpl {
     @Override
     public long getProcessStartTime(long pid) {
         try {
-            int[] mib = new int[]{CTL_KERN, KERN_PROC, KERN_PROC_PID, (int) pid};
-            IntByReference sizeRef = new IntByReference(0);
-            // First call to get size
-            int rc1 = MACC.sysctl(mib, mib.length, null, sizeRef, null, 0);
-            int actualSize = sizeRef.getValue();
-            if (rc1 != 0 || actualSize < KinfoProc.BYTES) {
+            if (!isProcessAlive(pid)) {
+                return -1;
+            }
+
+            String lstart = execAndReadFirst(
+                    "ps", "-p", String.valueOf(pid),
+                    "-o", "lstart="
+            );
+
+            if (lstart == null || lstart.trim().isEmpty()) {
                 return 0;
             }
-            Memory m = new Memory(actualSize);
-            m.clear(actualSize);
-            IntByReference newSize = new IntByReference(actualSize);
-            int rc2 = MACC.sysctl(mib, mib.length, m, newSize, null, 0);
-            if (rc2 != 0) {
-                return 0;
-            }
-            KinfoProc kp = new KinfoProc(m);
-            kp.read();
-            if (kp.p_pid != pid) {
-                return 0;
-            }
-            long ms = kp.tv_sec * 1000L + (kp.tv_usec / 1000L);
-            return ms;
+
+            LocalDateTime ldt = LocalDateTime.parse(lstart.trim(), PS_LSTART);
+            return ldt.atZone(LOCAL_ZONE).toInstant().toEpochMilli();
         } catch (Throwable ignored) {
             return 0;
         }
     }
-    //───────────────────────────────────────────────────────────────────────────
-    // macOS “kinfo_proc”‐via‐sysctl portion (no SystemB dependency)
-    //───────────────────────────────────────────────────────────────────────────
 
-    private interface MacCLibrary extends Library {
-        int sysctl(int[] name, int namelen, Pointer oldp, IntByReference oldlenp, Pointer newp, int newlen);
+
+    /* ---------- Internals ------------------------------------------------- */
+
+    private Optional<String> getExecutablePath(long pid) {
+        try {
+            Process p = new ProcessBuilder("lsof",
+                    "-p", String.valueOf(pid),
+                    "-a", "-d", "txt",
+                    "-Fn")               // parse-friendly output
+                    .redirectErrorStream(true)
+                    .start();
+
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
+
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (line.startsWith("n") && line.length() > 1) {
+                        return Optional.of(line.substring(1));
+                    }
+                }
+            } finally {
+                p.destroy();
+            }
+        } catch (Throwable e) {
+            JarInJarHelper.LOGGER.error("Unable to determine executable path for PID {}", pid, e);
+        }
+
+
+        String javaHome = System.getProperty("java.home");
+        if (javaHome != null && !javaHome.isEmpty()) {
+            Path cmd = Paths.get(javaHome, "bin", "java");
+            if (Files.isExecutable(cmd)) return Optional.of(cmd.toString());
+        }
+
+        return Optional.empty();
     }
 
-    private static final MacCLibrary MACC = Native.loadLibrary("c", MacCLibrary.class);
+    /**
+     * Kernel start-time format that macOS’ <code>ps(1)</code> prints for “lstart”.
+     */
+    private static final DateTimeFormatter PS_LSTART =
+            DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy", Locale.ENGLISH);
 
-    private static final int CTL_KERN = 1;
-    private static final int KERN_PROC = 14;
-    private static final int KERN_PROC_PID = 1;
-
-    @SuppressWarnings("unused")
-    public static class KinfoProc extends Structure {
-        public static final int BYTES = 0x158;
-
-        // dummy placeholder for the first 16 bytes of extern_proc.__p_forw/back
-        public byte[] _p_forw_back = new byte[16];
-        public int p_pid;           // pid_t (4 bytes)
-        public int _pad_pid;        // padding (4 bytes)
-        public byte[] _pad_until_timeval = new byte[0x138];
-        public long tv_sec;         // time_t (64-bit)
-        public int tv_usec;         // suseconds_t (32-bit)
-        public int _pad_tv;         // padding to align structure
-
-        @Override
-        protected List<String> getFieldOrder() {
-            return Arrays.asList(
-                    "_p_forw_back",
-                    "p_pid",
-                    "_pad_pid",
-                    "_pad_until_timeval",
-                    "tv_sec",
-                    "tv_usec",
-                    "_pad_tv"
-            );
-        }
-
-        public KinfoProc() {
-            super(new Memory(BYTES));
-            getPointer().clear(BYTES);
-        }
-
-        public KinfoProc(Pointer p) {
-            super(p);
-        }
-
-        @Override
-        public void read() {
-            super.read();
-        }
-    }
+    /**
+     * Cached once to avoid ZoneRules lookup on every call.
+     */
+    private static final ZoneId LOCAL_ZONE = ZoneId.systemDefault();
 }

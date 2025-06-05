@@ -1,3 +1,11 @@
+1.9.2:
+
+- Initial release for 1.16.5 (beta)
+- 1.16.5+ marked as release, as I see no bugs related to the Java 8 backport (from 1.9.0 was beta).
+- Prevent a super rare crash on MacOS if OSHI failed to get the processor name.
+- Rearrange args for better readability of CA log.
+- Fixed `close old app on new Minecraft instance launch` feature was not working on Linux / MacOS.
+
 1.9.1:
 
 - Fixed bug in essential mod modid parsing.

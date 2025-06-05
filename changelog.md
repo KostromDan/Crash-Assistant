@@ -5,6 +5,7 @@
 - Prevent a super rare crash on MacOS if OSHI failed to get the processor name.
 - Rearrange args for better readability of CA log.
 - Fixed `close old app on new Minecraft instance launch` feature was not working on Linux / MacOS.
+- Expanded 1.19.2 forge version range support to older versions of forge.
 
 1.9.1:
 

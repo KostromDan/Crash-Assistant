@@ -403,8 +403,8 @@ public class CrashAssistantGUI {
                                         if (!Objects.equals(PlatformHelp.childProcessesPIDs, "UNDEFINED")) {
                                             String[] childProcessesData = PlatformHelp.childProcessesPIDs.split("\\n");
                                             if (childProcessesData.length != 1) break ifBlock;
-                                            long childProcessPID = Long.parseLong(childProcessesData[0].split(":")[0]);
-                                            long childProcessStart = Long.parseLong(childProcessesData[0].split(":")[1]);
+                                            long childProcessPID = Long.parseLong(childProcessesData[0].split(": ")[0]);
+                                            long childProcessStart = Long.parseLong(childProcessesData[0].split(": ")[1]);
                                             if (!ProcessHelper.isProcessAlive(childProcessPID)) break ifBlock;
                                             if (ProcessHelper.getProcessStartTime(childProcessPID) != childProcessStart)
                                                 break ifBlock;

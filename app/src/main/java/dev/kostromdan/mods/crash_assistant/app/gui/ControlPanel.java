@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
@@ -81,41 +80,46 @@ public class ControlPanel {
         gbc.weightx = 1.0;
 
         uploadAllButton = new JButton(LanguageProvider.get("gui.upload_all_button"));
+        customizeButton(uploadAllButton, "upload_all");
+        uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
         uploadAllButton.addActionListener(e -> uploadAllFiles());
+
         gbc.gridy = 0;
         bottomPanel.add(uploadAllButton, gbc);
 
-        uploadAllButton.setEnabled(false);
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-
-            @Override
-            public void run() {
-                SwingUtilities.invokeLater(() -> {
-                    double lestTime = (CrashAssistantApp.terminatedProcessesLocationEndTime - Instant.now().toEpochMilli() + 100) / 1000.0D;
-                    uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button_delayed")
-                            .replaceAll("\\$SECONDS\\$", String.format("%.3f", lestTime)));
-
-                    if (Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
-                        uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
-                        uploadAllButton.setEnabled(true);
-                        if (CrashAssistantConfig.getBoolean("general.upload_all_animated_border")) {
-                            uploadAllButton.setBorder(new AnimatedBorder(uploadAllButton, Color.GREEN, true));
-                        }
-
-                        this.cancel();
-                    }
-                });
-            }
-        }, 0, 21);
-
         requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));
+        customizeButton(requestHelpButton, "request_help");
         requestHelpButton.addActionListener(e -> requestHelp());
         requestHelpButton.setToolTipText(PlatformHelp.getActualHelpLink());
         gbc.gridy = 1;
         bottomPanel.add(requestHelpButton, gbc);
 
         panel.add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    public void customizeButton(JButton button, String button_id) {
+        button.setFont(button.getFont().deriveFont(Font.BOLD,
+                CrashAssistantConfig.getInteger("gui_customisation." + button_id + "_button_font_size")));
+        button.setForeground(
+                deserializeColor(CrashAssistantConfig.get("gui_customisation." + button_id + "_button_foreground_color"),
+                        button.getForeground()));
+//        button.setBackground(
+//                deserializeColor(CrashAssistantConfig.get("gui_customisation." + button_id + "_button_background_color"),
+//                        button.getBackground())); // todo: Swing brakes gradient if we try to customize BG color,
+    }
+
+    public Color deserializeColor(String colorString, Color fallbackColor) {
+        if (colorString.equalsIgnoreCase("default")) return fallbackColor;
+        try {
+            int[] rgb = Arrays.stream(colorString.split("_")).mapToInt(Integer::parseInt).toArray();
+            if (rgb.length != 3) {
+                throw new NumberFormatException();
+            }
+            return new Color(rgb[0], rgb[1], rgb[2]);
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Failed to deserialize color: " + colorString + "\nExpected 3 numbers separated by underscores.", e);
+        }
+        return fallbackColor;
     }
 
     public void updateModListInfo() {

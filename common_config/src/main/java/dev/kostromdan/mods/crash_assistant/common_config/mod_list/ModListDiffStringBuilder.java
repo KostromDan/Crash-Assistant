@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -61,14 +63,18 @@ public class ModListDiffStringBuilder {
             result.append(ModListDiff.getFirstString(true, false, null));
             result.append("\n");
         }
-        result.append("```ansi\n");
+        result.append("```");
+
+        boolean color_message = CrashAssistantConfig.getBoolean("generated_message.color_message");
+        if (color_message) result.append("ansi");
+        result.append("\n");
         boolean first = !withoutFirstString;
         for (ColoredString cs : sb) {
             if (first) {
                 first = false;
                 continue;
             }
-            if (!cs.getColor().isEmpty()) {
+            if (!cs.getColor().isEmpty() && color_message) {
                 result.append(Enum.valueOf(AnsiColor.class, cs.getColor().toUpperCase()).getColorPrefix());
                 result.append(cs.getText());
                 result.append(AnsiColor.postfix);
@@ -111,8 +117,8 @@ public class ModListDiffStringBuilder {
             if (o == null || getClass() != o.getClass()) return false;
             ColoredString that = (ColoredString) o;
             return endsWithNewLine == that.endsWithNewLine &&
-                   Objects.equals(text, that.text) &&
-                   Objects.equals(color, that.color);
+                    Objects.equals(text, that.text) &&
+                    Objects.equals(color, that.color);
         }
 
         @Override
@@ -123,10 +129,10 @@ public class ModListDiffStringBuilder {
         @Override
         public String toString() {
             return "ColoredString{" +
-                   "text='" + text + '\'' +
-                   ", color='" + color + '\'' +
-                   ", endsWithNewLine=" + endsWithNewLine +
-                   '}';
+                    "text='" + text + '\'' +
+                    ", color='" + color + '\'' +
+                    ", endsWithNewLine=" + endsWithNewLine +
+                    '}';
         }
     }
 }

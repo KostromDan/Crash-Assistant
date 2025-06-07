@@ -134,6 +134,10 @@ public class CrashAssistantConfig {
         addOption("generated_message.put_analysis_result_to_message",
                 "Puts analysis result(names of crash reasons) to message, instead of just count.",
                 true);
+        addOption("generated_message.color_message",
+                "Color modified mods count/analysis in msg with ANSI.\n" +
+                        "Can be needed to be disabled if issues are reported to something not supporting ANSI codeblocks, like GitHub.",
+                true);
 
         config.setComment("modpack_modlist", "Settings of modlist feature.\n" +
                 "Adds in generated msg block about which mods modpack user added/removed/updated.\n" +

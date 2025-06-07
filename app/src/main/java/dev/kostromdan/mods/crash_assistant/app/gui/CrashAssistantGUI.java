@@ -83,13 +83,13 @@ public class CrashAssistantGUI {
         }
 
         // Screenshot notice in a separate JEditorPane
-        if (CrashAssistantConfig.getBoolean("general.show_dont_send_screenshot_of_gui_notice")) {
+        if (CrashAssistantConfig.getBoolean("gui_customisation.show_dont_send_screenshot_of_gui_notice")) {
             String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
             String screenshotHtml = "<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
             JEditorPane screenshotNoticePane = getEditorPaneNoMargins(screenshotHtml, false);
 
             // Apply the animated border
-            if (CrashAssistantConfig.getBoolean("general.screenshot_of_gui_notice_animated_border")) {
+            if (CrashAssistantConfig.getBoolean("gui_customisation.screenshot_of_gui_notice_animated_border")) {
                 screenshotNoticePane.setBorder(new AnimatedBorder(screenshotNoticePane, Color.RED, false));
             }
             labelPanel.add(screenshotNoticePane);

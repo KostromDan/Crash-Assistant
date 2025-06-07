@@ -7,14 +7,17 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParsingResult;
-import dev.kostromdan.mods.crash_assistant.app.utils.*;
+import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
+import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
+import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
+import dev.kostromdan.mods.crash_assistant.app.utils.TrustedDomainsHelper;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.ApiProvider;
+import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.UploadLogResponse;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
-import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.UploadLogResponse;
 
 import javax.swing.*;
 import java.awt.*;
@@ -427,7 +430,9 @@ public class ControlPanel {
                     String link = uploadModlistDiff(modlistDIff);
                     sb.append(ModListDiff.getFilePrefix());
                     sb.append(ModListDiff.getFirstString(true, true, link));
-                    sb.append("\n```ansi\n");
+                    sb.append("\n```");
+                    if (CrashAssistantConfig.getBoolean("generated_message.color_message")) sb.append("ansi");
+                    sb.append("\n");
                     sb.append(LanguageProvider.getMsgLang("gui.modlist_changed_label_msg")
                             .replace("$ADDED_MODS_COUNT$", AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + AnsiColor.postfix)
                             .replace("$REMOVED_MODS_COUNT$", AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + AnsiColor.postfix)

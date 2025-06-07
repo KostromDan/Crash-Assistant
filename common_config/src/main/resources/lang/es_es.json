@@ -85,7 +85,7 @@
   "msg.updated_mods": "Mods actualizados:",
   "text.greeting1": "¡Gracias por instalar ",
   "text.greeting2": " mod!\nSi el mod está instalado en un modpack,\ndeberías configurarlo en ",
-  "text.greeting3": "\nEste mensaje ya no aparecerá.",
+  "text.greeting3": "\nCambie el enlace a Discord de su modpack, etc.\nEste mensaje ya no aparecerá.",
   "text.opens_url": "Abrir la página de GitHub del mod",
   "warnings.atio6axx": "El <strong>atio6axx</strong> \"Problematic frame\" en un archivo <strong>$LOG_FILENAME$</strong> es parte del controlador <strong>AMD</strong> para la GPU,\nexiste una versión defectuosa de los controladores de AMD que provoca un crasheo instantáneo en una tarea OpenGL.\nReinstala/Instala desde cero tus controladores desde $LINK.AMD_SUPPORT$\n<strong>SI</strong> no tienes una <strong>GPU AMD</strong>, entonces necesitas configurar tu sistema para usar esa GPU\nen lugar de la GPU integrada AMD en el CPU, los pasos están a continuación.\n$LINK.HOW_FORCE_APP_USE_DISCRETE_GPU$",
   "warnings.closed_by_windows": "Si este crasheo ocurrió durante la carga del juego o nivel, probablemente fue causado por presionar teclas o hacer clic con el ratón.\nEl error \"El programa javaw.exe versión ... dejó de interactuar con Windows y se cerró\" en\n<strong>$LOG_FILENAME$</strong> significa que el juego se congeló, posiblemente debido a estas acciones.\nPara evitar esto, deja que el juego cargue completamente—<strong style='color: red;'>NO HAGAS CLIC EN NADA</strong>, <strong style='color: red;'>NO PRESIONES NINGUNA TECLA</strong>, o <strong style='color: red;'>NO CLICKEES EN FINALIZAR PROCESO</strong>.\nSi el crasheo ocurrió durante el juego, solo presiona OK e ignora este mensaje."

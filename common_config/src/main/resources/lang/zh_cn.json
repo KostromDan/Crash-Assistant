@@ -94,7 +94,7 @@
   "msg.updated_mods": "更新模组：",
   "text.greeting1": "感谢安装 ",
   "text.greeting2": " 模组！\n若该模组被安装于整合包中，\n您应在 ",
-  "text.greeting3": " 进行配置\n本提示仅显示一次。",
+  "text.greeting3": " 进行配置\n更改您的整合包Discord链接等。\n本提示仅显示一次。",
   "text.opens_url": "打开模组的GitHub页面",
   "warnings.atio6axx": "<strong>atio6axx</strong> 在文件 <strong>$LOG_FILENAME$</strong> 中标记为「问题帧」，这是 <strong>AMD</strong> GPU驱动的组件。\n部分AMD驱动版本会在执行OpenGL任务时立即崩溃。\n请从 $LINK.AMD_SUPPORT$ 重新安装/全新安装驱动。\n<strong>若您未使用AMD GPU</strong>，需设置系统使用独立GPU而非CPU集成的AMD显卡，步骤参考：\n$LINK.HOW_FORCE_APP_USE_DISCRETE_GPU$",
   "warnings.c6a": "我们在 <strong>$LOG_FILENAME$</strong> 中检测到缺少Create模组类的迹象，而Create模组当前已安装。\nCreate Update 6最近已发布，您可能遇到以下不匹配之一：\n- Create Update 5与Update 6的附属模组，或\n- Create Update 6与Update 5的附属模组。\n\n您需要确保所有与Create相关的模组要么全部来自Update 5，要么全部来自Update 6。\n请注意，发布日期并不是确定兼容性的完全可靠方法。\n（这里的附属模组指的是任何与Create集成的模组，包括标准附属模组和具有Create兼容性的模组。）\n\n这可能是误报，请仔细检查。\n\n要识别哪些模组与当前版本的Create模组不兼容：\n点击确定，然后在窗口顶部打开 <strong>$LANG.gui.menu.analysis$</strong> -> <strong>$LANG.gui.menu.analysis.create_dependencies$</strong>。\n等待进程完成——然后您将看到与已安装版本的Create不兼容的模组列表。",

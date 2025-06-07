@@ -1,7 +1,15 @@
+1.9.3:
+
+- Improved greeting message to include instructions for updating modpack Discord link.
+- Added a config option `generated_message.color_message` to be able to disable color in generated messages with ANSI.
+  Can be needed to be disabled if issues are reported to something not supporting ANSI codeblocks, like GitHub.
+- Fixed open in browser icon didn't display correctly on Linux/MacOS on all versions / 1.16.5 on all OSes.
+- Fixed I forgot to mark 1.18.2+ versions as release.
+
 1.9.2:
 
 - Initial release for 1.16.5 (beta)
-- 1.16.5+ marked as release, as I see no bugs related to the Java 8 backport (from 1.9.0 was beta).
+- 1.18.2+ marked as release, as I see no bugs related to the Java 8 backport (from 1.9.0 was beta).
 - Prevent a super rare crash on MacOS if OSHI failed to get the processor name.
 - Rearrange args for better readability of CA log.
 - Fixed `close old app on new Minecraft instance launch` feature was not working on Linux / MacOS.

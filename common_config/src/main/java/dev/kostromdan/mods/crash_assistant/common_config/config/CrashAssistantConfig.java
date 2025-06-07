@@ -58,15 +58,6 @@ public class CrashAssistantConfig {
         addOption("general.default_lang",
                 "If options.txt doesn't exist, the default language will be used.",
                 "en_us");
-        addOption("general.show_dont_send_screenshot_of_gui_notice",
-                "Append comment text with notice about sending screenshot of this gui tells nothing to modpack creators.",
-                true);
-        addOption("general.screenshot_of_gui_notice_animated_border",
-                "Animate border to request user attention even more.",
-                true);
-        addOption("general.upload_all_animated_border",
-                "Animate border to request user attention even more.",
-                true);
         addOption("general.enable_privacy_policy_acceptance",
                 "Before uploading the first log, requires the user to accept the privacy policy.\n" +
                         "Disabling this option may be illegal in some countries if you are modpack creator. Disable at your own risk.",
@@ -201,6 +192,40 @@ public class CrashAssistantConfig {
                 "You don't need to touch this option.\n" +
                         "On first world join of modpack creator if set to false shows greeting, then self enables.",
                 false);
+
+        config.setComment("gui_customisation", "You can customise GUI with this options.");
+        addOption("gui_customisation.show_dont_send_screenshot_of_gui_notice",
+                "Append comment text with notice about sending screenshot of this gui tells nothing to modpack creators.",
+                true);
+        addOption("gui_customisation.screenshot_of_gui_notice_animated_border",
+                "Animate border to request user attention even more.",
+                true);
+        addOption("gui_customisation.upload_all_button_font_size",
+                "You can make Upload All Button bigger/smaller to request user attention.\n" +
+                        "Default Swing font size is 12, Default for this button in crash assistant is 16.\n" +
+                        "Not recommended to set it more than 16, as it will affect the increase of GUI size because all text won't fit.",
+                16);
+        addOption("gui_customisation.request_help_button_font_size",
+                "Same as upload_all_button_font_size, but for Request Help button.",
+                16);
+        addOption("gui_customisation.upload_all_button_foreground_color",
+                "You can change Upload All Button color to request user attention.\n" +
+                        "format is \"R_G_B\", range is 0-255, for example \"255_0_0\" is red color. Use \"default\" to use default swing color.\n" +
+                        "Default for this button is \"0_178_0\" (dark green color).",
+                "0_178_0");
+        addOption("gui_customisation.request_help_button_foreground_color",
+                "Same as upload_all_button_foreground_color, but for Request Help button.\n" +
+                        "Default for this button is \"0_0_178\" (dark blue color).",
+                "0_0_178");
+//        addOption("gui_customisation.upload_all_button_background_color",
+//                "You can change Upload All Button background color to request user attention.\n" +
+//                        "format is same as in upload_all_button_color.\n" +
+//                        "Default for this button is \"255_110_0\" (dark orange color).",
+//                "238_238_238");
+//        addOption("gui_customisation.request_help_button_background_color",
+//                "Same as upload_all_button_background_color, but for Request Help button.\n" +
+//                        "Default for this button is \"0_0_0\" (black color).",
+//                "238_238_238");
 
         config.setComment("compatibility", "Checks crash_assistant compatibility with other incompatible mods.\n" +
                 "Highly unrecommended to disable!");
@@ -355,6 +380,10 @@ public class CrashAssistantConfig {
     }
 
     public static boolean getBoolean(String path) {
+        return get(path);
+    }
+
+    public static int getInteger(String path) {
         return get(path);
     }
 

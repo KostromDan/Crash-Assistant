@@ -7,9 +7,11 @@ import net.minecraftforge.forgespi.locating.IModFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 
 /**
@@ -18,6 +20,7 @@ import java.util.Map;
 public class CrashAssistantDependencyLocator extends AbstractModProvider implements IDependencyLocator {
     public static final Logger LOGGER = LoggerFactory.getLogger("CrashAssistantDependencyLocator");
 
+    @Override
     public List<IModFile> scanMods(Iterable<IModFile> loadedMods) {
         List<IModFile> mods = new ArrayList<>();
         try {
@@ -30,6 +33,11 @@ public class CrashAssistantDependencyLocator extends AbstractModProvider impleme
 
     public String name() {
         return "crash_assistant";
+    }
+
+    @Override
+    public void scanFile(IModFile modFile, Consumer<Path> pathConsumer) {
+
     }
 
     public void initArguments(Map<String, ?> map) {

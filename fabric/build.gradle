@@ -60,32 +60,32 @@ processResources {
     }
 }
 
-unifiedPublishing {
-    project {
-        gameVersions = ["1.19.2", "1.19.3", "1.19.4", "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4"]
-        gameLoaders = ["fabric", "quilt"]
-
-        displayName = tasks.remapJar.archiveFile.get().asFile.name
-        version = mod_version
-        changelog = file('../changelog.md').text
-        releaseType = release_type
-
-        mainPublication tasks.remapJar
-
-        var cfToken = System.getenv("CF_TOKEN")
-        if (cfToken != null) {
-            curseforge {
-                token = cfToken
-                id = "1154099"
-            }
-        }
-
-        var mrToken = System.getenv("MODRINTH_TOKEN")
-        if (mrToken != null) {
-            modrinth {
-                token = mrToken
-                id = "ix1qq8Ux"
-            }
-        }
-    }
-}
+//unifiedPublishing {
+//    project {
+//        gameVersions = ["1.19.2", "1.19.3", "1.19.4", "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4"]
+//        gameLoaders = ["fabric", "quilt"]
+//
+//        displayName = tasks.remapJar.archiveFile.get().asFile.name
+//        version = mod_version
+//        changelog = file('../changelog.md').text
+//        releaseType = release_type
+//
+//        mainPublication tasks.remapJar
+//
+//        var cfToken = System.getenv("CF_TOKEN")
+//        if (cfToken != null) {
+//            curseforge {
+//                token = cfToken
+//                id = "1154099"
+//            }
+//        }
+//
+//        var mrToken = System.getenv("MODRINTH_TOKEN")
+//        if (mrToken != null) {
+//            modrinth {
+//                token = mrToken
+//                id = "ix1qq8Ux"
+//            }
+//        }
+//    }
+//}

@@ -29,9 +29,11 @@ subprojects { subproject ->
         var archives_name
         base {
             if (subproject.name in ['forge_coremod']) {
-                archivesName = "CrashAssistant-forge-1.19.2-1.20.1"
+                archivesName = "CrashAssistant-forge-1.20.2-1.20.6"
+            }else if (subproject.name in ['neoforge_coremod']) {
+                archivesName = "CrashAssistant-neoforge-1.20.2-1.20.6"
             } else {
-                archivesName = "CrashAssistant-$project.name-1.19.2-1.21.4"
+                archivesName = "CrashAssistant-$project.name-1.20.2-1.20.6"
             }
             archives_name = archivesName
         }
@@ -70,7 +72,7 @@ idea {
 
 
 task collectJars(type: Copy) {
-    def deps = [':fabric', ':forge_coremod']
+    def deps = [':fabric', ':forge_coremod', ':neoforge_coremod']
             .collect { path -> project(path).tasks.remapJar }
     dependsOn deps
     from deps

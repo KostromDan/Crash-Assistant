@@ -1,3 +1,7 @@
+1.9.4:
+
+- Fixed a small bug in 1.16.5
+
 1.9.3:
 
 - Initial release for 1.20.2 - 1.20.6 forge and neo.

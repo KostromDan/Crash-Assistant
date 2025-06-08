@@ -7,7 +7,7 @@ plugins {
 }
 
 base {
-    archivesName = "CrashAssistant-forge-${minecraft_version}"
+    archivesName = "CrashAssistant-forge-1.20.6-1.21.4"
 }
 
 configurations {

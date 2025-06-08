@@ -17,11 +17,6 @@ idea {
 task collectJars(type: Copy) {
     dependsOn(":fabric:build", ":forge_coremod:build", ":neoforge_coremod:build")
 
-    from("fabric/build/libs") {
-        include '*.jar'
-        exclude '*-sources.jar', '*-javadoc.jar', '*-dev-shadow.jar'
-    }
-
     from("forge_coremod/build/libs") {
         include '*.jar'
         exclude '*-sources.jar', '*-javadoc.jar', '*-dev-shadow.jar'

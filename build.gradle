@@ -70,7 +70,7 @@ idea {
 
 
 task collectJars(type: Copy) {
-    def deps = [':fabric', ':forge_coremod']
+    def deps = [':forge_coremod']
             .collect { path -> project(path).tasks.remapJar }
     dependsOn deps
     from deps

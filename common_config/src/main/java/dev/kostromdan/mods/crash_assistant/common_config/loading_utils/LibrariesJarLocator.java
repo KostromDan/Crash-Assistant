@@ -11,15 +11,19 @@ import java.nio.file.Paths;
 
 public class LibrariesJarLocator {
     public static String getLibraryJarPath(Class cls) throws JarLocatingException, URISyntaxException {
+        return getLibraryJarPath(cls, true);
+    }
+
+    public static String getLibraryJarPath(Class cls, boolean checkExistence) throws JarLocatingException, URISyntaxException {
         Path path = getPathFromClass(cls);
 
         if (path == null) {
             throw new JarLocatingException("getPathFromClass returned null, class: " + cls.getName());
         }
-        if (!Files.exists(path)) {
+        if (checkExistence && !Files.exists(path)) {
             throw new JarLocatingException("Successfully parsed '.jar' path of `" + cls + "',but it does not exist; path: `" + path);
         }
-        if (!Files.isRegularFile(path)) {
+        if (checkExistence && !Files.isRegularFile(path)) {
             throw new JarLocatingException("Successfully parsed '.jar' path of `" + cls + "',but it is not regular file; path: `" + path);
         }
 
@@ -53,8 +57,8 @@ public class LibrariesJarLocator {
 
     public static void setupLoaderJarName(Class cls) {
         try {
-            PlatformHelp.loaderJarName = Paths.get(getLibraryJarPath(cls)).getFileName().toString();
-        } catch (URISyntaxException e) {
+            PlatformHelp.loaderJarName = Paths.get(getLibraryJarPath(cls, false)).getFileName().toString();
+        } catch (Exception e) {
             JarInJarHelper.LOGGER.error("Error while trying to get loader jar path: ", e);
         }
     }

@@ -5,6 +5,10 @@ plugins {
     id "me.shedaniel.unified-publishing" version "0.1.+"
 }
 
+base {
+    archivesName = "CrashAssistant-${project.name}-1.21.5-1.21.6"
+}
+
 configurations {
     shadowBundle {
         canBeResolved = true
@@ -69,7 +73,10 @@ loom {
 
 unifiedPublishing {
     project {
-        gameVersions = ["1.21.5"]
+        gameVersions = [
+                "1.21.5",
+                "1.21.6"
+        ]
         gameLoaders = ["fabric", "quilt"]
 
         displayName = tasks.remapJar.archiveFile.get().asFile.name

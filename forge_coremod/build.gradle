@@ -7,7 +7,7 @@ plugins {
 }
 
 base {
-    archivesName = "CrashAssistant-forge-${minecraft_version}"
+    archivesName = "CrashAssistant-forge-1.21.5-1.21.6"
 }
 
 configurations {
@@ -119,7 +119,10 @@ sourceSets.each {
 
 unifiedPublishing {
     project {
-        gameVersions = ["1.21.5"]
+        gameVersions = [
+                "1.21.5",
+                "1.21.6"
+        ]
         gameLoaders = ["forge"]
 
         displayName = tasks.jar.archiveFile.get().asFile.name

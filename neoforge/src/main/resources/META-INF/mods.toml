@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[2,)"
+loaderVersion = "[1,)"
 issueTrackerURL = "https://github.com/KostromDan/Crash-Assistant/issues"
 license = "GNU LGPLv3"
 
@@ -16,6 +16,7 @@ Shows a GUI after Minecraft crashes, immediately showing all affected logs, cras
 [[dependencies.crash_assistant]]
 modId = "neoforge"
 type = "required"
+mandatory = true
 versionRange = "[20.2,20.6]"
 ordering = "NONE"
 side = "BOTH"
@@ -23,6 +24,7 @@ side = "BOTH"
 [[dependencies.crash_assistant]]
 modId = "minecraft"
 type = "required"
+mandatory = true
 versionRange = "[1.20.2,1.20.6]"
 ordering = "NONE"
 side = "BOTH"

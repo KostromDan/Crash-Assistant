@@ -17,7 +17,7 @@ Shows a GUI after Minecraft crashes, immediately showing all affected logs, cras
 modId = "neoforge"
 type = "required"
 mandatory = true
-versionRange = "[20.2,20.4]"
+versionRange = "[20.2,20.5]"
 ordering = "NONE"
 side = "BOTH"
 

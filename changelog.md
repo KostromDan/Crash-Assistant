@@ -1,10 +1,20 @@
 1.9.3:
 
+- Initial release for 1.20.2 - 1.20.6 forge and neo.
+- Fixed 1.20 wasn't marked as a compatible version while publishing mod. While it was.
+- Initial release for 1.21.6 all mod loaders.
+- Attempted to fix users posting separate logs instead of using the Upload All Button.
+- Added ability to customize font size and color of the upload all and request help buttons.
+  Made them bigger and colored by default to request user attention.
+- Locating win_events time decreased from 1 minute to 15 seconds to reduce probability of capturing false events.
 - Improved greeting message to include instructions for updating modpack Discord link.
 - Added a config option `generated_message.color_message` to be able to disable color in generated messages with ANSI.
   Can be needed to be disabled if issues are reported to something not supporting ANSI codeblocks, like GitHub.
+- Improved ProblematicModsConfig. Now logging a message from modpack creators.
 - Fixed open in browser icon didn't display correctly on Linux/MacOS on all versions / 1.16.5 on all OSes.
 - Fixed I forgot to mark 1.18.2+ versions as release.
+- Fixed an extremely rare crash on server environment.
+- Small fixes and improvements.
 
 1.9.2:
 

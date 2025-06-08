@@ -27,8 +27,8 @@ dependencies {
 }
 
 shadowJar {
-    archiveClassifier.set('dev-shadow')
     configurations = [project.configurations.shadowBundle]
+    archiveClassifier.set('dev-shadow')
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
 }
 

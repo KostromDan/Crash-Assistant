@@ -37,6 +37,7 @@ public class FilePanel {
     private final JButton uploadButton;
     private final JButton browserButton;
     private Exception lastError = null;
+    private boolean waiting = true;
     private static final Set<FilePanel> awaitingPrivacyPolicyDialogs = Collections.synchronizedSet(new HashSet<>());
     private final Log log;
 
@@ -59,6 +60,7 @@ public class FilePanel {
         showButton = createButton(LanguageProvider.get("gui.show_in_explorer_button"), e -> showInExplorer());
 
         uploadButton = createButton(LanguageProvider.get("gui.upload_and_copy_link_button"), e -> uploadFile());
+        uploadButton.setEnabled(false);
 
         browserButton = createButtonWithIcon("assets/internet.png", e -> openInBrowser());
         browserButton.setVisible(false);
@@ -174,6 +176,10 @@ public class FilePanel {
 
     public boolean isUploadButtonEnabled() {
         return uploadButton.isEnabled();
+    }
+
+    public void setUploadButtonEnabled(boolean enabled) {
+        uploadButton.setEnabled(enabled);
     }
 
     private void uploadFile() {
@@ -400,5 +406,13 @@ public class FilePanel {
         }
         FileListPanel.currentLogSelectionDialog = null;
         return (String) selectedValue;
+    }
+
+    public boolean isWaiting() {
+        return waiting;
+    }
+
+    public void setWaiting(boolean waiting) {
+        this.waiting = waiting;
     }
 }

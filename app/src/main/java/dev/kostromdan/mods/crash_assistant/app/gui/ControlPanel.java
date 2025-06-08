@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
@@ -83,6 +84,41 @@ public class ControlPanel {
         customizeButton(uploadAllButton, "upload_all");
         uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
         uploadAllButton.addActionListener(e -> uploadAllFiles());
+
+        uploadAllButton.setEnabled(false);
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+                SwingUtilities.invokeLater(() -> {
+                    double lestTime = (CrashAssistantApp.terminatedProcessesLocationEndTime - Instant.now().toEpochMilli() + 100) / 1000.0D;
+                    uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button_delayed")
+                            .replaceAll("\\$SECONDS\\$", String.format("%.3f", lestTime)));
+
+                    if (Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
+                        uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
+                        uploadAllButton.setEnabled(true);
+
+                        Timer enableButtonsTimer = new Timer();
+                        enableButtonsTimer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                SwingUtilities.invokeLater(() -> {
+                                    for (FilePanel panel : fileListPanel.filePanelList) {
+                                        panel.setUploadButtonEnabled(true);
+                                        panel.setWaiting(false);
+                                    }
+                                });
+                            }
+                        }, 1000);
+
+                        this.cancel();
+                    }
+                });
+            }
+        }, 0, 21);
+
 
         gbc.gridy = 0;
         bottomPanel.add(uploadAllButton, gbc);
@@ -235,7 +271,12 @@ public class ControlPanel {
             if (generatedMsg == null) {
                 uploadAllButton.setText(LanguageProvider.get("gui.uploading"));
                 for (FilePanel panel : fileListPanel.filePanelList) {
-                    while (panel.getLastError() != null && !panel.isUploadButtonEnabled()) {
+                    while (!panel.isUploadButtonEnabled() && (panel.getLastError() != null || panel.isWaiting())) {
+                        if (panel.isWaiting()) {
+                            panel.setWaiting(false);
+                            panel.setUploadButtonEnabled(true);
+                            continue;
+                        }
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException e) {

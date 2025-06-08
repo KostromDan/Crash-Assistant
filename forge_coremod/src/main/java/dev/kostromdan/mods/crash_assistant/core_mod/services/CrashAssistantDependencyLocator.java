@@ -29,6 +29,6 @@ public class CrashAssistantDependencyLocator extends AbstractModProvider impleme
 
     @Override
     public String name() {
-        return "";
+        return "crash_assistant";
     }
 }

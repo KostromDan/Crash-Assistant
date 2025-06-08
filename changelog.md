@@ -12,7 +12,7 @@
   Can be needed to be disabled if issues are reported to something not supporting ANSI codeblocks, like GitHub.
 - Improved ProblematicModsConfig. Now logging a message from modpack creators.
 - Fixed open in browser icon didn't display correctly on Linux/MacOS on all versions / 1.16.5 on all OSes.
-- Fixed I forgot to mark 1.18.2+ versions as release.
+- Fixed I forgot to mark 1.18.2+ versions as release from prev update.
 - Fixed an extremely rare crash on server environment.
 - Small fixes and improvements.
 

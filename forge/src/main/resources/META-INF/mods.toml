@@ -16,7 +16,7 @@ description = '''${description}''' #mandatory (Supports multiline text)
 [[dependencies.${mod_id}]] #optional
 modId = "forge" #mandatory
 mandatory = true #mandatory
-versionRange = "[51.0,)" #mandatory
+versionRange = "[50.0,)" #mandatory
 ordering = "NONE" # The order that this dependency should load in relation to your mod, required to be either 'BEFORE' or 'AFTER' if the dependency is not mandatory
 side = "BOTH" # Side this dependency is applied on - 'BOTH', 'CLIENT' or 'SERVER'
 [[dependencies.${mod_id}]]

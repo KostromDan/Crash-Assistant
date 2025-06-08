@@ -116,7 +116,7 @@ public class ProblematicModsConfig {
             if (mod.isShouldCrashOnStartup()) {
                 shouldCrash = true;
                 Mod currentMod = mod.getCurrentMod();
-                JarInJarHelper.LOGGER.error("Detected " + currentMod.getJarName() + "(modId: " + mod.getModid() + ") in current modlist. It marked as incompatible with this modpack(" + CONFIG_PATH + "). Crashing game and starting Crash Assistant.");
+                JarInJarHelper.LOGGER.error("Detected " + currentMod.getJarName() + "(modId: " + mod.getModid() + ") in current modlist.\nIt marked as incompatible with this modpack(" + CONFIG_PATH + ").\nCrashing game and starting Crash Assistant.\nMessage from modpack creators:\n" + mod.getMsg());
             }
         }
         if (shouldCrash) {

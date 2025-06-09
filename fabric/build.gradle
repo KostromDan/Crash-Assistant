@@ -74,8 +74,8 @@ loom {
 unifiedPublishing {
     project {
         gameVersions = [
-                "1.21.5",
-                "1.21.6"
+                "1.21.5"
+//                ,"1.21.6"
         ]
         gameLoaders = ["fabric", "quilt"]
 

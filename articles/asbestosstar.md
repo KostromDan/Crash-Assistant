@@ -32,7 +32,7 @@
 
 ### NeoForge Discord Server
 
-- Banned for attacking staff, including from army of twinks, spamming in DMs, harassment.
+- Banned for attacking staff (including from army of twinks), spamming in DMs, harassment.
 
 ![image](https://github.com/user-attachments/assets/178aab5f-a3ba-4316-a8a5-bcbc5609b5a3)
 ![image](https://github.com/user-attachments/assets/7350478e-3928-4b39-81d4-83a07674ae83)
@@ -42,8 +42,9 @@
 
 ### Minecraft Mod Development Discord Server
 
-- Banned for terrorist propaganda, raiding the MMD Discord server, spreading defamatory rumors about the MMD Discord
-  server through mass DMs to random people.
+- Banned for attacking staff, including from army of twinks, spamming in DMs, harassment, terrorist propaganda,
+  raiding the MMD Discord server, spreading defamatory rumors about the MMD Discord server through mass DMs to random
+  people.
 
 ![image](https://github.com/user-attachments/assets/e4ad6735-bc07-4e28-880e-7a1f4e735f77)
 ![image](https://github.com/user-attachments/assets/70e5d28c-6244-4361-9694-8d3b1f8ed46a)

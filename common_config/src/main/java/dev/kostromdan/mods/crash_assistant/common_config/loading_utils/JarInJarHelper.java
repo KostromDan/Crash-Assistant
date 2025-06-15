@@ -105,11 +105,22 @@ public class JarInJarHelper {
         }
     }
 
-    public static String getProcessorName(){
-        try{
+    public static String getProcessorName() {
+        try {
             return String.format("%s", (new SystemInfo()).getHardware().getProcessors()[0]).replaceAll("\\s+", " ");
-        }catch (Throwable e){
-            LOGGER.error("Error while getting processor name:", e);
+        } catch (Throwable e) {
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {
+                LOGGER.error("Most likely you have permission issues in your file system.\n" +
+                        "OSHI failed init because it failed to create its tmp files for natives.\n" +
+                        "This won't crash Vanilla, but can crash many other mods using OSHI, like Embeddium.\n" +
+                        "Try reinstalling your launcher / trying another launcher, make sure to NOT activate admin rights on install,\n" +
+                        "as this is most likely the cause of this permission issue.\n\n" +
+                        "If you seeing Crash Assistant in the stacktrace somewhere upper, it's not the cause of the crash!\n" +
+                        "It's just the first thing tried to use OSHI, which failed to init.");
+            } else {
+                LOGGER.error("Error while getting processor name:", e);
+            }
             return "UNKNOWN";
         }
     }

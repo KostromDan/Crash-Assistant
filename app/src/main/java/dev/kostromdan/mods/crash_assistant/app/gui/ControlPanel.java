@@ -163,14 +163,8 @@ public class ControlPanel {
         if (!CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) return;
         if (PlatformHelp.isLinkDefault() || CrashAssistantConfig.getBoolean("modpack_modlist.force_add_full_modlist_as_log")) {
             Path modListTxtPath = Paths.get("logs", "modlist.txt");
-            try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
-                for (Mod mod : modListDiff.getCurrentMods()) {
-                    writer.write(mod.getJarName());
-                    if (mod.getModId() != null) {
-                        writer.write(" : " + mod.getModId());
-                    }
-                    writer.newLine();
-                }
+            try {
+                Mod.writeModlistTxt(modListTxtPath, modListDiff.getCurrentMods());
                 synchronized (KnownCrashReasonMessage.class) {
                     LogsList.addIfExistsAndModified(new Log(LogType.MOD_LIST, modListTxtPath), false, false);
                 }

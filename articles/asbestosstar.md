@@ -1,5 +1,8 @@
 ## Who Is Asbestosstar and What Are They Known For?
 
+This article was created to help people quickly understand the incidents involving this character without spending hours investigating.
+Many have asked about Asbestosstar but received incomplete answers, as people often avoid revisiting this drama.
+
 - A developer notorious for “vibe-coding” (especially without proper testing, which leads to **many cursed bugs**).
 - Uses Spanish identifiers and naming conventions in their codebase, a practice generally discouraged in internationaly
   distributed projects.
@@ -58,5 +61,6 @@
 - Banned for violating Discord TOS and some other reasons.
 
 ![image](https://github.com/user-attachments/assets/d9cd0e1d-0163-4a28-9b2b-c1290f0a3135)
+![image](https://github.com/user-attachments/assets/873b78af-e2f5-4046-be4b-9d01bd72a4f8)
 
 ---

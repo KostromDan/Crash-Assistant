@@ -26,7 +26,7 @@ import java.util.jar.Manifest;
 
 public class ModDataParser {
     public static List<String> inJarPaths = PlatformHelp.getOrderedInJarPaths();
-    private static final Path CACHE_FOLDER = Paths.get("local", "crash_assistant", "mod_data_cache");
+    private static final Path CACHE_FOLDER = Paths.get("local", "crash_assistant", "mod_data_cache_v2");
     private static final Gson GSON = new Gson();
 
     static {
@@ -108,8 +108,21 @@ public class ModDataParser {
         if (cachedMod != null) {
             return cachedMod;
         }
+        Boolean isMCreator = null;
+        List<String> mixinConfigs = new ArrayList<>();
+        List<Mod> jarInJarPaths = new ArrayList<>();
 
         try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+            isMCreator = jarFile.getJarEntry("net/mcreator") != null;
+
+            jarFile.stream()
+                    .filter(entry -> !entry.isDirectory() && entry.getName().endsWith(".jar"))
+                    .forEach(entry -> {
+                        JarInJarHelper.LOGGER.info("Found jar in jar: " + entry.getName());
+                        jarInJarPaths.add(new Mod(entry.getName().substring(entry.getName().lastIndexOf("/") + 1), null, null, null, new ArrayList<>(), new ArrayList<>()));
+                    });
+
+
             for (String resourcePath : inJarPaths) {
                 JarEntry entry = jarFile.getJarEntry(resourcePath);
                 if (entry == null) continue;
@@ -131,9 +144,33 @@ public class ModDataParser {
                             mods = config;
                             modId = mods.get("id");
                         }
+
+                        ManifestParsingResult manifestParsingResult = null;
+
+                        if (resourcePath.equals("META-INF/neoforge.mods.toml")) {
+                            ArrayList<Object> mixinsList = config.get("mixins");
+                            if (mixinsList != null) {
+                                for (Object mixinObj : mixinsList) {
+                                    if (mixinObj instanceof Config) {
+                                        Config mixinConfig = (Config) mixinObj;
+                                        String configPath = mixinConfig.get("config");
+                                        if (configPath != null) {
+                                            mixinConfigs.add(configPath);
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            manifestParsingResult = parseManifestFile(jarFile);
+                            if (manifestParsingResult != null) {
+                                mixinConfigs.addAll(manifestParsingResult.getMixinConfigs());
+                            }
+                        }
+
                         String version = mods.get("version");
                         if (Objects.equals(version, "${file.jarVersion}")) {
-                            version = parseVersionFromManifest(jarFile);
+                            if (manifestParsingResult == null) manifestParsingResult = parseManifestFile(jarFile);
+                            version = manifestParsingResult == null ? null : manifestParsingResult.getImplementationVersion();
                         } else if (Objects.equals(version, "${modVersion}")) {
                             version = null;
                         }
@@ -144,7 +181,7 @@ public class ModDataParser {
                             JarInJarHelper.LOGGER.warn("Failed to parse version from " + resourcePath + " of " + jarPath.getFileName());
                         if (modId == null)
                             JarInJarHelper.LOGGER.warn("Failed to parse version from " + resourcePath + " of " + jarPath.getFileName());
-                        Mod mod = new Mod(jarPath.getFileName().toString(), modId, version);
+                        Mod mod = new Mod(jarPath.getFileName().toString(), modId, version, isMCreator, mixinConfigs, jarInJarPaths);
                         saveModToCache(jarPath, mod);
                         return mod;
                     } finally {
@@ -155,27 +192,64 @@ public class ModDataParser {
                 }
             }
             if (jarPath.getFileName().toString().toLowerCase().contains("essential") && jarFile.getJarEntry("essential-loader.properties") != null) {
-                return new Mod(jarPath.getFileName().toString(), "essential-container", null);
+                return new Mod(jarPath.getFileName().toString(), "essential-container", null, isMCreator, mixinConfigs, jarInJarPaths);
             }
         } catch (Exception ignored) {
         }
-        return new Mod(jarPath.getFileName().toString(), null, null);
+        return new Mod(jarPath.getFileName().toString(), null, null, isMCreator, mixinConfigs, jarInJarPaths);
     }
 
+
     /**
-     * Parses the version from the JAR's manifest file.
+     * Parses the version and mixin configs from the JAR's manifest file.
      *
      * @param jarFile The JAR file to parse.
-     * @return The version from the manifest, or null if not found.
+     * @return The ManifestParsingResult containing version and mixin configs, or null if manifest not found.
      */
-    private static String parseVersionFromManifest(JarFile jarFile) {
+    private static ManifestParsingResult parseManifestFile(JarFile jarFile) {
         JarEntry manifestEntry = jarFile.getJarEntry("META-INF/MANIFEST.MF");
         if (manifestEntry == null) return null;
         try (InputStream is = jarFile.getInputStream(manifestEntry)) {
             Manifest manifest = new Manifest(is);
-            return manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+            Attributes mainAttributes = manifest.getMainAttributes();
+
+            String implementationVersion = mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+
+            List<String> mixinConfigs = new ArrayList<>();
+            String mixinConfigsValue = mainAttributes.getValue("MixinConfigs");
+            if (mixinConfigsValue != null) {
+                String[] configs = mixinConfigsValue.split(",");
+                for (String config : configs) {
+                    String trimmed = config.trim();
+                    if (!trimmed.isEmpty()) {
+                        mixinConfigs.add(trimmed);
+                    }
+                }
+            }
+
+            return new ManifestParsingResult(implementationVersion, mixinConfigs);
         } catch (Exception ignored) {
         }
         return null;
     }
+
+
+    public static class ManifestParsingResult {
+        private final String implementationVersion;
+        private final List<String> mixinConfigs;
+
+        public ManifestParsingResult(String implementationVersion, List<String> mixinConfigs) {
+            this.implementationVersion = implementationVersion;
+            this.mixinConfigs = mixinConfigs;
+        }
+
+        public String getImplementationVersion() {
+            return implementationVersion;
+        }
+
+        public List<String> getMixinConfigs() {
+            return mixinConfigs;
+        }
+    }
+
 }

@@ -46,7 +46,7 @@ Many have asked about Asbestosstar but received incomplete answers, as people of
 ### Minecraft Mod Development Discord Server
 
 - Banned for attacking staff, including from army of twinks, spamming in DMs, harassment, terrorist propaganda,
-  raiding the MMD Discord server, spreading defamatory rumors about the MMD Discord server through mass DMs to random
+  raiding the MMD Discord server, posting bad mods from MMD name in purpose of harming them, spreading defamatory rumors about the MMD Discord server through mass DMs to random
   people.
 
 ![image](https://github.com/user-attachments/assets/e4ad6735-bc07-4e28-880e-7a1f4e735f77)

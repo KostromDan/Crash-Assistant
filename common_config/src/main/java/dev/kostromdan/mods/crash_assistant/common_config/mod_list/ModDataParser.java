@@ -143,8 +143,14 @@ public class ModDataParser {
                             if (jarName.contains("mixinextras") || jarName.contains("mixinsquared")) {
                                 break tryBlock;
                             }
+                            if (
+                                    PlatformHelp.platform == PlatformHelp.FABRIC &&
+                                    jarPath.getFileName().toString().startsWith("fabric-api-")
+                            ) {
+                                break tryBlock;
+                            }
 
-                            Path tempJarPath = Files.createTempFile("nestedjar", ".jar");
+                            Path tempJarPath = Files.createTempFile(jarName.substring(0, jarName.length() - 4), ".jar");
                             try {
                                 try (InputStream is = jarFile.getInputStream(entry)) {
                                     Files.copy(is, tempJarPath, StandardCopyOption.REPLACE_EXISTING);
@@ -177,35 +183,45 @@ public class ModDataParser {
                         config.load();
                         Config mods;
                         String modId;
+                        ManifestParsingResult manifestParsingResult = null;
+
                         if (resourcePath.endsWith(".toml")) {
                             ArrayList<Object> modsList = config.get("mods");
                             if (modsList == null || modsList.isEmpty()) continue;
                             mods = (Config) modsList.get(0);
                             modId = mods.get("modId");
-                        } else {
-                            mods = config;
-                            modId = mods.get("id");
-                        }
 
-                        ManifestParsingResult manifestParsingResult = null;
-
-                        if (resourcePath.equals("META-INF/neoforge.mods.toml")) {
-                            ArrayList<Object> mixinsList = config.get("mixins");
-                            if (mixinsList != null) {
-                                for (Object mixinObj : mixinsList) {
-                                    if (mixinObj instanceof Config) {
-                                        Config mixinConfig = (Config) mixinObj;
-                                        String configPath = mixinConfig.get("config");
-                                        if (configPath != null) {
-                                            mixinConfigs.add(configPath);
+                            if (resourcePath.equals("META-INF/neoforge.mods.toml")) {
+                                ArrayList<Object> mixinsList = config.get("mixins");
+                                if (mixinsList != null) {
+                                    for (Object mixinObj : mixinsList) {
+                                        if (mixinObj instanceof Config) {
+                                            Config mixinConfig = (Config) mixinObj;
+                                            String configPath = mixinConfig.get("config");
+                                            if (configPath != null) {
+                                                mixinConfigs.add(configPath);
+                                            }
                                         }
                                     }
                                 }
+                            } else {
+                                manifestParsingResult = parseManifestFile(jarFile);
+                                if (manifestParsingResult != null) {
+                                    mixinConfigs.addAll(manifestParsingResult.getMixinConfigs());
+                                }
                             }
                         } else {
-                            manifestParsingResult = parseManifestFile(jarFile);
-                            if (manifestParsingResult != null) {
-                                mixinConfigs.addAll(manifestParsingResult.getMixinConfigs());
+                            mods = config;
+                            modId = mods.get("id");
+
+                            Object mixinsObj = mods.get("mixins");
+                            if (mixinsObj instanceof List) {
+                                List<?> mixinsList = (List<?>) mixinsObj;
+                                for (Object mixinItem : mixinsList) {
+                                    if (mixinItem instanceof String) {
+                                        mixinConfigs.add((String) mixinItem);
+                                    }
+                                }
                             }
                         }
 

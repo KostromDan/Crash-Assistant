@@ -95,14 +95,14 @@ public class Mod {
         // Write jar name
         writer.write(indent + mod.getJarName());
 
-        // Add MCreator indicator if applicable
-        if (mod.IsMCreator() != null && mod.IsMCreator()) {
-            writer.write(" (MCreator mod)");
-        }
-
         // Add mod ID if available
         if (mod.getModId() != null) {
             writer.write(" : " + mod.getModId());
+        }
+
+        // Add MCreator indicator if applicable
+        if (mod.IsMCreator() != null && mod.IsMCreator()) {
+            writer.write(" (MCreator mod)");
         }
 
         writer.newLine();

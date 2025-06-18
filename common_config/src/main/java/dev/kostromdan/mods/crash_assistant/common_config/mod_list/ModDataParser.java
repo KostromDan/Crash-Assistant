@@ -108,20 +108,72 @@ public class ModDataParser {
         if (cachedMod != null) {
             return cachedMod;
         }
+
+        try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+            return parseJarFile(jarFile, jarPath);
+        } catch (Exception ignored) {
+        }
+
+        return new Mod(jarPath.getFileName().toString(), null, null, null, new ArrayList<>(), new ArrayList<>());
+    }
+
+    /**
+     * Parses a jar file to extract mod data.
+     *
+     * @param jarFile The jar file to parse
+     * @param jarPath The path to the jar file (used for naming and caching)
+     * @return The parsed Mod object
+     */
+    private static Mod parseJarFile(JarFile jarFile, Path jarPath) {
         Boolean isMCreator = null;
         List<String> mixinConfigs = new ArrayList<>();
         List<Mod> jarInJarPaths = new ArrayList<>();
 
-        try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+        try {
             isMCreator = jarFile.getJarEntry("net/mcreator") != null;
 
+            // Process nested jar files
             jarFile.stream()
                     .filter(entry -> !entry.isDirectory() && entry.getName().endsWith(".jar"))
                     .forEach(entry -> {
-                        JarInJarHelper.LOGGER.info("Found jar in jar: " + entry.getName());
-                        jarInJarPaths.add(new Mod(entry.getName().substring(entry.getName().lastIndexOf("/") + 1), null, null, null, new ArrayList<>(), new ArrayList<>()));
-                    });
+                        tryBlock:
+                        try {
+                            // Get the jar name from the entry
+                            String entryName = entry.getName();
+                            String jarName = entryName.substring(entryName.lastIndexOf("/") + 1);
+                            if (jarName.contains("mixinextras") || jarName.contains("mixinsquared")) {
+//                                jarInJarPaths.add(new Mod(entry.getName().substring(entry.getName().lastIndexOf("/") + 1), null, null, null, new ArrayList<>(), new ArrayList<>()));
+                                break tryBlock;
+                            }
 
+                            // Create a temporary file for the nested jar
+                            Path tempJarPath = Files.createTempFile("nestedjar", ".jar");
+                            try {
+                                // Copy the nested jar to the temporary file
+                                try (InputStream is = jarFile.getInputStream(entry)) {
+                                    Files.copy(is, tempJarPath, StandardCopyOption.REPLACE_EXISTING);
+                                }
+
+                                // Create a JarFile from the temporary file and parse it using the same method as for regular jars
+                                try (JarFile nestedJarFile = new JarFile(tempJarPath.toFile())) {
+                                    // Use the same parseJarFile method for nested jars
+                                    Mod nestedMod = parseJarFile(nestedJarFile, tempJarPath);
+                                    // Update the jar name to use the one from the entry
+                                    nestedMod = new Mod(jarName, nestedMod.getModId(), nestedMod.getVersion(),
+                                            nestedMod.IsMCreator(), nestedMod.getMixinConfigs(), nestedMod.getJarJarMods());
+                                    jarInJarPaths.add(nestedMod);
+                                }
+                            } finally {
+                                // Delete the temporary file
+                                Files.deleteIfExists(tempJarPath);
+                            }
+                        } catch (Exception e) {
+                            // If anything goes wrong, add a basic entry
+                            String jarName = entry.getName().substring(entry.getName().lastIndexOf("/") + 1);
+                            JarInJarHelper.LOGGER.warn("Error processing nested jar " + jarName + ": " + e.getMessage());
+                            jarInJarPaths.add(new Mod(jarName, null, null, null, new ArrayList<>(), new ArrayList<>()));
+                        }
+                    });
 
             for (String resourcePath : inJarPaths) {
                 JarEntry entry = jarFile.getJarEntry(resourcePath);
@@ -194,8 +246,10 @@ public class ModDataParser {
             if (jarPath.getFileName().toString().toLowerCase().contains("essential") && jarFile.getJarEntry("essential-loader.properties") != null) {
                 return new Mod(jarPath.getFileName().toString(), "essential-container", null, isMCreator, mixinConfigs, jarInJarPaths);
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            JarInJarHelper.LOGGER.warn("Error parsing jar file " + jarPath.getFileName() + ": " + e.getMessage());
         }
+
         return new Mod(jarPath.getFileName().toString(), null, null, isMCreator, mixinConfigs, jarInJarPaths);
     }
 

@@ -18,6 +18,7 @@ public class Mod {
     private final Boolean isMCreator;
     private final List<String> mixinConfigs;
     private final List<Mod> jarJarMods;
+    private final String pathFromJarJar;
 
     public static final Type TYPE = new TypeToken<LinkedHashSet<Mod>>() {
     }.getType();
@@ -26,13 +27,14 @@ public class Mod {
             .setPrettyPrinting()
             .create();
 
-    public Mod(String jarName, String modId, String version, Boolean isMCreator, List<String> mixinConfigs, List<Mod> jarJarMods) {
+    public Mod(String jarName, String modId, String version, Boolean isMCreator, List<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar) {
         this.jarName = jarName;
         this.modId = modId;
         this.version = version;
         this.isMCreator = isMCreator;
         this.mixinConfigs = mixinConfigs;
         this.jarJarMods = jarJarMods;
+        this.pathFromJarJar = pathFromJarJar;
     }
 
     public String getJarName() {
@@ -59,72 +61,103 @@ public class Mod {
         return jarJarMods;
     }
 
+    public String getPathFromJarJar() {
+        return pathFromJarJar;
+    }
+
     /**
      * Writes a list of mods to a text file with detailed formatting.
-     * 
+     *
      * @param modListTxtPath Path to the output file
-     * @param mods Collection of mods to write
+     * @param mods           Collection of mods to write
      * @throws IOException If an I/O error occurs
      */
     public static void writeModlistTxt(Path modListTxtPath, Collection<Mod> mods) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
             writer.write("Mods count: " + mods.size() + "\n\n");
+            int[] maxLens = computeMaxLengths(mods, 0);
+            int maxJarNameLength = maxLens[0];
+            int maxModIdLength = maxLens[1];
+
             for (Mod mod : mods) {
-                writeModWithFormatting(writer, mod, 0);
+                writeModWithFormatting(writer, mod, 0, maxJarNameLength, maxModIdLength);
             }
         }
+    }
+
+    private static int[] computeMaxLengths(Collection<Mod> mods, int indentLevel) {
+        int maxJarLen = 0;
+        int maxModIdLen = 0;
+
+        for (Mod mod : mods) {
+            // ── protect against nulls ───────────────────────────────────────
+            String jarName = mod.getJarName() != null ? mod.getJarName() : "";
+            String pathFromJarJar = mod.getPathFromJarJar() != null ? mod.getPathFromJarJar() : "";
+            String modId = mod.getModId() != null ? mod.getModId() : "";
+
+            /* jar column: 4 × indent + jarName + pathFromJarJar */
+            int jarLen = indentLevel * 4 + jarName.length() + pathFromJarJar.length();
+            maxJarLen = Math.max(maxJarLen, jarLen);
+
+            /* mod-id column: 4 × indent + modId + optional “ (MCreator mod)” */
+            int modIdLen = indentLevel * 4 + modId.length();
+            if (Boolean.TRUE.equals(mod.IsMCreator())) {
+                modIdLen += " (MCreator mod)".length();
+            }
+            maxModIdLen = Math.max(maxModIdLen, modIdLen);
+
+            /* recurse into nested mods, if any */
+            if (mod.getJarJarMods() != null && !mod.getJarJarMods().isEmpty()) {
+                int[] childLens = computeMaxLengths(mod.getJarJarMods(), indentLevel + 1);
+                maxJarLen = Math.max(maxJarLen, childLens[0]);
+                maxModIdLen = Math.max(maxModIdLen, childLens[1]);
+            }
+        }
+        return new int[]{maxJarLen, maxModIdLen};
     }
 
     /**
      * Helper method to write a single mod with proper indentation and formatting.
      * Handles recursive formatting for jarJarMods.
-     * 
-     * @param writer The BufferedWriter to write to
-     * @param mod The mod to write
+     *
+     * @param writer      The BufferedWriter to write to
+     * @param mod         The mod to write
      * @param indentLevel The current indentation level (0 for top-level mods)
      * @throws IOException If an I/O error occurs
      */
-    private static void writeModWithFormatting(BufferedWriter writer, Mod mod, int indentLevel) throws IOException {
+    private static void writeModWithFormatting(BufferedWriter writer, Mod mod, int indentLevel, int maxJarNameLength, int maxModIdLength) throws IOException {
         // Create indentation string based on level
         StringBuilder indentBuilder = new StringBuilder();
         for (int i = 0; i < indentLevel; i++) {
-            indentBuilder.append("        ");
+            indentBuilder.append("    ");
         }
         String indent = indentBuilder.toString();
 
-        // Write jar name
-        writer.write(indent + mod.getJarName());
+        // Start with the jar name in its column
+        StringBuilder line = new StringBuilder();
+        line.append(String.format("%-" + maxJarNameLength + "s", indent + (mod.getPathFromJarJar() != null ? mod.getPathFromJarJar() : "") + mod.getJarName()));
+
+        String mCreatorString = mod.IsMCreator() != null && mod.IsMCreator() ? " (MCreator mod)" : "";
+
 
         // Add mod ID if available
         if (mod.getModId() != null) {
-            writer.write(" : " + mod.getModId());
+            line.append(" : ").append(String.format("%-" + maxModIdLength + "s", mod.getModId() + mCreatorString));
         }
-
-        // Add MCreator indicator if applicable
-        if (mod.IsMCreator() != null && mod.IsMCreator()) {
-            writer.write(" (MCreator mod)");
-        }
-
-        writer.newLine();
 
         // Write mixin configs if any
         if (mod.getMixinConfigs() != null && !mod.getMixinConfigs().isEmpty()) {
-            writer.write(indent + "    mixins:");
-            writer.newLine();
-            for (String mixin : mod.getMixinConfigs()) {
-                writer.write(indent + "        " + mixin);
-                writer.newLine();
-            }
+            line.append(" : ").append(String.join(", ", mod.getMixinConfigs()));
         }
+
+        writer.write(line.toString());
+        writer.newLine();
 
         // Write jarJarMods if any
         if (mod.getJarJarMods() != null && !mod.getJarJarMods().isEmpty()) {
-            writer.write(indent + "    jarjar:");
-            writer.newLine();
-
             // Recursively write each jarJarMod with increased indentation
             for (Mod jarJarMod : mod.getJarJarMods()) {
-                writeModWithFormatting(writer, jarJarMod, indentLevel + 1);
+                writeModWithFormatting(writer, jarJarMod, indentLevel + 1, maxJarNameLength, maxModIdLength);
             }
         }
     }
@@ -158,6 +191,7 @@ public class Mod {
                 ", isMCreator='" + isMCreator + '\'' +
                 ", mixinConfigs='" + mixinConfigs + '\'' +
                 ", jarJarMods='" + jarJarMods + '\'' +
+                ", pathFromJarJar='" + pathFromJarJar + '\'' +
                 '}';
     }
 
@@ -181,7 +215,7 @@ public class Mod {
             if (json.isJsonArray()) {
                 // Simple array format with just jar names
                 for (JsonElement element : json.getAsJsonArray()) {
-                    mods.add(new Mod(element.getAsString(), null, null, null, new ArrayList<>(), new ArrayList<>()));
+                    mods.add(new Mod(element.getAsString(), null, null, null, new ArrayList<>(), new ArrayList<>(), null));
                 }
             } else if (json.isJsonObject()) {
                 // Object format with detailed mod information
@@ -204,7 +238,7 @@ public class Mod {
         private Mod deserializeMod(JsonElement element) {
             if (element.isJsonPrimitive()) {
                 // Legacy format: just a string with jar name
-                return new Mod(element.getAsString(), null, null, null, new ArrayList<>(), new ArrayList<>());
+                return new Mod(element.getAsString(), null, null, null, new ArrayList<>(), new ArrayList<>(), null);
             } else if (element.isJsonObject()) {
                 // Object format with full mod details
                 JsonObject modObj = element.getAsJsonObject();
@@ -213,7 +247,7 @@ public class Mod {
             }
 
             // Default case (shouldn't happen with well-formed JSON)
-            return new Mod("unknown", null, null, null, new ArrayList<>(), new ArrayList<>());
+            return new Mod("unknown", null, null, null, new ArrayList<>(), new ArrayList<>(), null);
         }
 
         /**
@@ -225,6 +259,7 @@ public class Mod {
             String modId = modObj.has("modId") ? modObj.get("modId").getAsString() : null;
             String version = modObj.has("version") ? modObj.get("version").getAsString() : null;
             Boolean isMCreator = modObj.has("isMCreator") ? modObj.get("isMCreator").getAsBoolean() : null;
+            String pathFromJarJar = modObj.has("pathFromJarJar") ? modObj.get("pathFromJarJar").getAsString() : null;
 
             // Parse mixinConfigs
             List<String> mixinConfigs = new ArrayList<>();
@@ -244,7 +279,7 @@ public class Mod {
                 }
             }
 
-            return new Mod(jarName, modId, version, isMCreator, mixinConfigs, jarJarMods);
+            return new Mod(jarName, modId, version, isMCreator, mixinConfigs, jarJarMods, pathFromJarJar);
         }
 
         @Override
@@ -260,7 +295,8 @@ public class Mod {
 
         /**
          * Creates a JSON object with all the properties of a Mod.
-         * @param mod The mod to serialize
+         *
+         * @param mod            The mod to serialize
          * @param includeJarName Whether to include jarName as a property (true for nested mods, false for root mods)
          * @return JsonObject representing the mod
          */
@@ -281,6 +317,9 @@ public class Mod {
             }
             if (mod.IsMCreator() != null) {
                 modObj.addProperty("isMCreator", mod.IsMCreator());
+            }
+            if (mod.getPathFromJarJar() != null) {
+                modObj.addProperty("pathFromJarJar", mod.getPathFromJarJar());
             }
 
             // Add mixinConfigs if any

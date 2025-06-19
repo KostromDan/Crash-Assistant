@@ -27,7 +27,6 @@ public class MissingEmbeddiumForOculus extends KnownCrashReason {
 
     @Override
     public boolean matches(Log log) {
-        if (CrashAssistantApp.gameLaunchedSuccessfully) return false;
         if (PlatformHelp.platform != PlatformHelp.FORGE) return false;
         LinkedHashSet<Mod> mods = ModListUtils.getCurrentModList(true);
         if (mods.stream().noneMatch(mod -> Objects.equals(mod.getModId(), "oculus"))) return false;

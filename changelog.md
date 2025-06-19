@@ -1,3 +1,7 @@
+1.9.5:
+
+- Added 1.21.6 forge support.
+
 1.9.4:
 
 - Fixed a small bug in 1.16.5

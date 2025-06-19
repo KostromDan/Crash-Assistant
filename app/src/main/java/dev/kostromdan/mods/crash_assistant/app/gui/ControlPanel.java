@@ -161,7 +161,7 @@ public class ControlPanel {
     public void updateModListInfo() {
         ModListDiff modListDiff = ModListDiff.getDiff(true);
         if (!CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) return;
-        if (PlatformHelp.isLinkDefault() || CrashAssistantConfig.getBoolean("modpack_modlist.force_add_full_modlist_as_log")) {
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.add_modlist_txt_as_log")) {
             Path modListTxtPath = Paths.get("logs", "modlist.txt");
             try {
                 Mod.writeModlistTxt(modListTxtPath, modListDiff.getCurrentMods());

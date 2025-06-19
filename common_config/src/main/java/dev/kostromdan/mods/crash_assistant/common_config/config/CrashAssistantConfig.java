@@ -154,11 +154,9 @@ public class CrashAssistantConfig {
         addOption("modpack_modlist.add_modloader_jar_name",
                 "If enabled, will add modloader jar name to modlist, to easily track if user changed version of modloader.",
                 true);
-        addOption("modpack_modlist.force_add_full_modlist_as_log",
-                "If enabled, will add modlist.txt, with names of all mods to logs.\n" +
-                        "false - only if general.help_link equals CHANGE_ME, will add modlist.txt to logs.\n" +
-                        "true - anyways will add modlist.txt to logs.",
-                false);
+        addOption("modpack_modlist.add_modlist_txt_as_log",
+                "If enabled, will add generated modlist.txt, with names of all mods / modids / mixin configs / jarjar mods info to logs.\n",
+                true);
 
         config.setComment("analysis", "Settings of analysis feature.\n" +
                 "Analysing logs for most common reasons of crashes and displaying recommendations with fixes.");

@@ -1,11 +1,11 @@
 package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
 import com.electronwill.nightconfig.core.Config;
-import com.electronwill.nightconfig.core.file.FileConfig;
+import com.electronwill.nightconfig.json.JsonParser;
+import com.electronwill.nightconfig.toml.TomlParser;
 import com.google.gson.Gson;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
-import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -179,82 +179,71 @@ public class ModDataParser {
             byte[] bytes = descriptorBytes.get(descriptorPath);
             if (bytes == null) continue;
 
-            Path temp = null;
             try {
-                temp = Files.createTempFile("moddata", descriptorPath.substring(descriptorPath.lastIndexOf('.')));
-                FileUtils.writeByteArrayToFile(temp.toFile(), bytes);
+                Config cfg = loadConfigFromBytes(descriptorPath, bytes);
+                if (cfg == null) continue;
 
-                try (FileConfig cfg = FileConfig.builder(temp).build()) {
-                    cfg.load();
-                    Config mods;
-                    String modId;
-                    ManifestParsingResult mp = null;
+                Config mods;
+                String modId;
+                ManifestParsingResult mp = null;
 
-                    if (descriptorPath.endsWith(".toml")) {
-                        List<Object> modsList = cfg.get("mods");
-                        if (modsList == null || modsList.isEmpty()) continue;
+                if (descriptorPath.endsWith(".toml")) {
+                    List<Object> modsList = cfg.get("mods");
+                    if (modsList == null || modsList.isEmpty()) continue;
 
-                        mods = (Config) modsList.get(0);
-                        modId = mods.get("modId");
+                    mods = (Config) modsList.get(0);
+                    modId = mods.get("modId");
 
-                        if ("META-INF/neoforge.mods.toml".equals(descriptorPath)) {
-                            List<Object> mixinsList = cfg.get("mixins");
-                            if (mixinsList != null) {
-                                for (Object obj : mixinsList) {
-                                    if (obj instanceof Config) {
-                                        String c = ((Config) obj).get("config");
-                                        if (c != null) mixinConfigs.add(c);
-                                    }
+                    if ("META-INF/neoforge.mods.toml".equals(descriptorPath)) {
+                        List<Object> mixinsList = cfg.get("mixins");
+                        if (mixinsList != null) {
+                            for (Object obj : mixinsList) {
+                                if (obj instanceof Config) {
+                                    String c = ((Config) obj).get("config");
+                                    if (c != null) mixinConfigs.add(c);
                                 }
                             }
-                        } else {
-                            mp = manifestResult;
-                            if (mp != null) mixinConfigs.addAll(mp.getMixinConfigs());
                         }
                     } else {
-                        mods = cfg;
-                        modId = mods.get("id");
-
-                        Object mixinsObj = mods.get("mixins");
-                        if (mixinsObj instanceof List) {
-                            mixinConfigs.addAll(
-                                    ((List<?>) mixinsObj).stream()
-                                            .filter(String.class::isInstance)
-                                            .map(String.class::cast)
-                                            .collect(Collectors.toList()));
-                        }
+                        mp = manifestResult;
+                        if (mp != null) mixinConfigs.addAll(mp.getMixinConfigs());
                     }
+                } else {
+                    mods = cfg;
+                    modId = mods.get("id");
 
-                    String version = mods.get("version");
-                    if (Objects.equals(version, "${file.jarVersion}")) {
-                        if (mp == null) mp = manifestResult;
-                        version = mp == null ? null : mp.getImplementationVersion();
-                    } else if (Objects.equals(version, "${modVersion}")) {
-                        version = null;
+                    Object mixinsObj = mods.get("mixins");
+                    if (mixinsObj instanceof List) {
+                        mixinConfigs.addAll(
+                                ((List<?>) mixinsObj).stream()
+                                        .filter(String.class::isInstance)
+                                        .map(String.class::cast)
+                                        .collect(Collectors.toList()));
                     }
-
-                    if (version == null && modId == null) {
-                        throw new Exception("Failed to parse mod data (version AND modId) from " +
-                                descriptorPath + " of " + displayJarPath.getFileName());
-                    }
-                    if (version == null) JarInJarHelper.LOGGER.warn("Failed to parse version from " +
-                            descriptorPath + " of " + displayJarPath.getFileName());
-                    if (modId == null) JarInJarHelper.LOGGER.warn("Failed to parse modId from " +
-                            descriptorPath + " of " + displayJarPath.getFileName());
-
-                    return new Mod(displayJarPath.getFileName().toString(), modId, version,
-                            isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
                 }
+
+                String version = mods.get("version");
+                if (Objects.equals(version, "${file.jarVersion}")) {
+                    if (mp == null) mp = manifestResult;
+                    version = mp == null ? null : mp.getImplementationVersion();
+                } else if (Objects.equals(version, "${modVersion}")) {
+                    version = null;
+                }
+
+                if (version == null && modId == null) {
+                    throw new Exception("Failed to parse mod data (version AND modId) from " +
+                            descriptorPath + " of " + displayJarPath.getFileName());
+                }
+                if (version == null) JarInJarHelper.LOGGER.warn("Failed to parse version from " +
+                        descriptorPath + " of " + displayJarPath.getFileName());
+                if (modId == null) JarInJarHelper.LOGGER.warn("Failed to parse modId from " +
+                        descriptorPath + " of " + displayJarPath.getFileName());
+
+                return new Mod(displayJarPath.getFileName().toString(), modId, version,
+                        isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
             } catch (Exception e) {
                 JarInJarHelper.LOGGER.warn("Error parsing " + descriptorPath + " of " +
                         displayJarPath.getFileName() + ": ", e);
-            } finally {
-                if (temp != null) {
-                    try {
-                        Files.deleteIfExists(temp);
-                    } catch (Exception ignored) {
-                    }
-                }
             }
         }
 
@@ -280,6 +269,23 @@ public class ModDataParser {
             out.write(buf, 0, r);
         }
         return out.toByteArray();
+    }
+
+    /**
+     * Loads a NightConfig {@link Config} directly from the given in‑memory descriptor bytes.
+     * This avoids the costly round‑trip to the file‑system that the old implementation required.
+     */
+    private static Config loadConfigFromBytes(String descriptorPath, byte[] bytes) {
+        try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {
+            if (descriptorPath.endsWith(".toml")) {
+                return new TomlParser().parse(reader);
+            } else { // JSON, JSON5, etc.
+                return new JsonParser().parse(reader);
+            }
+        } catch (Exception e) {
+            JarInJarHelper.LOGGER.warn("Failed to parse descriptor " + descriptorPath + " in‑memory", e);
+            return null;
+        }
     }
 
     private static ManifestParsingResult parseManifest(Manifest manifest) {

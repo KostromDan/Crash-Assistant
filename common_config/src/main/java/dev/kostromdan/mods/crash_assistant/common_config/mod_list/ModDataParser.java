@@ -105,7 +105,7 @@ public class ModDataParser {
              BufferedInputStream bis = new BufferedInputStream(fis);
              JarInputStream jis = new JarInputStream(bis)) {
 
-            Mod mod = parseJarFile(jis, jarPath, null);
+            Mod mod = parseJarFile(jis, jarPath.getFileName().toString(), null);
             saveModToCache(jarPath, mod);
             return mod;
         } catch (Exception e) {
@@ -115,7 +115,7 @@ public class ModDataParser {
         }
     }
 
-    private static Mod parseJarFile(JarInputStream jis, Path displayJarPath, String jarJarPath) {
+    private static Mod parseJarFile(JarInputStream jis, String currentJarName, String jarJarPath) {
         Boolean isMCreator = null;
         boolean hasEssentialLoader = false;
 
@@ -150,7 +150,7 @@ public class ModDataParser {
                     String nestedJarPath = "/" + (name.contains("/") ? name.substring(0, name.lastIndexOf('/') + 1) : "");
                     byte[] nestedBytes = readEntryBytes(jis);
                     try (JarInputStream nestedJis = new JarInputStream(new ByteArrayInputStream(nestedBytes))) {
-                        Mod nested = parseJarFile(nestedJis, Paths.get(nestedJarName), nestedJarPath);
+                        Mod nested = parseJarFile(nestedJis, nestedJarName, nestedJarPath);
                         nested = new Mod(nestedJarName, nested.getModId(), nested.getVersion(),
                                 nested.IsMCreator(), nested.getMixinConfigs(),
                                 nested.getJarJarMods(), nestedJarPath);
@@ -171,7 +171,7 @@ public class ModDataParser {
                 }
             }
         } catch (Exception e) {
-            JarInJarHelper.LOGGER.warn("Failed while streaming entries of " + displayJarPath.getFileName(), e);
+            JarInJarHelper.LOGGER.warn("Failed while streaming entries of " + currentJarName, e);
         }
 
         /* ─ Parse descriptors in priority order ─ */
@@ -232,29 +232,29 @@ public class ModDataParser {
 
                 if (version == null && modId == null) {
                     throw new Exception("Failed to parse mod data (version AND modId) from " +
-                            descriptorPath + " of " + displayJarPath.getFileName());
+                            descriptorPath + " of " + currentJarName);
                 }
                 if (version == null) JarInJarHelper.LOGGER.warn("Failed to parse version from " +
-                        descriptorPath + " of " + displayJarPath.getFileName());
+                        descriptorPath + " of " + currentJarName);
                 if (modId == null) JarInJarHelper.LOGGER.warn("Failed to parse modId from " +
-                        descriptorPath + " of " + displayJarPath.getFileName());
+                        descriptorPath + " of " + currentJarName);
 
-                return new Mod(displayJarPath.getFileName().toString(), modId, version,
+                return new Mod(currentJarName, modId, version,
                         isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
             } catch (Exception e) {
                 JarInJarHelper.LOGGER.warn("Error parsing " + descriptorPath + " of " +
-                        displayJarPath.getFileName() + ": ", e);
+                        currentJarName + ": ", e);
             }
         }
 
         /* ─ Special-case Essential ─ */
-        if (displayJarPath.getFileName().toString().toLowerCase().contains("essential") && hasEssentialLoader) {
-            return new Mod(displayJarPath.getFileName().toString(), "essential-container", null,
+        if (currentJarName.toLowerCase().contains("essential") && hasEssentialLoader) {
+            return new Mod(currentJarName, "essential-container", null,
                     isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
         }
 
         /* ─ Nothing found ─ */
-        return new Mod(displayJarPath.getFileName().toString(), null, null,
+        return new Mod(currentJarName, null, null,
                 isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
     }
 

@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
 import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.core.io.ParsingException;
 import com.electronwill.nightconfig.json.JsonParser;
 import com.electronwill.nightconfig.toml.TomlParser;
 import com.google.gson.Gson;
@@ -180,7 +181,7 @@ public class ModDataParser {
             if (bytes == null) continue;
 
             try {
-                Config cfg = loadConfigFromBytes(descriptorPath, bytes);
+                Config cfg = loadConfigFromBytes(currentJarName + "/" + descriptorPath, bytes);
                 if (cfg == null) continue;
 
                 Config mods;
@@ -271,22 +272,91 @@ public class ModDataParser {
         return out.toByteArray();
     }
 
-    /**
-     * Loads a NightConfig {@link Config} directly from the given in‑memory descriptor bytes.
-     * This avoids the costly round‑trip to the file‑system that the old implementation required.
-     */
+
     private static Config loadConfigFromBytes(String descriptorPath, byte[] bytes) {
-        try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {
-            if (descriptorPath.endsWith(".toml")) {
-                return new TomlParser().parse(reader);
-            } else { // JSON, JSON5, etc.
+        if (!descriptorPath.endsWith(".toml")) {
+            try (Reader reader = new InputStreamReader(
+                    new ByteArrayInputStream(bytes),
+                    StandardCharsets.UTF_8)) {
                 return new JsonParser().parse(reader);
+            } catch (Exception e) {
+                JarInJarHelper.LOGGER.warn("Failed to parse JSON descriptor " + descriptorPath, e);
+                return null;
+            }
+        }
+
+        try (Reader reader = new InputStreamReader(
+                new ByteArrayInputStream(bytes),
+                StandardCharsets.UTF_8)) {
+            return new TomlParser().parse(reader);
+        } catch (ParsingException pe) {
+            byte[] normalized = normalizeToml(bytes);
+            try (Reader reader2 = new InputStreamReader(
+                    new ByteArrayInputStream(normalized),
+                    StandardCharsets.UTF_8)) {
+                return new TomlParser().parse(reader2);
+            } catch (Exception e2) {
+                JarInJarHelper.LOGGER.warn("Failed to parse descriptor even after normalization: "
+                        + descriptorPath, e2);
+                return null;
             }
         } catch (Exception e) {
-            JarInJarHelper.LOGGER.warn("Failed to parse descriptor " + descriptorPath + " in‑memory", e);
+            JarInJarHelper.LOGGER.warn("Unexpected error parsing TOML descriptor " + descriptorPath, e);
             return null;
         }
     }
+
+    /**
+     * Restores invalid “newline in basic string” sequences that some very old mods
+     * wrote out in 8-bit encodings.
+     * <p>
+     * Algorithm:
+     * – stream over the raw bytes
+     * – remember whether we are inside a single-line basic string ( " … " )
+     * but **not** inside a multi-line one ( """ … """ ), and whether the
+     * current byte is escaped with a back-slash
+     * – whenever an unescaped LF (`0x0A`) is seen *while* we are inside a
+     * single-line basic string, emit the two ASCII characters `\` `n` instead
+     * of the raw LF
+     */
+    private static byte[] normalizeToml(byte[] raw) {
+        StringBuilder out = new StringBuilder(raw.length + 16);
+        boolean inBasic = false;        // inside " … "
+        boolean inMultiline = false;    // inside """ … """
+        boolean escaped = false;        // previous char was '\'
+        int quoteRun = 0;               // how many '"' seen in a row
+
+        for (byte b : raw) {
+            char c = (char) (b & 0xFF);
+
+            // track quoting state -------------------------------------------------
+            if (c == '"' && !escaped) {
+                quoteRun++;
+            } else {
+                quoteRun = 0;
+            }
+            if (quoteRun == 1 && !inMultiline) {           // start / end basic
+                inBasic = !inBasic;
+            } else if (quoteRun == 3) {                    // start / end """ …
+                inMultiline = !inMultiline;
+                inBasic = false;                           // triple quotes override
+                quoteRun = 0;                              // reset for safety
+            }
+
+            // newline → "\n" only if it’s really illegal --------------------------
+            if (c == '\n' && inBasic && !escaped) {
+                out.append("\\n");
+                escaped = false;
+                continue;
+            }
+
+            // regular copy --------------------------------------------------------
+            out.append(c);
+            escaped = (!escaped && c == '\\'); // '\' toggles escape for *next* byte
+        }
+        return out.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
 
     private static ManifestParsingResult parseManifest(Manifest manifest) {
         if (manifest == null) return null;

@@ -99,6 +99,7 @@ public class ControlPanel {
                     if (Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
                         uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
                         uploadAllButton.setEnabled(true);
+                        CrashAssistantGUI.resize();
 
                         Timer enableButtonsTimer = new Timer();
                         enableButtonsTimer.schedule(new TimerTask() {

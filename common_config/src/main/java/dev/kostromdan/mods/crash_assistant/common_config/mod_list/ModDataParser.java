@@ -123,8 +123,6 @@ public class ModDataParser {
         List<Mod> jarInJarMods = new ArrayList<>();
         Map<String, byte[]> descriptorBytes = new HashMap<>();
 
-        ManifestParsingResult manifestResult = parseManifest(jis.getManifest());
-
         try {
             JarEntry entry;
             while ((entry = jis.getNextJarEntry()) != null) {
@@ -205,7 +203,7 @@ public class ModDataParser {
                             }
                         }
                     } else {
-                        mp = manifestResult;
+                        mp = parseManifest(jis.getManifest());;
                         if (mp != null) mixinConfigs.addAll(mp.getMixinConfigs());
                     }
                 } else {
@@ -224,7 +222,7 @@ public class ModDataParser {
 
                 String version = mods.get("version");
                 if (Objects.equals(version, "${file.jarVersion}")) {
-                    if (mp == null) mp = manifestResult;
+                    if (mp == null) mp = parseManifest(jis.getManifest());;
                     version = mp == null ? null : mp.getImplementationVersion();
                 } else if (Objects.equals(version, "${modVersion}")) {
                     version = null;

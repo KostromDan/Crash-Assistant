@@ -16,10 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-import java.util.jar.Manifest;
+import java.util.jar.*;
 import java.util.stream.Collectors;
 
 public class ModDataParser {
@@ -101,11 +98,8 @@ public class ModDataParser {
         Mod cached = getModFromCache(jarPath);
         if (cached != null) return cached;
 
-        try (InputStream fis = Files.newInputStream(jarPath);
-             BufferedInputStream bis = new BufferedInputStream(fis);
-             JarInputStream jis = new JarInputStream(bis)) {
-
-            Mod mod = parseJarFile(jis, jarPath.getFileName().toString(), null);
+        try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+            Mod mod = parseJarFile(jarFile, jarPath.getFileName().toString(), null);
             saveModToCache(jarPath, mod);
             return mod;
         } catch (Exception e) {
@@ -115,6 +109,64 @@ public class ModDataParser {
         }
     }
 
+    private static Mod parseJarFile(JarFile jarFile, String currentJarName, String jarJarPath) {
+        Boolean isMCreator = null;
+        boolean hasEssentialLoader = false;
+
+        List<String> mixinConfigs = new ArrayList<>();
+        List<Mod> jarInJarMods = new ArrayList<>();
+
+        try {
+            if (jarFile.getEntry("net/mcreator/") != null) {
+                isMCreator = true;
+            }
+
+            if (jarFile.getEntry("essential-loader.properties") != null) {
+                hasEssentialLoader = true;
+            }
+
+            Enumeration<JarEntry> entries = jarFile.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                String name = entry.getName();
+
+                if (!name.startsWith("META-INF/") || entry.isDirectory() || !name.endsWith(".jar")) {
+                    continue;
+                }
+
+                processNestedJar(name, () -> readEntryBytes(jarFile, entry), jarInJarMods);
+            }
+
+            Map<String, byte[]> descriptorBytes = new HashMap<>();
+            Manifest manifest = null;
+
+            for (String descriptorPath : inJarPaths) {
+                JarEntry entry = jarFile.getJarEntry(descriptorPath);
+                if (entry != null) {
+                    descriptorBytes.put(descriptorPath, readEntryBytes(jarFile, entry));
+                }
+            }
+
+            // Get manifest if needed
+            ManifestProvider manifestProvider = () -> {
+                if (manifest == null) {
+                    return jarFile.getManifest();
+                }
+                return manifest;
+            };
+
+            return parseDescriptorsAndBuildMod(descriptorBytes, manifestProvider, currentJarName,
+                    jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods);
+
+        } catch (Exception e) {
+            JarInJarHelper.LOGGER.warn("Failed while processing " + currentJarName, e);
+        }
+
+        return new Mod(currentJarName, null, null,
+                isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
+    }
+
+    // Overloaded method for parsing from JarInputStream (for nested jars)
     private static Mod parseJarFile(JarInputStream jis, String currentJarName, String jarJarPath) {
         Boolean isMCreator = null;
         boolean hasEssentialLoader = false;
@@ -139,27 +191,8 @@ public class ModDataParser {
                 }
 
                 /* ─ Nested jars ─ */
-                if (name.endsWith(".jar")) {
-                    String nestedJarName = name.substring(name.lastIndexOf('/') + 1);
-                    String normalizedNestedJarName = nestedJarName.toLowerCase();
-                    if (normalizedNestedJarName.contains("mixinextras") || normalizedNestedJarName.contains("mixinsquared")) {
-                        continue;
-                    }
-                    String nestedJarPath = "/" + (name.contains("/") ? name.substring(0, name.lastIndexOf('/') + 1) : "");
-                    byte[] nestedBytes = readEntryBytes(jis);
-                    try (JarInputStream nestedJis = new JarInputStream(new ByteArrayInputStream(nestedBytes))) {
-                        Mod nested = parseJarFile(nestedJis, nestedJarName, nestedJarPath);
-                        nested = new Mod(nestedJarName, nested.getModId(), nested.getVersion(),
-                                nested.IsMCreator(), nested.getMixinConfigs(),
-                                nested.getJarJarMods(), nestedJarPath);
-                        jarInJarMods.add(nested);
-                    } catch (Exception e) {
-                        JarInJarHelper.LOGGER.warn("Error processing nested jar " + name + ": " + e.getMessage());
-                        jarInJarMods.add(new Mod(name.substring(name.lastIndexOf('/') + 1),
-                                null, null, null,
-                                new ArrayList<>(), new ArrayList<>(),
-                                "/" + (name.contains("/") ? name.substring(0, name.lastIndexOf('/') + 1) : "")));
-                    }
+                if (name.startsWith("META-INF/") && name.endsWith(".jar")) {
+                    processNestedJar(name, () -> readEntryBytes(jis), jarInJarMods);
                     continue;
                 }
 
@@ -172,7 +205,49 @@ public class ModDataParser {
             JarInJarHelper.LOGGER.warn("Failed while streaming entries of " + currentJarName, e);
         }
 
-        /* ─ Parse descriptors in priority order ─ */
+        ManifestProvider manifestProvider = () -> jis.getManifest();
+
+        return parseDescriptorsAndBuildMod(descriptorBytes, manifestProvider, currentJarName,
+                jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods);
+    }
+
+    // Functional interface for lazy byte loading
+    private interface ByteSupplier {
+        byte[] get() throws Exception;
+    }
+
+    // Functional interface for manifest provider
+    private interface ManifestProvider {
+        Manifest get() throws IOException;
+    }
+
+    private static void processNestedJar(String name, ByteSupplier byteSupplier, List<Mod> jarInJarMods) {
+        String nestedJarName = name.substring(name.lastIndexOf('/') + 1);
+        String normalizedNestedJarName = nestedJarName.toLowerCase();
+
+        if (normalizedNestedJarName.contains("mixinextras") || normalizedNestedJarName.contains("mixinsquared")) {
+            return;
+        }
+
+        String nestedJarPath = "/" + (name.contains("/") ? name.substring(0, name.lastIndexOf('/') + 1) : "");
+
+        try {
+            byte[] nestedBytes = byteSupplier.get();
+            try (JarInputStream nestedJis = new JarInputStream(new ByteArrayInputStream(nestedBytes))) {
+                Mod nested = parseJarFile(nestedJis, nestedJarName, nestedJarPath);
+                nested = new Mod(nestedJarName, nested.getModId(), nested.getVersion(),
+                        nested.IsMCreator(), nested.getMixinConfigs(),
+                        nested.getJarJarMods(), nestedJarPath);
+                jarInJarMods.add(nested);
+            }
+        } catch (Exception e) {
+            JarInJarHelper.LOGGER.warn("Error processing nested jar " + name + ": " + e.getMessage());
+            jarInJarMods.add(new Mod(nestedJarName, null, null, null,
+                    new ArrayList<>(), new ArrayList<>(), nestedJarPath));
+        }
+    }
+
+    private static Mod parseDescriptorsAndBuildMod(Map<String, byte[]> descriptorBytes, ManifestProvider manifestProvider, String currentJarName, String jarJarPath, Boolean isMCreator, boolean hasEssentialLoader, List<String> mixinConfigs, List<Mod> jarInJarMods) {
         for (String descriptorPath : inJarPaths) {
             byte[] bytes = descriptorBytes.get(descriptorPath);
             if (bytes == null) continue;
@@ -181,63 +256,23 @@ public class ModDataParser {
                 Config cfg = loadConfigFromBytes(currentJarName + "/" + descriptorPath, bytes);
                 if (cfg == null) continue;
 
-                Config mods;
-                String modId;
-                ManifestParsingResult mp = null;
+                ParsedModInfo modInfo = parseModConfig(cfg, descriptorPath, manifestProvider, mixinConfigs);
+                if (modInfo == null) continue;
 
-                if (descriptorPath.endsWith(".toml")) {
-                    List<Object> modsList = cfg.get("mods");
-                    if (modsList == null || modsList.isEmpty()) continue;
-
-                    mods = (Config) modsList.get(0);
-                    modId = mods.get("modId");
-
-                    if ("META-INF/neoforge.mods.toml".equals(descriptorPath)) {
-                        List<Object> mixinsList = cfg.get("mixins");
-                        if (mixinsList != null) {
-                            for (Object obj : mixinsList) {
-                                if (obj instanceof Config) {
-                                    String c = ((Config) obj).get("config");
-                                    if (c != null) mixinConfigs.add(c);
-                                }
-                            }
-                        }
-                    } else {
-                        mp = parseManifest(jis.getManifest());;
-                        if (mp != null) mixinConfigs.addAll(mp.getMixinConfigs());
-                    }
-                } else {
-                    mods = cfg;
-                    modId = mods.get("id");
-
-                    Object mixinsObj = mods.get("mixins");
-                    if (mixinsObj instanceof List) {
-                        mixinConfigs.addAll(
-                                ((List<?>) mixinsObj).stream()
-                                        .filter(String.class::isInstance)
-                                        .map(String.class::cast)
-                                        .collect(Collectors.toList()));
-                    }
-                }
-
-                String version = mods.get("version");
-                if (Objects.equals(version, "${file.jarVersion}")) {
-                    if (mp == null) mp = parseManifest(jis.getManifest());;
-                    version = mp == null ? null : mp.getImplementationVersion();
-                } else if (Objects.equals(version, "${modVersion}")) {
-                    version = null;
-                }
-
-                if (version == null && modId == null) {
+                if (modInfo.version == null && modInfo.modId == null) {
                     throw new Exception("Failed to parse mod data (version AND modId) from " +
                             descriptorPath + " of " + currentJarName);
                 }
-                if (version == null) JarInJarHelper.LOGGER.warn("Failed to parse version from " +
-                        descriptorPath + " of " + currentJarName);
-                if (modId == null) JarInJarHelper.LOGGER.warn("Failed to parse modId from " +
-                        descriptorPath + " of " + currentJarName);
+                if (modInfo.version == null) {
+                    JarInJarHelper.LOGGER.warn("Failed to parse version from " +
+                            descriptorPath + " of " + currentJarName);
+                }
+                if (modInfo.modId == null) {
+                    JarInJarHelper.LOGGER.warn("Failed to parse modId from " +
+                            descriptorPath + " of " + currentJarName);
+                }
 
-                return new Mod(currentJarName, modId, version,
+                return new Mod(currentJarName, modInfo.modId, modInfo.version,
                         isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
             } catch (Exception e) {
                 JarInJarHelper.LOGGER.warn("Error parsing " + descriptorPath + " of " +
@@ -245,20 +280,79 @@ public class ModDataParser {
             }
         }
 
-        /* ─ Special-case Essential ─ */
+        // Special-case Essential
         if (currentJarName.toLowerCase().contains("essential") && hasEssentialLoader) {
             return new Mod(currentJarName, "essential-container", null,
                     isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
         }
 
-        /* ─ Nothing found ─ */
+        // Nothing found
         return new Mod(currentJarName, null, null,
                 isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
     }
 
-    /* ─────────────────────────────────────────────
-     *  Helpers
-     * ───────────────────────────────────────────── */
+    private static class ParsedModInfo {
+        final String modId;
+        final String version;
+
+        ParsedModInfo(String modId, String version) {
+            this.modId = modId;
+            this.version = version;
+        }
+    }
+
+    private static ParsedModInfo parseModConfig(Config cfg, String descriptorPath, ManifestProvider manifestProvider, List<String> mixinConfigs) throws IOException {
+        Config mods;
+        String modId;
+        String version;
+        ManifestParsingResult mp = null;
+
+        if (descriptorPath.endsWith(".toml")) {
+            List<Object> modsList = cfg.get("mods");
+            if (modsList == null || modsList.isEmpty()) return null;
+
+            mods = (Config) modsList.get(0);
+            modId = mods.get("modId");
+
+            if ("META-INF/neoforge.mods.toml".equals(descriptorPath)) {
+                List<Object> mixinsList = cfg.get("mixins");
+                if (mixinsList != null) {
+                    for (Object obj : mixinsList) {
+                        if (obj instanceof Config) {
+                            String c = ((Config) obj).get("config");
+                            if (c != null) mixinConfigs.add(c);
+                        }
+                    }
+                }
+            } else {
+                mp = parseManifest(manifestProvider.get());
+                if (mp != null) mixinConfigs.addAll(mp.getMixinConfigs());
+            }
+        } else {
+            mods = cfg;
+            modId = mods.get("id");
+
+            Object mixinsObj = mods.get("mixins");
+            if (mixinsObj instanceof List) {
+                mixinConfigs.addAll(
+                        ((List<?>) mixinsObj).stream()
+                                .filter(String.class::isInstance)
+                                .map(String.class::cast)
+                                .collect(Collectors.toList()));
+            }
+        }
+
+        version = mods.get("version");
+        if (Objects.equals(version, "${file.jarVersion}")) {
+            if (mp == null) mp = parseManifest(manifestProvider.get());
+            version = mp == null ? null : mp.getImplementationVersion();
+        } else if (Objects.equals(version, "${modVersion}")) {
+            version = null;
+        }
+
+        return new ParsedModInfo(modId, version);
+    }
+
     private static byte[] readEntryBytes(JarInputStream jis) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buf = new byte[4096];
@@ -267,6 +361,18 @@ public class ModDataParser {
             out.write(buf, 0, r);
         }
         return out.toByteArray();
+    }
+
+    private static byte[] readEntryBytes(JarFile jarFile, JarEntry entry) throws Exception {
+        try (InputStream is = jarFile.getInputStream(entry)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buf = new byte[4096];
+            int r;
+            while ((r = is.read(buf)) != -1) {
+                out.write(buf, 0, r);
+            }
+            return out.toByteArray();
+        }
     }
 
     /**
@@ -303,9 +409,6 @@ public class ModDataParser {
         return new ManifestParsingResult(implVer, mixin);
     }
 
-    /* ─────────────────────────────────────────────
-     *  Old ManifestParsingResult (unchanged)
-     * ───────────────────────────────────────────── */
     public static class ManifestParsingResult {
         private final String implementationVersion;
         private final List<String> mixinConfigs;

@@ -258,36 +258,15 @@ public class Mod {
             // Extract basic properties
             String modId = modObj.has("modId") ? modObj.get("modId").getAsString() : null;
             String version = modObj.has("version") ? modObj.get("version").getAsString() : null;
-            Boolean isMCreator = modObj.has("isMCreator") ? modObj.get("isMCreator").getAsBoolean() : null;
-            String pathFromJarJar = modObj.has("pathFromJarJar") ? modObj.get("pathFromJarJar").getAsString() : null;
 
-            // Parse mixinConfigs
-            List<String> mixinConfigs = new ArrayList<>();
-            if (modObj.has("mixinConfigs") && modObj.get("mixinConfigs").isJsonArray()) {
-                JsonArray mixinArray = modObj.get("mixinConfigs").getAsJsonArray();
-                for (JsonElement mixinElement : mixinArray) {
-                    mixinConfigs.add(mixinElement.getAsString());
-                }
-            }
-
-            // Parse nested jarJarMods recursively
-            List<Mod> jarJarMods = new ArrayList<>();
-            if (modObj.has("jarJarMods") && modObj.get("jarJarMods").isJsonArray()) {
-                JsonArray jarJarArray = modObj.get("jarJarMods").getAsJsonArray();
-                for (JsonElement jarJarElement : jarJarArray) {
-                    jarJarMods.add(deserializeMod(jarJarElement));
-                }
-            }
-
-            return new Mod(jarName, modId, version, isMCreator, mixinConfigs, jarJarMods, pathFromJarJar);
+            return new Mod(jarName, modId, version, null, new ArrayList<>(), new ArrayList<>(), null);
         }
 
         @Override
         public JsonElement serialize(LinkedHashSet<Mod> src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject root = new JsonObject();
             for (Mod mod : src) {
-                // For each mod, create its JSON representation but with jarName as key in the root object
-                JsonObject modDetails = createModJsonObject(mod, false); // false = don't include jarName as property
+                JsonObject modDetails = createModJsonObject(mod);
                 root.add(mod.getJarName(), modDetails);
             }
             return root;
@@ -296,15 +275,14 @@ public class Mod {
         /**
          * Creates a JSON object with all the properties of a Mod.
          *
-         * @param mod            The mod to serialize
-         * @param includeJarName Whether to include jarName as a property (true for nested mods, false for root mods)
+         * @param mod The mod to serialize
          * @return JsonObject representing the mod
          */
-        private JsonObject createModJsonObject(Mod mod, boolean includeJarName) {
+        private JsonObject createModJsonObject(Mod mod) {
             JsonObject modObj = new JsonObject();
 
             // Add jarName only for nested mods (not for root mods where it's the key)
-            if (includeJarName && mod.getJarName() != null) {
+            if (mod.getJarName() != null) {
                 modObj.addProperty("jarName", mod.getJarName());
             }
 
@@ -315,33 +293,6 @@ public class Mod {
             if (mod.getVersion() != null) {
                 modObj.addProperty("version", mod.getVersion());
             }
-            if (mod.IsMCreator() != null) {
-                modObj.addProperty("isMCreator", mod.IsMCreator());
-            }
-            if (mod.getPathFromJarJar() != null) {
-                modObj.addProperty("pathFromJarJar", mod.getPathFromJarJar());
-            }
-
-            // Add mixinConfigs if any
-            if (mod.getMixinConfigs() != null && !mod.getMixinConfigs().isEmpty()) {
-                JsonArray mixinArray = new JsonArray();
-                for (String mixin : mod.getMixinConfigs()) {
-                    mixinArray.add(mixin);
-                }
-                modObj.add("mixinConfigs", mixinArray);
-            }
-
-            // Add nested jarJarMods recursively
-            if (mod.getJarJarMods() != null && !mod.getJarJarMods().isEmpty()) {
-                JsonArray jarJarArray = new JsonArray();
-                for (Mod nestedMod : mod.getJarJarMods()) {
-                    // Create JsonObject for nested mod, including its jarName as property
-                    JsonObject nestedModObj = createModJsonObject(nestedMod, true);
-                    jarJarArray.add(nestedModObj);
-                }
-                modObj.add("jarJarMods", jarJarArray);
-            }
-
             return modObj;
         }
     }

@@ -45,10 +45,8 @@ public class CrashAssistantGUI {
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                synchronized (TerminatedProcessesFinder.class) {
-                    CrashAssistantApp.LOGGER.info("Crash Assistant closed.");
-                    System.exit(0);
-                }
+                CrashAssistantApp.LOGGER.info("Crash Assistant closed.");
+                System.exit(0);
             }
         });
 
@@ -378,10 +376,8 @@ public class CrashAssistantGUI {
                     dialog.addWindowListener(new WindowAdapter() {
                         @Override
                         public void windowClosing(WindowEvent e) {
-                            synchronized (TerminatedProcessesFinder.class) {
-                                CrashAssistantApp.LOGGER.info("Incompatible mods dialog closed with window close button. Exiting with code 0.");
-                                System.exit(0);
-                            }
+                            CrashAssistantApp.LOGGER.info("Incompatible mods dialog closed with window close button. Exiting with code 0.");
+                            System.exit(0);
                         }
                     });
 
@@ -442,10 +438,8 @@ public class CrashAssistantGUI {
                                         "Incompatible Mods Removed",
                                         JOptionPane.INFORMATION_MESSAGE
                                 );
-                                synchronized (TerminatedProcessesFinder.class) {
-                                    CrashAssistantApp.LOGGER.info("All incompatible mods deleted successfully. Exiting with code 0.");
-                                    System.exit(0);
-                                }
+                                CrashAssistantApp.LOGGER.info("All incompatible mods deleted successfully. Exiting with code 0.");
+                                System.exit(0);
                             } else {
                                 JOptionPane.showMessageDialog(
                                         frame,
@@ -503,10 +497,8 @@ public class CrashAssistantGUI {
                             processBuilder.start();
 
                             // Exit the current process
-                            synchronized (TerminatedProcessesFinder.class) {
-                                CrashAssistantApp.LOGGER.info("Exiting to allow Crash Assistant removal. Exiting with code 0.");
-                                System.exit(0);
-                            }
+                            CrashAssistantApp.LOGGER.info("Exiting to allow Crash Assistant removal. Exiting with code 0.");
+                            System.exit(0);
                         } catch (Exception ex) {
                             CrashAssistantApp.LOGGER.error("Error while setting up Crash Assistant removal: ", ex);
                             JOptionPane.showMessageDialog(

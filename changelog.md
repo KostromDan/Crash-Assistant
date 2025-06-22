@@ -1,3 +1,19 @@
+1.9.6:
+
+- Redesigned `ModDataParser` to parse jar in jar, mixin configs and isMCreator.
+- Improved `modlist.txt` log. Now prints as a properly formated table, and with a
+  list of mixins, jar in jar and isMCreator.
+  Note: `modlist.json` in config keeps the same, this is only about `modlist.txt` log.
+- Improved error message on OSHI failed to init because of permission issues and ways to fix it.
+- Moved config option `modpack_modlist.force_add_full_modlist_as_log` to `modpack_modlist.add_modlist_txt_as_log`.
+  Now enabled by default not only for individual downloads but also for modpacks.
+- Refactored TerminatedProcessesFinder.
+- Added instruments for LauncherLog analysis.
+- Added new `ModuleResolution` log analysis.
+- Fixed `MissingEmbeddiumForOculus` analysis not triggered in some rare cases.
+- Fixed Upload all button text can be not fit into a window in some langs.
+- Fixed some rare issues with toml parsing in 1.16.5.
+
 1.9.5:
 
 - Added 1.21.6 forge support.

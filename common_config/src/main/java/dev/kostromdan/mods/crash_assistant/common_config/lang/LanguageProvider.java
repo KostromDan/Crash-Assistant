@@ -75,6 +75,7 @@ public class LanguageProvider {
             langFilesInJarNames.add("lang/ru_ru.json");
             langFilesInJarNames.add("lang/zh_cn.json");
             langFilesInJarNames.add("lang/es_es.json");
+            langFilesInJarNames.add("lang/it_it.json");
             langFilesInJarNames.add("lang/README.md");
             HashMap<String, HashMap<String, String>> jarLangFiles = new HashMap<>();
             for (String langFile : langFilesInJarNames) {

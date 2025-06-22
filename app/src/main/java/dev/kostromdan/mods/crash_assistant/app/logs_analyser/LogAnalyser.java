@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.advanced.ModuleResolution;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.codex.CodexAnalysis;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.codex.ErroringEntity;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_err.*;
@@ -132,6 +133,8 @@ public class LogAnalyser {
         if (reasonsRegistered) {
             return;
         }
+        registerKnownCrashReason(new ModuleResolution());
+
         registerKnownCrashReason(new AlLibAlcCleanup());
         registerKnownCrashReason(new Atio6axx());
         registerKnownCrashReason(new GPUDriverIssue());

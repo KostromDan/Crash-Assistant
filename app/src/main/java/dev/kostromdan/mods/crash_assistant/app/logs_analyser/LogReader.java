@@ -24,28 +24,28 @@ public class LogReader {
     List<String> lastLines;
     List<String> allLinesListCached;
     String allLinesStringCached;
-    Path logPath;
+    Log log;
     boolean isLogProcessed = false;
     long sizeOnLastRead = -1;
 
-    public LogReader(Path logPath) {
+    public LogReader(Log log) {
         this.firstLines = new ArrayList<>(maxUploadLines);
         this.lastLines = null;
-        this.logPath = logPath;
+        this.log = log;
     }
 
     public synchronized void readLogFile(boolean checkUpdated) throws IOException {
-        if (isLogProcessed && (!checkUpdated || Files.size(logPath) == sizeOnLastRead)) {
+        if (isLogProcessed && (!checkUpdated || Files.size(log.getPath()) == sizeOnLastRead)) {
             return;
         }
-        sizeOnLastRead = Files.size(logPath);
+        sizeOnLastRead = Files.size(log.getPath());
         countedLines = 0;
         lineCountInterrupted = false;
         lastLines = null;
         firstLines = new ArrayList<>(maxUploadLines);
 
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(this.logPath.toFile()), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(this.log.getFile()), StandardCharsets.UTF_8))) {
             String line;
             int length = 0;
 
@@ -106,12 +106,12 @@ public class LogReader {
     private ReversedLinesFileReader createReversedLinesFileReader() throws IOException {
         try {
             return ReversedLinesFileReader.builder()
-                    .setPath(this.logPath)
+                    .setPath(this.log.getPath())
                     .setCharset(StandardCharsets.UTF_8)
                     .setBufferSize(1024 * 1024)
                     .get();
         } catch (NoSuchMethodError e) {
-            return new ReversedLinesFileReader(logPath.toFile(), 1024 * 1024, StandardCharsets.UTF_8);
+            return new ReversedLinesFileReader(log.getFile(), 1024 * 1024, StandardCharsets.UTF_8);
         }
     }
 

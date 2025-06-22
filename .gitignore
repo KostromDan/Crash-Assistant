@@ -28,5 +28,6 @@ local
 /mods/
 /crash-reports/
 win_event*.txt
+launcher_log.txt
 hs_err_pid-1.log
 /.architectury-transformer/*

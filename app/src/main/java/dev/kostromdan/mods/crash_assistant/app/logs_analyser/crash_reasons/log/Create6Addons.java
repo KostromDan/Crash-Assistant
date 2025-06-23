@@ -51,12 +51,19 @@ public class Create6Addons extends KnownCrashReason {
         if (!PlatformHelp.isLinkDefault() && diff.getAddedMods().isEmpty() && diff.getUpdatedMods().isEmpty()) {
             return false;
         }
-        if (createMods.size() == 1 &&
-                createMods.get(0).getVersion() != null &&
-                createMods.get(0).getVersion().startsWith("6") &&
-                ModListUtils.getCurrentModList(true).stream()
-                        .anyMatch(mod -> Objects.equals(mod.getModId(), "railways"))) {
-            return true;
+        if (createMods.size() == 1 && createMods.get(0).getVersion() != null) {
+            String creteVersion = createMods.get(0).getVersion();
+            Mod railwaysMod = ModListUtils.getCurrentModList(true).stream()
+                    .filter(mod -> Objects.equals(mod.getModId(), "railways"))
+                    .findFirst().orElse(null);
+            if (railwaysMod != null && railwaysMod.getVersion() != null) {
+                String railwaysVersion = railwaysMod.getVersion().split("-")[0];
+                if (creteVersion.startsWith("6")) {
+                    return VersionUtils.isLower(railwaysVersion, "1.6.10");
+                } else {
+                    return VersionUtils.isGreaterThanOrEqual(railwaysVersion, "1.6.10");
+                }
+            }
         }
         return super.matches(log);
 

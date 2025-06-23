@@ -31,6 +31,7 @@ public class Create6Addons extends KnownCrashReason {
                 "(?i)java\\.lang\\.(ClassNotFoundException|NoClassDefFoundError): com[./]simibubi[./]create[./](?!foundation[./]ponder[./]PonderWorld\\b)[^ ]+",
                 "(?i)java\\.lang\\.(ClassNotFoundException|NoClassDefFoundError): com[./]jozufozu[./]flywheel",
                 "(?i)java\\.lang\\.(ClassNotFoundException|NoClassDefFoundError): dev[./]engine_room[./]flywheel",
+                "(?i)java\\.lang\\.(ClassNotFoundException|NoClassDefFoundError): net[./]createmod",
                 ".*Caused by: org\\.spongepowered\\.asm\\.mixin\\.throwables\\.ClassMetadataNotFoundException: net\\.createmod\\.catnip\\.data\\.Couple.*"
         );
     }

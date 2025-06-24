@@ -79,6 +79,7 @@ shadowJar {
         exclude(dependency('commons-io:commons-io:2.15.1'))
         exclude(dependency('com.electronwill.night-config:.*'))
         exclude(dependency('net.java.dev.jna:.*'))
+        exclude(dependency('org.lwjgl:.*'))
         exclude(project(':common_config'))
     }
 }

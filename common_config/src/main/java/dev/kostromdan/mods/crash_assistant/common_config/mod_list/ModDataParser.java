@@ -105,7 +105,7 @@ public class ModDataParser {
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed to parse " + jarPath.getFileName() + ": ", e);
             return new Mod(jarPath.getFileName().toString(), null, null, null,
-                    new ArrayList<>(), new ArrayList<>(), null);
+                    new HashSet<>(), new ArrayList<>(), null);
         }
     }
 
@@ -113,7 +113,7 @@ public class ModDataParser {
         Boolean isMCreator = null;
         boolean hasEssentialLoader = false;
 
-        List<String> mixinConfigs = new ArrayList<>();
+        HashSet<String> mixinConfigs = new HashSet<>();
         List<Mod> jarInJarMods = new ArrayList<>();
 
         try {
@@ -129,12 +129,19 @@ public class ModDataParser {
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 String name = entry.getName();
+                if (entry.isDirectory()) continue;
 
-                if (!name.startsWith("META-INF/") || entry.isDirectory() || !name.endsWith(".jar")) {
+                if (name.startsWith("META-INF/") && name.endsWith(".jar")) {
+                    processNestedJar(name, () -> readEntryBytes(jarFile, entry), jarInJarMods);
                     continue;
                 }
 
-                processNestedJar(name, () -> readEntryBytes(jarFile, entry), jarInJarMods);
+                if (name.endsWith(".json")) {
+                    if (name.substring(name.lastIndexOf('/') + 1).contains("mixin") && !name.startsWith("data/")) {
+                        mixinConfigs.add(name);
+                        continue;
+                    }
+                }
             }
 
             Map<String, byte[]> descriptorBytes = new HashMap<>();
@@ -171,7 +178,7 @@ public class ModDataParser {
         Boolean isMCreator = null;
         boolean hasEssentialLoader = false;
 
-        List<String> mixinConfigs = new ArrayList<>();
+        HashSet<String> mixinConfigs = new HashSet<>();
         List<Mod> jarInJarMods = new ArrayList<>();
         Map<String, byte[]> descriptorBytes = new HashMap<>();
 
@@ -190,15 +197,21 @@ public class ModDataParser {
                     hasEssentialLoader = true;
                 }
 
-                /* ─ Nested jars ─ */
                 if (name.startsWith("META-INF/") && name.endsWith(".jar")) {
                     processNestedJar(name, () -> readEntryBytes(jis), jarInJarMods);
                     continue;
                 }
 
-                /* ─ Descriptor collection ─ */
                 if (inJarPaths.contains(name)) {
                     descriptorBytes.put(name, readEntryBytes(jis));
+                    continue;
+                }
+
+                if (name.endsWith(".json")) {
+                    if (name.substring(name.lastIndexOf('/') + 1).contains("mixin") && !name.startsWith("data/")) {
+                        mixinConfigs.add(name);
+                        continue;
+                    }
                 }
             }
         } catch (Exception e) {
@@ -243,11 +256,11 @@ public class ModDataParser {
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Error processing nested jar " + name + ": " + e.getMessage());
             jarInJarMods.add(new Mod(nestedJarName, null, null, null,
-                    new ArrayList<>(), new ArrayList<>(), nestedJarPath));
+                    new HashSet<>(), new ArrayList<>(), nestedJarPath));
         }
     }
 
-    private static Mod parseDescriptorsAndBuildMod(Map<String, byte[]> descriptorBytes, ManifestProvider manifestProvider, String currentJarName, String jarJarPath, Boolean isMCreator, boolean hasEssentialLoader, List<String> mixinConfigs, List<Mod> jarInJarMods) {
+    private static Mod parseDescriptorsAndBuildMod(Map<String, byte[]> descriptorBytes, ManifestProvider manifestProvider, String currentJarName, String jarJarPath, Boolean isMCreator, boolean hasEssentialLoader, HashSet<String> mixinConfigs, List<Mod> jarInJarMods) {
         for (String descriptorPath : inJarPaths) {
             byte[] bytes = descriptorBytes.get(descriptorPath);
             if (bytes == null) continue;
@@ -301,7 +314,7 @@ public class ModDataParser {
         }
     }
 
-    private static ParsedModInfo parseModConfig(Config cfg, String descriptorPath, ManifestProvider manifestProvider, List<String> mixinConfigs) throws IOException {
+    private static ParsedModInfo parseModConfig(Config cfg, String descriptorPath, ManifestProvider manifestProvider, HashSet<String> mixinConfigs) throws IOException {
         Config mods;
         String modId;
         String version;

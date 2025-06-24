@@ -166,6 +166,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new ResourceLocationException());
         registerKnownCrashReason(new Rubidium());
         registerKnownCrashReason(new ServerConfigCorrupted());
+        registerKnownCrashReason(new UsedByAnotherProcess());
         registerKnownCrashReason(new Version1_21());
 
         registerKnownCrashReason(new WasClosedByWindows());

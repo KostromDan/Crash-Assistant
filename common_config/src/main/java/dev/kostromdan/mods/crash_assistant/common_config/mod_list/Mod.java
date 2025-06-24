@@ -16,7 +16,7 @@ public class Mod {
     private final String modId;
     private final String version;
     private final Boolean isMCreator;
-    private final List<String> mixinConfigs;
+    private final HashSet<String> mixinConfigs;
     private final List<Mod> jarJarMods;
     private final String pathFromJarJar;
 
@@ -27,7 +27,7 @@ public class Mod {
             .setPrettyPrinting()
             .create();
 
-    public Mod(String jarName, String modId, String version, Boolean isMCreator, List<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar) {
+    public Mod(String jarName, String modId, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar) {
         this.jarName = jarName;
         this.modId = modId;
         this.version = version;
@@ -53,7 +53,7 @@ public class Mod {
         return isMCreator;
     }
 
-    public List<String> getMixinConfigs() {
+    public HashSet<String> getMixinConfigs() {
         return mixinConfigs;
     }
 
@@ -74,12 +74,15 @@ public class Mod {
      */
     public static void writeModlistTxt(Path modListTxtPath, Collection<Mod> mods) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
-            writer.write("Mods count: " + mods.size() + "\n\n");
-            int[] maxLens = computeMaxLengths(mods, 0);
+            writer.write("Mods count: " + mods.size() + "\n \n");
+
+            Mod tableColumnNames = new Mod("jar name", "mod id (isMCreator)", null,null, new HashSet<String>(){{add("mixin configs");}},new ArrayList<>(),"");
+            List<Mod> finalMods = new ArrayList<>(){{add(tableColumnNames);addAll(mods);}};
+            int[] maxLens = computeMaxLengths(finalMods, 0);
             int maxJarNameLength = maxLens[0];
             int maxModIdLength = maxLens[1];
 
-            for (Mod mod : mods) {
+            for (Mod mod : finalMods) {
                 writeModWithFormatting(writer, mod, 0, maxJarNameLength, maxModIdLength);
             }
         }
@@ -126,36 +129,25 @@ public class Mod {
      * @throws IOException If an I/O error occurs
      */
     private static void writeModWithFormatting(BufferedWriter writer, Mod mod, int indentLevel, int maxJarNameLength, int maxModIdLength) throws IOException {
-        // Create indentation string based on level
         StringBuilder indentBuilder = new StringBuilder();
         for (int i = 0; i < indentLevel; i++) {
             indentBuilder.append("    ");
         }
         String indent = indentBuilder.toString();
 
-        // Start with the jar name in its column
         StringBuilder line = new StringBuilder();
         line.append(String.format("%-" + maxJarNameLength + "s", indent + (mod.getPathFromJarJar() != null ? mod.getPathFromJarJar() : "") + mod.getJarName()));
 
         String mCreatorString = mod.IsMCreator() != null && mod.IsMCreator() ? " (MCreator mod)" : "";
 
+        line.append(" | ").append(String.format("%-" + maxModIdLength + "s", (mod.getModId() == null ? "" : mod.getModId()) + mCreatorString));
 
-        // Add mod ID if available
-        if (mod.getModId() != null) {
-            line.append(" : ").append(String.format("%-" + maxModIdLength + "s", mod.getModId() + mCreatorString));
-        }
-
-        // Write mixin configs if any
-        if (mod.getMixinConfigs() != null && !mod.getMixinConfigs().isEmpty()) {
-            line.append(" : ").append(String.join(", ", mod.getMixinConfigs()));
-        }
+        line.append(" | ").append(String.join(", ", mod.getMixinConfigs() == null ? new HashSet<>() : mod.getMixinConfigs()));
 
         writer.write(line.toString());
         writer.newLine();
 
-        // Write jarJarMods if any
         if (mod.getJarJarMods() != null && !mod.getJarJarMods().isEmpty()) {
-            // Recursively write each jarJarMod with increased indentation
             for (Mod jarJarMod : mod.getJarJarMods()) {
                 writeModWithFormatting(writer, jarJarMod, indentLevel + 1, maxJarNameLength, maxModIdLength);
             }
@@ -215,7 +207,7 @@ public class Mod {
             if (json.isJsonArray()) {
                 // Simple array format with just jar names
                 for (JsonElement element : json.getAsJsonArray()) {
-                    mods.add(new Mod(element.getAsString(), null, null, null, new ArrayList<>(), new ArrayList<>(), null));
+                    mods.add(new Mod(element.getAsString(), null, null, null, new HashSet<>(), new ArrayList<>(), null));
                 }
             } else if (json.isJsonObject()) {
                 // Object format with detailed mod information
@@ -238,7 +230,7 @@ public class Mod {
         private Mod deserializeMod(JsonElement element) {
             if (element.isJsonPrimitive()) {
                 // Legacy format: just a string with jar name
-                return new Mod(element.getAsString(), null, null, null, new ArrayList<>(), new ArrayList<>(), null);
+                return new Mod(element.getAsString(), null, null, null, new HashSet<>(), new ArrayList<>(), null);
             } else if (element.isJsonObject()) {
                 // Object format with full mod details
                 JsonObject modObj = element.getAsJsonObject();
@@ -247,7 +239,7 @@ public class Mod {
             }
 
             // Default case (shouldn't happen with well-formed JSON)
-            return new Mod("unknown", null, null, null, new ArrayList<>(), new ArrayList<>(), null);
+            return new Mod("unknown", null, null, null, new HashSet<>(), new ArrayList<>(), null);
         }
 
         /**
@@ -259,7 +251,7 @@ public class Mod {
             String modId = modObj.has("modId") ? modObj.get("modId").getAsString() : null;
             String version = modObj.has("version") ? modObj.get("version").getAsString() : null;
 
-            return new Mod(jarName, modId, version, null, new ArrayList<>(), new ArrayList<>(), null);
+            return new Mod(jarName, modId, version, null, new HashSet<>(), new ArrayList<>(), null);
         }
 
         @Override

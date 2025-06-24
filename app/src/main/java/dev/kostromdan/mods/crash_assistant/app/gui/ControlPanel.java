@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 public class ControlPanel {
     public static boolean stopMovingToTop = false;
+    public static boolean uploadButtonsActivated = false;
     private static boolean uploadAllButtonWarningShown = false;
     private static JPanel panel;
     public static JDialog dialog;
@@ -105,6 +106,9 @@ public class ControlPanel {
                         enableButtonsTimer.schedule(new TimerTask() {
                             @Override
                             public void run() {
+                                synchronized (ControlPanel.class) {
+                                    uploadButtonsActivated = true;
+                                }
                                 SwingUtilities.invokeLater(() -> {
                                     for (FilePanel panel : fileListPanel.filePanelList) {
                                         panel.setUploadButtonEnabled(true);

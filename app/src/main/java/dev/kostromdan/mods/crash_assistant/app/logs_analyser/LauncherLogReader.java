@@ -2,10 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class LauncherLogReader extends LogReader {
     private static final List<String> MinecraftLauncherLogNames = Arrays.asList(
@@ -38,6 +35,8 @@ public class LauncherLogReader extends LogReader {
     private void cutLauncherLog() {
         if (MinecraftLauncherLogNames.contains(log.getName())) {
             cutVanillaLauncherLog();
+            return;
+        } else if (Objects.equals(log.getName(),"launcher_log.txt")) {
             return;
         }
         allLinesListCached = Collections.singletonList("");

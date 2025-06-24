@@ -60,7 +60,9 @@ public class FilePanel {
         showButton = createButton(LanguageProvider.get("gui.show_in_explorer_button"), e -> showInExplorer());
 
         uploadButton = createButton(LanguageProvider.get("gui.upload_and_copy_link_button"), e -> uploadFile());
-        uploadButton.setEnabled(false);
+        synchronized (ControlPanel.class) {
+            uploadButton.setEnabled(ControlPanel.uploadButtonsActivated);
+        }
 
         browserButton = createButtonWithIcon("assets/internet.png", e -> openInBrowser());
         browserButton.setVisible(false);

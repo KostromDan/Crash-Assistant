@@ -27,7 +27,7 @@ public class GPUDetector {
         // Try Vulkan first
         try {
             // Check if Vulkan and lwjglNatives are available
-            if (Boot.vulkanAddonLoaded && PlatformHelp.isWindows()) { // tmp
+            if (Boot.vulkanAddonLoaded) {
                 // Use reflection to access VulkanGPUDetector
                 Class<?> vulkanDetectorClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.VulkanGPUDetector");
                 Method getSerialisedGPUsMethod = vulkanDetectorClass.getMethod("getSerialisedGPUs");

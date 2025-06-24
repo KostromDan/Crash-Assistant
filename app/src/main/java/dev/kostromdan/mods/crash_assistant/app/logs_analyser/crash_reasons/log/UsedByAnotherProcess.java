@@ -23,10 +23,6 @@ public class UsedByAnotherProcess extends KnownCrashReason {
 
     @Override
     public boolean matches(Log log) {
-        if (!log.getFile().isFile()) {
-            return false;
-        }
-
         try {
             String logContent = log.getReader().getAllLinesString();
             Matcher matcher = Pattern.compile(this.patterns.get(0)).matcher(logContent);

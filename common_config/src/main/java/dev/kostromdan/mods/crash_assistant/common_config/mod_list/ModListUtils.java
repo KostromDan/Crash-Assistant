@@ -10,10 +10,7 @@ import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -39,7 +36,7 @@ public class ModListUtils {
                         PlatformHelp.loaderJarName + " (modloader)",
                         PlatformHelp.platform.name().toLowerCase(),
                         PlatformHelp.loaderJarName,
-                        null, new ArrayList<>(), new ArrayList<>(), null)
+                        null, new HashSet<>(), new ArrayList<>(), null)
                 );
             }
 
@@ -65,7 +62,7 @@ public class ModListUtils {
                 Files.list(RESOURCEPACKS_FOLDER).sorted(new PathComparator()).forEach(path -> {
                     String filename = path.getFileName().toString();
                     if (Files.isDirectory(path) || filename.endsWith(".zip")) {
-                        currentMods.add(new Mod(filename + " (resourcepack)", null, null, null, new ArrayList<>(), new ArrayList<>(), null));
+                        currentMods.add(new Mod(filename + " (resourcepack)", null, null, null, new HashSet<>(), new ArrayList<>(), null));
                     }
                 });
             }

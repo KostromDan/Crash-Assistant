@@ -134,7 +134,7 @@ public class ModuleFinder {
         byte[] get() throws Exception;
     }
 
-    private static String normalizeModuleName(String moduleName) {
+    public static String normalizeModuleName(String moduleName) {
         moduleName = moduleName.toLowerCase().replace('.', '/');
         if (!moduleName.endsWith("/")) {
             moduleName += "/";

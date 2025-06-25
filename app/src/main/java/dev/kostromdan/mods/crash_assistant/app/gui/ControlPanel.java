@@ -292,7 +292,8 @@ public class ControlPanel {
                     int successCounter = 0;
                     for (FilePanel filePanel : fileListPanel.filePanelList) {
                         Log log = filePanel.getLog();
-                        if (filePanel.getLastError() != null) {
+                        if (filePanel.getLastError() != null &&
+                                !(filePanel.getLastError() instanceof UploadException && filePanel.getLastError().getMessage().startsWith("Crash Assistant log"))) {
                             String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError();
                             if (filePanel.getLastError() instanceof DeclinedException) {
                                 message = filePanel.getLastError().getMessage();

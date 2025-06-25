@@ -10,12 +10,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +32,10 @@ public class MixinApply extends KnownCrashReason {
         for (Log log : LogsList.getLogs()) {
             if (log.getType() == LogType.LAUNCHER_LOG) {
                 logs.add(log);
-            } else if (log.getType() == LogType.CRASH_REPORT) {
+            }
+        }
+        for (Log log : LogsList.getLogs()) {
+            if (log.getType() == LogType.CRASH_REPORT) {
                 logs.add(log);
             }
         }
@@ -50,24 +48,24 @@ public class MixinApply extends KnownCrashReason {
                 String jarName = configToJarMap.get(mixinConfig);
                 String conflictingJarName = null;
                 String conflictingMixin = null;
-                if(result.getConflictingJarName() != null) {
+                if (result.getConflictingJarName() != null) {
                     conflictingJarName = result.getConflictingJarName();
                     message = LanguageProvider.get("warnings.mixin_apply_conflicting_with_jar");
-                }else {
+                } else {
                     conflictingMixin = findConflictingMixin(result.getMixinConfig(), log, configToJarMap);
                     if (conflictingMixin != null) {
                         conflictingJarName = configToJarMap.get(conflictingMixin);
                         message = LanguageProvider.get("warnings.mixin_apply_conflicting");
-                    }else {
+                    } else {
                         message = LanguageProvider.get("warnings.mixin_apply");
                     }
                 }
                 message = message.replace("$MOD$", "<strong style='color: red;'>" + jarName + "</strong>");
                 message = message.replace("$CONFIG$", "<strong>" + mixinConfig + "</strong>");
-                if(conflictingMixin != null) {
+                if (conflictingMixin != null) {
                     message = message.replace("$CONFIG_2$", "<strong>" + conflictingMixin + "</strong>");
                 }
-                if(conflictingJarName != null) {
+                if (conflictingJarName != null) {
                     message = message.replace("$MOD_2$", "<strong style='color: red;'>" + conflictingJarName + "</strong>");
                 }
 
@@ -86,13 +84,13 @@ public class MixinApply extends KnownCrashReason {
                 if (configs.size() != 1) {
                     continue;
                 }
-                String[] patterns = {" merged by ", " was not located in the target class "};
+                String[] patterns = {" merged by ", " was not located in the target class ", " previously written by "};
                 for (String pattern : patterns) {
                     if (line.contains(pattern)) {
                         String packageName = line.split(pattern)[1].split(" ")[0];
                         if (isInternalClass(packageName)) continue;
                         List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(packageName), ModListUtils.getCurrentModList(true));
-                        if(jarsContainingModule.isEmpty()) continue;
+                        if (jarsContainingModule.isEmpty()) continue;
                         return new MixinParsingResult(configs.iterator().next(), jarsContainingModule.get(0));
                     }
                 }
@@ -107,10 +105,10 @@ public class MixinApply extends KnownCrashReason {
         List<String> lines = log.getReader().getLastNLines(1000);
         for (int i = lines.size() - 1; i >= 0; i--) {
             String line = lines.get(i);
-            if(!line.contains(mixinConfig))continue;
+            if (!line.contains(mixinConfig)) continue;
             HashSet<String> configs = extractFromLineMixinConfigs(line, configToJarMap);
-            if(configs.size() != 2) continue;
-            if(line.contains(" conflict. Skipping ")) {
+            if (configs.size() != 2) continue;
+            if (line.contains(" conflict. Skipping ")) {
                 configs.remove(mixinConfig);
                 return configs.iterator().next();
             }
@@ -125,7 +123,7 @@ public class MixinApply extends KnownCrashReason {
      * @param line one line from your log
      * @return set of distinct config names
      */
-    public static HashSet<String> extractFromLineMixinConfigs(String line,HashMap<String, String> configToJarMap) {
+    public static HashSet<String> extractFromLineMixinConfigs(String line, HashMap<String, String> configToJarMap) {
         HashSet<String> configs = new HashSet<>();
         Matcher m = JSON_CONFIG_PATTERN.matcher(line);
         while (m.find()) {
@@ -144,7 +142,7 @@ public class MixinApply extends KnownCrashReason {
     /**
      * Gets a mapping of mixin config files to the jar names that contain them.
      * Uses the current mod list.
-     * 
+     *
      * @return HashMap mapping mixin config files to jar names
      */
     public static HashMap<String, String> getMixinConfigToJarMapping() {

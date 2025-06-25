@@ -40,7 +40,7 @@ public class MixinApply extends KnownCrashReason {
             }
         }
         logs.add(latestLog);
-        HashMap<String, String> configToJarMap = getMixinConfigToJarMapping();
+        HashMap<String, String> configToJarMap = getMixinConfigToJarMapping(ModListUtils.getCurrentModList(true));
         for (Log log : logs) {
             MixinParsingResult result = parseLatestMixinError(log, configToJarMap);
             if (result != null) {
@@ -141,16 +141,6 @@ public class MixinApply extends KnownCrashReason {
 
     /**
      * Gets a mapping of mixin config files to the jar names that contain them.
-     * Uses the current mod list.
-     *
-     * @return HashMap mapping mixin config files to jar names
-     */
-    public static HashMap<String, String> getMixinConfigToJarMapping() {
-        return getMixinConfigToJarMapping(null);
-    }
-
-    /**
-     * Gets a mapping of mixin config files to the jar names that contain them.
      * Recursively processes nested jars (jar-in-jar format).
      *
      * @param mods List of mods to process. If null, uses the current mod list.
@@ -158,10 +148,6 @@ public class MixinApply extends KnownCrashReason {
      */
     public static HashMap<String, String> getMixinConfigToJarMapping(LinkedHashSet<Mod> mods) {
         HashMap<String, String> configToJarMap = new HashMap<>();
-
-        if (mods == null) {
-            mods = ModListUtils.getCurrentModList(true);
-        }
 
         for (Mod mod : mods) {
             // Process the mod's mixin configs
@@ -194,7 +180,6 @@ public class MixinApply extends KnownCrashReason {
         return configToJarMap;
     }
 
-
     public static class MixinParsingResult {
         private final String mixinConfig;
         private final String conflictingJarName;
@@ -212,19 +197,4 @@ public class MixinApply extends KnownCrashReason {
             return conflictingJarName;
         }
     }
-
-
-//    private static final Pattern AT_PATTERN = Pattern.compile("^\\s*at\\s+.*");
-//    private static final Pattern MORE_PATTERN = Pattern.compile("^\\s*\\.{3}\\s+\\d+\\s+more$");
-//    private static final Pattern CAUSED_BY_PATTERN = Pattern.compile("^\\s*Caused\\s+by:.*");
-//
-//    private static boolean isStackTraceLine(String line) {
-//        if (line == null || line.trim().isEmpty()) {
-//            return false;
-//        }
-//
-//        return AT_PATTERN.matcher(line).matches() ||
-//                MORE_PATTERN.matcher(line).matches() ||
-//                CAUSED_BY_PATTERN.matcher(line).matches();
-//    }
 }

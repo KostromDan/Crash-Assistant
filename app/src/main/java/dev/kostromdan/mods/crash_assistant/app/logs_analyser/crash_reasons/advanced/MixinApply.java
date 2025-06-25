@@ -52,7 +52,7 @@ public class MixinApply extends KnownCrashReason {
                     conflictingJarName = result.getConflictingJarName();
                     message = LanguageProvider.get("warnings.mixin_apply_conflicting_with_jar");
                 } else {
-                    conflictingMixin = findConflictingMixin(result.getMixinConfig(), log, configToJarMap);
+                    conflictingMixin = findConflictingMixin(result.getMixinConfig(), latestLog, configToJarMap);
                     if (conflictingMixin != null) {
                         conflictingJarName = configToJarMap.get(conflictingMixin);
                         message = LanguageProvider.get("warnings.mixin_apply_conflicting");

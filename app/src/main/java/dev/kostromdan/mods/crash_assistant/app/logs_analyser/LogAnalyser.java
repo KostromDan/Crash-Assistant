@@ -157,6 +157,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new DiskSpaceEnded());
         registerKnownCrashReason(new DuplicatedMods());
         registerKnownCrashReason(new FeatureOrderCycle());
+        registerKnownCrashReason(new GroovyModLoaderIPv6());
         registerKnownCrashReason(new KubeJSDataPack());
         registerKnownCrashReason(new LanguageProviderMismatch());
         registerKnownCrashReason(new MissingEmbeddiumForOculus());

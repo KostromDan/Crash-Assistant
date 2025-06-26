@@ -19,41 +19,7 @@ import java.util.jar.JarInputStream;
 import java.util.stream.Collectors;
 
 public class ModuleFinder {
-    public static List<String> findJarsContainingEntries(List<String> packagePrefixes, Path jarPath) {
-        List<String> pathPrefixes = packagePrefixes.stream()
-                .map(ModuleFinder::normalizeModuleName)
-                .collect(Collectors.toList());
-        List<String> results = new ArrayList<>();
-        String topName = jarPath.getFileName().toString();
-        try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-            boolean matchedTop = false;
-            Enumeration<JarEntry> entries = jarFile.entries();
-            while (entries.hasMoreElements()) {
-                JarEntry entry = entries.nextElement();
-                String name = entry.getName();
-                if (!matchedTop) {
-                    for (String prefix : pathPrefixes) {
-                        if (normalizeModuleName(name).startsWith(prefix)) {
-                            results.add(topName);
-                            matchedTop = true;
-                            break;
-                        }
-                    }
-                }
-                if (!entry.isDirectory() && name.endsWith(".jar")) {
-                    processNestedJar(name,
-                            () -> readAllBytes(jarFile.getInputStream(entry)),
-                            pathPrefixes,
-                            topName + "!/" + name,
-                            results);
-                }
-            }
-        } catch (IOException e) {
-        }
-        return results;
-    }
-
-    public static List<String> findJarsInFolderAsync(List<String> packagePrefixes, LinkedHashSet<Mod> mods) {
+    public static synchronized List<String> findJarsInFolderAsync(List<String> packagePrefixes, LinkedHashSet<Mod> mods) {
         Path modsFolderPath = Paths.get("mods");
         ExecutorService executor = Executors.newWorkStealingPool();
 
@@ -89,6 +55,40 @@ public class ModuleFinder {
 
         executor.shutdown();
         return allResults;
+    }
+
+    public static List<String> findJarsContainingEntries(List<String> packagePrefixes, Path jarPath) {
+        List<String> pathPrefixes = packagePrefixes.stream()
+                .map(ModuleFinder::normalizeModuleName)
+                .collect(Collectors.toList());
+        List<String> results = new ArrayList<>();
+        String topName = jarPath.getFileName().toString();
+        try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+            boolean matchedTop = false;
+            Enumeration<JarEntry> entries = jarFile.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                String name = entry.getName();
+                if (!matchedTop) {
+                    for (String prefix : pathPrefixes) {
+                        if (normalizeModuleName(name).startsWith(prefix)) {
+                            results.add(topName);
+                            matchedTop = true;
+                            break;
+                        }
+                    }
+                }
+                if (!entry.isDirectory() && name.endsWith(".jar")) {
+                    processNestedJar(name,
+                            () -> readAllBytes(jarFile.getInputStream(entry)),
+                            pathPrefixes,
+                            topName + "!/" + name,
+                            results);
+                }
+            }
+        } catch (IOException e) {
+        }
+        return results;
     }
 
     private static void processNestedJar(String entryName, ByteSupplier supplier, List<String> pathPrefixes, String containerName, List<String> results) {

@@ -36,7 +36,7 @@ public class ModListUtils {
                         PlatformHelp.loaderJarName + " (modloader)",
                         PlatformHelp.platform.name().toLowerCase(),
                         PlatformHelp.loaderJarName,
-                        null, new HashSet<>(), new ArrayList<>(), null)
+                        null, new HashSet<>(), new ArrayList<>(), null, new ArrayList<>())
                 );
             }
 
@@ -62,7 +62,7 @@ public class ModListUtils {
                 Files.list(RESOURCEPACKS_FOLDER).sorted(new PathComparator()).forEach(path -> {
                     String filename = path.getFileName().toString();
                     if (Files.isDirectory(path) || filename.endsWith(".zip")) {
-                        currentMods.add(new Mod(filename + " (resourcepack)", null, null, null, new HashSet<>(), new ArrayList<>(), null));
+                        currentMods.add(new Mod(filename + " (resourcepack)", null, null, null, new HashSet<>(), new ArrayList<>(), null, new ArrayList<>()));
                     }
                 });
             }

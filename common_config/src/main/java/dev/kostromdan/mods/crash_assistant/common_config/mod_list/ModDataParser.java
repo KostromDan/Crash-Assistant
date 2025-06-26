@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class ModDataParser {
     public static final List<String> inJarPaths = PlatformHelp.getOrderedInJarPaths();
-    private static final Path CACHE_FOLDER = Paths.get("local", "crash_assistant", "mod_data_cache_v2");
+    private static final Path CACHE_FOLDER = Paths.get("local", "crash_assistant", "mod_data_cache_v3");
     private static final Gson GSON = new Gson();
 
     static {
@@ -105,7 +105,7 @@ public class ModDataParser {
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed to parse " + jarPath.getFileName() + ": ", e);
             return new Mod(jarPath.getFileName().toString(), null, null, null,
-                    new HashSet<>(), new ArrayList<>(), null);
+                    new HashSet<>(), new ArrayList<>(), null, new ArrayList<>());
         }
     }
 
@@ -115,6 +115,7 @@ public class ModDataParser {
 
         HashSet<String> mixinConfigs = new HashSet<>();
         List<Mod> jarInJarMods = new ArrayList<>();
+        List<String> entriesList = new ArrayList<>();
 
         try {
             if (jarFile.getEntry("net/mcreator/") != null) {
@@ -129,6 +130,7 @@ public class ModDataParser {
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 String name = entry.getName();
+                entriesList.add(name);
                 if (entry.isDirectory()) continue;
 
                 if (name.startsWith("META-INF/") && name.endsWith(".jar")) {
@@ -163,14 +165,14 @@ public class ModDataParser {
             };
 
             return parseDescriptorsAndBuildMod(descriptorBytes, manifestProvider, currentJarName,
-                    jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods);
+                    jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods, entriesList);
 
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed while processing " + currentJarName, e);
         }
 
         return new Mod(currentJarName, null, null,
-                isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
+                isMCreator, mixinConfigs, jarInJarMods, jarJarPath, entriesList);
     }
 
     // Overloaded method for parsing from JarInputStream (for nested jars)
@@ -180,14 +182,17 @@ public class ModDataParser {
 
         HashSet<String> mixinConfigs = new HashSet<>();
         List<Mod> jarInJarMods = new ArrayList<>();
+        List<String> entriesList = new ArrayList<>();
         Map<String, byte[]> descriptorBytes = new HashMap<>();
 
         try {
             JarEntry entry;
             while ((entry = jis.getNextJarEntry()) != null) {
-                if (entry.isDirectory()) continue;
-
                 String name = entry.getName();
+
+                entriesList.add(name);
+
+                if (entry.isDirectory()) continue;
 
                 if (isMCreator == null && name.startsWith("net/mcreator")) {
                     isMCreator = true;
@@ -221,7 +226,7 @@ public class ModDataParser {
         ManifestProvider manifestProvider = () -> jis.getManifest();
 
         return parseDescriptorsAndBuildMod(descriptorBytes, manifestProvider, currentJarName,
-                jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods);
+                jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods, entriesList);
     }
 
     // Functional interface for lazy byte loading
@@ -250,17 +255,17 @@ public class ModDataParser {
                 Mod nested = parseJarFile(nestedJis, nestedJarName, nestedJarPath);
                 nested = new Mod(nestedJarName, nested.getModId(), nested.getVersion(),
                         nested.IsMCreator(), nested.getMixinConfigs(),
-                        nested.getJarJarMods(), nestedJarPath);
+                        nested.getJarJarMods(), nestedJarPath, nested.getEntries());
                 jarInJarMods.add(nested);
             }
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Error processing nested jar " + name + ": " + e.getMessage());
             jarInJarMods.add(new Mod(nestedJarName, null, null, null,
-                    new HashSet<>(), new ArrayList<>(), nestedJarPath));
+                    new HashSet<>(), new ArrayList<>(), nestedJarPath, new ArrayList<>()));
         }
     }
 
-    private static Mod parseDescriptorsAndBuildMod(Map<String, byte[]> descriptorBytes, ManifestProvider manifestProvider, String currentJarName, String jarJarPath, Boolean isMCreator, boolean hasEssentialLoader, HashSet<String> mixinConfigs, List<Mod> jarInJarMods) {
+    private static Mod parseDescriptorsAndBuildMod(Map<String, byte[]> descriptorBytes, ManifestProvider manifestProvider, String currentJarName, String jarJarPath, Boolean isMCreator, boolean hasEssentialLoader, HashSet<String> mixinConfigs, List<Mod> jarInJarMods, List<String> entriesList) {
         for (String descriptorPath : inJarPaths) {
             byte[] bytes = descriptorBytes.get(descriptorPath);
             if (bytes == null) continue;
@@ -286,7 +291,7 @@ public class ModDataParser {
                 }
 
                 return new Mod(currentJarName, modInfo.modId, modInfo.version,
-                        isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
+                        isMCreator, mixinConfigs, jarInJarMods, jarJarPath, entriesList);
             } catch (Exception e) {
                 JarInJarHelper.LOGGER.warn("Error parsing " + descriptorPath + " of " +
                         currentJarName + ": ", e);
@@ -296,12 +301,12 @@ public class ModDataParser {
         // Special-case Essential
         if (currentJarName.toLowerCase().contains("essential") && hasEssentialLoader) {
             return new Mod(currentJarName, "essential-container", null,
-                    isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
+                    isMCreator, mixinConfigs, jarInJarMods, jarJarPath, entriesList);
         }
 
         // Nothing found
         return new Mod(currentJarName, null, null,
-                isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
+                isMCreator, mixinConfigs, jarInJarMods, jarJarPath, entriesList);
     }
 
     private static class ParsedModInfo {

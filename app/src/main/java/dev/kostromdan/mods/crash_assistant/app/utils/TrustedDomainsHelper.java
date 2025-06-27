@@ -19,6 +19,7 @@ public class TrustedDomainsHelper {
         add("discordstatus.com");
         add("dis.gd");
         add("discord.co");
+        add("qq.com");
         add("minecraftforge.net");
         add("neoforged.net");
         add("fabricmc.net");

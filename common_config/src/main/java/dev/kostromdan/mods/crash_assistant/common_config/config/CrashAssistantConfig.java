@@ -139,7 +139,11 @@ public class CrashAssistantConfig {
         addOption("modpack_modlist.modpack_creators",
                 "nicknames of players, who considered as modpack creator.\n" +
                         "Only this players can overwrite modlist.json\n" +
-                        "If this feature is enabled and this array is empty, will be appended with nickname of current player.",
+                        "If this feature is enabled and this array is empty, will be appended with nickname of current player.\n" +
+                        "-----------------------------------------------------------------------------------------------------\n" +
+                        "Warning! This is not displayed anywhere, it's just tech param used for modlist feature to work correctly.\n" +
+                        "Here must be actual nicknames of people who work with the modpack and publishing releases!\n" +
+                        "-----------------------------------------------------------------------------------------------------",
                 new ArrayList<String>());
         addOption("modpack_modlist.auto_update",
                 "If enabled, modlist.json will be overwritten on every launch(first tick of TitleScreen),\n" +

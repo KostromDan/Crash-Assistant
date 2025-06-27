@@ -6,7 +6,7 @@ plugins {
 }
 
 base {
-    archivesName = "CrashAssistant-${project.name}-1.21.5-1.21.6"
+    archivesName = "CrashAssistant-${project.name}-1.21.5-1.21.7"
 }
 
 configurations {

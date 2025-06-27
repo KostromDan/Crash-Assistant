@@ -1,3 +1,21 @@
+1.9.7:
+
+- Initial release for 1.21.7.
+- Added Italian localization. Thanks `splack01` for making PR.
+- `MixinApply` new log analysis. Detects most crashes caused by mixins apply/conflicts.
+- `UsedByAnotherProcess` new log analysis. If config locked by another process and it's crashing.
+- `GroovyModLoaderIPv6` new log analysis. If GML failed to download some files, and it's crashing due to IPv6 issues.
+- Replaced back Vulkan GPU detection with `gpu-detect-jni.dll` as CurseForge finally allowed me to do so.
+  Decreases mod size from ~1,6 mb to ~600 kb.
+- Improved version compatibility checks for Create 6 and Steam and Rails mod in `Create6Addons` analysis.
+- Added Modrinth launcher log with actual STDOUT support.
+- Refactored domain validation and link opening logic.
+- Added `qq.com` to trusted domains.
+- Fixed `Create6Addons` analysis wasn't triggered sometimes.
+- Fixed `FeatureOrderCycle` analysis not triggered sometimes.
+- Fixed `ModDataParser` wasn't parsing some mixin configs.
+- Fixed some upload buttons can be rarely not activated.
+
 1.9.6:
 
 - Redesigned `ModDataParser` to parse jar in jar, mixin configs and isMCreator.

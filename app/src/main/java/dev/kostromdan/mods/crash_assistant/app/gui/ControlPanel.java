@@ -21,10 +21,9 @@ import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedWriter;
+import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -214,31 +213,33 @@ public class ControlPanel {
     public void requestHelp() {
         try {
             stopMovingToTop = true;
-            String link = PlatformHelp.getActualHelpLink();
-            URI uri = new URI(link);
-            if (!TrustedDomainsHelper.isTrustedTopDomain(uri)) {
-                String creatorWarning = "";
-                if (CrashAssistantConfig.getModpackCreators().contains(ModListUtils.getCurrentUsername())) {
-                    creatorWarning = "\n\n<b>The next text is seen only by modpack creators</b>:\n" +
-                            "If you think your domain(" + TrustedDomainsHelper.getTopDomainName(uri) + ") should be in trusted domains,\n" +
-                            "please contact us on <a href =https://github.com/KostromDan/Crash-Assistant/blob/1.19.2-1.20.1/app/src/main/java/dev/kostromdan/mods/crash_assistant/app/utils/TrustedDomainsHelper.java>GitHub</a>.";
-                }
-                int result = JOptionPane.showConfirmDialog(
-                        null,
-                        CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.untrusted_domain_question") + "\n<a href =" + link + ">" + link + "</a>" + creatorWarning, false),
-                        LanguageProvider.get("gui.untrusted_domain_title"),
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE
-                );
-                if (result != JOptionPane.YES_OPTION) {
-                    return;
-                }
-            }
-
-            Desktop.getDesktop().browse(uri);
+            validateIsDomainTrustedAndOpenInBrowser(PlatformHelp.getActualHelpLink());
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to open help_link in browser: ", e);
         }
+    }
+
+    public static void validateIsDomainTrustedAndOpenInBrowser(String link) throws URISyntaxException, IOException {
+        URI uri = new URI(link);
+        if (TrustedDomainsHelper.isTrustedTopDomain(uri)) {
+            Desktop.getDesktop().browse(new URI(link));
+            return;
+        }
+        String creatorWarning = "";
+        if (CrashAssistantConfig.getModpackCreators().contains(ModListUtils.getCurrentUsername())) {
+            creatorWarning = "\n\n<b>The next text is seen only by modpack creators</b>:\n" +
+                    "If you think your domain(" + TrustedDomainsHelper.getTopDomainName(uri) + ") should be in trusted domains,\n" +
+                    "please contact us on <a href =https://github.com/KostromDan/Crash-Assistant/blob/1.19.2-1.20.1/app/src/main/java/dev/kostromdan/mods/crash_assistant/app/utils/TrustedDomainsHelper.java>GitHub</a>.";
+        }
+        int result = JOptionPane.showConfirmDialog(
+                null,
+                CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.untrusted_domain_question") + "\n<a href =" + link + ">" + link + "</a>" + creatorWarning, false),
+                LanguageProvider.get("gui.untrusted_domain_title"),
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (result != JOptionPane.YES_OPTION) return;
+        Desktop.getDesktop().browse(new URI(link));
     }
 
 

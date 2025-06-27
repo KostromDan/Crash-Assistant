@@ -572,7 +572,7 @@ public class CrashAssistantGUI {
                     return;
                 } else if (e.getURL() != null) {
                     try {
-                        Desktop.getDesktop().browse(e.getURL().toURI());
+                        ControlPanel.validateIsDomainTrustedAndOpenInBrowser(e.getURL().toString());
                     } catch (Exception exception) {
                         CrashAssistantApp.LOGGER.error("Failed to open in link browser: ", exception);
                     }

@@ -1,6 +1,8 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 
 public class TrustedDomainsHelper {
@@ -22,7 +24,29 @@ public class TrustedDomainsHelper {
         add("fabricmc.net");
         add("quiltmc.org");
         add("github.com");
+
+        // Add domains from LinksProvider
+        addAll(getDomainsFromLinksProvider());
     }};
+
+    private static HashSet<String> getDomainsFromLinksProvider() {
+        HashSet<String> domains = new HashSet<>();
+        for (LinksProvider provider : LinksProvider.values()) {
+            try {
+                String link = provider.getLink();
+                if (link != null && !link.equals("PRIVACY_POLICY")) {
+                    URI uri = new URI(link);
+                    String domain = getDomainName(uri);
+                    if (domain != null) {
+                        domains.add(domain);
+                    }
+                }
+            } catch (URISyntaxException e) {
+                // Skip invalid URLs
+            }
+        }
+        return domains;
+    }
 
 
     public static String getDomainName(URI uri) {

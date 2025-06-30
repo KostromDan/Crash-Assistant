@@ -77,7 +77,7 @@ public class Mod {
             writer.write("Mods count: " + mods.size() + "\n \n");
 
             Mod tableColumnNames = new Mod("jar name", "mod id (isMCreator)", null,null, new HashSet<String>(){{add("mixin configs");}},new ArrayList<>(),"");
-            List<Mod> finalMods = new ArrayList<>(){{add(tableColumnNames);addAll(mods);}};
+            List<Mod> finalMods = new ArrayList<Mod>(){{add(tableColumnNames);addAll(mods);}};
             int[] maxLens = computeMaxLengths(finalMods, 0);
             int maxJarNameLength = maxLens[0];
             int maxModIdLength = maxLens[1];

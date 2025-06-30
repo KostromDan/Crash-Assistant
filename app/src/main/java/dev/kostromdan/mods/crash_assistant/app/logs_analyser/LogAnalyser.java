@@ -156,6 +156,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new CurseForgeCorrupted());
         registerKnownCrashReason(new DiskSpaceEnded());
         registerKnownCrashReason(new DuplicatedMods());
+        registerKnownCrashReason(new EpicFightAddons());
         registerKnownCrashReason(new FeatureOrderCycle());
         registerKnownCrashReason(new GroovyModLoaderIPv6());
         registerKnownCrashReason(new KubeJSDataPack());

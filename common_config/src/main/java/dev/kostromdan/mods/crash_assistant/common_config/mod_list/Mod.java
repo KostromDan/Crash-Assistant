@@ -19,7 +19,6 @@ public class Mod {
     private final HashSet<String> mixinConfigs;
     private final List<Mod> jarJarMods;
     private final String pathFromJarJar;
-    private final List<String> entries;
 
     public static final Type TYPE = new TypeToken<LinkedHashSet<Mod>>() {
     }.getType();
@@ -28,7 +27,7 @@ public class Mod {
             .setPrettyPrinting()
             .create();
 
-    public Mod(String jarName, String modId, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar, List<String> entries) {
+    public Mod(String jarName, String modId, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar) {
         this.jarName = jarName;
         this.modId = modId;
         this.version = version;
@@ -36,7 +35,6 @@ public class Mod {
         this.mixinConfigs = mixinConfigs;
         this.jarJarMods = jarJarMods;
         this.pathFromJarJar = pathFromJarJar;
-        this.entries = entries;
     }
 
     public String getJarName() {
@@ -67,10 +65,6 @@ public class Mod {
         return pathFromJarJar;
     }
 
-    public List<String> getEntries() {
-        return entries;
-    }
-
     /**
      * Writes a list of mods to a text file with detailed formatting.
      *
@@ -82,13 +76,8 @@ public class Mod {
         try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
             writer.write("Mods count: " + mods.size() + "\n \n");
 
-            Mod tableColumnNames = new Mod("jar name", "mod id (isMCreator)", null, null, new HashSet<String>() {{
-                add("mixin configs");
-            }}, new ArrayList<>(), "", new ArrayList<>());
-            List<Mod> finalMods = new ArrayList<>() {{
-                add(tableColumnNames);
-                addAll(mods);
-            }};
+            Mod tableColumnNames = new Mod("jar name", "mod id (isMCreator)", null,null, new HashSet<String>(){{add("mixin configs");}},new ArrayList<>(),"");
+            List<Mod> finalMods = new ArrayList<>(){{add(tableColumnNames);addAll(mods);}};
             int[] maxLens = computeMaxLengths(finalMods, 0);
             int maxJarNameLength = maxLens[0];
             int maxModIdLength = maxLens[1];
@@ -218,7 +207,7 @@ public class Mod {
             if (json.isJsonArray()) {
                 // Simple array format with just jar names
                 for (JsonElement element : json.getAsJsonArray()) {
-                    mods.add(new Mod(element.getAsString(), null, null, null, new HashSet<>(), new ArrayList<>(), null, new ArrayList<>()));
+                    mods.add(new Mod(element.getAsString(), null, null, null, new HashSet<>(), new ArrayList<>(), null));
                 }
             } else if (json.isJsonObject()) {
                 // Object format with detailed mod information
@@ -241,7 +230,7 @@ public class Mod {
         private Mod deserializeMod(JsonElement element) {
             if (element.isJsonPrimitive()) {
                 // Legacy format: just a string with jar name
-                return new Mod(element.getAsString(), null, null, null, new HashSet<>(), new ArrayList<>(), null, new ArrayList<>());
+                return new Mod(element.getAsString(), null, null, null, new HashSet<>(), new ArrayList<>(), null);
             } else if (element.isJsonObject()) {
                 // Object format with full mod details
                 JsonObject modObj = element.getAsJsonObject();
@@ -250,7 +239,7 @@ public class Mod {
             }
 
             // Default case (shouldn't happen with well-formed JSON)
-            return new Mod("unknown", null, null, null, new HashSet<>(), new ArrayList<>(), null, new ArrayList<>());
+            return new Mod("unknown", null, null, null, new HashSet<>(), new ArrayList<>(), null);
         }
 
         /**
@@ -262,7 +251,7 @@ public class Mod {
             String modId = modObj.has("modId") ? modObj.get("modId").getAsString() : null;
             String version = modObj.has("version") ? modObj.get("version").getAsString() : null;
 
-            return new Mod(jarName, modId, version, null, new HashSet<>(), new ArrayList<>(), null, new ArrayList<>());
+            return new Mod(jarName, modId, version, null, new HashSet<>(), new ArrayList<>(), null);
         }
 
         @Override

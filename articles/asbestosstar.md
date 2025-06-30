@@ -71,17 +71,15 @@ Many have asked about Asbestosstar but received incomplete answers, as people of
 
 - In the best traditions, after he knew about that article, he started DMing people with disinformation about me.
 
-<details>
-  <summary>His disinformation message:</summary>
+His disinformation message:
 
-    ![image](https://github.com/user-attachments/assets/9f6bc965-3d5a-40a7-a4ce-9462152ddc55)
+![image](https://github.com/user-attachments/assets/9f6bc965-3d5a-40a7-a4ce-9462152ddc55)
 
-</details>
 Let's break it down:
 
 - `Own idea, mods differ`. He said so many times, so maybe even trusts it. Anyway, it's a lie.
     - Crash Assistant started `27.11.2024`, his `own idea` started `21.03.2025`.
-      At the moment of `27.03.2025` Crash Assistant already had millions of downloads and he was aware of it.
+      At the moment of `21.03.2025` Crash Assistant already had millions of downloads and he was aware of it.
     - He literally confessed:
 
       ![image](https://github.com/user-attachments/assets/ff149b68-98dd-4320-99c1-c0d870ca4624)
@@ -89,8 +87,8 @@ Let's break it down:
 
     - "Crash Assistant is just logs sharing, while his `own idea` is analysis."
       Many things can be said, but facts are clear:
-        - Mods are doing the same thing. A little in different places, they lack many features,
-          implemented differently, but almost same.
+        - Mods are doing the same thing. A little in different places, they lack many features and
+          have many wired bugs, implemented differently, but genrally same.
         - Crash Assistant started adding log analysis a month ago, his project even started:
 
       ![image](https://github.com/user-attachments/assets/5a5296db-5990-4fc6-8b6e-f184424a11b3)
@@ -98,12 +96,12 @@ Let's break it down:
         - Mod part of code is just implemented the same way as in Crash Assistant.
           He heavily inspired on my code, while ~~developing~~ vibe coding his `own idea`.
           It's just the same implementation.
-          But he resists these facts, and not saying which project they copied anywhere.
+          But he resists these facts, and not saying which project they copied/inspired anywhere.
 
 - `DRM, Malware mod, project reports`:
     - Project reports:
-      Yes, I see bad thing: I report it. And I spent on it like not more than 2 hours at all,
-      despite them saying "Weeks".
+      Yes, I see a bad thing: I report it. And I spent on it like not more than 2 hours at all,
+      despite them saying "weeks".
     - Report reasons:
         1) They did TLauncher advertising on CurseForge: I reported it. They were taken down.
         2) They were uploading logs to TLauncher criminal servers, with uncensored access tokens,

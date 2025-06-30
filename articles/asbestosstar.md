@@ -1,6 +1,7 @@
 ## Who Is Asbestosstar and What Are They Known For?
 
-This article was created to help people quickly understand the incidents involving this character without spending hours investigating.
+This article was created to help people quickly understand the incidents involving this character without spending hours
+investigating.
 Many have asked about Asbestosstar but received incomplete answers, as people often avoid revisiting this drama.
 
 - A developer notorious for “vibe-coding” (especially without proper testing, which leads to **many cursed bugs**).
@@ -46,7 +47,8 @@ Many have asked about Asbestosstar but received incomplete answers, as people of
 ### Minecraft Mod Development Discord Server
 
 - Banned for attacking staff, including from army of twinks, spamming in DMs, harassment, terrorist propaganda,
-  raiding the MMD Discord server, posting bad mods from MMD name in purpose of harming them, spreading defamatory rumors about the MMD Discord server through mass DMs to random
+  raiding the MMD Discord server, posting bad mods from MMD name in purpose of harming them, spreading defamatory rumors
+  about the MMD Discord server through mass DMs to random
   people.
 
 ![image](https://github.com/user-attachments/assets/e4ad6735-bc07-4e28-880e-7a1f4e735f77)
@@ -64,3 +66,60 @@ Many have asked about Asbestosstar but received incomplete answers, as people of
 ![image](https://github.com/user-attachments/assets/873b78af-e2f5-4046-be4b-9d01bd72a4f8)
 
 ---
+
+### Update 1:
+
+- In the best traditions, after he knew about that article, he started DMing people with disinformation about me.
+
+<details>
+  <summary>His disinformation message:</summary>
+
+    ![image](https://github.com/user-attachments/assets/9f6bc965-3d5a-40a7-a4ce-9462152ddc55)
+
+</details>
+Let's break it down:
+
+- `Own idea, mods differ`. He said so many times, so maybe even trusts it. Anyway, it's a lie.
+    - Crash Assistant started `27.11.2024`, his `own idea` started `21.03.2025`.
+      At the moment of `27.03.2025` Crash Assistant already had millions of downloads and he was aware of it.
+    - He literally confessed:
+
+      ![image](https://github.com/user-attachments/assets/ff149b68-98dd-4320-99c1-c0d870ca4624)
+      ![image](https://github.com/user-attachments/assets/f1030e83-2bf1-4408-9917-d23a6179d85a)
+
+    - "Crash Assistant is just logs sharing, while his `own idea` is analysis."
+      Many things can be said, but facts are clear:
+        - Mods are doing the same thing. A little in different places, they lack many features,
+          implemented differently, but almost same.
+        - Crash Assistant started adding log analysis a month ago, his project even started:
+
+      ![image](https://github.com/user-attachments/assets/5a5296db-5990-4fc6-8b6e-f184424a11b3)
+
+        - Mod part of code is just implemented the same way as in Crash Assistant.
+          He heavily inspired on my code, while ~~developing~~ vibe coding his `own idea`.
+          It's just the same implementation.
+          But he resists these facts, and not saying which project they copied anywhere.
+
+- `DRM, Malware mod, project reports`:
+    - Project reports:
+      Yes, I see bad thing: I report it. And I spent on it like not more than 2 hours at all,
+      despite them saying "Weeks".
+    - Report reasons:
+        1) They did TLauncher advertising on CurseForge: I reported it. They were taken down.
+        2) They were uploading logs to TLauncher criminal servers, with uncensored access tokens,
+           which can be used for direct access to Minecraft account. I reported it. They were taken down.
+           I'm 99% sure it was done intentionally as they're part of TL community.
+    - Malware mod warning.
+      After I caught them on that, I reported them and immediately added a warning notifying users about security
+      issue and his mod malware-like behavior. I mean it's really serious. Sending access tokens to criminal
+      organisation, known in the community for stealing Minecraft accounts.
+      So at the moment of adding that warning it was 100% correct it was malware-like and very suspicious behavior.
+      After he fixed it (I don't even know why CF allowed them to be reapproved after this kind of shit),
+      they reported me and I was asked to remove that warning.
+    - DRM stopping mods from working together:
+      I added it after I seen crash where his mod caused crash while trying to do something with my mod.
+      Since there is too much drama involved, (i.e. they copied my mod, saying it's their own, harassing me,
+      disinformation about me)
+      I decided to do anything as I don't want to even touch/test their mod, and just mark mods incompatible.
+      Since their mod is crashing main process while trying to do shit with mine,
+      it's a valid reason for marking mods incompatible.

@@ -69,7 +69,7 @@ Many have asked about Asbestosstar but received incomplete answers, as people of
 
 ### Update 1:
 
-- In the best traditions, after he knew about that article, he started DMing people with disinformation about me.
+- In the best traditions, after he knew about this article, he started DMing people with disinformation about me.
 
 His disinformation message:
 
@@ -78,23 +78,23 @@ His disinformation message:
 Let's break it down:
 
 - `Own idea, mods differ`. He said so many times, so maybe even trusts it. Anyway, it's a lie.
-    - Crash Assistant started `27.11.2024`, his `own idea` started `21.03.2025`.
+    - Crash Assistant started `27.11.2024`, his "own idea" started `21.03.2025`.
       At the moment of `21.03.2025` Crash Assistant already had millions of downloads and he was aware of it.
     - He literally confessed:
 
       ![image](https://github.com/user-attachments/assets/ff149b68-98dd-4320-99c1-c0d870ca4624)
       ![image](https://github.com/user-attachments/assets/f1030e83-2bf1-4408-9917-d23a6179d85a)
 
-    - "Crash Assistant is just logs sharing, while his `own idea` is analysis."
+    - "Crash Assistant is just logs sharing, while his "own idea" is analysis."
       Many things can be said, but facts are clear:
         - Mods are doing the same thing. A little in different places, they lack many features and
-          have many wired bugs, implemented differently, but genrally same.
+          have many wired bugs, implemented differently, but generally the same.
         - Crash Assistant started adding log analysis a month ago, his project even started:
 
       ![image](https://github.com/user-attachments/assets/5a5296db-5990-4fc6-8b6e-f184424a11b3)
 
         - Mod part of code is just implemented the same way as in Crash Assistant.
-          He heavily inspired on my code, while ~~developing~~ vibe coding his `own idea`.
+          He heavily inspired on my code, while ~~developing~~ vibe coding his "own idea".
           It's just the same implementation.
           But he resists these facts, and not saying which project they copied/inspired anywhere.
 
@@ -115,9 +115,9 @@ Let's break it down:
       After he fixed it (I don't even know why CF allowed them to be reapproved after this kind of shit),
       they reported me and I was asked to remove that warning.
     - DRM stopping mods from working together:
-      I added it after I seen crash where his mod caused crash while trying to do something with my mod.
+      I added it after I seen crash-report where his mod caused crash while trying to do something with my mod.
       Since there is too much drama involved, (i.e. they copied my mod, saying it's their own, harassing me,
       disinformation about me)
-      I decided to do anything as I don't want to even touch/test their mod, and just mark mods incompatible.
+      I decided to not investigate it as I don't want to even touch/test their mod, and just mark mods incompatible.
       Since their mod is crashing main process while trying to do shit with mine,
       it's a valid reason for marking mods incompatible.

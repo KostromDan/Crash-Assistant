@@ -85,13 +85,19 @@ Let's break it down:
       ![image](https://github.com/user-attachments/assets/ff149b68-98dd-4320-99c1-c0d870ca4624)
       ![image](https://github.com/user-attachments/assets/f1030e83-2bf1-4408-9917-d23a6179d85a)
 
-    - "Crash Assistant is just logs sharing, while his "own idea" is analysis."
+    - "Crash Assistant is just logs sharing, while his "own idea" is more about analysis."
+
       Many things can be said, but facts are clear:
         - Mods are doing the same thing. A little in different places, they lack many features and
           have many wired bugs, implemented differently, but generally the same.
         - Crash Assistant started adding log analysis a month ago, his project even started:
 
       ![image](https://github.com/user-attachments/assets/5a5296db-5990-4fc6-8b6e-f184424a11b3)
+
+        - I don't know from where he even took that thesis. I have no idea except he thought it himself.
+          Crash Assistant initially had a concept of assisting users with crashes in any possible ways.
+          Log Analysis was planned initially. And its implementation was started
+          a month ago before they did their first commit.
 
         - Mod part of code is just implemented the same way as in Crash Assistant.
           He heavily inspired on my code, while ~~developing~~ vibe coding his "own idea".

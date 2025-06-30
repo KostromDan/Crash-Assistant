@@ -9,6 +9,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.ModuleFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -28,6 +29,8 @@ public class MixinApply extends KnownCrashReason {
     @Override
     public boolean matches(Log latestLog) {
         if (CrashAssistantApp.gameLaunchedSuccessfully) return false;
+        if (!PlatformHelp.isLinkDefault())
+            return false; // Temporally disable for modpacks. todo: revert after out from beta.
         List<Log> logs = new ArrayList<>();
         for (Log log : LogsList.getLogs()) {
             if (log.getType() == LogType.LAUNCHER_LOG) {
@@ -60,6 +63,7 @@ public class MixinApply extends KnownCrashReason {
                         message = LanguageProvider.get("warnings.mixin_apply");
                     }
                 }
+                message = LanguageProvider.get("warnings.mixin_apply_common_start") + message + LanguageProvider.get("warnings.mixin_apply_common_end");
                 message = message.replace("$MOD$", "<strong style='color: red;'>" + jarName + "</strong>");
                 message = message.replace("$CONFIG$", "<strong>" + mixinConfig + "</strong>");
                 if (conflictingMixin != null) {
@@ -76,7 +80,7 @@ public class MixinApply extends KnownCrashReason {
     }
 
     private static MixinParsingResult parseLatestMixinError(Log log, HashMap<String, String> configToJarMap) {
-        List<String> lines = log.getType() == LogType.CRASH_REPORT ? log.getReader().getAllLinesList() : log.getReader().getLastNLines(1000);
+        List<String> lines = log.getType() == LogType.CRASH_REPORT ? log.getReader().getAllLinesList() : log.getReader().getLastNLines(300);
         for (int i = lines.size() - 1; i >= 0; i--) {
             String line = lines.get(i);
             if (line.contains("Caused by: org.spongepowered.asm.mixin.")) {

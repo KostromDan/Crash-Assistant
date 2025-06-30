@@ -111,8 +111,8 @@ Let's break it down:
     - Report reasons:
         1) They did TLauncher advertising on CurseForge: I reported it. They were taken down.
         2) They were uploading logs to TLauncher criminal servers, with uncensored access tokens,
-           which can be used for direct access to Minecraft account. I reported it. They were taken down.
-           I'm 99% sure it was done intentionally as they're part of TL community.
+           which can be used for direct access to the Minecraft accounts. I reported it.
+           They were taken down. I'm 99% sure it was done intentionally as they're part of TL community.
     - Malware mod warning.
       After I caught them on that, I reported them and immediately added a warning notifying users about security
       issue and his mod malware-like behavior. I mean it's really serious. Sending access tokens to criminal
@@ -121,9 +121,9 @@ Let's break it down:
       After he fixed it (I don't even know why CF allowed them to be reapproved after this kind of shit),
       they reported me and I was asked to remove that warning.
     - DRM stopping mods from working together:
-      I added it after I seen crash-report where his mod caused crash while trying to do something with my mod.
+      I added it after I saw a crash report where his mod caused a crash while trying to do something with my mod.
       Since there is too much drama involved, (i.e. they copied my mod, saying it's their own, harassing me,
-      disinformation about me)
+      disinformation about me, and all in all I'm generally annoyed by this situation)
       I decided to not investigate it as I don't want to even touch/test their mod, and just mark mods incompatible.
-      Since their mod is crashing main process while trying to do shit with mine,
+      Since their mod is crashing main process while trying to do shit with mine mod,
       it's a valid reason for marking mods incompatible.

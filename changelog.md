@@ -3,6 +3,7 @@
 - Initial release for 1.21.7.
 - Added Italian localization. Thanks `splack01` for making PR.
 - `MixinApply` new log analysis. Detects most crashes caused by mixins apply/conflicts.
+  Currently, disabled for modpacks as a feature is in the beta stage and there is a lot of work to do.
 - `UsedByAnotherProcess` new log analysis. If config locked by another process and it's crashing.
 - `GroovyModLoaderIPv6` new log analysis. If GML failed to download some files, and it's crashing due to IPv6 issues.
 - `EpicFightAddons` new log analysis. Same as Create6Addons log analysis.
@@ -13,7 +14,7 @@
 - Refactored domain validation and link opening logic.
 - Added `qq.com` to trusted domains.
 - Fixed `Create6Addons` analysis wasn't triggered sometimes.
-- Fixed `FeatureOrderCycle` analysis not triggered sometimes.
+- Fixed `FeatureOrderCycle` analysis wasn't triggered sometimes.
 - Fixed `ModDataParser` wasn't parsing some mixin configs.
 - Fixed some upload buttons can be rarely not activated.
 

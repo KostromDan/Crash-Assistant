@@ -60,9 +60,9 @@ public class Create6Addons extends KnownCrashReason {
             if (railwaysMod != null && railwaysMod.getVersion() != null) {
                 String railwaysVersion = railwaysMod.getVersion().split("-")[0];
                 if (creteVersion.startsWith("6")) {
-                    return VersionUtils.isLower(railwaysVersion, "1.6.10");
+                    if (VersionUtils.isLower(railwaysVersion, "1.6.10")) return true;
                 } else {
-                    return VersionUtils.isGreaterThanOrEqual(railwaysVersion, "1.6.10");
+                    if (VersionUtils.isGreaterThanOrEqual(railwaysVersion, "1.6.10")) return true;
                 }
             }
         }

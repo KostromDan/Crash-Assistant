@@ -8,6 +8,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.ModuleFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
@@ -28,9 +29,14 @@ public class MixinApply extends KnownCrashReason {
 
     @Override
     public boolean matches(Log latestLog) {
-        if (CrashAssistantApp.gameLaunchedSuccessfully) return false;
-        if (!PlatformHelp.isLinkDefault())
-            return false; // Temporally disable for modpacks. todo: revert after out from beta.
+        if (!PlatformHelp.isLinkDefault()) {
+            if (ModListDiff.isModpackCreator()) {
+                message += "<strong>You are seeing this analysis only because you are creator of this modpack. Won't be displayed to the end users.</strong>\n\n";
+            } else {
+                CrashAssistantApp.LOGGER.warn("Skipping MixinApply analysis due to it's in beta and game ran by the end user of this modpack.");
+                return false; // Temporally disable for modpacks. todo: revert after out from beta.
+            }
+        }
         List<Log> logs = new ArrayList<>();
         for (Log log : LogsList.getLogs()) {
             if (log.getType() == LogType.LAUNCHER_LOG) {
@@ -53,14 +59,14 @@ public class MixinApply extends KnownCrashReason {
                 String conflictingMixin = null;
                 if (result.getConflictingJarName() != null) {
                     conflictingJarName = result.getConflictingJarName();
-                    message = LanguageProvider.get("warnings.mixin_apply_conflicting_with_jar");
+                    message += LanguageProvider.get("warnings.mixin_apply_conflicting_with_jar");
                 } else {
                     conflictingMixin = findConflictingMixin(result.getMixinConfig(), latestLog, configToJarMap);
                     if (conflictingMixin != null) {
                         conflictingJarName = configToJarMap.get(conflictingMixin);
-                        message = LanguageProvider.get("warnings.mixin_apply_conflicting");
+                        message += LanguageProvider.get("warnings.mixin_apply_conflicting");
                     } else {
-                        message = LanguageProvider.get("warnings.mixin_apply");
+                        message += LanguageProvider.get("warnings.mixin_apply");
                     }
                 }
                 message = LanguageProvider.get("warnings.mixin_apply_common_start") + message + LanguageProvider.get("warnings.mixin_apply_common_end");

@@ -12,6 +12,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSi
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
@@ -307,6 +308,10 @@ public class CrashAssistantApp {
         LOGGER.info("Joined world successfully: {}", joinedWorldSuccessfully);
 
         LOGGER.info("Stop function of Minecraft fired: {}", stopFunctionFired);
+
+        LOGGER.info("isModpackCreator: {}", ModListDiff.isModpackCreator());
+        LOGGER.info("isHelpLinkDefault: {}", PlatformHelp.isLinkDefault());
+        LOGGER.info("helpLink: {}", PlatformHelp.getActualHelpLink());
 
 
         startLocatingTerminatedProcesses();

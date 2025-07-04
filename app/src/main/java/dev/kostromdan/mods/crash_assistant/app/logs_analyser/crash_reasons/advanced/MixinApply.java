@@ -157,37 +157,29 @@ public class MixinApply extends KnownCrashReason {
      * @return HashMap mapping mixin config files to jar names
      */
     public static HashMap<String, String> getMixinConfigToJarMapping(LinkedHashSet<Mod> mods) {
-        HashMap<String, String> configToJarMap = new HashMap<>();
+        HashMap<String, String> result = new HashMap<>();
 
-        for (Mod mod : mods) {
-            // Process the mod's mixin configs
-            HashSet<String> mixinConfigs = mod.getMixinConfigs();
-            if (mixinConfigs != null && !mixinConfigs.isEmpty()) {
-                String jarName = mod.getJarName();
-                String pathFromJarJar = mod.getPathFromJarJar();
-
-                // Build the full jar path if it's a nested jar
-                String fullJarPath = jarName;
-                if (pathFromJarJar != null && !pathFromJarJar.isEmpty()) {
-                    fullJarPath = pathFromJarJar + "!/" + jarName;
-                }
-
-                // Add each mixin config to the map
-                for (String mixinConfig : mixinConfigs) {
-                    configToJarMap.put(mixinConfig, fullJarPath);
-                }
-            }
-
-            // Recursively process nested jars
-            List<Mod> jarJarMods = mod.getJarJarMods();
-            if (jarJarMods != null && !jarJarMods.isEmpty()) {
-                LinkedHashSet<Mod> nestedMods = new LinkedHashSet<>(jarJarMods);
-                HashMap<String, String> nestedMap = getMixinConfigToJarMapping(nestedMods);
-                configToJarMap.putAll(nestedMap);
-            }
+        Deque<Map.Entry<Mod, String>> stack = new ArrayDeque<>();
+        for (Mod root : mods) {
+            stack.push(new AbstractMap.SimpleEntry<>(root, root.getJarName()));
         }
 
-        return configToJarMap;
+        while (!stack.isEmpty()) {
+            Map.Entry<Mod, String> entry = stack.pop();
+            Mod mod = entry.getKey();
+            String jarPath = entry.getValue();
+
+            for (String cfg : mod.getMixinConfigs()) {
+                result.putIfAbsent(cfg, jarPath);
+                CrashAssistantApp.LOGGER.info(jarPath);
+            }
+
+            for (Mod nested : mod.getJarJarMods()) {
+                String fullNested = jarPath + "!" + nested.getPathFromJarJar() + nested.getJarName();
+                stack.push(new AbstractMap.SimpleEntry<>(nested, fullNested));
+            }
+        }
+        return result;
     }
 
     public static class MixinParsingResult {

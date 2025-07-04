@@ -171,7 +171,6 @@ public class MixinApply extends KnownCrashReason {
 
             for (String cfg : mod.getMixinConfigs()) {
                 result.putIfAbsent(cfg, jarPath);
-                CrashAssistantApp.LOGGER.info(jarPath);
             }
 
             for (Mod nested : mod.getJarJarMods()) {

@@ -1,3 +1,12 @@
+1.9.8:
+
+- Fixed `Create6Addons` analysis was a little broken with the 1.9.7 update and wasn't triggered in some cases.
+- Fixed MixinApply analysis wasn't triggered in some cases.
+- Improved MixinApply analysis.
+- Fixed jarInJar names in the MixinApply analysis weren't correct.
+- Added some logging.
+- Small fixes and improvements.
+
 1.9.7:
 
 - Initial release for 1.21.7.

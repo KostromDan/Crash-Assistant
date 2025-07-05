@@ -134,6 +134,7 @@ public class LogAnalyser {
             return;
         }
         registerKnownCrashReason(new MixinApply());
+        registerKnownCrashReason(new ModuleFind());
         registerKnownCrashReason(new ModuleResolution());
 
         registerKnownCrashReason(new AlLibAlcCleanup());

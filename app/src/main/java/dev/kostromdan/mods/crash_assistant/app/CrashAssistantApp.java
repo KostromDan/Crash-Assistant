@@ -47,6 +47,7 @@ public class CrashAssistantApp {
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
     public static boolean stopFunctionFired = false;
+    public static boolean emergencySaveFired = false;
     public static long terminatedProcessesLocationEndTime = 0;
 
 
@@ -296,10 +297,6 @@ public class CrashAssistantApp {
 
         LogsList.addIfExistsAndModified(new Log(LogType.CRASH_ASSISTANT, Paths.get("logs", "crash_assistant", "crash_assistant_app.log")));
 
-        stopFunctionFired = ProcessSignalIO.exists("normal_stop", parentPID);
-        if (!stopFunctionFired) {
-            crashed = true;
-        }
 
         gameLaunchedSuccessfully = ProcessSignalIO.exists("successful_launch", parentPID);
         LOGGER.info("Reached first tick of TitleScreen: {}", gameLaunchedSuccessfully);
@@ -307,7 +304,13 @@ public class CrashAssistantApp {
         joinedWorldSuccessfully = ProcessSignalIO.exists("joined_world", parentPID);
         LOGGER.info("Joined world successfully: {}", joinedWorldSuccessfully);
 
-        LOGGER.info("Stop function of Minecraft fired: {}", stopFunctionFired);
+        stopFunctionFired = ProcessSignalIO.exists("normal_stop", parentPID);
+        if (!stopFunctionFired) crashed = true;
+        LOGGER.info("stop() function of Minecraft fired: {}", stopFunctionFired);
+
+        emergencySaveFired = ProcessSignalIO.exists("emergency_save", parentPID);
+        if (emergencySaveFired) crashed = true;
+        LOGGER.info("emergencySave() function of Minecraft fired: {}", emergencySaveFired);
 
         LOGGER.info("isModpackCreator: {}", ModListDiff.isModpackCreator());
         LOGGER.info("isHelpLinkDefault: {}", PlatformHelp.isLinkDefault());

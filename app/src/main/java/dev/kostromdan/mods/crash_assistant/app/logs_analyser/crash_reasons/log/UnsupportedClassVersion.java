@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.advanced.MixinApply.isInternalClass;
+
 public class UnsupportedClassVersion extends KnownCrashReason {
     public UnsupportedClassVersion() {
         super(
@@ -38,6 +40,8 @@ public class UnsupportedClassVersion extends KnownCrashReason {
 
                 String compiledJavaVersion = Integer.toString(Integer.parseInt(compiledVer) - 44);
                 String runtimeJavaVersion = Integer.toString(Integer.parseInt(runtimeVer) - 44);
+
+                if (isInternalClass(moduleName))return false;
 
                 List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(moduleName), ModListUtils.getCurrentModList(true));
 

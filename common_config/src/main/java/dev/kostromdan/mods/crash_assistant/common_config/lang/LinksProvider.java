@@ -36,6 +36,7 @@ public enum LinksProvider {
         return "https://www.curseforge.com/minecraft/mc-mods/ferritecore-fabric";
     }),
     EMBEDDIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/embeddium"),
+    INDIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/indium"),
     FEATURE_RECYCLER(() -> "https://www.curseforge.com/minecraft/mc-mods/feature-recycler");
 
 

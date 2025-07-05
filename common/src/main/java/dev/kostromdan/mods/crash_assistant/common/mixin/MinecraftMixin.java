@@ -28,14 +28,6 @@ public class MinecraftMixin {
         ProcessSignalIO.post("normal_stop");
     }
 
-    //        @Inject(
-//            method = "close",
-//            at = @At(
-//                    value = "INVOKE",
-//                    target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V"
-//            ),
-//            cancellable = false
-//    )
     @Inject(
             method = "close",
             at = @At(

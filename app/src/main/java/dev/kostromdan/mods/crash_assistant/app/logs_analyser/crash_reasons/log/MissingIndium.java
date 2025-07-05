@@ -39,25 +39,25 @@ public class MissingIndium extends KnownCrashReason {
 
     @Override
     public boolean matches(Log log) {
-//        if (!PlatformHelp.isFabricBased()) {
-//            return false;
-//        }
-//        if(ModListUtils.getCurrentModList(true).stream().anyMatch(x->Objects.equals(x.getModId(), "indium"))){
-//            return false;
-//        }
-//        List<Mod> sodiumMods = ModListUtils.getCurrentModList(true).stream().filter(x->Objects.equals(x.getModId(), "sodium")).collect(Collectors.toList());
-//        if (sodiumMods.isEmpty()) {
-//            return false;
-//        }
-//        String maxSodiumVersion = sodiumMods.get(0).getVersion();
-//        for (Mod sodiumMod : sodiumMods) {
-//            if(VersionUtils.isGreaterThanOrEqual(sodiumMod.getVersion(), maxSodiumVersion)) {
-//                maxSodiumVersion = sodiumMod.getVersion();
-//            }
-//        }
-//        if(VersionUtils.isGreaterThanOrEqual(maxSodiumVersion, "0.6.0")) {
-//            return false;
-//        }
+        if (!PlatformHelp.isFabricBased()) {
+            return false;
+        }
+        if(ModListUtils.getCurrentModList(true).stream().anyMatch(x->Objects.equals(x.getModId(), "indium"))){
+            return false;
+        }
+        List<Mod> sodiumMods = ModListUtils.getCurrentModList(true).stream().filter(x->Objects.equals(x.getModId(), "sodium")).collect(Collectors.toList());
+        if (sodiumMods.isEmpty()) {
+            return false;
+        }
+        String maxSodiumVersion = sodiumMods.get(0).getVersion();
+        for (Mod sodiumMod : sodiumMods) {
+            if(VersionUtils.isGreaterThanOrEqual(sodiumMod.getVersion(), maxSodiumVersion)) {
+                maxSodiumVersion = sodiumMod.getVersion();
+            }
+        }
+        if(VersionUtils.isGreaterThanOrEqual(maxSodiumVersion, "0.6.0")) {
+            return false;
+        }
         return super.matches(log);
 
     }

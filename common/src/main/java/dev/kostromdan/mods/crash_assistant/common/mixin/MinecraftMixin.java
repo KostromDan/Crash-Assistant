@@ -28,6 +28,25 @@ public class MinecraftMixin {
         ProcessSignalIO.post("normal_stop");
     }
 
+    //        @Inject(
+//            method = "close",
+//            at = @At(
+//                    value = "INVOKE",
+//                    target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V"
+//            ),
+//            cancellable = false
+//    )
+    @Inject(
+            method = "close",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lorg/apache/logging/log4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V"
+            )
+    )
+    private void onCloseFailed(CallbackInfo ci) {
+        ProcessSignalIO.post("close_failed");
+    }
+
     @Inject(method = "emergencySave", at = @At("HEAD"), cancellable = false)
     private void beforeEmergencySave(CallbackInfo ci) {
         ProcessSignalIO.post("emergency_save");

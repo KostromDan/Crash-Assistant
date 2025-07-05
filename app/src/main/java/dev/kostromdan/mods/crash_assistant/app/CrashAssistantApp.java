@@ -47,6 +47,7 @@ public class CrashAssistantApp {
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
     public static boolean stopFunctionFired = false;
+    public static boolean closeFunctionFailed = false;
     public static boolean emergencySaveFired = false;
     public static long terminatedProcessesLocationEndTime = 0;
 
@@ -307,6 +308,10 @@ public class CrashAssistantApp {
         stopFunctionFired = ProcessSignalIO.exists("normal_stop", parentPID);
         if (!stopFunctionFired) crashed = true;
         LOGGER.info("stop() function of Minecraft fired: {}", stopFunctionFired);
+
+        closeFunctionFailed = ProcessSignalIO.exists("close_failed", parentPID);
+        if (closeFunctionFailed) crashed = true;
+        LOGGER.info("close() function of Minecraft failed: {}", closeFunctionFailed);
 
         emergencySaveFired = ProcessSignalIO.exists("emergency_save", parentPID);
         if (emergencySaveFired) crashed = true;

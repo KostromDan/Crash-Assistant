@@ -390,7 +390,8 @@ public class CreateDependencies {
             if (createMods.size() > 1) {
                 String message = "Multiple Create mods found: " +
                         createMods.stream().map(Mod::getJarName).collect(Collectors.joining(", ")) + "\n" +
-                        "Analysis cannot proceed with multiple Create mods.\n";
+                        "Analysis cannot proceed with multiple Create mods.\n" +
+                        "Please fix the duplicated mods issue first.\n";
                 SwingUtilities.invokeLater(() -> {
                     appendStyledText(textPane, message, ERROR_COLOR);
                     CrashAssistantApp.LOGGER.info(message.trim());

@@ -26,7 +26,7 @@ public class ModuleFind extends KnownCrashReason {
         for (int i = lastLines.size() - 1; i >= 0; i--) {
             String line = lastLines.get(i);
             if (line.contains("java.lang.module.FindException: Module ") && line.contains(" not found, required by ")) {
-                String errorLine = line.split("java.lang.module.FindException: Module ")[1].trim();
+                String errorLine = line.split("java.lang.module.FindException: ")[1].trim();
                 String requiredByModuleName = errorLine.split(" not found, required by ")[1];
                 List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(requiredByModuleName), ModListUtils.getCurrentModList(true));
 

@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 
 import java.io.ByteArrayInputStream;
@@ -39,6 +40,9 @@ public class ModuleFinder {
                             break;
                         }
                     }
+                }
+                if (name.equals("module-info.class")) {
+                    JarInJarHelper.LOGGER.warn("Found module-info.class in " + topName);
                 }
                 if (!entry.isDirectory() && name.endsWith(".jar")) {
                     processNestedJar(name,
@@ -99,6 +103,9 @@ public class ModuleFinder {
                 JarEntry ne;
                 while ((ne = jis.getNextJarEntry()) != null) {
                     String n = ne.getName();
+                    if (n.equals("module-info.class")) {
+                        JarInJarHelper.LOGGER.warn("Found module-info.class in " + containerName);
+                    }
                     if (!matched) {
                         for (String prefix : pathPrefixes) {
                             if (normalizeModuleName(n).startsWith(prefix)) {

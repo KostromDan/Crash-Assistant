@@ -1,3 +1,13 @@
+1.9.9:
+
+- Added new `MissingIndium` analysis if the Indium mod is missing and it's crashing.
+- Added new `ModuleFind` analysis: Module `A` not found, required by `B`.
+- Added new `UnsupportedClassVersion` analysis if a mod is compiled with a more recent version of Java.
+- Improved `MixinApply` analysis, now detects if mixin config is declared with a more recent version of Java.
+- Improved error message for handling multiple Create mods in `CreateDependencies` analysis.
+- Fixed Crash Assistant not starting in some rare cases due to thinking it's a normal finish of Minecraft.
+- Small fixes and improvements.
+
 1.9.8:
 
 - Fixed `Create6Addons` analysis was a little broken with the 1.9.7 update and wasn't triggered in some cases.

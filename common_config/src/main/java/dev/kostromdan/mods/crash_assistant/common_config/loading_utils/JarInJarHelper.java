@@ -11,6 +11,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMo
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
@@ -183,6 +184,15 @@ public class JarInJarHelper {
         return new ArrayList<>(resultSet);
     }
 
+    public static boolean isCleanroomRelauncher(){
+        List<Mod> mods = getModsContainingPart("!cleanroom-relauncher-");
+        if (mods.isEmpty()) return false;
+        if (!ClassExistenceChecker.classExists("com.cleanroommc.boot.Main")){
+            LOGGER.warn("Detected cleanroom-relauncher env. Crash Assistant will start after relaunching with cleanroom.");
+            return true;
+        }
+        return false;
+    }
 
     public static List<Mod> checkDuplicatedCrashAssistantMod(boolean crashIfDuplicated) {
         try {

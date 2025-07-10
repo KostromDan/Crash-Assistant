@@ -13,6 +13,9 @@ import java.util.Map;
 @IFMLLoadingPlugin.MCVersion("1.12.2")
 public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
     public CrashAssistantEntrypoint() {
+        if(JarInJarHelper.isCleanroomRelauncher()){
+            return;
+        }
         String launchTarget = FMLLaunchHandler.side().isClient() ? "client" : "server";
         PlatformHelp.platform = dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp.FORGE;
         PlatformHelp.minecraftVersion = ForgeVersion.mcVersion;

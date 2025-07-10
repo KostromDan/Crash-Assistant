@@ -12,7 +12,9 @@ public enum PlatformHelp {
     NEOFORGE("https://discord.neoforged.net", "NeoForge Discord", "#user_support channel"),
     FABRIC("https://discord.gg/v6v4pMv", "Fabric Discord", "#player-support channel"),
     QUILT("https://discord.quiltmc.org/", "QuiltMC Discord", "#player-support channel"),
-    UNKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help channel");
+
+    UNKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help channel"),
+    CLEANROOM("https://discord.gg/sgQxDJdrnY", "Cleanroom Discord", "#lobby channel");
 
     private final String helpLink;
     private final String helpName;
@@ -29,6 +31,12 @@ public enum PlatformHelp {
         this.helpLink = helpLink;
         this.helpName = helpName;
         this.helpChannel = helpChannel;
+    }
+
+    PlatformHelp(PlatformHelp fromPlatform) {
+        this.helpLink = fromPlatform.helpLink;
+        this.helpName = fromPlatform.helpName;
+        this.helpChannel = fromPlatform.helpChannel;
     }
 
     public static boolean isLinkDefault() {

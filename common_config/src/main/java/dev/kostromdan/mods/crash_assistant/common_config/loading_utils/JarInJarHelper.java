@@ -13,6 +13,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
+import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -117,7 +118,7 @@ public class JarInJarHelper {
                         .getMethod("getProcessors")
                         .invoke(hardware);
                 return String.format("%s", processors[0]).replaceAll("\\s+", " ");
-            } catch (NoSuchMethodError ex) {
+            } catch (NoSuchMethodError | NoSuchMethodException ex) {
                 // new SystemInfo()
                 Class<?> systemInfoCls = Class.forName("oshi.SystemInfo");
                 Object systemInfo = systemInfoCls.getDeclaredConstructor().newInstance();
@@ -192,7 +193,7 @@ public class JarInJarHelper {
             if (modsWithSameModId.size() > 1) {
                 LOGGER.error("Found more than one mod with modid \"crash_assistant\". Crash Assistant is duplicated." + (crashIfDuplicated ? " Crashing!" : "") +
                         "\nDuplicated mods:\n" + duplicatedMods);
-                if (crashIfDuplicated) System.exit(-1);
+                if (crashIfDuplicated) ExitVMBypass.exit(-1);
             } else {
                 LOGGER.error("Found more than one mod starting with \"crash_assistant-\":\n" +
                         duplicatedMods + "\n" +
@@ -228,7 +229,7 @@ public class JarInJarHelper {
                 if (CrashAssistantConfig.getBoolean("compatibility.enabled")) {
                     JarInJarHelper.LOGGER.error("Crash Assistant detected incompatible mod(s), crashing to prevent potential issues:\n{}",
                             incompatibleMessage + " Remove one of them.");
-                    System.exit(-1);
+                    ExitVMBypass.exit(-1);
                 } else {
                     JarInJarHelper.LOGGER.warn("Crash Assistant detected incompatible mod(s). Compatibility check is disabled! Issues may arise!\n{}",
                             incompatibleMessage + " Continue at your own risk!");

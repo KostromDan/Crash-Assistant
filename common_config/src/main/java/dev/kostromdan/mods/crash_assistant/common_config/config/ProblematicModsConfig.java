@@ -5,6 +5,7 @@ import com.electronwill.nightconfig.core.io.ParsingException;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -120,7 +121,7 @@ public class ProblematicModsConfig {
             }
         }
         if (shouldCrash) {
-            System.exit(-1);
+            ExitVMBypass.exit(-1);
         }
     }
 

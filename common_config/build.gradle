@@ -1,4 +1,41 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
 dependencies {
+    implementation 'org.apache.logging.log4j:log4j-core:2.24.2'
+    implementation 'org.apache.logging.log4j:log4j-api:2.24.2'
+    implementation 'commons-io:commons-io:2.15.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'net.java.dev.jna:jna:4.4.0'
+    implementation 'net.java.dev.jna:platform:3.4.0'
     implementation 'com.electronwill.night-config:toml:3.6.3'
     implementation 'com.electronwill.night-config:json:3.6.3'
 }
+
+shadowJar {
+    archiveClassifier.set('')
+
+    // Relocate Night Config packages
+    relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
+
+    dependencies {
+        exclude(dependency('org.apache.logging.log4j:.*'))
+        exclude(dependency('commons-io:commons-io:2.15.1'))
+        exclude(dependency('net.java.dev.jna:.*'))
+        exclude(dependency('com.google.code.gson:.*'))
+    }
+}
+
+build.finalizedBy(shadowJar)

@@ -1,17 +1,36 @@
 pluginManagement {
     repositories {
-        maven { url "https://maven.fabricmc.net/" }
-        maven { url "https://maven.architectury.dev/" }
-        maven { url "https://files.minecraftforge.net/maven/" }
+        maven {
+            // RetroFuturaGradle
+            name 'GTNH Maven'
+            url 'https://nexus.gtnewhorizons.com/repository/public/'
+            //noinspection GroovyAssignabilityCheck
+            mavenContent {
+                includeGroup 'com.gtnewhorizons'
+                includeGroup 'com.gtnewhorizons.retrofuturagradle'
+            }
+        }
         gradlePluginPortal()
+        mavenCentral()
+        mavenLocal()
     }
 }
 
-rootProject.name = 'crash_assistant'
+plugins {
+    id 'com.diffplug.blowdryerSetup' version '1.7.0'
+    // Automatic toolchain provisioning
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
+}
 
-include 'common'
-include 'common_config'
-include 'fabric'
-include 'forge'
+blowdryerSetup {
+    repoSubfolder 'spotless'
+    github 'GregTechCEu/Buildscripts', 'tag', 'v1.0.7'
+}
+
+rootProject.name = rootProject.projectDir.getName()
+
 include 'app'
-include 'forge_coremod'
+include 'common_config'
+
+// Configure all projects
+// This will be handled in the root build.gradle file

@@ -17,10 +17,10 @@ import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Core;
-import oshi.SystemInfo;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -107,7 +107,37 @@ public class JarInJarHelper {
 
     public static String getProcessorName() {
         try {
-            return String.format("%s", (new SystemInfo()).getHardware().getProcessors()[0]).replaceAll("\\s+", " ");
+            try {
+                Class<?> sysInfoCls = Class.forName("oshi.SystemInfo");
+                Object sysInfo = sysInfoCls.getDeclaredConstructor().newInstance();
+
+                Object hardware = sysInfoCls.getMethod("getHardware").invoke(sysInfo);
+
+                Object[] processors = (Object[]) hardware.getClass()
+                        .getMethod("getProcessors")
+                        .invoke(hardware);
+                return String.format("%s", processors[0]).replaceAll("\\s+", " ");
+            } catch (NoSuchMethodError ex) {
+                // new SystemInfo()
+                Class<?> systemInfoCls = Class.forName("oshi.SystemInfo");
+                Object systemInfo = systemInfoCls.getDeclaredConstructor().newInstance();
+
+                // getHardware()
+                Method mGetHardware = systemInfoCls.getMethod("getHardware");
+                Object hardware = mGetHardware.invoke(systemInfo);
+
+                // getProcessor()
+                Method mGetProcessor = hardware.getClass().getMethod("getProcessor");
+                Object processor = mGetProcessor.invoke(hardware);
+
+                // getProcessorIdentifier()
+                Method mGetIdentifier = processor.getClass().getMethod("getProcessorIdentifier");
+                Object identifier = mGetIdentifier.invoke(processor);
+
+                // getName()
+                Method mGetName = identifier.getClass().getMethod("getName");
+                return (String) mGetName.invoke(identifier);
+            }
         } catch (Throwable e) {
             String errorMessage = e.getMessage();
             if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {

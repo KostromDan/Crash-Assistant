@@ -5,11 +5,11 @@ import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommand
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.event.ClickEvent;
+import net.minecraft.util.text.event.HoverEvent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentString;
 
 public class CrashAssistantEvents {
     public static void onGameJoin() {
@@ -19,20 +19,19 @@ public class CrashAssistantEvents {
         }
         CrashAssistantConfig.set("greeting.shown_greeting", true);
         LanguageProvider.updateLang();
-        TextComponent msg = new TextComponent(LanguageProvider.get("text.greeting1"));
+        TextComponentString msg = new TextComponentString(LanguageProvider.get("text.greeting1"));
 
-        // Create and style the "Crash Assistant" component
-        TextComponent crashAssistantComponent = new TextComponent("Crash Assistant");
-        Style style = Style.EMPTY
-                .withColor(ChatFormatting.LIGHT_PURPLE)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/KostromDan/Crash-Assistant"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("text.opens_url"))));
+        TextComponentString crashAssistantComponent = new TextComponentString("Crash Assistant");
+        Style style = new Style();
+        style.setColor(TextFormatting.LIGHT_PURPLE);
+        style.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/KostromDan/Crash-Assistant"));
+        style.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString(LanguageProvider.get("text.opens_url"))));
         crashAssistantComponent.setStyle(style);
 
-        msg.append(crashAssistantComponent);
-        msg.append(new TextComponent(LanguageProvider.get("text.greeting2")));
-        msg.append(CrashAssistantCommands.getModConfigComponent());
-        msg.append(new TextComponent(LanguageProvider.get("text.greeting3")));
+        msg.appendSibling(crashAssistantComponent);
+        msg.appendSibling(new TextComponentString(LanguageProvider.get("text.greeting2")));
+        msg.appendSibling(CrashAssistantCommands.getModConfigComponent());
+        msg.appendSibling(new TextComponentString(LanguageProvider.get("text.greeting3")));
         CrashAssistantCommands.sendClientMsg(msg);
     }
 }

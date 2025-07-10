@@ -68,7 +68,8 @@ shadowJar {
         rename { "CRASH_ASSISTANT_LICENSE" }
         into ""
     }
-    dependsOn(':common_config:build')
+    evaluationDependsOn(':common_config')
+    dependsOn project(':common_config').tasks.named('shadowJar')
     archiveClassifier.set('')
 
     // Relocate Night Config packages

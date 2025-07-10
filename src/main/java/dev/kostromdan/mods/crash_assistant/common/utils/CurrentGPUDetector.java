@@ -1,19 +1,15 @@
 package dev.kostromdan.mods.crash_assistant.common.utils;
 
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
-import org.lwjgl.opengl.GL11C;
+
+import static org.lwjgl.opengl.GL11.GL_RENDERER;
+import static org.lwjgl.opengl.GL11.glGetString;
 
 
 public interface CurrentGPUDetector {
     static void writeCurrentGPU() {
         try {
-            // Vulkan always selects correct GPU, so this not needed.
-            if (ClassExistenceChecker.classExists("net.vulkanmod.Initializer")) {
-                return;
-            }
-
-            String renderer = GL11C.glGetString(GL11C.GL_RENDERER);
+            String renderer = glGetString(GL_RENDERER);
             if (renderer == null) {
                 return;
             }

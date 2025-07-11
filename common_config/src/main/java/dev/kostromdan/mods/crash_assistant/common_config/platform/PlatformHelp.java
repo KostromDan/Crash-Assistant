@@ -76,7 +76,7 @@ public enum PlatformHelp {
                 break;
 
             case FORGE:
-                if (minecraftVersion.equals("1.12.2")) {
+                if (VersionUtils.isLowerThanOrEqual(minecraftVersion, "1.12.2")) {
                     paths.add("mcmod.info");
                 }
                 paths.add("META-INF/mods.toml");

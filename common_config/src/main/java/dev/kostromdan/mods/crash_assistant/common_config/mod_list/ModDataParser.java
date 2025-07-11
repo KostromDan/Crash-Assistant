@@ -341,7 +341,7 @@ public class ModDataParser {
                 mp = parseManifest(manifestProvider.get());
                 if (mp != null) mixinConfigs.addAll(mp.getMixinConfigs());
             }
-        } else {
+        } else if (descriptorPath.endsWith(".json")){
             mods = cfg;
             modId = mods.get("id");
 
@@ -353,6 +353,14 @@ public class ModDataParser {
                                 .map(String.class::cast)
                                 .collect(Collectors.toList()));
             }
+        }else if (descriptorPath.endsWith(".info")){
+            List<Object> modsList = cfg.get("mods");
+            if (modsList == null || modsList.isEmpty()) return null;
+
+            mods = (Config) modsList.get(0);
+            modId = mods.get("modid");
+        }else {
+            throw new IllegalArgumentException("Unsupported descriptor file extension: " + descriptorPath);
         }
 
         version = mods.get("version");
@@ -393,11 +401,32 @@ public class ModDataParser {
      * This avoids the costly round‑trip to the file‑system that the old implementation required.
      */
     private static Config loadConfigFromBytes(String descriptorPath, byte[] bytes) {
-        try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {
+        try {
             if (descriptorPath.endsWith(".toml")) {
-                return new TomlParser().parse(reader);
-            } else {
-                return new JsonParser().parse(reader);
+                try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {
+                    return new TomlParser().parse(reader);
+                }
+            } else if (descriptorPath.endsWith(".json")) {
+                try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {
+                    return new JsonParser().parse(reader);
+                }
+            } else if (descriptorPath.endsWith(".info")){
+                // Special handling for .info files that might start with '[' character
+                // Convert the bytes to string, check if it starts with '[', and wrap it in an object if needed
+                String content = new String(bytes, StandardCharsets.UTF_8);
+                if (content.trim().startsWith("[")) {
+                    // Wrap the array in an object to make it compatible with JsonParser
+                    content = "{\"mods\":" + content + "}";
+                    try (Reader reader = new StringReader(content)) {
+                        return new JsonParser().parse(reader);
+                    }
+                } else {
+                    try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {
+                        return new JsonParser().parse(reader);
+                    }
+                }
+            }else {
+                throw new IllegalArgumentException("Unsupported descriptor file extension: " + descriptorPath);
             }
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed to parse descriptor " + descriptorPath + " in‑memory", e);

@@ -1,3 +1,8 @@
+1.9.10
+
+- Backport to 1.12.2, initial release for 1.12.2
+- Fixed a small issue in 1.16.5
+
 1.9.9:
 
 - Added new `MissingIndium` analysis if the Indium mod is missing and it's crashing.

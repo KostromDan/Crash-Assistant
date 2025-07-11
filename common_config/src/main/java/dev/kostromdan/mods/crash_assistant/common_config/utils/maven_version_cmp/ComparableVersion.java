@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.app.utils.maven_version_cmp;
+package dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one

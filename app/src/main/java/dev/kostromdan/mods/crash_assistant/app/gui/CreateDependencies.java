@@ -1,7 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.app.utils.maven_version_cmp.ComparableVersion;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp.ComparableVersion;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;

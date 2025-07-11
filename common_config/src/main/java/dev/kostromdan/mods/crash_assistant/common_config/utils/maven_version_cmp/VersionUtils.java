@@ -21,7 +21,7 @@ public final class VersionUtils {
     /**
      * Returns true if version1 is less than or equal to version2.
      */
-    public static boolean isLowerEqual(String version1, String version2) {
+    public static boolean isLowerThanOrEqual(String version1, String version2) {
         ComparableVersion v1 = new ComparableVersion(version1);
         ComparableVersion v2 = new ComparableVersion(version2);
         return v1.compareTo(v2) <= 0;

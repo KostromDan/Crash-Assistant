@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.platform;
 
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp.VersionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +77,9 @@ public enum PlatformHelp {
                 break;
 
             case FORGE:
+                if (VersionUtils.isLowerThanOrEqual(minecraftVersion, "1.12.2")) {
+                    paths.add("mcmod.info");
+                }
                 paths.add("META-INF/mods.toml");
                 paths.add("META-INF/neoforge.mods.toml");
                 paths.add("fabric.mod.json");

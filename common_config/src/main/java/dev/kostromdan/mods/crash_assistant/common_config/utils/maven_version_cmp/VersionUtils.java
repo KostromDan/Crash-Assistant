@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.app.utils.maven_version_cmp;
+package dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp;
 
 /**
  * Utility methods for comparing version strings using Maven's ComparableVersion.

@@ -1144,8 +1144,8 @@ idea {
 
 
 // Deployment
-def final modrinthApiKey = providers.environmentVariable('MODRINTH_API_KEY')
-def final cfApiKey = providers.environmentVariable('CURSEFORGE_API_KEY')
+def final modrinthApiKey = providers.environmentVariable('MODRINTH_TOKEN')
+def final cfApiKey = providers.environmentVariable('CF_TOKEN')
 final boolean isCIEnv = providers.environmentVariable('CI').getOrElse('false').toBoolean()
 
 if (isCIEnv || deploymentDebug.toBoolean()) {
@@ -1387,7 +1387,7 @@ def getChangelog() {
     if (generateDefaultChangelog.toBoolean()) {
         return getFile('build/changelog.md')
     }
-    return getFile('CHANGELOG.md')
+    return getFile('changelog.md')
 }
 
 

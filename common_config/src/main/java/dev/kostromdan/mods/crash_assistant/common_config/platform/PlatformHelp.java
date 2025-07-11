@@ -88,6 +88,7 @@ public enum PlatformHelp {
                 paths.add("META-INF/mods.toml");
                 paths.add("META-INF/neoforge.mods.toml");
                 paths.add("fabric.mod.json");
+                paths.add("mcmod.info");
                 break;
         }
         return paths;

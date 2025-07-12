@@ -83,7 +83,8 @@ public class JarInJarHelper {
                     "-systemRAM", formatMemorySize(getTotalPhysicalMemory()),
                     "-processor", Base64.getEncoder().encodeToString(getProcessorName().getBytes(StandardCharsets.UTF_8))
             );
-            crashAssistantAppProcessBuilder.start();
+            Process crashAssistantAppProcess = crashAssistantAppProcessBuilder.start();
+            ChildProcessLogger.captureOutput(crashAssistantAppProcess);
             ProblematicModsConfig.crashIfProblematicMod();
         } catch (Throwable e) {
             LOGGER.error("Error while launching GUI: ", e);

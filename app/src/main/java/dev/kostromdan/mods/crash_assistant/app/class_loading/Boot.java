@@ -7,6 +7,8 @@ import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,7 +17,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -27,6 +35,7 @@ public class Boot {
     public static String jarPath = null;
     public static String crashAssistantModJarPath = null;
     public static boolean recursiveStart = false;
+    public static boolean gpuDetect = false;
     public static boolean vulkanAddonLoaded = false;
     public static String serialisedGPUs = null;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -34,77 +43,107 @@ public class Boot {
 
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        APP_ARGS = Arrays.asList(args);
-        for (int i = 0; i < args.length; i++) {
-            if ("-log4jApi".equals(args[i]) && i + 1 < args.length) {
-                log4jApi = args[i + 1];
-            } else if ("-log4jCore".equals(args[i]) && i + 1 < args.length) {
-                log4jCore = args[i + 1];
-            } else if ("-googleGson".equals(args[i]) && i + 1 < args.length) {
-                googleGson = args[i + 1];
-            } else if ("-commonIo".equals(args[i]) && i + 1 < args.length) {
-                commonIo = args[i + 1];
-            } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
-                jarPath = args[i + 1];
-            } else if ("-crashAssistantModJarPath".equals(args[i]) && i + 1 < args.length) {
-                crashAssistantModJarPath = args[i + 1];
-            } else if ("-serialisedGPUs".equals(args[i]) && i + 1 < args.length) {
-                serialisedGPUs = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
-            } else if ("-recursiveStart".equals(args[i])) {
-                recursiveStart = true;
+        try {
+            APP_ARGS = Arrays.asList(args);
+            for (int i = 0; i < args.length; i++) {
+                if ("-log4jApi".equals(args[i]) && i + 1 < args.length) {
+                    log4jApi = args[i + 1];
+                } else if ("-log4jCore".equals(args[i]) && i + 1 < args.length) {
+                    log4jCore = args[i + 1];
+                } else if ("-googleGson".equals(args[i]) && i + 1 < args.length) {
+                    googleGson = args[i + 1];
+                } else if ("-commonIo".equals(args[i]) && i + 1 < args.length) {
+                    commonIo = args[i + 1];
+                } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
+                    jarPath = args[i + 1];
+                } else if ("-crashAssistantModJarPath".equals(args[i]) && i + 1 < args.length) {
+                    crashAssistantModJarPath = args[i + 1];
+                } else if ("-serialisedGPUs".equals(args[i]) && i + 1 < args.length) {
+                    serialisedGPUs = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
+                } else if ("-recursiveStart".equals(args[i])) {
+                    recursiveStart = true;
+                } else if ("-gpuDetect".equals(args[i])) {
+                    gpuDetect = true;
+                }
             }
-        }
 
-        List<String> missingParameters = getMissingParameters();
-        if (!missingParameters.isEmpty()) {
-            System.err.println("Missing required parameters: " + String.join(", ", missingParameters) +
-                    "\nIf you trying to run app from dev env, run CrashAssistantApp.");
-            System.exit(-1);
-        }
+            List<String> missingParameters = getMissingParameters();
+            if (!missingParameters.isEmpty()) {
+                System.err.println("Missing required parameters: " + String.join(", ", missingParameters) +
+                        "\nIf you trying to run app from dev env, run CrashAssistantApp.");
+                System.exit(-1);
+            }
 
-        CrashAssistantAgent.appendJarFile(log4jApi);
-        CrashAssistantAgent.appendJarFile(log4jCore);
-        CrashAssistantAgent.appendJarFile(googleGson);
-        CrashAssistantAgent.appendJarFile(commonIo);
-        CrashAssistantAgent.appendJarFile(crashAssistantModJarPath);
+            CrashAssistantAgent.appendJarFile(log4jApi);
+            CrashAssistantAgent.appendJarFile(log4jCore);
+            CrashAssistantAgent.appendJarFile(googleGson);
+            CrashAssistantAgent.appendJarFile(commonIo);
+            CrashAssistantAgent.appendJarFile(crashAssistantModJarPath);
 
-        /**
-         * If Minecraft JVM terminated by windows itself, all child processes will be also terminated.
-         * So Crash Assistant can't be child process. This way we make Crash Assistant completely independent process.
-         *
-         * Also, here we're locating GPUs with Vulkan or DirectX, it's increasing heap before GUI start,
-         * so we're doing it on this TMP process, to not waste user resources on App avaiting stage.
-         */
-        if (!recursiveStart) {
-            loadVulkanAddon();
+            if (gpuDetect) {
+                loadVulkanAddon();
+                try {
+                    Class<?> GPUDetectorClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPUDetector");
+                    Method getSerialisedGPUsMethod = GPUDetectorClass.getMethod("getSerialisedGPUs");
+                    serialisedGPUs = (String) getSerialisedGPUsMethod.invoke(null);
+                } catch (Throwable e) {
+                    serialisedGPUs = ErrorUtils.getErrorMessageAndStackTrace(e);
+                }
+                System.out.println(serialisedGPUs);
+                System.exit(0);
+            }
+
+            /**
+             * If Minecraft JVM terminated by windows itself, all child processes will be also terminated.
+             * So Crash Assistant can't be child process. This way we make Crash Assistant completely independent process.
+             *
+             * Also, here we're locating GPUs with Vulkan or DirectX, it's increasing heap before GUI start,
+             * so we're doing it on this TMP process, to not waste user resources on App avaiting stage.
+             */
+            if (!recursiveStart) {
+                List<String> argsList = new ArrayList<>();
+                argsList.add(JavaBinaryLocator.getJavaBinary());
+                argsList.addAll(JVM_ARGS);
+                argsList.add("-jar");
+                argsList.add(jarPath);
+                argsList.addAll(APP_ARGS);
+                serialisedGPUs = getSerializedGPUsOnAnotherProcess(new ArrayList<>(argsList));
+                if (serialisedGPUs != null) {
+                    String encodedGPUs = Base64.getEncoder().encodeToString(serialisedGPUs.getBytes(StandardCharsets.UTF_8));
+                    argsList.add("-serialisedGPUs");
+                    argsList.add(encodedGPUs);
+                }
+                argsList.add("-recursiveStart");
+                ProcessBuilder pb = new ProcessBuilder(argsList);
+                pb.start();
+                System.exit(0);
+            }
+
+            Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
+            Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);
+            mainMethod.invoke(null, (Object) args);
+        } catch (Throwable e) {
+            Path logsFolder = Paths.get("logs", "crash_assistant");
+            Files.createDirectories(logsFolder);
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String errorDetails = "CrashAssistantApp process failed to start due to errors bellow:\n" +
+                    "Crash Assistant won't work.\n" +
+                    "This won't cause any issues to the main game process, just Crash Assistant won't popup after crash.\n" +
+                    "Please report to https://github.com/KostromDan/Crash-Assistant/issues\n"
+                    + sw.toString();
+            Path errorFile = logsFolder.resolve("app_start_error.txt");
             try {
-                Class<?> GPUDetectorClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.utils.gpu.GPUDetector");
-                Method getSerialisedGPUsMethod = GPUDetectorClass.getMethod("getSerialisedGPUs");
-                serialisedGPUs = (String) getSerialisedGPUsMethod.invoke(null);
-            } catch (Exception e) {
-                serialisedGPUs = ErrorUtils.getErrorMessageAndStackTrace(e);
+                Files.write(
+                        errorFile,
+                        (errorDetails + System.lineSeparator()).getBytes(StandardCharsets.UTF_8),
+                        StandardOpenOption.CREATE
+                );
+            } catch (IOException ioe) {
+                System.err.println("Failed to write crash log: " + ioe.getMessage());
             }
-
-            List<String> argsList = new ArrayList<>();
-            argsList.add(JavaBinaryLocator.getJavaBinary());
-            argsList.addAll(JVM_ARGS);
-            argsList.add("-jar");
-            argsList.add(jarPath);
-            argsList.addAll(APP_ARGS);
-            if (serialisedGPUs != null) {
-                String encodedGPUs = Base64.getEncoder().encodeToString(serialisedGPUs.getBytes(StandardCharsets.UTF_8));
-                argsList.add("-serialisedGPUs");
-                argsList.add(encodedGPUs);
-            }
-            argsList.add("-recursiveStart");
-            ProcessBuilder pb = new ProcessBuilder(argsList);
-            pb.start();
-            System.exit(0);
         }
-
-        Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
-        Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);
-        mainMethod.invoke(null, (Object) args);
     }
 
     private static List<String> getMissingParameters() {
@@ -118,12 +157,12 @@ public class Boot {
         return missingParameters;
     }
 
-    private static void loadVulkanAddon(){
+    private static void loadVulkanAddon() {
         List<Mod> vulkanAddons = JarInJarHelper.getModsContainingPart("CrashAssistantVulkanGPUDetectionAddon-");
         Mod VulkanAddon = vulkanAddons.stream()
                 .findFirst()
                 .orElse(null);
-        if(VulkanAddon == null) return;
+        if (VulkanAddon == null) return;
 
         vulkanAddonLoaded = true;
 
@@ -151,6 +190,41 @@ public class Boot {
         } catch (Exception e) {
             System.err.println("Failed to extract jar from VulkanAddon: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private static String getSerializedGPUsOnAnotherProcess(List<String> argsList) {
+        try {
+            argsList.add("-gpuDetect");
+            ProcessBuilder pb = new ProcessBuilder(argsList);
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            boolean finished = process.waitFor(5000, TimeUnit.MILLISECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                throw new RuntimeException("GPUDetector process reached timeout of 5 seconds and was killed.");
+            }
+
+            int exitCode = process.exitValue();
+
+            try (InputStream is = process.getInputStream()) {
+                StringBuilder output = new StringBuilder();
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    output.append(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
+                }
+
+                String result = output.toString();
+                if (exitCode == 0) return result;
+                return "GPUDetector process exited with non zero exit code: " + exitCode + "\n" +
+                        "STDOUT:\n" +
+                        result;
+            }
+
+        } catch (Throwable ignored) {
+            return "Error while getting gpus with GPUDetector process: " + ErrorUtils.getErrorMessageAndStackTrace(ignored);
         }
     }
 }

@@ -1,3 +1,11 @@
+1.9.11
+
+- Fixed a rare issue because of which the crash assistant did not start,
+  caused by the switch to `gpu-detect-jni.dll` in 1.9.6. Fixed the cause of issue in `gpu-detect-jni.dll`.
+  Also moved GPU detection logic to a separate process from the crash assistant app process to prevent any further
+  potential issues which can lead to the crash assistant not starting due to GPU detection failure.
+- Updated `ModuleFind` log analysis text, to be more clear.
+
 1.9.10
 
 - Backport to 1.12.2, initial release for 1.12.2

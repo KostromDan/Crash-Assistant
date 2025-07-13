@@ -44,7 +44,7 @@ public class ChildProcessLogger extends Thread {
                                         "Crash Assistant won't work.\n" +
                                         "This won't cause any issues to the main game process, just Crash Assistant won't popup after crash.\n" +
                                         "Please report to https://github.com/KostromDan/Crash-Assistant/issues");
-                            }else{
+                            } else {
                                 LOGGER.info("CrashAssistantApp process successfully started.");
                             }
                             break;

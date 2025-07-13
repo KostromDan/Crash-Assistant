@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.utils.gpu;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -19,7 +20,12 @@ public class DirectXGPUDetector {
         }
     }
 
-    public native static String getSerialisedGPUs();
+    private native static byte[] getNativeSerialisedGPUs();
+
+    public static String getSerialisedGPUs() {
+        byte[] bytes = getNativeSerialisedGPUs();
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
 
     private static void loadNativeLibraryFromJar() throws IOException {
         String libraryName = "gpu-detect-jni.dll";

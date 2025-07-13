@@ -55,8 +55,8 @@ public class Boot {
                     commonIo = args[i + 1];
                 } else if ("-jna".equals(args[i]) && i + 1 < args.length) {
                     jna = args[i + 1];
-            } else if ("-jnaPlatform".equals(args[i]) && i + 1 < args.length) {
-                jnaPlatform = args[i + 1];
+                } else if ("-jnaPlatform".equals(args[i]) && i + 1 < args.length) {
+                    jnaPlatform = args[i + 1];
                 } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
                     jarPath = args[i + 1];
                 } else if ("-crashAssistantModJarPath".equals(args[i]) && i + 1 < args.length) {
@@ -81,7 +81,7 @@ public class Boot {
             CrashAssistantAgent.appendJarFile(log4jCore);
             CrashAssistantAgent.appendJarFile(commonIo);
             CrashAssistantAgent.appendJarFile(jna);
-        CrashAssistantAgent.appendJarFile(jnaPlatform);
+            CrashAssistantAgent.appendJarFile(jnaPlatform);
             CrashAssistantAgent.appendJarFile(crashAssistantModJarPath);
 
             if (gpuDetect) {

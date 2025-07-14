@@ -417,6 +417,7 @@ public class ModDataParser {
                 if (content.trim().startsWith("[")) {
                     // Wrap the array in an object to make it compatible with JsonParser
                     content = "{\"mods\":" + content + "}";
+                    content = content.replace("mod_minecraftForge", "");
                     try (Reader reader = new StringReader(content)) {
                         return new JsonParser().parse(reader);
                     }

@@ -1,7 +1,14 @@
+1.9.12
+
+- Finally fixed `gpu-detect-jni.dll` issue. Fixes from previous update fixed "crash assistant not starting issue",
+  but haven't actually fixed the root cause of issue, so extremely rarely check of running on integrated gpu wasn't
+  working.
+- Fixed in 1.12.2 `mcmod.info` parsing issue.
+
 1.9.11
 
 - Fixed a rare issue because of which the crash assistant did not start,
-  caused by the switch to `gpu-detect-jni.dll` in 1.9.6. Fixed the cause of issue in `gpu-detect-jni.dll`.
+  caused by the switch to `gpu-detect-jni.dll` in 1.9.7. Fixed the cause of issue in `gpu-detect-jni.dll`.
   Also moved GPU detection logic to a separate process from the crash assistant app process to prevent any further
   potential issues which can lead to the crash assistant not starting due to GPU detection failure.
 - Updated `ModuleFind` log analysis text, to be more clear.

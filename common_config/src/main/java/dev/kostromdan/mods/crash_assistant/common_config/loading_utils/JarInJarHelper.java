@@ -186,7 +186,8 @@ public class JarInJarHelper {
     }
 
     public static boolean isCleanroomRelauncher(){
-        List<Mod> mods = getModsContainingPart("!cleanroom-relauncher-");
+        List<Mod> mods = getModsContainingPart("cleanroom");
+        mods = mods.stream().filter(mod ->  Objects.equals(mod.getModId(), "cleanroom-relauncher")).collect(Collectors.toList());
         if (mods.isEmpty()) return false;
         if (!ClassExistenceChecker.classExists("com.cleanroommc.boot.Main")){
             LOGGER.warn("Detected cleanroom-relauncher env. Crash Assistant will start after relaunching with cleanroom.");

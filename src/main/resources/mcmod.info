@@ -1,12 +1,21 @@
-[{
-    "modid": "${modid}",
-    "name": "${modname}",
-    "description": "Shows a GUI after Minecraft crashes, immediately showing all affected logs, crash reports, or hs_err files. Provides a one-click solution to upload them, copy the link, and perform other actions for easier reporting, debugging, and troubleshooting.",
-    "version": "${version}",
-    "mcversion": "${mcversion}",
-    "logoFile": "",
-    "url": "https://github.com/KostromDan/Crash-Assistant",
-    "authorList": ["KostromDan"],
-    "credits": "",
-    "dependencies": []
-}]
+{
+	"modListVersion": 2,
+	"modList": [{
+		"modid": "${modId}",
+		"name": "${modName}",
+		"description": "Shows a GUI after Minecraft crashes, immediately showing all affected logs, crash reports, or hs_err files. Provides a one-click solution to upload them, copy the link, and perform other actions for easier reporting, debugging, and troubleshooting.",
+		"version": "${modVersion}",
+		"mcversion": "${minecraftVersion}",
+		"url": "https://github.com/KostromDan/Crash-Assistant",
+		"updateUrl": "",
+		"authorList": ["KostromDan"],
+		"credits": "",
+		"logoFile": "",
+		"screenshots": [],
+		"parent": "",
+		"requiredMods": [],
+		"dependencies": [],
+		"dependants": [],
+		"useDependencyInformation": false
+	}]
+}

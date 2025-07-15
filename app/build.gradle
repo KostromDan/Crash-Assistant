@@ -1,7 +1,15 @@
-plugins {
-    id 'java'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+buildscript {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
+    }
 }
+
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 group = 'dev.kostromdan.mods'
 version = ''
@@ -34,8 +42,8 @@ def lwjglNatives = {
 }()
 
 dependencies {
-    implementation 'org.apache.logging.log4j:log4j-core:2.24.2'
-    implementation 'org.apache.logging.log4j:log4j-api:2.24.2'
+    implementation 'org.apache.logging.log4j:log4j-core:2.0-beta9'
+    implementation 'org.apache.logging.log4j:log4j-api:2.0-beta9'
     implementation 'com.electronwill.night-config:toml:3.6.3'
     implementation 'com.electronwill.night-config:json:3.6.3'
     implementation 'commons-io:commons-io:2.15.1'
@@ -52,25 +60,22 @@ dependencies {
 }
 
 jar {
-    manifest {
-        attributes(
-                'Main-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.Boot',
-                'Launcher-Agent-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
-                'Agent-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
-                'Premain-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
-                'Enable-Native-Access': 'ALL-UNNAMED' // Java 22+ prevents warnings and upcoming JNI restrictions in Java 25+
-        )
-    }
+    from sourceSets.main.output
 }
 
-shadowJar {
+task shadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    from sourceSets.main.output
+    archiveClassifier.set('')
+
     from("$rootDir/LICENSE") {
         rename { "CRASH_ASSISTANT_LICENSE" }
         into ""
     }
     evaluationDependsOn(':common_config')
-    dependsOn project(':common_config').tasks.named('shadowJar')
-    archiveClassifier.set('')
+    dependsOn project(':common_config').tasks.shadowJar
+
+    // Explicitly include Night Config dependencies
+    configurations = [project.configurations.runtimeClasspath]
 
     // Relocate Night Config packages
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
@@ -82,6 +87,15 @@ shadowJar {
         exclude(dependency('net.java.dev.jna:.*'))
         exclude(dependency('org.lwjgl:.*'))
         exclude(project(':common_config'))
+    }
+    manifest {
+        attributes(
+            'Main-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.Boot',
+            'Launcher-Agent-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
+            'Agent-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
+            'Premain-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
+            'Enable-Native-Access': 'ALL-UNNAMED' // Java 22+ prevents warnings and upcoming JNI restrictions in Java 25+
+        )
     }
 }
 

@@ -1,20 +1,22 @@
 package dev.kostromdan.mods.crash_assistant.forge_coremod;
 
+import net.minecraft.client.Minecraft;
+
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
-import dev.kostromdan.mods.crash_assistant.common.utils.CurrentGPUDetector;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
-import net.minecraft.client.Minecraft;
 
 /**
  * This class contains hooks that are called from ASM-transformed classes.
  * These hooks replace the functionality that was previously in mixin callbacks.
  */
 public class CrashAssistantHooks {
+
     public static void afterMinecraftInit() {
-        CrashAssistant.playerNickname = Minecraft.getMinecraft().getSession().getUsername();
+        CrashAssistant.playerNickname = Minecraft.getMinecraft()
+            .getSession()
+            .getUsername();
         ProcessSignalIO.postInfo("username", CrashAssistant.playerNickname);
     }
 
@@ -31,15 +33,17 @@ public class CrashAssistantHooks {
         CrashAssistant.clientLoaded = true;
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-            if (CrashAssistantConfig.getModpackCreators().isEmpty()) {
+            if (CrashAssistantConfig.getModpackCreators()
+                .isEmpty()) {
                 CrashAssistantConfig.addModpackCreator(CrashAssistant.playerNickname);
             }
-            if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update") &&
-                    CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname)) {
+            if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update")
+                && CrashAssistantConfig.getModpackCreators()
+                    .contains(CrashAssistant.playerNickname)) {
                 ModListUtils.saveCurrentModList();
             }
         }
-        
+
         ProcessSignalIO.post("successful_launch");
     }
 }

@@ -1,5 +1,26 @@
 package dev.kostromdan.mods.crash_assistant.common.commands;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
+
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
 import dev.kostromdan.mods.crash_assistant.common.utils.HeapDumper;
 import dev.kostromdan.mods.crash_assistant.common.utils.ThreadDumper;
@@ -8,60 +29,53 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiffStringBuilder;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
-import net.minecraftforge.client.IClientCommand;
+import sun.misc.Unsafe;
 
-import javax.annotation.Nullable;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.Callable;
+public class CrashAssistantCommands extends CommandBase {
 
-import static io.netty.util.internal.shaded.org.jctools.util.UnsafeAccess.UNSAFE;
-
-
-public class CrashAssistantCommands extends CommandBase implements IClientCommand {
+    private static Unsafe UNSAFE;
+    static {
+        try {
+            java.lang.reflect.Field field = Unsafe.class.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            UNSAFE = (Unsafe) field.get(null);
+        } catch (Exception e) {
+            CrashAssistant.LOGGER.error("Failed to get Unsafe instance", e);
+        }
+    }
 
     private static String latestDiffText = "";
     private static String latestNickname = "";
-    private static final Map<String, String> SUPPORTED_CRASH_CMDS =
-            new HashMap<String, String>() {{
-                put("game", "Minecraft");
-                put("jvm", "JVM");
-                put("no_crash", "noCrash");
-            }};
+    private static final Map<String, String> SUPPORTED_CRASH_CMDS = new HashMap<String, String>() {
 
-    private static final Set<String> SUPPORTED_CRASH_ARGS =
-            new HashSet<>(Arrays.asList("--withThreadDump", "--withHeapDump", "--GCBeforeHeapDump"));
+        {
+            put("game", "Minecraft");
+            put("jvm", "JVM");
+            put("no_crash", "noCrash");
+        }
+    };
 
-    private static Instant lastCrashCommand = Instant.EPOCH;
+    private static final Set<String> SUPPORTED_CRASH_ARGS = new HashSet<String>(
+        Arrays.asList("--withThreadDump", "--withHeapDump", "--GCBeforeHeapDump"));
+
+    private static long lastCrashCommandTime = 0L;
 
     @Override
-    public String getName() {
+    public String getCommandName() {
         return "crash_assistant";
     }
 
     @Override
-    public String getUsage(ICommandSender sender) {
+    public String getCommandUsage(ICommandSender sender) {
         return "/crash_assistant <modlist|crash> …";
     }
 
     @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+    public void processCommand(ICommandSender sender, String[] args) throws CommandException {
         LanguageProvider.updateLang();
 
         if (args.length == 0) {
-            sendClientMsg(red(getUsage(sender)));
+            sendClientMsg(red(getCommandUsage(sender)));
             return;
         }
 
@@ -76,7 +90,7 @@ public class CrashAssistantCommands extends CommandBase implements IClientComman
                 handleCopyToClipboard(Arrays.copyOfRange(args, 1, args.length));
                 break;
             default:
-                sendClientMsg(red(getUsage(sender)));
+                sendClientMsg(red(getCommandUsage(sender)));
         }
     }
 
@@ -101,17 +115,17 @@ public class CrashAssistantCommands extends CommandBase implements IClientComman
     }
 
     private void saveModlist() {
-        TextComponentString msg = new TextComponentString("");
-        if (CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname)) {
+        ChatComponentText msg = new ChatComponentText("");
+        if (CrashAssistantConfig.getModpackCreators()
+            .contains(CrashAssistant.playerNickname)) {
             ModListUtils.saveCurrentModList();
 
             msg.appendSibling(green(LanguageProvider.get("commands.modlist_overwritten_success")));
-            msg.appendSibling(new TextComponentString(" "));
+            msg.appendSibling(new ChatComponentText(" "));
 
             if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update"))
                 msg.appendSibling(white(LanguageProvider.get("commands.modlist_auto_update_msg")));
-            else
-                msg.appendSibling(white(LanguageProvider.get("commands.modlist_enable_auto_update_msg")));
+            else msg.appendSibling(white(LanguageProvider.get("commands.modlist_enable_auto_update_msg")));
 
             msg.appendSibling(getModConfigComponent());
         } else {
@@ -127,7 +141,7 @@ public class CrashAssistantCommands extends CommandBase implements IClientComman
         ModListDiff diff = ModListDiff.getDiff(false);
         ModListDiffStringBuilder builder = diff.generateDiffMsg(false);
         ComponentModListDiffStringBuilder compBuilder = new ComponentModListDiffStringBuilder(builder);
-        TextComponentString comp = compBuilder.toComponent();
+        ChatComponentText comp = compBuilder.toComponent();
         comp.appendSibling(getCopyDiffComponent(diff.generateDiffMsg(true)));
         sendClientMsg(comp);
     }
@@ -168,37 +182,61 @@ public class CrashAssistantCommands extends CommandBase implements IClientComman
 
         String toCrashKey = args[0];
         if (!SUPPORTED_CRASH_CMDS.containsKey(toCrashKey)) {
-            sendClientMsg(red(LanguageProvider.get("commands.crash_command_validation_failed_to_crash")
-                    + " '" + toCrashKey + "'"));
+            sendClientMsg(
+                red(
+                    LanguageProvider.get("commands.crash_command_validation_failed_to_crash") + " '"
+                        + toCrashKey
+                        + "'"));
             return;
         }
 
         String toCrash = SUPPORTED_CRASH_CMDS.get(toCrashKey);
-        List<String> flags = Arrays.asList(args).subList(1, args.length);
+        List<String> flags = Arrays.asList(args)
+            .subList(1, args.length);
         boolean noCrash = "noCrash".equals(toCrash);
 
         int seconds = CrashAssistantConfig.get("crash_command.seconds");
 
-        if (seconds <= 0
-                || Instant.now().isBefore(lastCrashCommand.plusSeconds(seconds))
-                || noCrash) {
+        if (seconds <= 0 || System.currentTimeMillis() < lastCrashCommandTime + (seconds * 1000) || noCrash) {
             if (!validateCrashArgs(flags)) return;
-            new Thread(() -> actuallyCrash(toCrash, flags)).start();
+            new Thread(new Runnable() {
+
+                public void run() {
+                    actuallyCrash(toCrash, flags);
+                }
+            }).start();
             return;
         }
 
-        lastCrashCommand = Instant.now();
+        lastCrashCommandTime = System.currentTimeMillis();
 
-        TextComponentString msg = new TextComponentString("");
-        msg.appendSibling(new TextComponentString(LanguageProvider.get("commands.crash_command_1")));
-        msg.appendSibling(new TextComponentString(toCrash)
-                .setStyle(new Style().setColor(TextFormatting.YELLOW)));
-        msg.appendSibling(new TextComponentString(LanguageProvider.get("commands.crash_command_2")));
-        msg.appendSibling(new TextComponentString(Integer.toString(seconds))
-                .setStyle(new Style().setColor(TextFormatting.YELLOW)));
-        msg.appendSibling(new TextComponentString(LanguageProvider.get("commands.crash_command_3")))
-                .setStyle(new Style().setColor(TextFormatting.RED));
-        msg.setStyle(new Style().setColor(TextFormatting.RED));
+        ChatComponentText msg = new ChatComponentText("");
+        msg.appendSibling(new ChatComponentText(LanguageProvider.get("commands.crash_command_1")));
+
+        ChatComponentText crashTypeText = new ChatComponentText(toCrash);
+        ChatStyle crashTypeStyle = new ChatStyle();
+        crashTypeStyle.setColor(EnumChatFormatting.YELLOW);
+        crashTypeText.setChatStyle(crashTypeStyle);
+        msg.appendSibling(crashTypeText);
+
+        msg.appendSibling(new ChatComponentText(LanguageProvider.get("commands.crash_command_2")));
+
+        ChatComponentText secondsText = new ChatComponentText(Integer.toString(seconds));
+        ChatStyle secondsStyle = new ChatStyle();
+        secondsStyle.setColor(EnumChatFormatting.YELLOW);
+        secondsText.setChatStyle(secondsStyle);
+        msg.appendSibling(secondsText);
+
+        ChatComponentText part3 = new ChatComponentText(LanguageProvider.get("commands.crash_command_3"));
+        ChatStyle part3Style = new ChatStyle();
+        part3Style.setColor(EnumChatFormatting.RED);
+        part3.setChatStyle(part3Style);
+        msg.appendSibling(part3);
+
+        ChatStyle msgStyle = new ChatStyle();
+        msgStyle.setColor(EnumChatFormatting.RED);
+        msg.setChatStyle(msgStyle);
+
         sendClientMsg(msg);
     }
 
@@ -208,8 +246,7 @@ public class CrashAssistantCommands extends CommandBase implements IClientComman
             sendClientMsg(yellow(LanguageProvider.get("commands.crash_command_applying_args")));
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException ignored) {
-            }
+            } catch (InterruptedException ignored) {}
         }
 
         if (flags.contains("--withThreadDump"))
@@ -235,19 +272,15 @@ public class CrashAssistantCommands extends CommandBase implements IClientComman
         sendClientMsg(red(LanguageProvider.get("commands.crash_command_crashing")));
 
         if ("Minecraft".equals(toCrash)) {
-            Minecraft.getMinecraft().addScheduledTask(new Callable<Void>() {
-                @Override
-                public Void call() {
-                    String reason = "Minecraft crashed by '/crash_assistant crash'";
-                    CrashReport report = CrashReport.makeCrashReport(
-                            new Throwable(reason), reason);
-                    if (Minecraft.getMinecraft().world != null) {
-                        Minecraft.getMinecraft().addGraphicsAndWorldToCrashReport(report);
-                    }
-                    Minecraft.getMinecraft().displayCrashReport(report);
-                    return null;
-                }
-            });
+            // In 1.7.10, we can't use scheduleTask, so we'll create a crash directly
+            String reason = "Minecraft crashed by '/crash_assistant crash'";
+            CrashReport report = CrashReport.makeCrashReport(new Throwable(reason), reason);
+            if (Minecraft.getMinecraft().theWorld != null) {
+                Minecraft.getMinecraft()
+                    .addGraphicsAndWorldToCrashReport(report);
+            }
+            Minecraft.getMinecraft()
+                .displayCrashReport(report);
         } else { // JVM
             CrashAssistant.LOGGER.error("JVM crashed by '/crash_assistant crash jvm'");
             UNSAFE.setMemory(0L, 1L, (byte) 0);
@@ -258,7 +291,7 @@ public class CrashAssistantCommands extends CommandBase implements IClientComman
         LanguageProvider.updateLang();
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) return true;
 
-        TextComponentString msg = red(LanguageProvider.get("commands.modlist_disabled_error_msg"));
+        ChatComponentText msg = red(LanguageProvider.get("commands.modlist_disabled_error_msg"));
         msg.appendSibling(getModConfigComponent());
         sendClientMsg(msg);
         return false;
@@ -274,107 +307,136 @@ public class CrashAssistantCommands extends CommandBase implements IClientComman
         return true;
     }
 
-    public static void sendClientMsg(ITextComponent comp) {
+    public static void sendClientMsg(IChatComponent comp) {
         Minecraft mc = Minecraft.getMinecraft();
-        mc.addScheduledTask(() -> mc.ingameGUI.getChatGUI().printChatMessage(comp));
+        mc.ingameGUI.getChatGUI()
+            .printChatMessage(comp);
     }
 
-    private static TextComponentString colored(String txt, TextFormatting fmt) {
-        TextComponentString component = new TextComponentString(txt);
-        component.setStyle(new Style().setColor(fmt));
+    private static ChatComponentText colored(String txt, EnumChatFormatting fmt) {
+        ChatComponentText component = new ChatComponentText(txt);
+        component.getChatStyle()
+            .setColor(fmt);
         return component;
     }
 
-    private static TextComponentString red(String txt) {
-        return colored(txt, TextFormatting.RED);
+    private static ChatComponentText red(String txt) {
+        return colored(txt, EnumChatFormatting.RED);
     }
 
-    private static TextComponentString green(String txt) {
-        return colored(txt, TextFormatting.GREEN);
+    private static ChatComponentText green(String txt) {
+        return colored(txt, EnumChatFormatting.GREEN);
     }
 
-    private static TextComponentString white(String txt) {
-        return colored(txt, TextFormatting.WHITE);
+    private static ChatComponentText white(String txt) {
+        return colored(txt, EnumChatFormatting.WHITE);
     }
 
-    private static TextComponentString yellow(String txt) {
-        return colored(txt, TextFormatting.YELLOW);
+    private static ChatComponentText yellow(String txt) {
+        return colored(txt, EnumChatFormatting.YELLOW);
     }
 
-    public static ITextComponent getModConfigComponent() {
-        return new TextComponentString("[mod config]")
-                .setStyle(new Style()
-                        .setColor(TextFormatting.YELLOW)
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE,
-                                CrashAssistantConfig.getConfigPath().toAbsolutePath().toString()))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                new TextComponentString(LanguageProvider.get("commands.mod_config_tooltip")))));
+    public static IChatComponent getModConfigComponent() {
+        ChatComponentText component = new ChatComponentText("[mod config]");
+        ChatStyle style = new ChatStyle();
+        style.setColor(EnumChatFormatting.YELLOW);
+        style.setChatClickEvent(
+            new ClickEvent(
+                ClickEvent.Action.OPEN_FILE,
+                CrashAssistantConfig.getConfigPath()
+                    .toAbsolutePath()
+                    .toString()));
+        style.setChatHoverEvent(
+            new HoverEvent(
+                HoverEvent.Action.SHOW_TEXT,
+                new ChatComponentText(LanguageProvider.get("commands.mod_config_tooltip"))));
+        component.setChatStyle(style);
+        return component;
     }
 
-    public static ITextComponent getCopyNicknameComponent(String name) {
+    public static IChatComponent getCopyNicknameComponent(String name) {
         latestNickname = name;
 
-        return new TextComponentString("[nickname]")
-                .setStyle(new Style()
-                        .setColor(TextFormatting.YELLOW)
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/crash_assistant copy_to_clipboard nickname"))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                new TextComponentString(LanguageProvider.get("commands.nickname_tooltip")))));
+        ChatComponentText component = new ChatComponentText("[nickname]");
+        ChatStyle style = new ChatStyle();
+        style.setColor(EnumChatFormatting.YELLOW);
+        style.setChatClickEvent(
+            new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/crash_assistant copy_to_clipboard nickname"));
+        style.setChatHoverEvent(
+            new HoverEvent(
+                HoverEvent.Action.SHOW_TEXT,
+                new ChatComponentText(LanguageProvider.get("commands.nickname_tooltip"))));
+        component.setChatStyle(style);
+        return component;
     }
 
-    public static ITextComponent getCopyDiffComponent(ModListDiffStringBuilder diff) {
+    public static IChatComponent getCopyDiffComponent(ModListDiffStringBuilder diff) {
         latestDiffText = diff.toText();
 
-        return new TextComponentString("[" + LanguageProvider.get("commands.diff_copy") + "]")
-                .setStyle(new Style()
-                        .setColor(TextFormatting.YELLOW)
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/crash_assistant copy_to_clipboard"))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                new TextComponentString(LanguageProvider.get("commands.diff_tooltip")))));
+        ChatComponentText component = new ChatComponentText("[" + LanguageProvider.get("commands.diff_copy") + "]");
+        ChatStyle style = new ChatStyle();
+        style.setColor(EnumChatFormatting.YELLOW);
+        style.setChatClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/crash_assistant copy_to_clipboard"));
+        style.setChatHoverEvent(
+            new HoverEvent(
+                HoverEvent.Action.SHOW_TEXT,
+                new ChatComponentText(LanguageProvider.get("commands.diff_tooltip"))));
+        component.setChatStyle(style);
+        return component;
     }
 
     public static class ComponentModListDiffStringBuilder extends ModListDiffStringBuilder {
+
         public ComponentModListDiffStringBuilder(ModListDiffStringBuilder sb) {
             this.sb = sb.sb;
         }
 
-        public TextComponentString toComponent() {
-            TextComponentString base = new TextComponentString("");
+        public ChatComponentText toComponent() {
+            ChatComponentText base = new ChatComponentText("");
             for (ColoredString cs : sb) {
-                TextComponentString part = new TextComponentString(cs.getText());
-                if (!cs.getColor().isEmpty())
-                    part.setStyle(new Style().setColor(TextFormatting.valueOf(cs.getColor().toUpperCase())));
+                ChatComponentText part = new ChatComponentText(cs.getText());
+                if (!cs.getColor()
+                    .isEmpty()) {
+                    ChatStyle style = new ChatStyle();
+                    style.setColor(
+                        EnumChatFormatting.valueOf(
+                            cs.getColor()
+                                .toUpperCase()));
+                    part.setChatStyle(style);
+                }
                 base.appendSibling(part);
-                if (cs.isEndsWithNewLine()) base.appendSibling(new TextComponentString("\n"));
+                if (cs.isEndsWithNewLine()) base.appendSibling(new ChatComponentText("\n"));
             }
             return base;
         }
     }
 
     @Override
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args,
-                                          @Nullable net.minecraft.util.math.BlockPos pos) {
-        if (args.length == 1)
-            return getListOfStringsMatchingLastWord(args, Arrays.asList("modlist", "crash"));
-
-        if ("modlist".equals(args[0]) && args.length == 2)
-            return getListOfStringsMatchingLastWord(args, Arrays.asList("save", "diff"));
-
-        if ("crash".equals(args[0])) {
-            if (args.length == 2)
-                return getListOfStringsMatchingLastWord(args, SUPPORTED_CRASH_CMDS.keySet());
-
-            List<String> left = new ArrayList<>(SUPPORTED_CRASH_ARGS);
-            left.removeAll(Arrays.asList(args).subList(2, args.length));
-            if (!Arrays.asList(args).contains("--withHeapDump"))
-                left.remove("--GCBeforeHeapDump");
-            return getListOfStringsMatchingLastWord(args, left);
-        }
-        return Collections.emptyList();
+    public boolean canCommandSenderUseCommand(ICommandSender sender) {
+        return true;
     }
 
     @Override
-    public boolean allowUsageWithoutPrefix(ICommandSender sender, String message) {
-        return false;
+    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
+        if (args.length == 1) return getListOfStringsMatchingLastWord(args, new String[] { "modlist", "crash" });
+
+        if ("modlist".equals(args[0]) && args.length == 2)
+            return getListOfStringsMatchingLastWord(args, new String[] { "save", "diff" });
+
+        if ("crash".equals(args[0])) {
+            if (args.length == 2) return getListOfStringsMatchingLastWord(
+                args,
+                SUPPORTED_CRASH_CMDS.keySet()
+                    .toArray(new String[0]));
+
+            List<String> left = new ArrayList<String>(SUPPORTED_CRASH_ARGS);
+            left.removeAll(
+                Arrays.asList(args)
+                    .subList(2, args.length));
+            if (!Arrays.asList(args)
+                .contains("--withHeapDump")) left.remove("--GCBeforeHeapDump");
+            return getListOfStringsMatchingLastWord(args, left.toArray(new String[0]));
+        }
+        return Collections.emptyList();
     }
 }

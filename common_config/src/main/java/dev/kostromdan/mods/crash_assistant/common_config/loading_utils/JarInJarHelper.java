@@ -18,7 +18,7 @@ import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Core;
+import org.apache.logging.log4j.core.LoggerContext;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -48,7 +48,7 @@ public class JarInJarHelper {
 
             long currentProcessId = ProcessHelper.getCurrentProcessId();
             String currentProcessData = Objects.toString(currentProcessId) + "_"
-                    + Objects.toString(ProcessHelper.getCurrentProcessStartTime());
+                + Objects.toString(ProcessHelper.getCurrentProcessStartTime());
             Path extractedJarPath = extractJarInJar("app.jar", currentProcessData + "_app.jar");
 
             String childProcess = ProcessHelper.getChildProcessesInfo();
@@ -57,33 +57,33 @@ public class JarInJarHelper {
             }
 
             ProcessBuilder crashAssistantAppProcessBuilder = new ProcessBuilder(
-                    JavaBinaryLocator.getJavaBinary(),
-                    "-XX:+UseSerialGC",
-                    "-XX:MaxHeapFreeRatio=30",
-                    "-XX:MinHeapFreeRatio=10",
-                    "-XX:MaxGCPauseMillis=10000",
-                    "-Xms8m",
-                    "-Xmx512m",
-                    "-javaagent:" + extractedJarPath.toAbsolutePath().toString(),
-                    "-jar", extractedJarPath.toAbsolutePath().toString(),
-                    "-jarPath", extractedJarPath.toAbsolutePath().toString(),
-                    "-parentPID", Objects.toString(ProcessHelper.getCurrentProcessId()),
-                    "-parentStarted", Objects.toString(ProcessHelper.getCurrentProcessStartTime()),
-                    "-platform", PlatformHelp.platform.toString(),
-                    "-loaderJarName", PlatformHelp.loaderJarName,
-                    "-minecraftVersion", PlatformHelp.minecraftVersion,
-                    "-childProcessesPIDs", Base64.getEncoder().encodeToString(PlatformHelp.childProcessesPIDs.getBytes(StandardCharsets.UTF_8)),
-                    "-crashAssistantModJarPath", crashAssistantModJarPath.toString(),
-                    "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
-                    "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
-                    "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
-                    "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    "-jna", LibrariesJarLocator.getLibraryJarPath(Memory.class),
-                    "-jnaPlatform", LibrariesJarLocator.getLibraryJarPath(Tlhelp32.class),
-                    "-parentXms", getJvmArgValue("Xms", "unknown"),
-                    "-parentXmx", getJvmArgValue("Xmx", "unknown"),
-                    "-systemRAM", formatMemorySize(getTotalPhysicalMemory()),
-                    "-processor", Base64.getEncoder().encodeToString(getProcessorName().getBytes(StandardCharsets.UTF_8))
+                JavaBinaryLocator.getJavaBinary(),
+                "-XX:+UseSerialGC",
+                "-XX:MaxHeapFreeRatio=30",
+                "-XX:MinHeapFreeRatio=10",
+                "-XX:MaxGCPauseMillis=10000",
+                "-Xms8m",
+                "-Xmx512m",
+                "-javaagent:" + extractedJarPath.toAbsolutePath().toString(),
+                "-jar", extractedJarPath.toAbsolutePath().toString(),
+                "-jarPath", extractedJarPath.toAbsolutePath().toString(),
+                "-parentPID", Objects.toString(ProcessHelper.getCurrentProcessId()),
+                "-parentStarted", Objects.toString(ProcessHelper.getCurrentProcessStartTime()),
+                "-platform", PlatformHelp.platform.toString(),
+                "-loaderJarName", PlatformHelp.loaderJarName,
+                "-minecraftVersion", PlatformHelp.minecraftVersion,
+                "-childProcessesPIDs", Base64.getEncoder().encodeToString(PlatformHelp.childProcessesPIDs.getBytes(StandardCharsets.UTF_8)),
+                "-crashAssistantModJarPath", crashAssistantModJarPath.toString(),
+                "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
+                "-log4jCore", LibrariesJarLocator.getLibraryJarPath(LoggerContext.class),
+                "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
+                "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
+                "-jna", LibrariesJarLocator.getLibraryJarPath(Memory.class),
+                "-jnaPlatform", LibrariesJarLocator.getLibraryJarPath(Tlhelp32.class),
+                "-parentXms", getJvmArgValue("Xms", "unknown"),
+                "-parentXmx", getJvmArgValue("Xmx", "unknown"),
+                "-systemRAM", formatMemorySize(getTotalPhysicalMemory()),
+                "-processor", Base64.getEncoder().encodeToString(getProcessorName().getBytes(StandardCharsets.UTF_8))
             );
             Process crashAssistantAppProcess = crashAssistantAppProcessBuilder.start();
             ChildProcessLogger.captureOutput(crashAssistantAppProcess);
@@ -100,7 +100,7 @@ public class JarInJarHelper {
     public static long getTotalPhysicalMemory() {
         try {
             OperatingSystemMXBean osBean =
-                    (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
             return osBean.getTotalPhysicalMemorySize();  // value in bytes
         } catch (Throwable t) {
             // Either the cast failed (non-HotSpot VM) or the method is unavailable
@@ -109,6 +109,7 @@ public class JarInJarHelper {
     }
 
     public static String getProcessorName() {
+        if (true) return "UNKNOWN";
         try {
             try {
                 Class<?> sysInfoCls = Class.forName("oshi.SystemInfo");
@@ -117,8 +118,8 @@ public class JarInJarHelper {
                 Object hardware = sysInfoCls.getMethod("getHardware").invoke(sysInfo);
 
                 Object[] processors = (Object[]) hardware.getClass()
-                        .getMethod("getProcessors")
-                        .invoke(hardware);
+                    .getMethod("getProcessors")
+                    .invoke(hardware);
                 return String.format("%s", processors[0]).replaceAll("\\s+", " ");
             } catch (NoSuchMethodError | NoSuchMethodException ex) {
                 // new SystemInfo()
@@ -145,13 +146,13 @@ public class JarInJarHelper {
             String errorMessage = e.getMessage();
             if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {
                 LOGGER.error(errorMessage + "\n\n" +
-                        "Most likely you have permission issues in your file system.\n" +
-                        "OSHI failed init because it failed to create its tmp files for natives.\n" +
-                        "This won't crash Vanilla, but can crash many other mods using OSHI, like Embeddium.\n" +
-                        "Try reinstalling your launcher / trying another launcher, make sure to NOT activate admin rights on install,\n" +
-                        "as this is most likely the cause of this permission issue.\n\n" +
-                        "If you seeing Crash Assistant in the stacktrace somewhere upper, it's not the cause of the crash!\n" +
-                        "It's just the first thing tried to use OSHI, which failed to init.");
+                    "Most likely you have permission issues in your file system.\n" +
+                    "OSHI failed init because it failed to create its tmp files for natives.\n" +
+                    "This won't crash Vanilla, but can crash many other mods using OSHI, like Embeddium.\n" +
+                    "Try reinstalling your launcher / trying another launcher, make sure to NOT activate admin rights on install,\n" +
+                    "as this is most likely the cause of this permission issue.\n\n" +
+                    "If you seeing Crash Assistant in the stacktrace somewhere upper, it's not the cause of the crash!\n" +
+                    "It's just the first thing tried to use OSHI, which failed to init.");
             } else {
                 LOGGER.error("Error while getting processor name:", e);
             }
@@ -162,10 +163,10 @@ public class JarInJarHelper {
     public static List<Path> getModJarPathsContainingPart(String part) {
         try {
             return Files.list(Paths.get("mods"))
-                    .filter(path -> Files.isRegularFile(path) &&
-                            path.getFileName().toString().toLowerCase().contains(part.toLowerCase()) &&
-                            path.getFileName().toString().endsWith(".jar"))
-                    .collect(Collectors.toList());
+                .filter(path -> Files.isRegularFile(path) &&
+                    path.getFileName().toString().toLowerCase().contains(part.toLowerCase()) &&
+                    path.getFileName().toString().endsWith(".jar"))
+                .collect(Collectors.toList());
         } catch (Exception e) {
             return new ArrayList<>();
         }
@@ -173,8 +174,8 @@ public class JarInJarHelper {
 
     public static List<Mod> mapPathsToMods(List<Path> paths) {
         return paths.stream()
-                .map(ModDataParser::parseModData)
-                .collect(Collectors.toList());
+            .map(ModDataParser::parseModData)
+            .collect(Collectors.toList());
     }
 
     public static List<Mod> getModsContainingPart(String... parts) {
@@ -185,11 +186,10 @@ public class JarInJarHelper {
         return new ArrayList<>(resultSet);
     }
 
-    public static boolean isCleanroomRelauncher(){
-        List<Mod> mods = getModsContainingPart("cleanroom");
-        mods = mods.stream().filter(mod ->  Objects.equals(mod.getModId(), "cleanroom-relauncher")).collect(Collectors.toList());
+    public static boolean isCleanroomRelauncher() {
+        List<Mod> mods = getModsContainingPart("!cleanroom-relauncher-");
         if (mods.isEmpty()) return false;
-        if (!ClassExistenceChecker.classExists("com.cleanroommc.boot.Main")){
+        if (!ClassExistenceChecker.classExists("com.cleanroommc.boot.Main")) {
             LOGGER.warn("Detected cleanroom-relauncher env. Crash Assistant will start after relaunching with cleanroom.");
             return true;
         }
@@ -204,12 +204,12 @@ public class JarInJarHelper {
             String duplicatedMods = String.join("\n", mods.stream().map(Mod::getJarName).collect(Collectors.toList()));
             if (modsWithSameModId.size() > 1) {
                 LOGGER.error("Found more than one mod with modid \"crash_assistant\". Crash Assistant is duplicated." + (crashIfDuplicated ? " Crashing!" : "") +
-                        "\nDuplicated mods:\n" + duplicatedMods);
+                    "\nDuplicated mods:\n" + duplicatedMods);
                 if (crashIfDuplicated) ExitVMBypass.exit(-1);
             } else {
                 LOGGER.error("Found more than one mod starting with \"crash_assistant-\":\n" +
-                        duplicatedMods + "\n" +
-                        "Assuming Crash Assistant is duplicated. Duplicated coremods can produce wired issues.");
+                    duplicatedMods + "\n" +
+                    "Assuming Crash Assistant is duplicated. Duplicated coremods can produce wired issues.");
             }
             return mods;
         } catch (Exception e) {
@@ -240,11 +240,11 @@ public class JarInJarHelper {
                 String incompatibleMessage = crashAssistantString + " and " + incompatibleModsString + "are incompatible.";
                 if (CrashAssistantConfig.getBoolean("compatibility.enabled")) {
                     JarInJarHelper.LOGGER.error("Crash Assistant detected incompatible mod(s), crashing to prevent potential issues:\n{}",
-                            incompatibleMessage + " Remove one of them.");
+                        incompatibleMessage + " Remove one of them.");
                     ExitVMBypass.exit(-1);
                 } else {
                     JarInJarHelper.LOGGER.warn("Crash Assistant detected incompatible mod(s). Compatibility check is disabled! Issues may arise!\n{}",
-                            incompatibleMessage + " Continue at your own risk!");
+                        incompatibleMessage + " Continue at your own risk!");
                 }
 
             }
@@ -288,21 +288,21 @@ public class JarInJarHelper {
                         boolean isAppProcessAlive = ProcessHelper.isProcessAlive(app_pid);
                         long minecraftStartTime = ProcessHelper.getProcessStartTime(minecraft_pid);
                         if (isAppProcessAlive && (app_start_time == null || app_start_time == ProcessHelper.getProcessStartTime(app_pid))
-                                && !(ProcessHelper.isProcessAlive(minecraft_pid) && minecraftStartTime == start_time)) {
+                            && !(ProcessHelper.isProcessAlive(minecraft_pid) && minecraftStartTime == start_time)) {
                             LOGGER.warn("Closed old CrashAssistantApp process to prevent confusing the player with window containing information from old crash.");
                             ProcessHelper.destroyProcess(app_pid);
                             new java.util.Timer().schedule(
-                                    new java.util.TimerTask() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                Files.deleteIfExists(path);
-                                                Files.deleteIfExists(processInfoPath);
-                                            } catch (IOException ignored) {
-                                            }
+                                new java.util.TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            Files.deleteIfExists(path);
+                                            Files.deleteIfExists(processInfoPath);
+                                        } catch (IOException ignored) {
                                         }
-                                    },
-                                    5000
+                                    }
+                                },
+                                5000
                             );
                         }
                     }

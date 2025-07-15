@@ -6,10 +6,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class HeapDumper {
+
     public static String createHeapDump() throws IOException {
         String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS").format(new Date());
         String heapDumpFilePath = "heapdump_" + timestamp + ".hprof";
-        com.sun.management.HotSpotDiagnosticMXBean mxBean = ManagementFactory.getPlatformMXBean(com.sun.management.HotSpotDiagnosticMXBean.class);
+        com.sun.management.HotSpotDiagnosticMXBean mxBean = ManagementFactory
+            .getPlatformMXBean(com.sun.management.HotSpotDiagnosticMXBean.class);
         mxBean.dumpHeap(heapDumpFilePath, false);
         return heapDumpFilePath;
     }

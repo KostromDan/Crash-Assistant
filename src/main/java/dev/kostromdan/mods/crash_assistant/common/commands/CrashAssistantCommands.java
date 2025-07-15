@@ -1,13 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.common.commands;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
@@ -34,6 +27,7 @@ import sun.misc.Unsafe;
 public class CrashAssistantCommands extends CommandBase {
 
     private static Unsafe UNSAFE;
+
     static {
         try {
             java.lang.reflect.Field field = Unsafe.class.getDeclaredField("theUnsafe");
@@ -307,10 +301,60 @@ public class CrashAssistantCommands extends CommandBase {
         return true;
     }
 
-    public static void sendClientMsg(IChatComponent comp) {
+    public static void sendClientMsg(IChatComponent root) {
         Minecraft mc = Minecraft.getMinecraft();
-        mc.ingameGUI.getChatGUI()
-            .printChatMessage(comp);
+        for (IChatComponent line : splitIntoLines(root)) {
+            mc.ingameGUI.getChatGUI()
+                .printChatMessage(line);
+        }
+    }
+
+    private static List<IChatComponent> splitIntoLines(IChatComponent root) {
+        LineBuilder lb = new LineBuilder();
+        walk(root, lb);
+        lb.finishCurrent();
+        return lb.lines;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void walk(IChatComponent comp, LineBuilder lb) {
+
+        if (comp instanceof ChatComponentText) {
+            ChatComponentText txt = (ChatComponentText) comp;
+            String[] parts = txt.getChatComponentText_TextValue()
+                .split("\\n", -1);
+
+            for (int i = 0; i < parts.length; i++) {
+                if (i > 0) lb.newLine();
+
+                if (!parts[i].isEmpty()) {
+                    ChatComponentText frag = new ChatComponentText(parts[i]);
+                    frag.setChatStyle(txt.getChatStyle());
+                    lb.current.appendSibling(frag);
+                }
+            }
+        } else {
+            lb.current.appendSibling(comp.createCopy());
+        }
+
+        for (IChatComponent sib : (List<IChatComponent>) comp.getSiblings()) {
+            walk(sib, lb);
+        }
+    }
+
+    private static class LineBuilder {
+
+        final List<IChatComponent> lines = new ArrayList<IChatComponent>();
+        ChatComponentText current = new ChatComponentText("");
+
+        void newLine() {
+            lines.add(current);
+            current = new ChatComponentText("");
+        }
+
+        void finishCurrent() {
+            lines.add(current);
+        }
     }
 
     private static ChatComponentText colored(String txt, EnumChatFormatting fmt) {

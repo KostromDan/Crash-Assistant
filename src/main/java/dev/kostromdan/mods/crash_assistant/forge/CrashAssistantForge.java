@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.forge;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
@@ -26,6 +27,9 @@ public final class CrashAssistantForge {
     public void preInit(FMLPreInitializationEvent event) {
         CrashAssistant.init();
         MinecraftForge.EVENT_BUS.register(this);
+        FMLCommonHandler.instance()
+            .bus()
+            .register(this);
     }
 
     @Mod.EventHandler

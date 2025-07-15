@@ -27,22 +27,25 @@ public class CrashAssistantTransformer implements IClassTransformer, Opcodes {
         "net.minecraft.client.gui.GuiErrorScreen",
         "net.minecraft.client.gui.GuiMainMenu");
 
-    // ──────────────────────────────────────────────────────────────
-    // method‑name -> descriptor (obf and deobf pairs)
-    // ──────────────────────────────────────────────────────────────
+    // Method mappings for Minecraft class
     private static final Map<String, String> SHUTDOWN_METHOD = new HashMap<>();
+    // Method mappings for GuiErrorScreen class
     private static final Map<String, String> INIT_GUI_METHOD = new HashMap<>();
+    // Method mappings for GuiMainMenu class
     private static final Map<String, String> DRAW_SCREEN_METHOD = new HashMap<>();
 
     static {
+        // Initialize Minecraft shutdown method mappings
         SHUTDOWN_METHOD.put("shutdown", "()V");
         SHUTDOWN_METHOD.put("k", "()V");
 
+        // Initialize GuiErrorScreen initGui method mappings
         INIT_GUI_METHOD.put("initGui", "()V");
-        INIT_GUI_METHOD.put("b", "()V"); // 1.7.10 obf
+        INIT_GUI_METHOD.put("b", "()V");
 
+        // Initialize GuiMainMenu drawScreen method mappings
         DRAW_SCREEN_METHOD.put("drawScreen", "(IIF)V");
-        DRAW_SCREEN_METHOD.put("a", "(IIF)V"); // 1.7.10 obf
+        DRAW_SCREEN_METHOD.put("a", "(IIF)V");
     }
 
     // ---------------------------------------------------------------------
@@ -50,7 +53,7 @@ public class CrashAssistantTransformer implements IClassTransformer, Opcodes {
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
         if (!TRANSFORM_CLASSES.contains(transformedName)) {
-            return basicClass; // class we don’t touch
+            return basicClass;
         }
         try {
             ClassNode classNode = new ClassNode();

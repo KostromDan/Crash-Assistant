@@ -15,8 +15,6 @@ import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
 
     public CrashAssistantEntrypoint() {
-        if (JarInJarHelper.isCleanroomRelauncher()) return;
-
         String launchTarget = FMLLaunchHandler.side()
             .isClient() ? "client" : "server";
         PlatformHelp.platform = PlatformHelp.FORGE;

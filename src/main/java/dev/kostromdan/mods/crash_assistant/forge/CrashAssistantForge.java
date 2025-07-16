@@ -13,6 +13,7 @@ import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import dev.kostromdan.mods.crash_assistant.Tags;
@@ -27,6 +28,10 @@ import dev.kostromdan.mods.crash_assistant.forge_coremod.CrashAssistantHooks;
     name = "Crash Assistant",
     acceptedMinecraftVersions = "[1.7.10]")
 public final class CrashAssistantForge {
+
+    private boolean mainMenuOpened = false;
+    private int ticksAfterMainMenu = 0;
+    private static final int TICKS_TO_WAIT = 1; // Wait for 1 tick after main menu is opened
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -64,11 +69,25 @@ public final class CrashAssistantForge {
 
     @SubscribeEvent
     @SideOnly(Side.CLIENT)
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && mainMenuOpened) {
+            ticksAfterMainMenu++;
+            if (ticksAfterMainMenu >= TICKS_TO_WAIT) {
+                CrashAssistantHooks.onClientLoaded();
+                mainMenuOpened = false;
+                ticksAfterMainMenu = 0;
+            }
+        }
+    }
+
+    @SubscribeEvent
+    @SideOnly(Side.CLIENT)
     public void onGuiOpen(GuiOpenEvent event) {
         if (event.gui instanceof GuiErrorScreen) {
             CrashAssistantHooks.onErrorScreenInit();
         } else if (event.gui instanceof GuiMainMenu) {
-            CrashAssistantHooks.onClientLoaded();
+            mainMenuOpened = true;
+            ticksAfterMainMenu = 0;
         }
     }
 }

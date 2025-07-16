@@ -27,7 +27,11 @@ public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
     }
 
     public String[] getASMTransformerClass() {
-        return new String[] { "dev.kostromdan.mods.crash_assistant.forge_coremod.CrashAssistantTransformer" };
+        if (FMLLaunchHandler.side().isClient()) {
+            return new String[]{"dev.kostromdan.mods.crash_assistant.forge_coremod.CrashAssistantTransformer"};
+        } else {
+            return new String[0];
+        }
     }
 
     public String getModContainerClass() {

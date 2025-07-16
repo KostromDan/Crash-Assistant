@@ -1,6 +1,5 @@
 package dev.kostromdan.mods.crash_assistant.forge;
 
-import net.minecraft.client.gui.GuiErrorScreen;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.GuiOpenEvent;
@@ -35,11 +34,13 @@ public final class CrashAssistantForge {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        CrashAssistant.init();
-        MinecraftForge.EVENT_BUS.register(this);
-        FMLCommonHandler.instance()
-            .bus()
-            .register(this);
+        if (event.getSide() == Side.CLIENT) {
+            CrashAssistant.init();
+            MinecraftForge.EVENT_BUS.register(this);
+            FMLCommonHandler.instance()
+                .bus()
+                .register(this);
+        }
     }
 
     @Mod.EventHandler

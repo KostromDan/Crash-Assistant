@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 buildscript {
     repositories {
         gradlePluginPortal()
@@ -36,7 +38,7 @@ jar {
     from sourceSets.main.output
 }
 
-task shadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+tasks.register('shadowJar', ShadowJar) {
     from sourceSets.main.output
     archiveClassifier.set('')
 

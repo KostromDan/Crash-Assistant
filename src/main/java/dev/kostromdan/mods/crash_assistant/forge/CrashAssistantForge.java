@@ -83,7 +83,7 @@ public final class CrashAssistantForge {
     @SubscribeEvent
     @SideOnly(Side.CLIENT)
     public void onGuiOpen(GuiOpenEvent event) {
-        if (event.getGui() instanceof GuiMainMenu) {
+        if (event.gui instanceof GuiMainMenu) {
             mainMenuOpened = true;
             ticksAfterMainMenu = 0;
         }

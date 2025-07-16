@@ -12,12 +12,12 @@ unifiedPublishing {
         gameVersions = listOf("1.7.10")
         gameLoaders = listOf("forge")
 
-        displayName = tasks.jar.get().archiveFile.get().asFile.name
+        displayName = tasks.reobfJar.get().archiveFile.get().asFile.name
         version = project.property("modVersion").toString()
-        changelog = file("CHANGELOG1.md").readText()
+        changelog = file("changelog_legacy.md").readText()
         releaseType = project.property("releaseType").toString()
 
-        mainPublication(tasks.jar.get())
+        mainPublication(tasks.reobfJar.get())
 
         val cfToken = System.getenv("CF_TOKEN")
         if (cfToken != null) {

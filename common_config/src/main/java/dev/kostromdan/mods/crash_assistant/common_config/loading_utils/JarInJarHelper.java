@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class JarInJarHelper {
@@ -109,55 +110,45 @@ public class JarInJarHelper {
     }
 
     public static String getProcessorName() {
-        if (true) return "UNKNOWN";
         try {
-            try {
-                Class<?> sysInfoCls = Class.forName("oshi.SystemInfo");
-                Object sysInfo = sysInfoCls.getDeclaredConstructor().newInstance();
+            List<String> cmd;
+            if (PlatformHelp.isWindows()) {
+                cmd = Arrays.asList("wmic", "cpu", "get", "Name");
+            } else if (PlatformHelp.isLinux()) {
+                cmd = Arrays.asList("bash", "-c",
+                    "grep -m1 \"model name\" /proc/cpuinfo | cut -d ':' -f2");
+            } else if (PlatformHelp.isMacOS()) {
+                cmd = Arrays.asList("sysctl", "-n", "machdep.cpu.brand_string");
+            } else {
+                return "UNKNOWN";
+            }
 
-                Object hardware = sysInfoCls.getMethod("getHardware").invoke(sysInfo);
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
 
-                Object[] processors = (Object[]) hardware.getClass()
-                        .getMethod("getProcessors")
-                        .invoke(hardware);
-                return String.format("%s", processors[0]).replaceAll("\\s+", " ");
-            } catch (NoSuchMethodError | NoSuchMethodException ex) {
-                // new SystemInfo()
-                Class<?> systemInfoCls = Class.forName("oshi.SystemInfo");
-                Object systemInfo = systemInfoCls.getDeclaredConstructor().newInstance();
+            if (!process.waitFor(2, TimeUnit.SECONDS)) {
+                process.destroy();
+                return "UNKNOWN";
+            }
 
-                // getHardware()
-                Method mGetHardware = systemInfoCls.getMethod("getHardware");
-                Object hardware = mGetHardware.invoke(systemInfo);
-
-                // getProcessor()
-                Method mGetProcessor = hardware.getClass().getMethod("getProcessor");
-                Object processor = mGetProcessor.invoke(hardware);
-
-                // getProcessorIdentifier()
-                Method mGetIdentifier = processor.getClass().getMethod("getProcessorIdentifier");
-                Object identifier = mGetIdentifier.invoke(processor);
-
-                // getName()
-                Method mGetName = identifier.getClass().getMethod("getName");
-                return (String) mGetName.invoke(identifier);
+            try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (line.isEmpty() || (PlatformHelp.isWindows() && line.equalsIgnoreCase("Name"))) {
+                        continue;
+                    }
+                    return line;
+                }
             }
         } catch (Throwable e) {
-            String errorMessage = e.getMessage();
-            if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {
-                LOGGER.error(errorMessage + "\n\n" +
-                        "Most likely you have permission issues in your file system.\n" +
-                        "OSHI failed init because it failed to create its tmp files for natives.\n" +
-                        "This won't crash Vanilla, but can crash many other mods using OSHI, like Embeddium.\n" +
-                        "Try reinstalling your launcher / trying another launcher, make sure to NOT activate admin rights on install,\n" +
-                        "as this is most likely the cause of this permission issue.\n\n" +
-                        "If you seeing Crash Assistant in the stacktrace somewhere upper, it's not the cause of the crash!\n" +
-                        "It's just the first thing tried to use OSHI, which failed to init.");
-            } else {
-                LOGGER.error("Error while getting processor name:", e);
-            }
+            LOGGER.error("Error while getting processor name:", e);
             return "UNKNOWN";
         }
+
+        return "UNKNOWN";
     }
 
     public static List<Path> getModJarPathsContainingPart(String part) {

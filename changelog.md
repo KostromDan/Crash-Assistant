@@ -1,3 +1,11 @@
+1.9.13
+
+- Initial release for 1.7.10.
+- 1.12.2: Fixed with Cleanroom Relauncher Crash Assistant can be started twice due to it named differently on
+  different versions.
+- 1.12.2: Fixed due to some mods, hooks from Crash Assistant weren't executed, caused not correct behavior of mod.
+- 1.12.2: Removed most coremods and moved to forge events to improve compatibility.
+
 1.9.12
 
 - Finally fixed `gpu-detect-jni.dll` issue. Fixes from previous update fixed "crash assistant not starting issue",

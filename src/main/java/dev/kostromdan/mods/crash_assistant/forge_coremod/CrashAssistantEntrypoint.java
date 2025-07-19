@@ -15,6 +15,10 @@ import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
 
     public CrashAssistantEntrypoint() {
+        if (Boolean.getBoolean("dev.kostromdan.mods.crash_assistant.startedFlag")) return;
+        System.setProperty("dev.kostromdan.mods.crash_assistant.startedFlag", "true");
+
+
         String launchTarget = FMLLaunchHandler.side()
             .isClient() ? "client" : "server";
         PlatformHelp.platform = PlatformHelp.FORGE;

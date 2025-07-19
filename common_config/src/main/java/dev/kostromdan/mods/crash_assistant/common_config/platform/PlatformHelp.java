@@ -15,7 +15,8 @@ public enum PlatformHelp {
     QUILT("https://discord.quiltmc.org/", "QuiltMC Discord", "#player-support channel"),
 
     UNKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help channel"),
-    CLEANROOM("https://discord.gg/sgQxDJdrnY", "Cleanroom Discord", "#lobby channel");
+    CLEANROOM("https://discord.gg/sgQxDJdrnY", "Cleanroom Discord", "#lobby channel"),
+    LEGACY_MODDING("https://discord.com/invite/AJxEFs6YBN", "Legacy Modding Discord", "#modding-help forums");
 
     private final String helpLink;
     private final String helpName;

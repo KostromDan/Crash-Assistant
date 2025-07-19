@@ -16,6 +16,7 @@ public enum PlatformHelp {
 
     UNKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help channel"),
     CLEANROOM("https://discord.gg/sgQxDJdrnY", "Cleanroom Discord", "#lobby channel"),
+    LEGACY_MODDING("https://discord.com/invite/AJxEFs6YBN", "Legacy Modding Discord", "#modding-help forums"),
     FORGE(CLEANROOM);
 
     private final String helpLink;

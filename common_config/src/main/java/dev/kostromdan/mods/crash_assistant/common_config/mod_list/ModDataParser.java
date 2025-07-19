@@ -427,7 +427,14 @@ public class ModDataParser {
                         obj = arr.get(0).getAsJsonObject();
                     }
                 } else if (root.isJsonObject()) {
-                    obj = root.getAsJsonObject();
+                    JsonObject rootObject = root.getAsJsonObject();
+                    if (rootObject.has("modList")){
+                        JsonArray arr = rootObject.getAsJsonArray("modList");
+                        if (arr.size() > 0 && arr.get(0).isJsonObject()) {
+                            obj = arr.get(0).getAsJsonObject();
+                        }
+                    }
+
                 }
 
                 if (obj != null) {

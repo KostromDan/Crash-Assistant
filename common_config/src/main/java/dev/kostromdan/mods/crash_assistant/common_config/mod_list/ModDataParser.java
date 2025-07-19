@@ -4,6 +4,9 @@ import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.json.JsonParser;
 import com.electronwill.nightconfig.toml.TomlParser;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
@@ -341,7 +344,7 @@ public class ModDataParser {
                 mp = parseManifest(manifestProvider.get());
                 if (mp != null) mixinConfigs.addAll(mp.getMixinConfigs());
             }
-        } else if (descriptorPath.endsWith(".json")){
+        } else if (descriptorPath.endsWith(".json")) {
             mods = cfg;
             modId = mods.get("id");
 
@@ -353,13 +356,13 @@ public class ModDataParser {
                                 .map(String.class::cast)
                                 .collect(Collectors.toList()));
             }
-        }else if (descriptorPath.endsWith(".info")){
+        } else if (descriptorPath.endsWith(".info")) {
             List<Object> modsList = cfg.get("mods");
             if (modsList == null || modsList.isEmpty()) return null;
 
             mods = (Config) modsList.get(0);
             modId = mods.get("modid");
-        }else {
+        } else {
             throw new IllegalArgumentException("Unsupported descriptor file extension: " + descriptorPath);
         }
 
@@ -410,23 +413,45 @@ public class ModDataParser {
                 try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {
                     return new JsonParser().parse(reader);
                 }
-            } else if (descriptorPath.endsWith(".info")){
-                // Special handling for .info files that might start with '[' character
-                // Convert the bytes to string, check if it starts with '[', and wrap it in an object if needed
+            } else if (descriptorPath.endsWith(".info")) {
                 String content = new String(bytes, StandardCharsets.UTF_8);
-                if (content.trim().startsWith("[")) {
-                    // Wrap the array in an object to make it compatible with JsonParser
-                    content = "{\"mods\":" + content + "}";
-                    content = content.replace("mod_minecraftForge", "");
-                    try (Reader reader = new StringReader(content)) {
-                        return new JsonParser().parse(reader);
+
+                String modId = null;
+                String version = null;
+                JsonElement root = new com.google.gson.JsonParser().parse(content);
+
+                JsonObject obj = null;
+                if (root.isJsonArray()) {
+                    JsonArray arr = root.getAsJsonArray();
+                    if (arr.size() > 0 && arr.get(0).isJsonObject()) {
+                        obj = arr.get(0).getAsJsonObject();
                     }
-                } else {
-                    try (Reader reader = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {
-                        return new JsonParser().parse(reader);
+                } else if (root.isJsonObject()) {
+                    obj = root.getAsJsonObject();
+                }
+
+                if (obj != null) {
+                    if (obj.has("modid") && !obj.get("modid").isJsonNull()) {
+                        modId = obj.get("modid").getAsString();
+                    }
+                    if (obj.has("version") && !obj.get("version").isJsonNull()) {
+                        version = obj.get("version").getAsString();
                     }
                 }
-            }else {
+
+
+                List<String> needed = new ArrayList<>();
+                if (modId != null) {
+                    needed.add("\"modid\": \"" + modId + "\"");
+                }
+                if (version != null) {
+                    needed.add("\"version\": \"" + version + "\"");
+                }
+                content = "{\"mods\":[{" + String.join(",", needed) + "}]}";
+                try (Reader reader = new StringReader(content)) {
+                    return new JsonParser().parse(reader);
+                }
+            } else {
                 throw new IllegalArgumentException("Unsupported descriptor file extension: " + descriptorPath);
             }
         } catch (Exception e) {

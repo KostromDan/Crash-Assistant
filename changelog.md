@@ -1,3 +1,14 @@
+1.9.14
+
+- Marked 1.21.8 as compatible.
+- 1.7.10: fixed jar name to standard format for Crash Assistant.
+- 1.7.10: fixed CPU name wasn't parsing propely and was always undefined.
+- 1.7.10: Changed from Cleanroom discord to Legacy Modding discord for 1.7.10, as Cleanroom is a pure 1.12.2 community.
+- 1.7.10, 1.12.2: Changed initialization logic to run only on the client side.
+- 1.7.10, 1.12.2: Improved `mcmod.info` parsing in `ModDataParser` should fix all parsing issues.
+- 1.7.10, 1.12.2: Fixed Crash Assistant can be rarely starting twice due to another mods issue.
+- 1.12.2: Fixed Crash Assistant commands not available without cheats.
+
 1.9.13
 
 - Initial release for 1.7.10.

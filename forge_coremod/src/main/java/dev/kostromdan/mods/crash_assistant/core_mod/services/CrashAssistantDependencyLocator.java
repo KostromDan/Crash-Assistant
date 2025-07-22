@@ -1,14 +1,12 @@
 package dev.kostromdan.mods.crash_assistant.core_mod.services;
 
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
-import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import net.minecraftforge.fml.loading.moddiscovery.AbstractJarFileLocator;
 import net.minecraftforge.forgespi.locating.IModFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,18 +35,25 @@ public class CrashAssistantDependencyLocator extends AbstractJarFileLocator {
         }
         return mods;
     }
-    
+
     /**
      * Uses reflection to access the private createMod method in AbstractJarFileLocator
+     *
      * @param path Path to the mod jar file
      * @return Optional containing the IModFile if successful
      */
     @SuppressWarnings("unchecked")
     private Optional<IModFile> createModWithReflection(Path path) {
         try {
-            Method createModMethod = AbstractJarFileLocator.class.getDeclaredMethod("createMod", Path.class);
-            createModMethod.setAccessible(true);
-            return (Optional<IModFile>) createModMethod.invoke(this, path);
+            try {
+                Method createModMethod = AbstractJarFileLocator.class.getDeclaredMethod("createMod", Path.class);
+                createModMethod.setAccessible(true);
+                return (Optional<IModFile>) createModMethod.invoke(this, path);
+            } catch (NoSuchMethodException e) { // 1.18.1
+                Method createModMethod = AbstractJarFileLocator.class.getDeclaredMethod("createMod", String.class, Path.class);
+                createModMethod.setAccessible(true);
+                return (Optional<IModFile>) createModMethod.invoke(this, null, path);
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to access createMod method via reflection", e);
             return Optional.empty();

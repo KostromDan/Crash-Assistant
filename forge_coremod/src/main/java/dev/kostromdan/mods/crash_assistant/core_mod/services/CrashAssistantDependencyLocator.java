@@ -50,9 +50,11 @@ public class CrashAssistantDependencyLocator extends AbstractJarFileLocator {
                 createModMethod.setAccessible(true);
                 return (Optional<IModFile>) createModMethod.invoke(this, path);
             } catch (NoSuchMethodException e) { // 1.18.1
-                Method createModMethod = AbstractJarFileLocator.class.getDeclaredMethod("createMod", String.class, Path.class);
+                Class clazz = Class.forName("net.minecraftforge.fml.loading.moddiscovery.AbstractModLocator");
+                Method createModMethod = clazz.getDeclaredMethod("createMod", Path[].class);
                 createModMethod.setAccessible(true);
-                return (Optional<IModFile>) createModMethod.invoke(this, null, path);
+                Path[] paths = new Path[]{path};
+                return (Optional<IModFile>) createModMethod.invoke(this, (Object) paths);
             }
         } catch (Exception e) {
             LOGGER.error("Failed to access createMod method via reflection", e);

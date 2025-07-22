@@ -31,9 +31,9 @@
   ],
   "depends": {
     "fabricloader": ">=0.16.9",
-    "minecraft": ">=1.19.2 <=1.21.4",
+    "minecraft": ">=1.19 <=1.21.4",
     "java": ">=17",
-    "fabric-api": "*"
+    "fabric": "*"
   },
   "suggests": {
     "another-mod": "*"

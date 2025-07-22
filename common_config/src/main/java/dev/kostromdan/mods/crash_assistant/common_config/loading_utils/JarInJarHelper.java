@@ -221,6 +221,7 @@ public class JarInJarHelper {
 
     public static void killAndDeleteOldApps() throws IOException {
         Path outputDirectory = Paths.get("local", "crash_assistant");
+        if (!Files.exists(outputDirectory)) return;
         Files.list(outputDirectory).forEach(path -> {
             String fileName = path.getFileName().toString();
             if (Files.isRegularFile(path) && fileName.endsWith("app.jar")) {

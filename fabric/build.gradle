@@ -62,7 +62,7 @@ processResources {
 
 unifiedPublishing {
     project {
-        gameVersions = ["1.18.2"]
+        gameVersions = ["1.17", "1.17.1", "1.18", "1.18.1"]
         gameLoaders = ["fabric", "quilt"]
 
         displayName = tasks.remapJar.archiveFile.get().asFile.name

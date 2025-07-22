@@ -32,9 +32,8 @@ public class MinecraftMixin {
             method = "close",
             at = @At(
                     value = "INVOKE",
-                    target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V"
-            ),
-            cancellable = false
+                    target = "Lorg/apache/logging/log4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V"
+            )
     )
     private void onCloseFailed(CallbackInfo ci) {
         ProcessSignalIO.post("close_failed");

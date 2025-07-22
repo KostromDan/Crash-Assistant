@@ -1,7 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.forge.mixin;
 
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
-import net.minecraftforge.client.gui.LoadingErrorScreen;
+import net.minecraftforge.fmlclient.gui.screen.LoadingErrorScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

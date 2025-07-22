@@ -27,13 +27,8 @@ public class CrashAssistantDependencyLocator extends AbstractJarFileLocator {
     public List<IModFile> scanMods() {
         List<IModFile> mods = new ArrayList<>();
         try {
-            Path tempDir = Files.createTempDirectory("crash_assistant_tmp");
-            tempDir.toFile().deleteOnExit();
-            Path tmpMod = tempDir.resolve("crash_assistant-forge.jar");
-            JarInJarHelper.unzipFromJar("/META-INF/jarjar/crash_assistant-forge.jar", tmpMod);
-            tmpMod.toFile().deleteOnExit();
-
-            Optional<IModFile> modFile = createModWithReflection(tmpMod);
+            Path mod = JarInJarHelper.extractJarInJar("crash_assistant-forge.jar", "crash_assistant-forge.jar");
+            Optional<IModFile> modFile = createModWithReflection(mod);
             if (modFile.isPresent()) {
                 mods.add(modFile.get());
             }

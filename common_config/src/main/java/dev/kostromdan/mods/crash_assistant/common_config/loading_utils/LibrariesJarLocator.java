@@ -8,6 +8,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LibrariesJarLocator {
     public static String getLibraryJarPath(Class cls) throws JarLocatingException, URISyntaxException {
@@ -68,10 +70,16 @@ public class LibrariesJarLocator {
     }
 
     private static Path getPathFromResource(String resource) {
-        ClassLoader cl = LibrariesJarLocator.class.getClassLoader();
-        URL url = cl.getResource(resource);
-        if (url == null)
-            return null;
+        List<ClassLoader> toTry = new ArrayList<>();
+        toTry.add(LibrariesJarLocator.class.getClassLoader());
+        toTry.add(ClassLoader.getSystemClassLoader());
+
+        URL url = null;
+        for (ClassLoader cl : toTry) {
+            url = cl.getResource(resource);
+            if (url != null) break;
+        }
+        if (url == null) return null;
         return getPath(url, resource);
     }
 

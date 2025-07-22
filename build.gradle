@@ -31,7 +31,7 @@ subprojects { subproject ->
             if (subproject.name in ['forge_coremod']) {
                 archivesName = "CrashAssistant-forge-1.17.1-1.18.1"
             } else {
-                archivesName = "CrashAssistant-$project.name-1.17.0-1.18.1"
+                archivesName = "CrashAssistant-$project.name-1.17-1.18.1"
             }
             archives_name = archivesName
         }

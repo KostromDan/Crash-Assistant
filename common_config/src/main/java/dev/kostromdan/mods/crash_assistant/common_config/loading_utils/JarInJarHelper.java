@@ -50,6 +50,7 @@ public class JarInJarHelper {
             long currentProcessId = ProcessHelper.getCurrentProcessId();
             String currentProcessData = Objects.toString(currentProcessId) + "_"
                     + Objects.toString(ProcessHelper.getCurrentProcessStartTime());
+            killAndDeleteOldApps();
             Path extractedJarPath = extractJarInJar("app.jar", currentProcessData + "_app.jar");
 
             String childProcess = ProcessHelper.getChildProcessesInfo();
@@ -252,6 +253,13 @@ public class JarInJarHelper {
         }
         Path extractedJarPath = outputDirectory.resolve(outputName);
 
+        unzipFromJar("/META-INF/jarjar/" + embeddedName, extractedJarPath);
+
+        return extractedJarPath;
+    }
+
+    public static void killAndDeleteOldApps() throws IOException {
+        Path outputDirectory = Paths.get("local", "crash_assistant");
         Files.list(outputDirectory).forEach(path -> {
             String fileName = path.getFileName().toString();
             if (Files.isRegularFile(path) && fileName.endsWith("app.jar")) {
@@ -314,10 +322,6 @@ public class JarInJarHelper {
                 }
             }
         });
-
-        unzipFromJar("/META-INF/jarjar/" + embeddedName, extractedJarPath);
-
-        return extractedJarPath;
     }
 
     public static void unzipFromJar(String embeddedPath, Path extractedPath) {

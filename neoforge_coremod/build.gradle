@@ -77,7 +77,7 @@ remapJar {
 
 unifiedPublishing {
     project {
-        gameVersions = ["1.20.2", "1.20.3", "1.20.4"]
+        gameVersions = ["1.20.5"]
         gameLoaders = ["neoforge"]
 
         displayName = tasks.remapJar.archiveFile.get().asFile.name

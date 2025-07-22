@@ -45,7 +45,7 @@ public class CrashAssistantTransformationService implements ITransformationServi
     }
 
     @Override
-    public @NotNull List<ITransformer> transformers() {
+    public @NotNull List<? extends ITransformer<?>> transformers() {
         return List.of();
     }
 }

@@ -7,7 +7,7 @@ plugins {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -28,12 +28,10 @@ subprojects { subproject ->
 
         var archives_name
         base {
-            if (subproject.name in ['forge_coremod']) {
-                archivesName = "CrashAssistant-forge-1.20.3-1.20.4"
-            }else if (subproject.name in ['neoforge_coremod']) {
-                archivesName = "CrashAssistant-neoforge-1.20.2-1.20.4"
+            if (subproject.name in ['neoforge_coremod']) {
+                archivesName = "CrashAssistant-neoforge-1.20.5"
             } else {
-                archivesName = "CrashAssistant-$project.name-1.20.2-1.20.6"
+                archivesName = "CrashAssistant-$project.name-1.20.5"
             }
             archives_name = archivesName
         }
@@ -53,12 +51,12 @@ subprojects { subproject ->
         java {
             withSourcesJar()
 
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
         }
 
         tasks.withType(JavaCompile).configureEach {
-            it.options.release = 17
+            it.options.release = 21
         }
     }
 }
@@ -72,7 +70,7 @@ idea {
 
 
 task collectJars(type: Copy) {
-    def deps = [':forge_coremod', ':neoforge_coremod']
+    def deps = [':neoforge_coremod']
             .collect { path -> project(path).tasks.remapJar }
     dependsOn deps
     from deps

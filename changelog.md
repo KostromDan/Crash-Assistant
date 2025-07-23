@@ -1,3 +1,11 @@
+1.9.15
+
+- Backported to 1.16.1, 1.16.2, 1.16.3, 1.16.4 (forge)
+- Backported to 1.17, 1.17.1, 1.18, 1.18.1, 1.19, 1.19.1 (forge+fabric)
+- Backported to 1.20.5 (neo)
+- Now Crash Assistant is available for all modloaders on every single version on 1.16.5 - 1.21.8 version range without gaps.
+- Small fixes and improvements.
+
 1.9.14
 
 - Marked 1.21.8 as compatible.

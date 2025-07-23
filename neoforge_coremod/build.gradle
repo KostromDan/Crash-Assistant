@@ -68,7 +68,7 @@ remapJar {
         into 'META-INF/jarjar'
     }
     from(zipTree(project(':neoforge').tasks.remapJar.archiveFile.get().asFile)) {
-        include 'META-INF/mods.toml'
+        include 'META-INF/neoforge.mods.toml'
         into ''
     }
 

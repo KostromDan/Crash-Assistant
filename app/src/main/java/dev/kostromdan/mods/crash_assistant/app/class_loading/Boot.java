@@ -44,26 +44,40 @@ public class Boot {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         try {
-            APP_ARGS = Arrays.asList(args);
+            List<String> effectiveArgs = new ArrayList<String>();
+            String argsFilePath = null;
+
             for (int i = 0; i < args.length; i++) {
-                if ("-log4jApi".equals(args[i]) && i + 1 < args.length) {
-                    log4jApi = args[i + 1];
-                } else if ("-log4jCore".equals(args[i]) && i + 1 < args.length) {
-                    log4jCore = args[i + 1];
-                } else if ("-googleGson".equals(args[i]) && i + 1 < args.length) {
-                    googleGson = args[i + 1];
-                } else if ("-commonIo".equals(args[i]) && i + 1 < args.length) {
-                    commonIo = args[i + 1];
-                } else if ("-jarPath".equals(args[i]) && i + 1 < args.length) {
-                    jarPath = args[i + 1];
-                } else if ("-crashAssistantModJarPath".equals(args[i]) && i + 1 < args.length) {
-                    crashAssistantModJarPath = args[i + 1];
-                } else if ("-serialisedGPUs".equals(args[i]) && i + 1 < args.length) {
-                    serialisedGPUs = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
+                if ("--args-file".equals(args[i]) && i + 1 < args.length) {
+                    argsFilePath = args[i + 1];
+                    Path argsFile = Paths.get(argsFilePath);
+                    if (Files.exists(argsFile)) {
+                        effectiveArgs.addAll(Files.readAllLines(argsFile, StandardCharsets.UTF_8));
+                    }
                 } else if ("-recursiveStart".equals(args[i])) {
                     recursiveStart = true;
                 } else if ("-gpuDetect".equals(args[i])) {
                     gpuDetect = true;
+                }
+            }
+
+            APP_ARGS = effectiveArgs;
+
+            for (int i = 0; i < effectiveArgs.size(); i++) {
+                if ("-log4jApi".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    log4jApi = effectiveArgs.get(i + 1);
+                } else if ("-log4jCore".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    log4jCore = effectiveArgs.get(i + 1);
+                } else if ("-googleGson".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    googleGson = effectiveArgs.get(i + 1);
+                } else if ("-commonIo".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    commonIo = effectiveArgs.get(i + 1);
+                } else if ("-jarPath".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    jarPath = effectiveArgs.get(i + 1);
+                } else if ("-crashAssistantModJarPath".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    crashAssistantModJarPath = effectiveArgs.get(i + 1);
+                } else if ("-serialisedGPUs".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    serialisedGPUs = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
                 }
             }
 
@@ -101,27 +115,31 @@ public class Boot {
              * so we're doing it on this TMP process, to not waste user resources on App avaiting stage.
              */
             if (!recursiveStart) {
-                List<String> argsList = new ArrayList<>();
-                argsList.add(JavaBinaryLocator.getJavaBinary());
-                argsList.addAll(JVM_ARGS);
-                argsList.add("-jar");
-                argsList.add(jarPath);
-                argsList.addAll(APP_ARGS);
-                serialisedGPUs = getSerializedGPUsOnAnotherProcess(new ArrayList<>(argsList));
+                List<String> baseChildCommand = new ArrayList<String>();
+                baseChildCommand.add(JavaBinaryLocator.getJavaBinary());
+                baseChildCommand.addAll(JVM_ARGS);
+                baseChildCommand.add("-jar");
+                baseChildCommand.add(jarPath);
+                baseChildCommand.add("--args-file");
+                baseChildCommand.add(argsFilePath);
+
+                serialisedGPUs = getSerializedGPUsOnAnotherProcess(new ArrayList<String>(baseChildCommand));
                 if (serialisedGPUs != null) {
                     String encodedGPUs = Base64.getEncoder().encodeToString(serialisedGPUs.getBytes(StandardCharsets.UTF_8));
-                    argsList.add("-serialisedGPUs");
-                    argsList.add(encodedGPUs);
+                    Files.write(Paths.get(argsFilePath), Arrays.asList("-serialisedGPUs", encodedGPUs), StandardOpenOption.APPEND);
                 }
-                argsList.add("-recursiveStart");
-                ProcessBuilder pb = new ProcessBuilder(argsList);
+
+                List<String> finalLaunchCommand = new ArrayList<String>(baseChildCommand);
+                finalLaunchCommand.add("-recursiveStart");
+
+                ProcessBuilder pb = new ProcessBuilder(finalLaunchCommand);
                 pb.start();
                 System.exit(0);
             }
 
             Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
             Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);
-            mainMethod.invoke(null, (Object) args);
+            mainMethod.invoke(null, (Object) effectiveArgs.toArray(new String[0]));
         } catch (Throwable e) {
             Path logsFolder = Paths.get("logs", "crash_assistant");
             Files.createDirectories(logsFolder);

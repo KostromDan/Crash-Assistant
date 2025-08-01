@@ -9,11 +9,10 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -480,6 +479,14 @@ public class CrashAssistantGUI {
                             }
 
                             Files.delete(modFile.toPath());
+                            JOptionPane.showMessageDialog(
+                                    frame,
+                                    CrashAssistantGUI.getEditorPane("Crash Assistant has been successfully removed from:\n" + modFile.getPath() + "\n\n" +
+                                            "Please restart your game.", false),
+                                    "Success",
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+                            System.exit(0);
                         } catch (Exception ex) {
                             CrashAssistantApp.LOGGER.error("Error while removing Crash Assistant: ", ex);
                             JOptionPane.showMessageDialog(

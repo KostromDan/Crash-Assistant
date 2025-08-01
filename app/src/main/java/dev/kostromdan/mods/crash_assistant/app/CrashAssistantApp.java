@@ -42,7 +42,6 @@ public class CrashAssistantApp {
     public static String systemRAM = null;
     public static String processor = null;
     public static boolean crashed_with_report = false;
-    public static String crashAssistantJarName = Boot.crashAssistantModJarPath == null ? null : Paths.get(Boot.crashAssistantModJarPath).getFileName().toString();
     public static String renderer = null;
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
@@ -61,7 +60,7 @@ public class CrashAssistantApp {
 
         LOGGER.info("CrashAssistantApp running from: {}", Paths.get("").toAbsolutePath().toString());
 
-        LOGGER.info("crashAssistantJarName: {}", crashAssistantJarName);
+        LOGGER.info("crashAssistantJarName: {}", Boot.crashAssistantModJarName);
 
         parentPID = -1;
         parentStarted = -1;

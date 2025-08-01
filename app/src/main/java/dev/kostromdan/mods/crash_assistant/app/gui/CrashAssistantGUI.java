@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
@@ -352,7 +353,7 @@ public class CrashAssistantGUI {
                     JOptionPane optionPane = new JOptionPane(
                             CrashAssistantGUI.getEditorPane(
                                     "<h2>Warning: incompatible mod(s) detected!</h2>\n" +
-                                            "<strong>" + CrashAssistantApp.crashAssistantJarName + "</strong>" + " and " +
+                                            "<strong>" + Boot.crashAssistantModJarName + "</strong>" + " and " +
                                             "<strong>" + String.join(", ", detectedMods.stream().map(Mod::getJarName).collect(Collectors.toList())) + "</strong>" +
                                             " are incompatible.\n" +
                                             "You should remove one them!" +
@@ -462,7 +463,7 @@ public class CrashAssistantGUI {
                     removeCrashAssistantButton.addActionListener(e -> {
                         try {
                             dialog.setAlwaysOnTop(false);
-                            String jarName = CrashAssistantApp.crashAssistantJarName;
+                            String jarName = Boot.crashAssistantModJarName;
                             File modsDir = new File("mods");
                             File modFile = new File(modsDir, jarName);
 

@@ -24,6 +24,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
@@ -478,33 +479,12 @@ public class CrashAssistantGUI {
                                 return;
                             }
 
-                            // Get the current process ID
-                            long currentPID = ProcessHelper.getCurrentProcessId();
-
-                            // Get the path to the current JAR
-                            String classPath = System.getProperty("java.class.path");
-
-                            // Build the command to start the remover process
-                            ProcessBuilder processBuilder = new ProcessBuilder(
-                                    JavaBinaryLocator.getJavaBinary(),
-                                    "-cp",
-                                    classPath,
-                                    "dev.kostromdan.mods.crash_assistant.app.utils.ModRemover",
-                                    modFile.getAbsolutePath(),
-                                    String.valueOf(currentPID)
-                            );
-
-                            // Start the remover process
-                            processBuilder.start();
-
-                            // Exit the current process
-                            CrashAssistantApp.LOGGER.info("Exiting to allow Crash Assistant removal. Exiting with code 0.");
-                            System.exit(0);
+                            Files.delete(modFile.toPath());
                         } catch (Exception ex) {
-                            CrashAssistantApp.LOGGER.error("Error while setting up Crash Assistant removal: ", ex);
+                            CrashAssistantApp.LOGGER.error("Error while removing Crash Assistant: ", ex);
                             JOptionPane.showMessageDialog(
                                     frame,
-                                    CrashAssistantGUI.getEditorPane("Failed to set up Crash Assistant removal: " + ex.getMessage(), false),
+                                    CrashAssistantGUI.getEditorPane("Error while removing Crash Assistant: " + ex.getMessage(), false),
                                     "Error",
                                     JOptionPane.ERROR_MESSAGE
                             );

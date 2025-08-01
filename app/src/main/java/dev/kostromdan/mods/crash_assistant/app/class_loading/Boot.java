@@ -1,8 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
-import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
 import java.io.IOException;
@@ -16,19 +14,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+
 
 public class Boot {
-    public static String jarPath = null;
     public static String classPath = null;
     public static String crashAssistantModJarName = null;
     public static boolean recursiveStart = false;
@@ -61,9 +55,7 @@ public class Boot {
             APP_ARGS = effectiveArgs;
 
             for (int i = 0; i < effectiveArgs.size(); i++) {
-                if ("-jarPath".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
-                    jarPath = effectiveArgs.get(i + 1);
-                } else if ("-crashAssistantModJarName".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                if ("-crashAssistantModJarName".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
                     crashAssistantModJarName = effectiveArgs.get(i + 1);
                 } else if ("-classPath".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
                     classPath = effectiveArgs.get(i + 1);
@@ -152,7 +144,6 @@ public class Boot {
 
     private static List<String> getMissingParameters() {
         List<String> missingParameters = new ArrayList<>();
-        if (jarPath == null) missingParameters.add("-jarPath");
         if (crashAssistantModJarName == null) missingParameters.add("-crashAssistantModJarName");
         if (classPath == null) missingParameters.add("-classPath");
         return missingParameters;

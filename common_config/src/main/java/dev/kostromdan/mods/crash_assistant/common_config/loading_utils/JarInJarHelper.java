@@ -53,7 +53,16 @@ public class JarInJarHelper {
                 PlatformHelp.childProcessesPIDs = childProcess;
             }
 
-            List<String> argsList = new ArrayList<String>();
+            String fullClassPath = String.join(System.getProperty("path.separator"),
+                    extractedJarPath.toString(),
+                    crashAssistantModJarPath.toString(),
+                    LibrariesJarLocator.getLibraryJarPath(LogManager.class),
+                    LibrariesJarLocator.getLibraryJarPath(Core.class),
+                    LibrariesJarLocator.getLibraryJarPath(Gson.class),
+                    LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class)
+            );
+
+            List<String> argsList = new ArrayList<>();
             argsList.add("-jarPath");
             argsList.add(extractedJarPath.toString());
             argsList.add("-parentPID");
@@ -68,16 +77,10 @@ public class JarInJarHelper {
             argsList.add(PlatformHelp.minecraftVersion);
             argsList.add("-childProcessesPIDs");
             argsList.add(Base64.getEncoder().encodeToString(PlatformHelp.childProcessesPIDs.getBytes(StandardCharsets.UTF_8)));
-            argsList.add("-crashAssistantModJarPath");
-            argsList.add(Paths.get("").toAbsolutePath().relativize(crashAssistantModJarPath).toString());
-            argsList.add("-log4jApi");
-            argsList.add(LibrariesJarLocator.getLibraryJarPath(LogManager.class));
-            argsList.add("-log4jCore");
-            argsList.add(LibrariesJarLocator.getLibraryJarPath(Core.class));
-            argsList.add("-googleGson");
-            argsList.add(LibrariesJarLocator.getLibraryJarPath(Gson.class));
-            argsList.add("-commonIo");
-            argsList.add(LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class));
+            argsList.add("-crashAssistantModJarName");
+            argsList.add(crashAssistantModJarPath.getFileName().toString());
+            argsList.add("-classPath");
+            argsList.add(fullClassPath);
             argsList.add("-parentXms");
             argsList.add(getJvmArgValue("Xms", "unknown"));
             argsList.add("-parentXmx");
@@ -98,8 +101,9 @@ public class JarInJarHelper {
                     "-XX:MaxGCPauseMillis=10000",
                     "-Xms8m",
                     "-Xmx512m",
-                    "-jar",
-                    extractedJarPath.toString(),
+                    "-cp",
+                    fullClassPath,
+                    "dev.kostromdan.mods.crash_assistant.app.class_loading.Boot",
                     "--args-file",
                     argsFile.toString()
             );

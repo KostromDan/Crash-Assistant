@@ -53,6 +53,43 @@ public class JarInJarHelper {
                 PlatformHelp.childProcessesPIDs = childProcess;
             }
 
+            List<String> argsList = new ArrayList<String>();
+            argsList.add("-jarPath");
+            argsList.add(extractedJarPath.toString());
+            argsList.add("-parentPID");
+            argsList.add(Objects.toString(ProcessHelper.getCurrentProcessId()));
+            argsList.add("-parentStarted");
+            argsList.add(Objects.toString(ProcessHelper.getCurrentProcessStartTime()));
+            argsList.add("-platform");
+            argsList.add(PlatformHelp.platform.toString());
+            argsList.add("-loaderJarName");
+            argsList.add(PlatformHelp.loaderJarName);
+            argsList.add("-minecraftVersion");
+            argsList.add(PlatformHelp.minecraftVersion);
+            argsList.add("-childProcessesPIDs");
+            argsList.add(Base64.getEncoder().encodeToString(PlatformHelp.childProcessesPIDs.getBytes(StandardCharsets.UTF_8)));
+            argsList.add("-crashAssistantModJarPath");
+            argsList.add(Paths.get("").toAbsolutePath().relativize(crashAssistantModJarPath).toString());
+            argsList.add("-log4jApi");
+            argsList.add(LibrariesJarLocator.getLibraryJarPath(LogManager.class));
+            argsList.add("-log4jCore");
+            argsList.add(LibrariesJarLocator.getLibraryJarPath(Core.class));
+            argsList.add("-googleGson");
+            argsList.add(LibrariesJarLocator.getLibraryJarPath(Gson.class));
+            argsList.add("-commonIo");
+            argsList.add(LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class));
+            argsList.add("-parentXms");
+            argsList.add(getJvmArgValue("Xms", "unknown"));
+            argsList.add("-parentXmx");
+            argsList.add(getJvmArgValue("Xmx", "unknown"));
+            argsList.add("-systemRAM");
+            argsList.add(formatMemorySize(getTotalPhysicalMemory()));
+            argsList.add("-processor");
+            argsList.add(Base64.getEncoder().encodeToString(getProcessorName().getBytes(StandardCharsets.UTF_8)));
+
+            Path argsFile = Paths.get("local", "crash_assistant", currentProcessData + "_args.info");
+            Files.write(argsFile, argsList, StandardCharsets.UTF_8);
+
             ProcessBuilder crashAssistantAppProcessBuilder = new ProcessBuilder(
                     JavaBinaryLocator.getJavaBinary(),
                     "-XX:+UseSerialGC",
@@ -61,23 +98,10 @@ public class JarInJarHelper {
                     "-XX:MaxGCPauseMillis=10000",
                     "-Xms8m",
                     "-Xmx512m",
-                    "-jar", extractedJarPath.toAbsolutePath().toString(),
-                    "-jarPath", extractedJarPath.toAbsolutePath().toString(),
-                    "-parentPID", Objects.toString(ProcessHelper.getCurrentProcessId()),
-                    "-parentStarted", Objects.toString(ProcessHelper.getCurrentProcessStartTime()),
-                    "-platform", PlatformHelp.platform.toString(),
-                    "-loaderJarName", PlatformHelp.loaderJarName,
-                    "-minecraftVersion", PlatformHelp.minecraftVersion,
-                    "-childProcessesPIDs", Base64.getEncoder().encodeToString(PlatformHelp.childProcessesPIDs.getBytes(StandardCharsets.UTF_8)),
-                    "-crashAssistantModJarPath", crashAssistantModJarPath.toString(),
-                    "-log4jApi", LibrariesJarLocator.getLibraryJarPath(LogManager.class),
-                    "-log4jCore", LibrariesJarLocator.getLibraryJarPath(Core.class),
-                    "-googleGson", LibrariesJarLocator.getLibraryJarPath(Gson.class),
-                    "-commonIo", LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    "-parentXms", getJvmArgValue("Xms", "unknown"),
-                    "-parentXmx", getJvmArgValue("Xmx", "unknown"),
-                    "-systemRAM", formatMemorySize(getTotalPhysicalMemory()),
-                    "-processor", Base64.getEncoder().encodeToString(getProcessorName().getBytes(StandardCharsets.UTF_8))
+                    "-jar",
+                    extractedJarPath.toString(),
+                    "--args-file",
+                    argsFile.toString()
             );
             Process crashAssistantAppProcess = crashAssistantAppProcessBuilder.start();
             ChildProcessLogger.captureOutput(crashAssistantAppProcess);
@@ -183,7 +207,6 @@ public class JarInJarHelper {
             List<Mod> mods = mapPathsToMods(modPaths).stream().filter(mod -> Objects.equals(mod.getModId(), incompatibleMod.getModId())).collect(Collectors.toList());
             if (mods.isEmpty()) continue;
             incompatibleMod.addDetectedMods(mods);
-
             if (crashIfIncompatibleModDetected) {
                 String incompatibleModsString = String.join(", ", mods.stream().map(Mod::getJarName).collect(Collectors.toList()));
                 String crashAssistantString = "Crash Assistant";
@@ -227,6 +250,7 @@ public class JarInJarHelper {
             if (Files.isRegularFile(path) && fileName.endsWith("app.jar")) {
                 String processInfo = fileName.split("_app.jar")[0];
                 Path processInfoPath = outputDirectory.resolve(processInfo + ".info");
+                Path argsInfoPath = outputDirectory.resolve(processInfo + "_args.info");
 
                 if (Files.exists(processInfoPath)) {
                     if (CrashAssistantConfig.getBoolean("general.kill_old_app")) {
@@ -260,6 +284,7 @@ public class JarInJarHelper {
                                             try {
                                                 Files.deleteIfExists(path);
                                                 Files.deleteIfExists(processInfoPath);
+                                                Files.deleteIfExists(argsInfoPath);
                                             } catch (IOException ignored) {
                                             }
                                         }
@@ -272,10 +297,17 @@ public class JarInJarHelper {
                 try {
                     Files.deleteIfExists(path);
                     Files.deleteIfExists(processInfoPath);
+                    Files.deleteIfExists(argsInfoPath);
                 } catch (IOException ignored) {
                 }
             } else if (Files.isRegularFile(path) && fileName.endsWith(".info") && fileName.contains("_")) {
-                String processInfo = fileName.split("\\.info")[0];
+                String processInfo;
+                if (fileName.endsWith("_args.info")) {
+                    processInfo = fileName.split("_args\\.info")[0];
+                } else {
+                    processInfo = fileName.split("\\.info")[0];
+                }
+
                 if (!Files.exists(outputDirectory.resolve(processInfo + "_app.jar"))) {
                     try {
                         Files.deleteIfExists(path);

@@ -16,15 +16,15 @@
   "icon": "assets/crash_assistant/icon.png",
   "environment": "*",
   "entrypoints": {
-    "preLaunch": [
-      "dev.kostromdan.mods.crash_assistant.fabric.pre_launch.CrashAssistantPreLaunch"
-    ],
     "main": [
       "dev.kostromdan.mods.crash_assistant.fabric.CrashAssistantFabric"
     ],
     "client": [
       "dev.kostromdan.mods.crash_assistant.fabric.client.CrashAssistantFabricClient"
     ]
+  },
+  "languageAdapters": {
+    "crash_assistant": "dev.kostromdan.mods.crash_assistant.fabric.entrypoint.CrashAssistantLanguageAdapter"
   },
   "mixins": [
     "crash_assistant.mixins.json"

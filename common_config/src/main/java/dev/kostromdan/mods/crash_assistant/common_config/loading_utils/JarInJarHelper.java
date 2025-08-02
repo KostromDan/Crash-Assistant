@@ -111,6 +111,12 @@ public class JarInJarHelper {
                     "--args-file",
                     argsFile.toString()
             );
+
+            if ("true".equals(System.getenv("dev.kostromdan.mods.crash_assistant.DisableEntirelyOnSystem"))) {
+                LOGGER.error("Detected \"dev.kostromdan.mods.crash_assistant.DisableEntirelyOnSystem\" env flag. Prevented start of Crash Assistant.");
+                return;
+            }
+
             Process crashAssistantAppProcess = crashAssistantAppProcessBuilder.start();
             ChildProcessLogger.captureOutput(crashAssistantAppProcess);
             ProblematicModsConfig.crashIfProblematicMod();

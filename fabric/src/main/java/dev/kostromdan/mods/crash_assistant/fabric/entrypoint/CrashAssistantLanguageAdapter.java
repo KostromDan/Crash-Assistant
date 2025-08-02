@@ -178,7 +178,6 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
 
     @Override
     public <T> T create(ModContainer mod, String value, Class<T> type) throws LanguageAdapterException {
-        // The setup is done. We just act as a passthrough to the default adapter.
-        return LanguageAdapter.getDefault().create(mod, value, type);
+        throw new IllegalStateException();
     }
 }

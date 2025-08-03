@@ -58,7 +58,7 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
             runner.run();
 
         } catch (Throwable throwable) {
-            LOGGER.error("A critical error occurred during Crash Assistant constructor setup:", throwable);
+            LOGGER.error("A critical error occurred during Crash Assistant setup:", throwable);
             throw new RuntimeException(throwable);
         } finally {
             // ALWAYS restore the original class loader to prevent side effects.

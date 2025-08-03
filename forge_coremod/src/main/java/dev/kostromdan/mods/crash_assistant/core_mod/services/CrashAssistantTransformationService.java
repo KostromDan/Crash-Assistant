@@ -39,7 +39,7 @@ public class CrashAssistantTransformationService implements ITransformationServi
             JarInJarHelper.checkForIncompatibleMods(true);
             JarInJarHelper.checkDuplicatedCrashAssistantMod(true);
         } catch (Throwable throwable) {
-            LOGGER.error("A critical error occurred during Crash Assistant constructor setup: ", throwable);
+            LOGGER.error("A critical error occurred during Crash Assistant setup: ", throwable);
         }
     }
 

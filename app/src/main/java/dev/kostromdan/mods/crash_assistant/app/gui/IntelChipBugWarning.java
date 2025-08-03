@@ -124,7 +124,10 @@ public class IntelChipBugWarning {
             }};
             String warningText = LanguageProvider.get("gui.intel_corrupted_msg", replacements);
             String microcodeText = "";
-//            microcodeVersion = 129;
+
+//            microcodeVertionString = "0x12B";
+//            microcodeVersion = Long.parseLong(microcodeVertionString.substring(2), 16);
+
             if (microcodeVersion != -1L) {
                 boolean isAffected = microcodeVersion < FIRST_NOT_AFFECTED_MICROCODE_VERSION;
                 if (!isAffected) {
@@ -144,7 +147,11 @@ public class IntelChipBugWarning {
 
 
             JEditorPane textPane = CrashAssistantGUI.getEditorPane(warningText, true);
-            textPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+
+            JScrollPane scrollPane = new JScrollPane(textPane);
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            scrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
             gbc.gridx = colIndex;
             gbc.gridy = 0;
@@ -153,7 +160,7 @@ public class IntelChipBugWarning {
             gbc.weighty = 1.0;
             gbc.fill = GridBagConstraints.BOTH;
             gbc.anchor = GridBagConstraints.CENTER;
-            mainPanel.add(textPane, gbc);
+            mainPanel.add(scrollPane, gbc);
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
             JButton readMoreButton = new JButton(LanguageProvider.get("gui.intel_corrupted_read_more"));
@@ -188,7 +195,7 @@ public class IntelChipBugWarning {
 
             dialog.setContentPane(mainPanel);
             dialog.pack();
-            dialog.setSize(900 - (showGif ? 0 : gifWidth), Math.max(dialog.getPreferredSize().height, 439));
+            dialog.setSize(870 - (showGif ? 0 : gifWidth), Math.max(dialog.getPreferredSize().height, 439+10));
             dialog.setLocationRelativeTo(null);
             if (debug) dialog.setAlwaysOnTop(true);
             dialog.setVisible(true);

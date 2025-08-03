@@ -112,8 +112,9 @@ public class JarInJarHelper {
                     argsFile.toString()
             );
 
-            if ("true".equals(System.getenv("dev.kostromdan.mods.crash_assistant.DisableEntirelyOnSystem"))) {
-                LOGGER.error("Detected \"dev.kostromdan.mods.crash_assistant.DisableEntirelyOnSystem\" env flag. Prevented start of Crash Assistant.");
+            // Added by Embeddedt request. Since he is crashing very often for debugging and don't need window opening after crash.
+            if ("true".equals(System.getenv("DisableEntirelyCrashAssistantModOnSystem"))) {
+                LOGGER.error("Detected \"DisableEntirelyCrashAssistantModOnSystem\" env flag. Prevented start of Crash Assistant.");
                 return;
             }
 

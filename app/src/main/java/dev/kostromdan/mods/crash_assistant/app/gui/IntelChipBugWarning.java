@@ -119,10 +119,31 @@ public class IntelChipBugWarning {
                 }.execute();
             }
 
-            JEditorPane textPane = CrashAssistantGUI.getEditorPane(
-                    LanguageProvider.get("gui.intel_corrupted_msg", new HashMap<String, String>() {{
-                        put("$LINK.INTEL_CHIP_BUG_FAQ$", "FAQ");
-                    }}), true);
+            HashMap<String, String> replacements = new HashMap<String, String>() {{
+                put("$LINK.INTEL_CHIP_BUG_FAQ$", "FAQ");
+            }};
+            String warningText = LanguageProvider.get("gui.intel_corrupted_msg", replacements);
+            String microcodeText = "";
+//            microcodeVersion = 129;
+            if (microcodeVersion != -1L) {
+                boolean isAffected = microcodeVersion < FIRST_NOT_AFFECTED_MICROCODE_VERSION;
+                if (!isAffected) {
+                    microcodeText = "\n\n<span style='background-color:#EEFFEE;color:#006600;'>"
+                            + LanguageProvider.get("gui.intel_corrupted_microcode_good", replacements)
+                            + "</span>";
+                } else {
+                    microcodeText = "\n\n<span style='background-color:#FFEEEE;color:#990000;'>"
+                            + LanguageProvider.get("gui.intel_corrupted_microcode_bad", replacements)
+                            + "</span>";
+                }
+                microcodeText = microcodeText.replace("$MICROCODE_VERSION_CURRENT$", "<strong style='color: " + (isAffected ? "red" : "green") + ";'>" + microcodeVertionString + "</strong>");
+                microcodeText = microcodeText.replace("$MICROCODE_VERSION_FIXED$", "<strong style='color: green;'>" + "0x" + Long.toHexString(FIRST_NOT_AFFECTED_MICROCODE_VERSION) + "</strong>");
+            }
+
+            warningText = warningText.replace("$CURRENT_MICROCODE_TEXT$", microcodeText);
+
+
+            JEditorPane textPane = CrashAssistantGUI.getEditorPane(warningText, true);
             textPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
             gbc.gridx = colIndex;
@@ -167,7 +188,7 @@ public class IntelChipBugWarning {
 
             dialog.setContentPane(mainPanel);
             dialog.pack();
-            dialog.setSize(800 - (showGif ? 0 : gifWidth), Math.max(dialog.getPreferredSize().height, 439));
+            dialog.setSize(900 - (showGif ? 0 : gifWidth), Math.max(dialog.getPreferredSize().height, 439));
             dialog.setLocationRelativeTo(null);
             if (debug) dialog.setAlwaysOnTop(true);
             dialog.setVisible(true);
@@ -175,7 +196,7 @@ public class IntelChipBugWarning {
         CrashAssistantApp.LOGGER.info("Shown IntelChipBugWarning");
     }
 
-    public static void setupMicrocodeVersion(){
+    public static void setupMicrocodeVersion() {
         String fileName = "microcode_" + System.currentTimeMillis() + ".txt";
         Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"), fileName);
 

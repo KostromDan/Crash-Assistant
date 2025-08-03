@@ -30,13 +30,17 @@ public class CrashAssistantTransformationService implements ITransformationServi
     private static String earlyMinecraftVersion = "unknown";
 
     public CrashAssistantTransformationService() {
-        reflectivelyExtractLaunchData();
-        PlatformHelp.platform = PlatformHelp.FORGE;
-        PlatformHelp.minecraftVersion = earlyMinecraftVersion;
-        LibrariesJarLocator.setupLoaderJarName(VersionInfo.class);
-        JarInJarHelper.launchCrashAssistantApp(earlyLaunchTarget);
-        JarInJarHelper.checkForIncompatibleMods(true);
-        JarInJarHelper.checkDuplicatedCrashAssistantMod(true);
+        try {
+            reflectivelyExtractLaunchData();
+            PlatformHelp.platform = PlatformHelp.FORGE;
+            PlatformHelp.minecraftVersion = earlyMinecraftVersion;
+            LibrariesJarLocator.setupLoaderJarName(VersionInfo.class);
+            JarInJarHelper.launchCrashAssistantApp(earlyLaunchTarget);
+            JarInJarHelper.checkForIncompatibleMods(true);
+            JarInJarHelper.checkDuplicatedCrashAssistantMod(true);
+        } catch (Throwable throwable) {
+            LOGGER.error("A critical error occurred during Crash Assistant constructor setup: ", throwable);
+        }
     }
 
     /**

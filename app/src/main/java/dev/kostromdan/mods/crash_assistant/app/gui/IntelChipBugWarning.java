@@ -14,6 +14,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -23,10 +25,17 @@ public class IntelChipBugWarning {
     public static final String GIF_URL = "https://kostromdan.github.io/Crash-Assistant/assets/intel_bug.gif?raw=true";
     public static final Path LOCAL_GIF_PATH = Paths.get("local", "crash_assistant", "intel_bug.gif");
 
+    public static String microcodeVertionString = "UNDEFINED";
+    public static long microcodeVersion = -1L;
+    public static final long FIRST_NOT_AFFECTED_MICROCODE_VERSION = Long.parseLong("129", 16);
+
     public static void showIfAffected(boolean debug) {
         synchronized (KnownCrashReasonMessage.class) {
             if (!CrashAssistantConfig.getBoolean("intel_corrupted.enabled")) return;
             if (!IntelCorruptedProcessorChecker.isAffectedProcessor() && !debug) return;
+
+            setupMicrocodeVersion();
+
             if (Objects.equals(CrashAssistantLocalConfig.get("intel_corrupted.dont_show_again"), true)) return;
             boolean showGif = CrashAssistantConfig.getBoolean("intel_corrupted.show_gif");
 
@@ -164,6 +173,49 @@ public class IntelChipBugWarning {
             dialog.setVisible(true);
         }
         CrashAssistantApp.LOGGER.info("Shown IntelChipBugWarning");
+    }
+
+    public static void setupMicrocodeVersion(){
+        String fileName = "microcode_" + System.currentTimeMillis() + ".txt";
+        Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"), fileName);
+
+        try {
+            try {
+                String command = ("$ErrorActionPreference = 'Continue'; " +
+                        "(('0x{0:X}' -f [BitConverter]::ToUInt32((Get-ItemProperty 'HKLM:\\HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0' | Select-Object -ExpandProperty 'Update Revision'),0))) " +
+                        "*>&1 | Out-String -Stream | Out-File \"$FILE_NAME$\" -Encoding UTF8 -NoNewline")
+                        .replace("$FILE_NAME$", tempPath.toString());
+
+                Process process = new ProcessBuilder("powershell.exe", "-NoProfile", "-Command", command)
+                        .redirectErrorStream(true)
+                        .start();
+
+                process.waitFor();
+
+                String output = new String(Files.readAllBytes(tempPath), StandardCharsets.UTF_8);
+
+                // Remove the UTF-8 Byte Order Mark (BOM) if it exists.
+                if (output.startsWith("\uFEFF")) {
+                    output = output.substring(1);
+                }
+
+                String trimmedOutput = output.trim();
+
+                if (trimmedOutput.matches("^0x[0-9A-Fa-f]+$")) {
+                    microcodeVertionString = trimmedOutput;
+                    microcodeVersion = Long.parseLong(microcodeVertionString.substring(2), 16);
+                    CrashAssistantApp.LOGGER.info("Microcode version: " + microcodeVertionString);
+                } else {
+                    throw new java.io.IOException("PowerShell script failed or returned invalid format: " + output);
+                }
+
+            } finally {
+                Files.deleteIfExists(tempPath);
+            }
+        } catch (Exception e) {
+            microcodeVertionString = "ERROR - FAILED TO GET MICROCODE";
+            CrashAssistantApp.LOGGER.error("Error getting microcode version: ", e);
+        }
     }
 
     public static void main(String[] args) {

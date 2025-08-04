@@ -166,6 +166,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new MissingIndium());
         registerKnownCrashReason(new MissingUnsupportedDependencies());
         registerKnownCrashReason(new ModernFixWatchDog());
+        registerKnownCrashReason(new NeoForgeVersion1_20_1());
         registerKnownCrashReason(new Optifine());
         registerKnownCrashReason(new OutOfMemoryError());
         registerKnownCrashReason(new ResourceLocationException());

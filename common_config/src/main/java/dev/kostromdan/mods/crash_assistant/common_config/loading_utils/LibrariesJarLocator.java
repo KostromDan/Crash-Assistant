@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -10,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class LibrariesJarLocator {
     public static String getLibraryJarPath(Class cls) throws JarLocatingException, URISyntaxException {
@@ -22,7 +24,7 @@ public class LibrariesJarLocator {
         if (path == null) {
             throw new JarLocatingException("getPathFromClass returned null, class: " + cls.getName());
         }
-        if (checkExistence && !Files.exists(path)) {
+        if (checkExistence && !path.toFile().exists()) {
             throw new JarLocatingException("Successfully parsed '.jar' path of `" + cls + "',but it does not exist; path: `" + path);
         }
         if (checkExistence && !Files.isRegularFile(path)) {
@@ -30,6 +32,47 @@ public class LibrariesJarLocator {
         }
 
         return path.toAbsolutePath().toString();
+    }
+
+    public static String getOurModJarPath() throws JarLocatingException, URISyntaxException {
+        try {
+            return getLibraryJarPath(JarInJarHelper.class);
+        } catch (Exception e) {
+            // Quilt with it's stupid QuiltZipPath
+            if (PlatformHelp.platform == PlatformHelp.QUILT) {
+                try {
+                    Class<?> fabricLoaderClass = Class.forName("net.fabricmc.loader.api.FabricLoader");
+                    Method getInstanceMethod = fabricLoaderClass.getMethod("getInstance");
+                    Object loaderInstance = getInstanceMethod.invoke(null);
+
+                    Method getModContainerMethod = fabricLoaderClass.getMethod("getModContainer", String.class);
+                    @SuppressWarnings("unchecked")
+                    Optional<Object> modContainerOptional = (Optional<Object>) getModContainerMethod.invoke(loaderInstance, "crash_assistant");
+
+                    if (modContainerOptional.isPresent()) {
+                        Object modContainer = modContainerOptional.get();
+                        Method getOriginMethod = modContainer.getClass().getMethod("getOrigin");
+                        Object modOrigin = getOriginMethod.invoke(modContainer);
+
+                        Method getPathsMethod = modOrigin.getClass().getMethod("getPaths");
+                        @SuppressWarnings("unchecked")
+                        List<Path> originPaths = (List<Path>) getPathsMethod.invoke(modOrigin);
+
+                        return originPaths.stream()
+                                .filter(p -> p.toString().toLowerCase().endsWith(".jar"))
+                                .findFirst()
+                                .map(p -> p.toAbsolutePath().toString())
+                                .orElseThrow(() -> new JarLocatingException("Could not find JAR path from Quilt ModOrigin paths"));
+                    } else {
+                        throw new JarLocatingException("Could not find ModContainer for 'crash_assistant' on Quilt");
+                    }
+                } catch (Exception reflectionEx) {
+                    throw new JarLocatingException("Failed to get mod JAR path on Quilt via reflection: " + reflectionEx.getMessage());
+                }
+            }
+            // If not on Quilt, re-throw the original exception
+            throw e;
+        }
     }
 
     public static String getLibraryJarPathFromResource(String resource) throws JarLocatingException {

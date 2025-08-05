@@ -39,7 +39,7 @@ public class JarInJarHelper {
         }
         isClient = true;
         try {
-            Path originalModJarPath = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).toAbsolutePath();
+            Path originalModJarPath = Paths.get(LibrariesJarLocator.getOurModJarPath()).toAbsolutePath();
             LOGGER.info("Launching CrashAssistantApp ({})", originalModJarPath.getFileName().toString());
 
             long currentProcessId = ProcessHelper.getCurrentProcessId();
@@ -226,7 +226,7 @@ public class JarInJarHelper {
                 String incompatibleModsString = String.join(", ", mods.stream().map(Mod::getJarName).collect(Collectors.toList()));
                 String crashAssistantString = "Crash Assistant";
                 try {
-                    crashAssistantString = Paths.get(LibrariesJarLocator.getLibraryJarPath(JarInJarHelper.class)).getFileName().toString();
+                    crashAssistantString = Paths.get(LibrariesJarLocator.getOurModJarPath()).getFileName().toString();
                 } catch (Exception ignored) {
                 }
                 String incompatibleMessage = crashAssistantString + " and " + incompatibleModsString + "are incompatible.";

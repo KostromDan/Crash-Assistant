@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -32,7 +33,7 @@ public class CrashReportsHelper {
                 if (Files.isRegularFile(entry) && 
                     entry.getFileName() != null && 
                     filenameFilter.test(entry.getFileName().toString()) &&
-                    entry.toFile().lastModified() >= CrashAssistantApp.parentStarted) {
+                    entry.toFile().lastModified() >= Boot.parentStarted) {
                     relevantFiles.add(entry);
                 }
             }

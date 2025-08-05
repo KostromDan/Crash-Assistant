@@ -99,13 +99,18 @@ public class CrashAssistantApp {
 
 
         String currentProcessData = Objects.toString(Boot.parentPID) + "_" + Boot.parentStarted;
-        Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");
+        Path localFolder = Paths.get("local", "crash_assistant");
+        Path currentProcessDataPath = localFolder.resolve(currentProcessData + ".info");
         try {
             Files.write(currentProcessDataPath, (ProcessHelper.getCurrentProcessId() + " : " + ProcessHelper.getCurrentProcessStartTime()).getBytes());
         } catch (IOException ignored) {
         }
+        try {
+            Files.deleteIfExists(localFolder.resolve(currentProcessData + "_gpu_detect_jni.dll"));
+        } catch (IOException ignored) {
+        }
 
-        FileUtils.removeTmpFiles(Paths.get("local", "crash_assistant"));
+        FileUtils.removeTmpFiles(localFolder);
         FileUtils.removeOldLogsFolder();
 
         WinEventCleaner.cleanOldWinEventFiles();

@@ -1,12 +1,16 @@
 package dev.kostromdan.mods.crash_assistant.app.utils.gpu;
 
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Utility class for detecting GPUs and their types using DirectX.
@@ -30,21 +34,18 @@ public class DirectXGPUDetector {
     private static void loadNativeLibraryFromJar() throws IOException {
         String libraryName = "gpu-detect-jni.dll";
 
-        // Create a temporary directory to extract the DLL
-        Path tempDir = Files.createTempDirectory("gpu-detect-jni");
-        tempDir.toFile().deleteOnExit();
-
-        // Extract the DLL to the temporary directory
-        Path tempFile = tempDir.resolve(libraryName);
+        String currentProcessData = Objects.toString(Boot.parentPID) + "_" + Boot.parentStarted;
+        String outputFileName = currentProcessData + "_gpu_detect_jni.dll";
+        Path localFolder = Paths.get("local", "crash_assistant");
+        Files.createDirectories(localFolder);
+        Path dllOutputFile = localFolder.resolve(outputFileName);
         try (InputStream in = DirectXGPUDetector.class.getClassLoader().getResourceAsStream(libraryName)) {
             if (in == null) {
                 throw new IOException("Could not find " + libraryName + " in the JAR");
             }
-            Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(in, dllOutputFile, StandardCopyOption.REPLACE_EXISTING);
         }
-
-        // Load the DLL from the temporary location
-        System.load(tempFile.toAbsolutePath().toString());
+        System.load(dllOutputFile.toAbsolutePath().toString());
     }
 
     public static void main(String[] args) throws Exception { // Test

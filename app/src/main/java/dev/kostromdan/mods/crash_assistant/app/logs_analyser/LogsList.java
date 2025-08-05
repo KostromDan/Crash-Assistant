@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 
 import java.io.IOException;
@@ -31,7 +32,7 @@ public class LogsList {
                     bl_log -> log.getFileName().startsWith(bl_log))) {
                 return;
             }
-            if (checkModified && log.getPath().toFile().lastModified() <= CrashAssistantApp.parentStarted) {
+            if (checkModified && log.getPath().toFile().lastModified() <= Boot.parentStarted) {
                 return;
             }
             try {

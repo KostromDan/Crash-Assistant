@@ -1,7 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
-import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +29,8 @@ public class Boot {
     public static boolean gpuDetect = false;
     public static boolean vulkanAddonLoaded = false;
     public static String serialisedGPUs = null;
+    public static long parentPID = -1;
+    public static long parentStarted = -1;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
     public static List<String> APP_ARGS;
 
@@ -55,7 +57,11 @@ public class Boot {
             APP_ARGS = effectiveArgs;
 
             for (int i = 0; i < effectiveArgs.size(); i++) {
-                if ("-crashAssistantModJarName".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                if ("-parentPID".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    parentPID = Long.parseLong(effectiveArgs.get(i + 1));
+                } else if ("-parentStarted".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    parentStarted = Long.parseLong(effectiveArgs.get(i + 1));
+                } else if ("-crashAssistantModJarName".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
                     crashAssistantModJarName = effectiveArgs.get(i + 1);
                 } else if ("-classPath".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
                     classPath = effectiveArgs.get(i + 1);

@@ -35,8 +35,6 @@ public class CrashAssistantApp {
     public static long GUIStartTime = -1;
     public static boolean GUIStartedLaunching = false;
     public static boolean GUIInitialisationFinished = false;
-    public static long parentPID;
-    public static long parentStarted;
     public static String parentXms = null;
     public static String parentXmx = null;
     public static String systemRAM = null;
@@ -62,16 +60,11 @@ public class CrashAssistantApp {
 
         LOGGER.info("crashAssistantJarName: {}", Boot.crashAssistantModJarName);
 
-        parentPID = -1;
-        parentStarted = -1;
+        LOGGER.info("Parent PID: {}", Boot.parentPID);
+        LOGGER.info("Parent started: {}", Boot.parentStarted);
+
         for (int i = 0; i < args.length; i++) {
-            if ("-parentPID".equals(args[i]) && i + 1 < args.length) {
-                parentPID = Long.parseLong(args[i + 1]);
-                LOGGER.info("Parent PID: {}", parentPID);
-            } else if ("-parentStarted".equals(args[i]) && i + 1 < args.length) {
-                parentStarted = Long.parseLong(args[i + 1]);
-                LOGGER.info("Parent started: {}", parentStarted);
-            } else if ("-parentXms".equals(args[i]) && i + 1 < args.length) {
+            if ("-parentXms".equals(args[i]) && i + 1 < args.length) {
                 parentXms = args[i + 1];
                 LOGGER.info("parentXms: {}", parentXms);
             } else if ("-parentXmx".equals(args[i]) && i + 1 < args.length) {
@@ -105,7 +98,7 @@ public class CrashAssistantApp {
         LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
 
 
-        String currentProcessData = Objects.toString(parentPID) + "_" + parentStarted;
+        String currentProcessData = Objects.toString(Boot.parentPID) + "_" + Boot.parentStarted;
         Path currentProcessDataPath = Paths.get("local", "crash_assistant", currentProcessData + ".info");
         try {
             Files.write(currentProcessDataPath, (ProcessHelper.getCurrentProcessId() + " : " + ProcessHelper.getCurrentProcessStartTime()).getBytes());
@@ -117,14 +110,14 @@ public class CrashAssistantApp {
 
         WinEventCleaner.cleanOldWinEventFiles();
 
-        HsErrHelper.removeHsErrLog(parentPID);
+        HsErrHelper.removeHsErrLog(Boot.parentPID);
 
-        LOGGER.info("CrashAssistantApp started successfully. Waiting for PID " + parentPID + " to stop.");
+        LOGGER.info("CrashAssistantApp started successfully. Waiting for PID " + Boot.parentPID + " to stop.");
 
         while (true) {
             try {
-                if (parentStarted == -1 || parentStarted != ProcessHelper.getProcessStartTime(parentPID)) {
-                    LOGGER.info("PID \"{}\" is not alive or reused by another process. Minecraft JVM appears to have stopped.", parentPID);
+                if (Boot.parentStarted == -1 || Boot.parentStarted != ProcessHelper.getProcessStartTime(Boot.parentPID)) {
+                    LOGGER.info("PID \"{}\" is not alive or reused by another process. Minecraft JVM appears to have stopped.", Boot.parentPID);
                     onMinecraftFinished();
                     return;
                 }
@@ -146,7 +139,7 @@ public class CrashAssistantApp {
     }
 
     private static boolean checkLoadingErrorScreen() {
-        if (ProcessSignalIO.exists("loading_error_fml", parentPID)) {
+        if (ProcessSignalIO.exists("loading_error_fml", Boot.parentPID)) {
             LOGGER.info("Detected FML error modloading screen.");
             if (CrashAssistantConfig.getBoolean("general.show_on_fml_error_screen")) {
                 onMinecraftFinished();
@@ -159,7 +152,7 @@ public class CrashAssistantApp {
     private static void checkRendererFile() {
         if (renderer != null) return;
         if (Boot.serialisedGPUs == null) return;
-        Optional<String> potentialRenderer = ProcessSignalIO.get("renderer", parentPID);
+        Optional<String> potentialRenderer = ProcessSignalIO.get("renderer", Boot.parentPID);
 
         if (potentialRenderer.isPresent()) {
             try {
@@ -222,7 +215,7 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LOG, Paths.get("logs", "latest.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.DEBUG_LOG, Paths.get("logs", "debug.log")));
 
-        Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(parentPID);
+        Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(Boot.parentPID);
         if (hsErrLog.isPresent()) {
             crashed = true;
             crashed_with_report = true;
@@ -298,21 +291,21 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.CRASH_ASSISTANT, Paths.get("logs", "crash_assistant", "crash_assistant_app.log")));
 
 
-        gameLaunchedSuccessfully = ProcessSignalIO.exists("successful_launch", parentPID);
+        gameLaunchedSuccessfully = ProcessSignalIO.exists("successful_launch", Boot.parentPID);
         LOGGER.info("Reached first tick of TitleScreen: {}", gameLaunchedSuccessfully);
 
-        joinedWorldSuccessfully = ProcessSignalIO.exists("joined_world", parentPID);
+        joinedWorldSuccessfully = ProcessSignalIO.exists("joined_world", Boot.parentPID);
         LOGGER.info("Joined world successfully: {}", joinedWorldSuccessfully);
 
-        stopFunctionFired = ProcessSignalIO.exists("normal_stop", parentPID);
+        stopFunctionFired = ProcessSignalIO.exists("normal_stop", Boot.parentPID);
         if (!stopFunctionFired) crashed = true;
         LOGGER.info("stop() function of Minecraft fired: {}", stopFunctionFired);
 
-        closeFunctionFailed = ProcessSignalIO.exists("close_failed", parentPID);
+        closeFunctionFailed = ProcessSignalIO.exists("close_failed", Boot.parentPID);
         if (closeFunctionFailed) crashed = true;
         LOGGER.info("close() function of Minecraft failed: {}", closeFunctionFailed);
 
-        emergencySaveFired = ProcessSignalIO.exists("emergency_save", parentPID);
+        emergencySaveFired = ProcessSignalIO.exists("emergency_save", Boot.parentPID);
         if (emergencySaveFired) crashed = true;
         LOGGER.info("emergencySave() function of Minecraft fired: {}", emergencySaveFired);
 

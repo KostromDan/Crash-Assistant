@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -48,7 +49,7 @@ public interface FileUtils {
             try {
                 Files.list(dir).forEach(path -> {
                     String fileName = path.getFileName().toString();
-                    if (fileName.endsWith(extension) && path.toFile().lastModified() >= CrashAssistantApp.parentStarted) {
+                    if (fileName.endsWith(extension) && path.toFile().lastModified() >= Boot.parentStarted) {
                         filesFound.add(path);
                     }
                 });

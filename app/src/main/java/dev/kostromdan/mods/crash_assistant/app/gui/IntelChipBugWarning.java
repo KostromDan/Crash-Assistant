@@ -34,7 +34,7 @@ public class IntelChipBugWarning {
             if (!CrashAssistantConfig.getBoolean("intel_corrupted.enabled")) return;
             if (!IntelCorruptedProcessorChecker.isAffectedProcessor() && !debug) return;
 
-            setupMicrocodeVersion();
+            parseMicrocodeVersion();
 
             if (Objects.equals(CrashAssistantLocalConfig.get("intel_corrupted.dont_show_again"), true)) return;
             boolean showGif = CrashAssistantConfig.getBoolean("intel_corrupted.show_gif");
@@ -203,7 +203,7 @@ public class IntelChipBugWarning {
         CrashAssistantApp.LOGGER.info("Shown IntelChipBugWarning");
     }
 
-    public static void setupMicrocodeVersion() {
+    public static void parseMicrocodeVersion() {
         String fileName = "microcode_" + System.currentTimeMillis() + ".txt";
         Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"), fileName);
 

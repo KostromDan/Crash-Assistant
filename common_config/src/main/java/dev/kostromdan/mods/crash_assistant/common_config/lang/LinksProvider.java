@@ -27,6 +27,9 @@ public enum LinksProvider {
     CRASH_ASSISTANT_DISCORD(() -> "https://discord.com/invite/dV8WFrJZK6"),
     LAT_DISCORD(() -> "https://discord.gg/lat"),
 
+    NOT_ENOUGH_IDS(() -> "https://www.curseforge.com/minecraft/mc-mods/notenoughids"),
+    ROUGHLY_ENOUGH_IDS(() -> "https://www.curseforge.com/minecraft/mc-mods/reid"),
+
     LITHOSTITCHED(() -> "https://www.curseforge.com/minecraft/mc-mods/lithostitched"),
     MODERN_FIX(() -> "https://www.curseforge.com/minecraft/mc-mods/modernfix"),
     FERRITE_CORE(() -> {

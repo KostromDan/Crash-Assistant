@@ -162,6 +162,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new GroovyModLoaderIPv6());
         registerKnownCrashReason(new KubeJSDataPack());
         registerKnownCrashReason(new LanguageProviderMismatch());
+        registerKnownCrashReason(new LegacyTooManyIds());
         registerKnownCrashReason(new MissingEmbeddiumForOculus());
         registerKnownCrashReason(new MissingIndium());
         registerKnownCrashReason(new MissingUnsupportedDependencies());

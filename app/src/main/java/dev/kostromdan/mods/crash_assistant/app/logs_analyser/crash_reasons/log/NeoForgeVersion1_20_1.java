@@ -19,13 +19,13 @@ public class NeoForgeVersion1_20_1 extends KnownCrashReason {
 
     @Override
     public boolean matches(Log log) {
-        if(!Objects.equals(PlatformHelp.minecraftVersion, "1.20.1")) return false;
-        if(!PlatformHelp.isForgeBased()) return false;
+        if (!Objects.equals(PlatformHelp.minecraftVersion, "1.20.1")) return false;
+        if (!PlatformHelp.isForgeBased()) return false;
         String loaderJarName = PlatformHelp.loaderJarName;
-        if(loaderJarName == null || "UNDEFINED".equals(loaderJarName)) return false;
-        if(loaderJarName.endsWith(".jar"))loaderJarName = loaderJarName.substring(0, loaderJarName.length()-4);
-        if(loaderJarName.startsWith("fmlloader-1.20.1-"))loaderJarName = loaderJarName.substring("fmlloader-1.20.1-".length());
-        if(loaderJarName.startsWith("loader-"))loaderJarName = loaderJarName.substring("loader-".length());
+        if (loaderJarName == null || "UNDEFINED".equals(loaderJarName)) return false;
+        if (loaderJarName.endsWith(".jar")) loaderJarName = loaderJarName.substring(0, loaderJarName.length() - 4);
+        if (loaderJarName.startsWith("fmlloader-1.20.1-")) loaderJarName = loaderJarName.substring("fmlloader-1.20.1-".length());
+        if (loaderJarName.startsWith("loader-")) loaderJarName = loaderJarName.substring("loader-".length());
         if (!loaderJarName.matches("^47\\.\\d+(?:\\.\\d+){0,2}$")) return false;
         return VersionUtils.isLower(loaderJarName, "47.3.0");
     }

@@ -28,8 +28,8 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
     /**
      * CrashAssistantApp should be launched as soon as possible after game start
      * to be able to help players even with LanguageAdapter/MixinConfigPlugin/mixin/hs_err crashes.
-     * So we launch it from the constructor of the LanguageAdapter, which is one of
-     * the first points we can launch it from in Fabric.
+     * So we launch it from the constructor of the LanguageAdapter,
+     * which is the first point we can launch it from in Fabric.
      *
      * <p>This block finds required libraries on the JVM's classpath,
      * creates a dedicated "parent-last" class loader, and runs the setup logic with it.

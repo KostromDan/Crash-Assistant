@@ -9,10 +9,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.nio.file.Path;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class IntegratedGPUWarning extends JFrame {
 
@@ -60,9 +63,60 @@ public class IntegratedGPUWarning extends JFrame {
         JButton okButton = new JButton("OK");
         okButton.addActionListener(e -> dispose());
 
+        // Auto-Fix button.
+        JButton autoFixButton = new JButton(LanguageProvider.get("gui.integrated_gpu_autofix_button"));
+        autoFixButton.addActionListener(e -> {
+            String javaPath = JavaBinaryLocator.getJavaBinary();
+            String commandToExecute = getGpuPreferenceCommand(javaPath);
+            // Use HTML tags for better formatting in the dialog
+            String formattedCommand = "<code>" + commandToExecute.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</code>";
+
+            String confirmationMessage = LanguageProvider.get("gui.integrated_gpu_autofix_confirm_message")
+                    .replace("$COMMAND$", formattedCommand);
+
+            int choice = JOptionPane.showConfirmDialog(
+                    this,
+                    CrashAssistantGUI.getEditorPane(confirmationMessage, true, 500),
+                    LanguageProvider.get("gui.integrated_gpu_autofix_confirm_title"),
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (choice == JOptionPane.YES_OPTION) {
+                autoFixButton.setEnabled(false);
+                autoFixButton.setText(LanguageProvider.get("gui.integrated_gpu_autofix_working"));
+                new Thread(() -> {
+                    String result = applyGpuPreference(javaPath);
+                    SwingUtilities.invokeLater(() -> {
+                        if ("SUCCESS".equals(result)) {
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    LanguageProvider.get("gui.integrated_gpu_autofix_success"),
+                                    LanguageProvider.get("gui.integrated_gpu_autofix_result_title"),
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+                            autoFixButton.setText(LanguageProvider.get("gui.integrated_gpu_autofix_done"));
+                        } else {
+                            String failureMessage = LanguageProvider.get("gui.integrated_gpu_autofix_failure")
+                                    .replace("$ERROR$", result);
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    failureMessage,
+                                    LanguageProvider.get("gui.integrated_gpu_autofix_result_title"),
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+                            autoFixButton.setEnabled(true);
+                            autoFixButton.setText(LanguageProvider.get("gui.integrated_gpu_autofix_button"));
+                        }
+                    });
+                }).start();
+            }
+        });
+
         // Bottom panel that centers both the checkbox and the OK button in the same row.
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         bottomPanel.add(dontShowAgainCheck);
+        bottomPanel.add(autoFixButton);
         bottomPanel.add(okButton);
 
         // Main panel to hold textPanel in the center and bottomPanel at the bottom.
@@ -109,6 +163,63 @@ public class IntegratedGPUWarning extends JFrame {
         }
     }
 
+
+    /**
+     * Generates the PowerShell command string needed to set the GPU preference.
+     *
+     * @param javaPath The absolute path to the javaw.exe file.
+     * @return The PowerShell command as a single-line string.
+     */
+    public static String getGpuPreferenceCommand(String javaPath) {
+        // This PowerShell command modifies the Windows Registry to set a GPU preference.
+        // - & { ... }: A script block to ensure all commands run in the same scope.
+        // - try { ... } catch { ... }: Handles potential errors, returning a specific error message.
+        // - if (-not (Test-Path...)): Checks if the registry key exists and creates it if it doesn't.
+        // - Set-ItemProperty: The core cmdlet that creates or changes a registry value.
+        //   -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences': The key path. HKCU (HKEY_CURRENT_USER)
+        //     means this does not require administrator rights.
+        //   -Name '%s': The registry value's name, which is the full path to the executable.
+        //   -Value 'GpuPreference=2;': The data for the value. '2' stands for "High performance".
+        //   -Force: Ensures the key/value is created if it doesn't exist.
+        return String.format(
+                "& { try { if (-not (Test-Path -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences')) { New-Item -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences' -Force | Out-Null; } Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences' -Name '%s' -Value 'GpuPreference=2;' -Force; return 'SUCCESS'; } catch { return \"ERROR: $($_.Exception.Message)\"; } }",
+                javaPath
+        );
+    }
+
+    /**
+     * Executes the PowerShell command to apply the high-performance GPU preference.
+     *
+     * @param javaPath The absolute path to the javaw.exe file.
+     * @return "SUCCESS" if the operation completes, or an error message if it fails.
+     */
+    public static String applyGpuPreference(String javaPath) {
+        String psCommand = getGpuPreferenceCommand(javaPath);
+
+        try {
+            // Use ProcessBuilder to run PowerShell with the command
+            ProcessBuilder builder = new ProcessBuilder(
+                    "powershell.exe",
+                    "-NoProfile",
+                    "-ExecutionPolicy", "Bypass",
+                    "-Command", psCommand
+            );
+            Process process = builder.start();
+
+            // Read the output from PowerShell to get the SUCCESS or ERROR message
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String result = reader.lines().collect(Collectors.joining("\n")).trim();
+                int exitCode = process.waitFor();
+                if (exitCode == 0 && result.equals("SUCCESS")) {
+                    return "SUCCESS";
+                }
+                return result.isEmpty() ? "ERROR: Unknown PowerShell execution error." : result;
+            }
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt(); // Restore interrupted status
+            return "ERROR: " + e.getMessage();
+        }
+    }
 
     // Demo main method for testing.
     public static void main(String[] args) {

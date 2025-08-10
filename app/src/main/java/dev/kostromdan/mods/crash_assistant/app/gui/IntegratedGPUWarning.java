@@ -69,7 +69,7 @@ public class IntegratedGPUWarning extends JFrame {
             String javaPath = JavaBinaryLocator.getJavaBinary();
             String commandToExecute = getGpuPreferenceCommand(javaPath);
             // Use HTML tags for better formatting in the dialog
-            String formattedCommand = "<code>" + commandToExecute.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</code>";
+            String formattedCommand = "<code style='background-color: #d1e7ff; padding: 2px 4px;'>" + commandToExecute.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</code>";
 
             String confirmationMessage = LanguageProvider.get("gui.integrated_gpu_autofix_confirm_message")
                     .replace("$COMMAND$", formattedCommand);

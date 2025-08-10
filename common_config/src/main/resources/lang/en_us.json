@@ -40,7 +40,7 @@
     "gui.incompatible_mod": "Incompatible Mod Found ($LANG.gui.window_name$)",
     "gui.integrated_gpu": "Integrated GPU Warning ($LANG.gui.window_name$)",
     "gui.integrated_gpu_autofix_button": "Auto-Fix",
-    "gui.integrated_gpu_autofix_confirm_message": "This will execute the following PowerShell command to configure Windows to always use your dedicated GPU for this Java instance.\n\n<b>Command:</b>\n$COMMAND$\n\nThis operation does not require administrator rights and only affects the current user's settings.\nDo you want to proceed?",
+    "gui.integrated_gpu_autofix_confirm_message": "This will execute the following PowerShell command to configure Windows to always use your dedicated GPU for this Java instance. It does exactly the same thing as if you had done it through the Windows GUI by the following the instructions. So it's safe to use - it can't break anything or cause unwanted changes.\n\n<b>Command:</b>\n$COMMAND$\n\nThis operation does not require administrator rights and only affects the current user's settings.\nDo you want to proceed?",
     "gui.integrated_gpu_autofix_confirm_title": "Auto-Fix Confirmation",
     "gui.integrated_gpu_autofix_done": "Done!",
     "gui.integrated_gpu_autofix_failure": "Auto-Fix failed. Please follow the manual guide.\nError: $ERROR$",

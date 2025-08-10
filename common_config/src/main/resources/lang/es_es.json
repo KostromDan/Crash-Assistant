@@ -40,7 +40,7 @@
     "gui.incompatible_mod": "Mod Incompatible Encontrado ($LANG.gui.window_name$)",
     "gui.integrated_gpu": "Advertencia de GPU Integrada ($LANG.gui.window_name$)",
     "gui.integrated_gpu_autofix_button": "Auto-Reparar",
-    "gui.integrated_gpu_autofix_confirm_message": "Esto ejecutará el siguiente comando de PowerShell para configurar Windows para que siempre use tu GPU dedicada para esta instancia de Java.\n\n<b>Comando:</b>\n$COMMAND$\n\nEsta operación no requiere derechos de administrador y solo afecta la configuración del usuario actual.\n¿Quieres proceder?",
+    "gui.integrated_gpu_autofix_confirm_message": "Esto ejecutará el siguiente comando de PowerShell para configurar Windows para que siempre use tu GPU dedicada para esta instancia de Java. Hace exactamente lo mismo que si lo hubieras hecho a través de la GUI de Windows siguiendo las instrucciones. Por lo tanto, es seguro de usar, no puede romper nada ni causar cambios no deseados.\n\n<b>Comando:</b>\n$COMMAND$\n\nEsta operación no requiere derechos de administrador y solo afecta la configuración del usuario actual.\n¿Quieres proceder?",
     "gui.integrated_gpu_autofix_confirm_title": "Confirmación de Auto-Reparación",
     "gui.integrated_gpu_autofix_done": "¡Hecho!",
     "gui.integrated_gpu_autofix_failure": "La Auto-Reparación ha fallado. Por favor, sigue la guía manual.\nError: $ERROR$",

@@ -133,7 +133,7 @@ public class IntegratedGPUWarning extends JFrame {
         setAlwaysOnTop(true);
     }
 
-    public static void showIfNotDisabled(String integratedGPU, List<String> dedicatedGPUs) {
+    public static void show(String integratedGPU, List<String> dedicatedGPUs) {
         isCurrentlyDisplayed = true;
         SwingUtilities.invokeLater(() -> {
             CrashAssistantApp.LOGGER.warn("Showing IntegratedGPUWarning.");
@@ -224,7 +224,7 @@ public class IntegratedGPUWarning extends JFrame {
     // Demo main method for testing.
     public static void main(String[] args) {
         // Show the warning with sample data.
-        showIfNotDisabled(
+        show(
                 "Intel HD Graphics",
                 Arrays.asList("NVIDIA GTX 1080", "AMD Radeon RX 580")
         );

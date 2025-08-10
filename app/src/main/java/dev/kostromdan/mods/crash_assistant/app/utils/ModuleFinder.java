@@ -1,7 +1,5 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
-import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 
@@ -16,6 +14,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
@@ -34,7 +33,7 @@ public class ModuleFinder {
 
     public static List<String> findJarsContainingEntries(List<String> searchTerms, Path jarPath, SearchMode mode) {
         List<String> searchPrefixes = searchTerms.stream()
-                .map(term -> mode == SearchMode.PACKAGE ? normalizeModuleName(term) : term.toLowerCase().replace('.', '/'))
+                .map(ModuleFinder::normalizeModuleName)
                 .collect(Collectors.toList());
 
         List<String> results = new ArrayList<>();
@@ -146,26 +145,29 @@ public class ModuleFinder {
 
     private static boolean matches(JarEntry entry, String searchTerm, SearchMode mode) {
         String entryName = entry.getName();
+        String normalizedEntryName = normalizeModuleName(entryName);
+        boolean isClass = entryName.endsWith(".class");
+        boolean isPackage = entry.isDirectory();
+        if (!isClass && !isPackage) return false;
+        if (isPackage){
+            return normalizedEntryName.equals(searchTerm);
+        }
         if (mode == SearchMode.PACKAGE) {
-            return normalizeModuleName(entryName).startsWith(searchTerm);
-        } else { // CLASS_OR_PACKAGE
-            String lowerEntryName = entryName.toLowerCase();
-
-            if (lowerEntryName.startsWith(searchTerm)) {
-                return true;
-            }
-
-            if (!entry.isDirectory() && lowerEntryName.endsWith(".class")) {
-                int lastSlash = lowerEntryName.lastIndexOf('/');
-                String fileName = (lastSlash == -1) ? lowerEntryName : lowerEntryName.substring(lastSlash + 1);
-                if (fileName.contains(searchTerm)) {
-                    CrashAssistantApp.LOGGER.warn("Found class " + fileName + " in " + entryName);
-                    return true;
-                }
-            }
-
             return false;
         }
+        entryName = entryName.substring(0, entryName.length() - 6);
+        normalizedEntryName = normalizedEntryName.substring(0, normalizedEntryName.length() - 6);
+        if (normalizedEntryName.equals(searchTerm)) {
+            return true;
+        }
+        String className = entryName.substring(entryName.lastIndexOf('/') + 1);
+        AtomicBoolean found = new AtomicBoolean(false);
+        Arrays.stream(className.split("\\$")).map(s -> s.toLowerCase() + "/").forEach(name ->{
+            if (name.equals(searchTerm)) {
+                found.set(true);
+            }
+        });
+        return found.get();
     }
 
     private static byte[] readAllBytes(InputStream in) throws IOException {

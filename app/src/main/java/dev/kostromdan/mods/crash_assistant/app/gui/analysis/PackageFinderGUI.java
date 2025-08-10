@@ -17,7 +17,7 @@ public class PackageFinderGUI extends AnalysisGUIBase {
     private final String originalSearchTerm;
 
     public PackageFinderGUI(JFrame parent, String search) {
-        super(parent, "Package/Class Finder", "This tool scans mods to find which ones contain the specified package or class.<br>This can help identify which mod provides a specific resource.");
+        super(parent, "Package/Class Finder", "This tool scans mods to find which ones contain the specified package or class.\nThis can help identify which mod provides a specific resource.");
         this.originalSearchTerm = search.trim();
         String term = originalSearchTerm;
         // If it's a class name with an extension, remove it for a broader search.

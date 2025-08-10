@@ -32,7 +32,7 @@ public class ModuleFinder {
 
     public static List<String> findJarsContainingEntries(List<String> searchTerms, Path jarPath, SearchMode mode) {
         List<String> searchPrefixes = searchTerms.stream()
-                .map(term -> mode == SearchMode.PACKAGE ? normalizeModuleName(term) : term.toLowerCase())
+                .map(term -> mode == SearchMode.PACKAGE ? normalizeModuleName(term) : term.toLowerCase().replace('.', '/'))
                 .collect(Collectors.toList());
 
         List<String> results = new ArrayList<>();
@@ -44,9 +44,9 @@ public class ModuleFinder {
                 JarEntry entry = entries.nextElement();
                 String name = entry.getName();
 
-                if (!matchedTop && !entry.isDirectory()) {
+                if (!matchedTop) {
                     for (String prefix : searchPrefixes) {
-                        if (matches(name, prefix, mode)) {
+                        if (matches(entry, prefix, mode)) {
                             results.add(topName);
                             matchedTop = true;
                             break;
@@ -116,24 +116,23 @@ public class ModuleFinder {
                 boolean matched = false;
                 JarEntry ne;
                 while ((ne = jis.getNextJarEntry()) != null) {
-                    String n = ne.getName();
-                    if (n.equals("module-info.class")) {
-                        JarInJarHelper.LOGGER.warn("Found module-info.class in " + containerName);
-                    }
-                    if (!matched && !ne.isDirectory()) {
+                    if (!matched) {
                         for (String prefix : searchPrefixes) {
-                            if (matches(n, prefix, mode)) {
+                            if (matches(ne, prefix, mode)) {
                                 results.add(containerName);
                                 matched = true;
                                 break;
                             }
                         }
                     }
-                    if (!ne.isDirectory() && n.endsWith(".jar")) {
+                    if (ne.getName().equals("module-info.class")) {
+                        JarInJarHelper.LOGGER.warn("Found module-info.class in " + containerName);
+                    }
+                    if (!ne.isDirectory() && ne.getName().endsWith(".jar")) {
                         processNestedJar(
                                 () -> readAllBytes(jis),
                                 searchPrefixes,
-                                containerName + "!/" + n,
+                                containerName + "!/" + ne.getName(),
                                 results,
                                 mode);
                     }
@@ -143,11 +142,26 @@ public class ModuleFinder {
         }
     }
 
-    private static boolean matches(String entryName, String searchTerm, SearchMode mode) {
+    private static boolean matches(JarEntry entry, String searchTerm, SearchMode mode) {
+        String entryName = entry.getName();
         if (mode == SearchMode.PACKAGE) {
             return normalizeModuleName(entryName).startsWith(searchTerm);
         } else { // CLASS_OR_PACKAGE
-            return entryName.toLowerCase().contains(searchTerm);
+            String lowerEntryName = entryName.toLowerCase();
+
+            if (lowerEntryName.startsWith(searchTerm)) {
+                return true;
+            }
+
+            if (!entry.isDirectory()) {
+                int lastSlash = lowerEntryName.lastIndexOf('/');
+                String fileName = (lastSlash == -1) ? lowerEntryName : lowerEntryName.substring(lastSlash + 1);
+                if (fileName.contains(searchTerm)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 

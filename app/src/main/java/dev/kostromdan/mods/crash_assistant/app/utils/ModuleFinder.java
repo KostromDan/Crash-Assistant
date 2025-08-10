@@ -149,7 +149,7 @@ public class ModuleFinder {
         boolean isClass = entryName.endsWith(".class");
         boolean isPackage = entry.isDirectory();
         if (!isClass && !isPackage) return false;
-        if (isPackage){
+        if (isPackage) {
             return normalizedEntryName.equals(searchTerm);
         }
         if (mode == SearchMode.PACKAGE) {
@@ -160,9 +160,11 @@ public class ModuleFinder {
         if (normalizedEntryName.equals(searchTerm)) {
             return true;
         }
-        String className = entryName.substring(entryName.lastIndexOf('/') + 1);
+        String className = entryName.substring(entryName.lastIndexOf('/') + 1).toLowerCase();
+        if ((className + "/").equals(searchTerm)) return true;
+
         AtomicBoolean found = new AtomicBoolean(false);
-        Arrays.stream(className.split("\\$")).map(s -> s.toLowerCase() + "/").forEach(name ->{
+        Arrays.stream(className.split("\\$")).map(s -> s + "/").forEach(name -> {
             if (name.equals(searchTerm)) {
                 found.set(true);
             }

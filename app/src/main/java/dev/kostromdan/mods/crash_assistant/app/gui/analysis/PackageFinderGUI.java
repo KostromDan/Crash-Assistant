@@ -51,9 +51,8 @@ public class PackageFinderGUI extends AnalysisGUIBase {
         LinkedHashSet<Mod> modsToAnalyze = ModListUtils.getCurrentModList(true);
         int totalMods = modsToAnalyze.size();
         AtomicInteger completedTasks = new AtomicInteger(0);
+        AtomicInteger foundCounter = new AtomicInteger(0);
         SwingUtilities.invokeLater(() -> progressBar.setMaximum(totalMods));
-
-        Map<String, List<String>> foundInMods = new TreeMap<>(); // Map<RootJar, List<FoundPath>>
 
         for (Mod mod : modsToAnalyze) {
             executor.submit(() -> {
@@ -72,9 +71,15 @@ public class PackageFinderGUI extends AnalysisGUIBase {
                 }
 
                 if (!foundPaths.isEmpty()) {
-                    synchronized (foundInMods) {
-                        foundInMods.put(mod.getJarName(), foundPaths);
+                    if (foundCounter.getAndIncrement() == 0) {
+                        SwingUtilities.invokeLater(() -> appendStyledText("Found '" + originalSearchTerm + "' in the following location(s):\n\n", NORMAL_COLOR));
                     }
+                    List<String> finalFoundPaths = foundPaths;
+                    SwingUtilities.invokeLater(() -> {
+                        for (String path : finalFoundPaths) {
+                            appendStyledText(path + "\n", MOD_COLOR);
+                        }
+                    });
                 }
 
                 int completed = completedTasks.incrementAndGet();
@@ -93,19 +98,9 @@ public class PackageFinderGUI extends AnalysisGUIBase {
             Thread.currentThread().interrupt();
         }
 
-        if (!isCancelled) {
+        if (!isCancelled && foundCounter.get() == 0) {
             SwingUtilities.invokeLater(() -> {
-                List<String> allPaths = new ArrayList<>();
-                foundInMods.values().forEach(allPaths::addAll);
-
-                if (allPaths.isEmpty()) {
-                    appendStyledText("'" + originalSearchTerm + "' not found in any mod.\n", NORMAL_COLOR);
-                } else {
-                    appendStyledText("Found '" + originalSearchTerm + "' in " + allPaths.stream().distinct().count() + " location(s):\n\n", NORMAL_COLOR);
-                    allPaths.stream().distinct().sorted().forEach(path -> {
-                        appendStyledText(path + "\n", MOD_COLOR);
-                    });
-                }
+                appendStyledText("'" + originalSearchTerm + "' not found in any mod.\n", NORMAL_COLOR);
             });
         }
     }

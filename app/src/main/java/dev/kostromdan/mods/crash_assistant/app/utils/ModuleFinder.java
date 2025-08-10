@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
+import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 
@@ -153,10 +155,11 @@ public class ModuleFinder {
                 return true;
             }
 
-            if (!entry.isDirectory()) {
+            if (!entry.isDirectory() && lowerEntryName.endsWith(".class")) {
                 int lastSlash = lowerEntryName.lastIndexOf('/');
                 String fileName = (lastSlash == -1) ? lowerEntryName : lowerEntryName.substring(lastSlash + 1);
                 if (fileName.contains(searchTerm)) {
+                    CrashAssistantApp.LOGGER.warn("Found class " + fileName + " in " + entryName);
                     return true;
                 }
             }

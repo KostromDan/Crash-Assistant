@@ -5,27 +5,27 @@
 - Forge coremod: Returned launch of our process to a constructor (to the first possible point) instead of
   `initialize()`. This was done earlier because some needed params were unavailable that early. But I've found a way to
   parse them. So now I reverted that old change.
-- Fixed rare issue with non-ASCII paths causing Crash Assistant not to start.
-- Removed CrashAssistantAgent and refactored classpath handling to improve stability on non-ASCII paths.
-- `TerminatedProcessesFinder`: Fixed handling of non-standard datetime formats; Which caused PS cmd ignoring time filter
-  and grabbing all available event errors instead of 15 seconds.
 - Added Auto-Fix option for the Integrated GPU warning. Now can fix the issue with just one click.
 - `IntelChipBugWarning`: Added microcode version diagnostics and improved UI/wording.
   Now notifies users if their current microcode version is affected or not.
-- New log analyses:
+- New log analysis:
     - `LegacyTooManyIds` - Too many ids on 1.12.2 and below.
-    - `NeoForgeVersion1_20_1` - Notifies that neo on 1.20.1 is abandoned and switching to Forge is an official
-      recommendation on that version.
-- Redesigned GUI analysis, transformed `CreateDependenciesAnalysisGUI` to be able to add new analysis easily and fast.
+    - `NeoForgeVersion1_20_1` - Notifies that Neo on 1.20.1 is abandoned and switching to Forge is an official
+      recommendation from Neo on that version.
+- Redesigned GUI analysis, transformed `CreateDependencies` to be able to add new analysis easily and fast.
 - New GUI analysis tools:
     - `MCreator Mod Detector` - Detects MCreator mods.
     - `Epic Fight mod addons compatibility` - Same as `Create mod addons compatibility` but for Epic Fight mods.
     - `Package/Class Finder` - Helps to find from which mod class or package came.
-- 1.12.2 and earlier: Improved OutOfMemory recommendations. Recommending available mods on that version.
+- 1.12.2 and earlier: Improved `OutOfMemory` analysis recommendations. Now recommending available mods on that version.
 - Prevented a Crash Assistant mod file being locked while the crash assistant is running.
-- Improved handling and cleanup for gpu-detect-jni.dll to prevent rubbishing local folder.
 - Localization: Added missing, fixed outdated and sorted keys across en, ru, it, es, zh;
 - Jvm.dll analysis: Added one more possible reason of this.
+- Improved handling and cleanup for gpu-detect-jni.dll to prevent rubbishing local folder.
+- Fixed rare issue with non-ASCII paths causing Crash Assistant not to start.
+- Removed CrashAssistantAgent and refactored classpath handling to improve stability on non-ASCII paths.
+- `TerminatedProcessesFinder`: Fixed handling of non-standard datetime formats; Which caused PS cmd ignoring time filter
+  and grabbing all available event errors instead of 15 seconds.
 - Fixed mod on Quilt mod-loader wan't working since some version due to bad QuiltZipPath implementation in the loader.
 - Small fixes, formatting cleanups, and internal improvements.
 

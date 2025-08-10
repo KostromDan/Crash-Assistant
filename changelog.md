@@ -16,6 +16,11 @@
     - `LegacyTooManyIds` - Too many ids on 1.12.2 and below.
     - `NeoForgeVersion1_20_1` - Notifies that neo on 1.20.1 is abandoned and switching to Forge is an official
       recommendation on that version.
+- Redesigned GUI analysis, transformed `CreateDependenciesAnalysisGUI` to be able to add new analysis easily and fast.
+- New GUI analysis tools:
+    - `MCreator Mod Detector` - Detects MCreator mods.
+    - `Epic Fight mod addons compatibility` - Same as `Create mod addons compatibility` but for Epic Fight mods.
+    - `Package/Class Finder` - Helps to find from which mod class or package came.
 - 1.12.2 and earlier: Improved OutOfMemory recommendations. Recommending available mods on that version.
 - Prevented a Crash Assistant mod file being locked while the crash assistant is running.
 - Improved handling and cleanup for gpu-detect-jni.dll to prevent rubbishing local folder.

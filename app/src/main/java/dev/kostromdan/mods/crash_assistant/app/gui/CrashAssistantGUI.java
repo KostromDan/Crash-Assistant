@@ -2,7 +2,10 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
-import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CreateDependencies;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.PackageFinderGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateDependenciesAnalysisGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.EpicFightDependenciesAnalysisGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorGUI;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
@@ -207,9 +210,21 @@ public class CrashAssistantGUI {
         fileMenu.add(openModpackFolderItem);
 
         // Analysis menu items
-        JMenuItem analysisItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.create_dependencies"));
-        analysisItem.addActionListener(e -> CreateDependencies.showCreateAnalysisDialog(frame));
-        analysisMenu.add(analysisItem);
+        JMenuItem createAnalysisItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.create_dependencies"));
+        createAnalysisItem.addActionListener(e -> CreateDependenciesAnalysisGUI.showCreateAnalysisDialog(frame));
+        analysisMenu.add(createAnalysisItem);
+
+        JMenuItem epicFightAnalysisItem = new JMenuItem("Epic Fight mod addons compatibility");
+        epicFightAnalysisItem.addActionListener(e -> EpicFightDependenciesAnalysisGUI.showEpicFightAnalysisDialog(frame));
+        analysisMenu.add(epicFightAnalysisItem);
+
+        JMenuItem mcreatorDetectorItem = new JMenuItem("MCreator Mod Detector");
+        mcreatorDetectorItem.addActionListener(e -> MCreatorModDetectorGUI.showMCreatorModDetectorDialog(frame));
+        analysisMenu.add(mcreatorDetectorItem);
+
+        JMenuItem packageFinderItem = new JMenuItem("Package/Class Finder");
+        packageFinderItem.addActionListener(e -> PackageFinderGUI.showPackageFinderDialog(frame));
+        analysisMenu.add(packageFinderItem);
 
         // Privacy menu items
         JMenuItem logsPrivacyItem = new JMenuItem(LanguageProvider.get("gui.menu.privacy.logs_info"));

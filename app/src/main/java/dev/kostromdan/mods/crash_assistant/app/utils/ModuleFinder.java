@@ -18,12 +18,23 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ModuleFinder {
+    public enum SearchMode {
+        PACKAGE,
+        CLASS_OR_PACKAGE
+    }
+
     public static List<String> findJarsContainingEntries(List<String> packagePrefixes, Path jarPath) {
-        List<String> pathPrefixes = packagePrefixes.stream()
-                .map(ModuleFinder::normalizeModuleName)
+        return findJarsContainingEntries(packagePrefixes, jarPath, SearchMode.PACKAGE);
+    }
+
+    public static List<String> findJarsContainingEntries(List<String> searchTerms, Path jarPath, SearchMode mode) {
+        List<String> searchPrefixes = searchTerms.stream()
+                .map(term -> mode == SearchMode.PACKAGE ? normalizeModuleName(term) : term.toLowerCase())
                 .collect(Collectors.toList());
+
         List<String> results = new ArrayList<>();
         String topName = jarPath.getFileName().toString();
         try (JarFile jarFile = new JarFile(jarPath.toFile())) {
@@ -32,9 +43,10 @@ public class ModuleFinder {
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 String name = entry.getName();
-                if (!matchedTop) {
-                    for (String prefix : pathPrefixes) {
-                        if (normalizeModuleName(name).startsWith(prefix)) {
+
+                if (!matchedTop && !entry.isDirectory()) {
+                    for (String prefix : searchPrefixes) {
+                        if (matches(name, prefix, mode)) {
                             results.add(topName);
                             matchedTop = true;
                             break;
@@ -45,26 +57,28 @@ public class ModuleFinder {
                     JarInJarHelper.LOGGER.warn("Found module-info.class in " + topName);
                 }
                 if (!entry.isDirectory() && name.endsWith(".jar")) {
-                    processNestedJar(name,
+                    processNestedJar(
                             () -> readAllBytes(jarFile.getInputStream(entry)),
-                            pathPrefixes,
+                            searchPrefixes,
                             topName + "!/" + name,
-                            results);
+                            results,
+                            mode);
                 }
             }
         } catch (IOException e) {
+            // Suppress errors
         }
         return results;
     }
+
 
     public static List<String> findJarsInFolderAsync(List<String> packagePrefixes, LinkedHashSet<Mod> mods) {
         Path modsFolderPath = Paths.get("mods");
         ExecutorService executor = Executors.newWorkStealingPool();
 
         Map<String, Path> jarMap = new HashMap<>();
-        try {
-            Files.walk(modsFolderPath)
-                    .filter(path -> path.toString().endsWith(".jar"))
+        try (Stream<Path> stream = Files.walk(modsFolderPath)) {
+            stream.filter(path -> path.toString().endsWith(".jar"))
                     .forEach(jarPath -> jarMap.put(jarPath.getFileName().toString(), jarPath));
         } catch (IOException e) {
             executor.shutdown();
@@ -87,7 +101,7 @@ public class ModuleFinder {
         for (CompletableFuture<List<String>> task : tasks) {
             try {
                 allResults.addAll(task.get());
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
         }
 
@@ -95,7 +109,7 @@ public class ModuleFinder {
         return allResults;
     }
 
-    private static void processNestedJar(String entryName, ByteSupplier supplier, List<String> pathPrefixes, String containerName, List<String> results) {
+    private static void processNestedJar(ByteSupplier supplier, List<String> searchPrefixes, String containerName, List<String> results, SearchMode mode) {
         try {
             byte[] data = supplier.get();
             try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(data))) {
@@ -106,9 +120,9 @@ public class ModuleFinder {
                     if (n.equals("module-info.class")) {
                         JarInJarHelper.LOGGER.warn("Found module-info.class in " + containerName);
                     }
-                    if (!matched) {
-                        for (String prefix : pathPrefixes) {
-                            if (normalizeModuleName(n).startsWith(prefix)) {
+                    if (!matched && !ne.isDirectory()) {
+                        for (String prefix : searchPrefixes) {
+                            if (matches(n, prefix, mode)) {
                                 results.add(containerName);
                                 matched = true;
                                 break;
@@ -116,11 +130,12 @@ public class ModuleFinder {
                         }
                     }
                     if (!ne.isDirectory() && n.endsWith(".jar")) {
-                        processNestedJar(n,
+                        processNestedJar(
                                 () -> readAllBytes(jis),
-                                pathPrefixes,
+                                searchPrefixes,
                                 containerName + "!/" + n,
-                                results);
+                                results,
+                                mode);
                     }
                 }
             }
@@ -128,9 +143,17 @@ public class ModuleFinder {
         }
     }
 
+    private static boolean matches(String entryName, String searchTerm, SearchMode mode) {
+        if (mode == SearchMode.PACKAGE) {
+            return normalizeModuleName(entryName).startsWith(searchTerm);
+        } else { // CLASS_OR_PACKAGE
+            return entryName.toLowerCase().contains(searchTerm);
+        }
+    }
+
     private static byte[] readAllBytes(InputStream in) throws IOException {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        byte[] tmp = new byte[4096];
+        byte[] tmp = new byte[8192];
         int r;
         while ((r = in.read(tmp)) != -1) buf.write(tmp, 0, r);
         return buf.toByteArray();

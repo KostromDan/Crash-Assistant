@@ -40,7 +40,7 @@
     "gui.incompatible_mod": "发现不兼容模组 ($LANG.gui.window_name$)",
     "gui.integrated_gpu": "集成显卡警告 ($LANG.gui.window_name$)",
     "gui.integrated_gpu_autofix_button": "自动修复",
-    "gui.integrated_gpu_autofix_confirm_message": "这将执行以下PowerShell命令，以配置Windows为此Java实例始终使用独立显卡。\n\n<b>命令:</b>\n$COMMAND$\n\n此操作不需要管理员权限，仅影响当前用户的设置。\n您想继续吗？",
+    "gui.integrated_gpu_autofix_confirm_message": "这将执行以下PowerShell命令，以配置Windows为此Java实例始终使用独立显卡。这与您通过Windows GUI按照说明操作的效果完全相同。因此，使用它是安全的——它不会损坏任何东西或导致不必要的更改。\n\n<b>命令:</b>\n$COMMAND$\n\n此操作不需要管理员权限，仅影响当前用户的设置。\n您想继续吗？",
     "gui.integrated_gpu_autofix_confirm_title": "自动修复确认",
     "gui.integrated_gpu_autofix_done": "已完成！",
     "gui.integrated_gpu_autofix_failure": "自动修复失败。请按照手动指南操作。\n错误: $ERROR$",

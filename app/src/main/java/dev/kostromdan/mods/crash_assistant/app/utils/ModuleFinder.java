@@ -72,8 +72,12 @@ public class ModuleFinder {
         return results;
     }
 
-
     public static List<String> findJarsInFolderAsync(List<String> packagePrefixes, LinkedHashSet<Mod> mods) {
+        return findJarsInFolderAsync(packagePrefixes, mods, SearchMode.PACKAGE);
+    }
+
+
+    public static List<String> findJarsInFolderAsync(List<String> packagePrefixes, LinkedHashSet<Mod> mods, SearchMode mode) {
         Path modsFolderPath = Paths.get("mods");
         ExecutorService executor = Executors.newWorkStealingPool();
 
@@ -91,7 +95,7 @@ public class ModuleFinder {
             CompletableFuture<List<String>> task = CompletableFuture.supplyAsync(() -> {
                 Path jarPath = jarMap.get(mod.getJarName());
                 if (jarPath != null) {
-                    return findJarsContainingEntries(packagePrefixes, jarPath);
+                    return findJarsContainingEntries(packagePrefixes, jarPath, mode);
                 }
                 return new ArrayList<>();
             }, executor);

@@ -9,7 +9,9 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import javax.swing.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PackageFinderGUI extends AnalysisGUIBase {
@@ -32,8 +34,7 @@ public class PackageFinderGUI extends AnalysisGUIBase {
 
         String input = (String) JOptionPane.showInputDialog(
                 parent,
-                "Enter a package (e.g.`org.mozilla.javascript`) or class name (e.g. `IMPConfig`) to search for inside mods (case-insensitive):",
-                "Package/Class Finder",
+                "Enter a package or class name to search for inside mods (case-insensitive).\nSupported formats:\n- package name e.g. \"org.mozilla.javascript\"\n- class name e.g. \"IMPConfig\" or \"OkHttpClient$Builder\"\n- class name with package e.g. \"org.mozilla.javascript.BoundFunction\"", "Package/Class Finder",
                 JOptionPane.PLAIN_MESSAGE,
                 null,
                 null,

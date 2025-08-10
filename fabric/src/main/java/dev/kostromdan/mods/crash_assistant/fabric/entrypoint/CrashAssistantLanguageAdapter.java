@@ -172,7 +172,6 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
 
             LibrariesJarLocator.setupLoaderJarName(FabricLoader.class);
             JarInJarHelper.launchCrashAssistantApp(launchTarget);
-            JarInJarHelper.checkForIncompatibleMods(true);
         }
     }
 

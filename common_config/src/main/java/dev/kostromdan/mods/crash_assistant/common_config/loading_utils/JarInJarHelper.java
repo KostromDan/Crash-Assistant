@@ -121,6 +121,7 @@ public class JarInJarHelper {
             Process crashAssistantAppProcess = crashAssistantAppProcessBuilder.start();
             ChildProcessLogger.captureOutput(crashAssistantAppProcess);
             ProblematicModsConfig.crashIfProblematicMod();
+            JarInJarHelper.checkForIncompatibleMods(true);
         } catch (Throwable e) {
             LOGGER.error("Error while launching GUI: ", e);
         }

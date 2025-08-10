@@ -36,7 +36,6 @@ public class CrashAssistantTransformationService implements ITransformationServi
             PlatformHelp.minecraftVersion = earlyMinecraftVersion;
             LibrariesJarLocator.setupLoaderJarName(VersionInfo.class);
             JarInJarHelper.launchCrashAssistantApp(earlyLaunchTarget);
-            JarInJarHelper.checkForIncompatibleMods(true);
             JarInJarHelper.checkDuplicatedCrashAssistantMod(true);
         } catch (Throwable throwable) {
             LOGGER.error("A critical error occurred during Crash Assistant setup: ", throwable);

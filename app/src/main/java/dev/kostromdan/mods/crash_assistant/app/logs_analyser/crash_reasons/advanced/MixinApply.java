@@ -16,6 +16,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static dev.kostromdan.mods.crash_assistant.app.utils.ModuleFinder.SearchMode.CLASS_OR_PACKAGE;
+
 public class MixinApply extends KnownCrashReason {
     public MixinApply() {
         super(
@@ -132,7 +134,7 @@ public class MixinApply extends KnownCrashReason {
                     if (line.contains(pattern)) {
                         String packageName = line.split(pattern)[1].split(" ")[0];
                         if (isInternalClass(packageName)) continue;
-                        List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(packageName), ModListUtils.getCurrentModList(true));
+                        List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(packageName), ModListUtils.getCurrentModList(true), CLASS_OR_PACKAGE);
                         if (jarsContainingModule.isEmpty()) continue;
                         return new MixinParsingResult(configs.iterator().next(), jarsContainingModule.get(0));
                     }

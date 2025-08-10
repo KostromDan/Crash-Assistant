@@ -191,7 +191,7 @@ public class CrashAssistantApp {
                         }
                         try {
                             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.IntegratedGPUWarning");
-                            Method method = clazz.getMethod("showIfNotDisabled", String.class, List.class);
+                            Method method = clazz.getMethod("show", String.class, List.class);
                             method.invoke(null, foundGPU.get().getName(), dedicatedGpus);
                         } catch (Exception e) {
                             LOGGER.error("Exception while showing IntegratedGPUWarning:", e);

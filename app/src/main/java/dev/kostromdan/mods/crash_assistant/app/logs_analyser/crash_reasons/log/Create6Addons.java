@@ -1,7 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.app.gui.CreateDependencies;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CreateDependencies;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;

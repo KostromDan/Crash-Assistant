@@ -1,9 +1,36 @@
+1.10.0 major update:
+
+- Fabric: Moved launch of our process from PreLaunchEntrypoint to a LanguageAdapter
+  to run from the first possible point.
+- Forge coremod: Returned launch of our process to a constructor (to the first possible point) instead of
+  `initialize()`. This was done earlier because some needed params were unavailable that early. But I've found a way to
+  parse them. So now I reverted that old change.
+- Fixed rare issue with non-ASCII paths causing Crash Assistant not to start.
+- Removed CrashAssistantAgent and refactored classpath handling to improve stability on non-ASCII paths.
+- `TerminatedProcessesFinder`: Fixed handling of non-standard datetime formats; Which caused PS cmd ignoring time filter
+  and grabbing all available event errors instead of 15 seconds.
+- Added Auto-Fix option for the Integrated GPU warning. Now can fix the issue with just one click.
+- `IntelChipBugWarning`: Added microcode version diagnostics and improved UI/wording.
+  Now notifies users if their current microcode version is affected or not.
+- New log analyses:
+    - `LegacyTooManyIds` - Too many ids on 1.12.2 and below.
+    - `NeoForgeVersion1_20_1` - Notifies that neo on 1.20.1 is abandoned and switching to Forge is an official
+      recommendation on that version.
+- 1.12.2 and earlier: Improved OutOfMemory recommendations. Recommending available mods on that version.
+- Prevented a Crash Assistant mod file being locked while the crash assistant is running.
+- Improved handling and cleanup for gpu-detect-jni.dll to prevent rubbishing local folder.
+- Localization: Added missing, fixed outdated and sorted keys across en, ru, it, es, zh;
+- Jvm.dll analysis: Added one more possible reason of this.
+- Fixed mod on Quilt mod-loader wan't working since some version due to bad QuiltZipPath implementation in the loader.
+- Small fixes, formatting cleanups, and internal improvements.
+
 1.9.15
 
 - Backported to 1.16.1, 1.16.2, 1.16.3, 1.16.4 (forge)
 - Backported to 1.17, 1.17.1, 1.18, 1.18.1, 1.19, 1.19.1 (forge+fabric)
 - Backported to 1.20.5 (neo)
-- Now Crash Assistant is available for all modloaders on every single version on 1.16.5 - 1.21.8 version range without gaps.
+- Now Crash Assistant is available for all modloaders on every single version on 1.16.5 - 1.21.8 version range without
+  gaps.
 - Small fixes and improvements.
 
 1.9.14

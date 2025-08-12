@@ -5,16 +5,17 @@
 - Forge coremod: Returned launch of our process to a constructor (to the first possible point) instead of
   `initialize()`. This was done earlier because some needed params were unavailable that early. But I've found a way to
   parse them. So now I reverted that old change.
-- Added Auto-Fix option for the Integrated GPU warning. Now can fix the issue with just one click.
+- Added Auto-Fix option for the Integrated GPU warning. Now can fix the issue with just one click instead of following a
+  quite complex guide for unexperienced users.
 - `IntelChipBugWarning`: Added microcode version diagnostics and improved UI/wording.
   Now notifies users if their current microcode version is affected or not.
 - New log analysis:
     - `LegacyTooManyIds` - Too many ids on 1.12.2 and below.
-    - `NeoForgeVersion1_20_1` - Notifies that Neo on 1.20.1 is abandoned and switching to Forge is an official
-      recommendation from Neo on that version.
+    - `NeoForgeVersion1_20_1` - Notifies that Neo on 1.20.1 is abandoned and causing many crashes and switching to Forge
+      is an official recommendation from Neo on that version.
 - Redesigned GUI analysis, transformed `CreateDependencies` to be able to add new analysis easily and fast.
 - New GUI analysis tools:
-    - `MCreator Mod Detector` - Detects MCreator mods.
+    - `MCreator Mod Detector` - Detects MCreator mods. Was already in `modlist.txt`, but now as sep GUI tool.
     - `Epic Fight mod addons compatibility` - Same as `Create mod addons compatibility` but for Epic Fight mods.
     - `Package/Class Finder` - Helps to find from which mod class or package came.
 - 1.12.2 and earlier: Improved `OutOfMemory` analysis recommendations. Now recommending available mods on that version.

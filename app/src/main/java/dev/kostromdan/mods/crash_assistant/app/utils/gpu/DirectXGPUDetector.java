@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.utils.gpu;
 
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,6 +12,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Utility class for detecting GPUs and their types using DirectX.
@@ -38,7 +41,7 @@ public class DirectXGPUDetector {
             if (!directory.exists()) {
                 directory.mkdirs();
             }
-            String fileName = "gpu_detect" + System.currentTimeMillis() + ".cs";
+            String fileName = Objects.toString(Boot.parentPID) + "_" + Boot.parentStarted + "_gpu_detect.cs";
             csharpFile = new File(directory, fileName);
 
             // 3. Write the loaded C# code to the temporary file

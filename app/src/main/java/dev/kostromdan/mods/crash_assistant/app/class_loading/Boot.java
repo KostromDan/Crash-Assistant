@@ -198,10 +198,10 @@ public class Boot {
             pb.redirectErrorStream(true);
             Process process = pb.start();
 
-            boolean finished = process.waitFor(5000, TimeUnit.MILLISECONDS);
+            boolean finished = process.waitFor(10000, TimeUnit.MILLISECONDS);
             if (!finished) {
                 process.destroyForcibly();
-                throw new RuntimeException("GPUDetector process reached timeout of 5 seconds and was killed.");
+                throw new RuntimeException("GPUDetector process reached timeout of 10 seconds and was killed.");
             }
 
             int exitCode = process.exitValue();

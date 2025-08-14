@@ -106,7 +106,7 @@ public class CrashAssistantApp {
         } catch (IOException ignored) {
         }
         try {
-            Files.deleteIfExists(localFolder.resolve(currentProcessData + "_gpu_detect_jni.dll"));
+            Files.deleteIfExists(localFolder.resolve(currentProcessData + "_gpu_detect.cs"));
         } catch (IOException ignored) {
         }
 

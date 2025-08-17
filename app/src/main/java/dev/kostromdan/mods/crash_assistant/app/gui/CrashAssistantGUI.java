@@ -214,15 +214,15 @@ public class CrashAssistantGUI {
         createAnalysisItem.addActionListener(e -> CreateDependenciesAnalysisGUI.showCreateAnalysisDialog(frame));
         analysisMenu.add(createAnalysisItem);
 
-        JMenuItem epicFightAnalysisItem = new JMenuItem("Epic Fight mod addons compatibility");
+        JMenuItem epicFightAnalysisItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.epic_fight_addons_compatibility"));
         epicFightAnalysisItem.addActionListener(e -> EpicFightDependenciesAnalysisGUI.showEpicFightAnalysisDialog(frame));
         analysisMenu.add(epicFightAnalysisItem);
 
-        JMenuItem mcreatorDetectorItem = new JMenuItem("MCreator Mod Detector");
+        JMenuItem mcreatorDetectorItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.mcreator_mod_detector"));
         mcreatorDetectorItem.addActionListener(e -> MCreatorModDetectorGUI.showMCreatorModDetectorDialog(frame));
         analysisMenu.add(mcreatorDetectorItem);
 
-        JMenuItem packageFinderItem = new JMenuItem("Package/Class Finder");
+        JMenuItem packageFinderItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.package_class_finder"));
         packageFinderItem.addActionListener(e -> PackageFinderGUI.showPackageFinderDialog(frame));
         analysisMenu.add(packageFinderItem);
 

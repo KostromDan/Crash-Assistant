@@ -1,12 +1,14 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies;
 
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+
 import javax.swing.*;
 import java.util.function.Predicate;
 
 public class EpicFightDependenciesAnalysisGUI extends DependenciesAnalysisGUIBase {
 
     public EpicFightDependenciesAnalysisGUI(JFrame parent) {
-        super(parent, "Epic Fight Dependencies Analysis", "Wait for analysis to finish.\nTry removing/updating/downgrading all <font color='red'>problematic mods</font> detected below to match the current <font color='#0000FF'>Epic Fight mod</font> version.");
+        super(parent, LanguageProvider.get("gui.analysis.epicfight.title"), LanguageProvider.get("gui.analysis.epicfight.header"));
     }
 
     public static void showEpicFightAnalysisDialog(JFrame parent) {

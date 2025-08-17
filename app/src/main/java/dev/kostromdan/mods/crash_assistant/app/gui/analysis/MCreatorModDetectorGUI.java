@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
@@ -12,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MCreatorModDetectorGUI extends AnalysisGUIBase {
 
     public MCreatorModDetectorGUI(JFrame parent) {
-        super(parent, "MCreator Mod Detector", "This tool scans for mods made with MCreator.");
+        super(parent, LanguageProvider.get("gui.menu.analysis.mcreator_mod_detector"), LanguageProvider.get("gui.analysis.mcreator_detector.header"));
     }
 
     public static void showMCreatorModDetectorDialog(JFrame parent) {
@@ -32,7 +33,7 @@ public class MCreatorModDetectorGUI extends AnalysisGUIBase {
             executor.submit(() -> {
                 if (isCancelled) return;
 
-                SwingUtilities.invokeLater(() -> currentJarLabel.setText("Current mod: " + mod.getJarName()));
+                SwingUtilities.invokeLater(() -> currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + mod.getJarName()));
 
                 if (Boolean.TRUE.equals(mod.IsMCreator())) {
                     mcreatorMods.add(mod);
@@ -57,9 +58,11 @@ public class MCreatorModDetectorGUI extends AnalysisGUIBase {
         if (!isCancelled) {
             SwingUtilities.invokeLater(() -> {
                 if (mcreatorMods.isEmpty()) {
-                    appendStyledText("No MCreator mods found.\n", NORMAL_COLOR);
+                    appendStyledText(LanguageProvider.get("gui.analysis.mcreator_detector.no_mods"), NORMAL_COLOR);
                 } else {
-                    appendStyledText("Found " + mcreatorMods.size() + " MCreator mod(s):\n", NORMAL_COLOR);
+                    String msg = LanguageProvider.get("gui.analysis.mcreator_detector.found")
+                            .replace("$COUNT$", String.valueOf(mcreatorMods.size()));
+                    appendStyledText(msg, NORMAL_COLOR);
                     for (Mod mod : mcreatorMods) {
                         appendStyledText(mod.getJarName() + "\n", MOD_COLOR);
                     }
@@ -73,30 +76,22 @@ public class MCreatorModDetectorGUI extends AnalysisGUIBase {
     protected void addOkButton() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
-        JButton whyButton = new JButton("Why are MCreator mods often discouraged?");
+        JButton whyButton = new JButton(LanguageProvider.get("gui.analysis.mcreator_detector.why_button"));
         whyButton.addActionListener(e -> {
-            String infoMessage = "MCreator is a software used to create Minecraft mods without programming knowledge. "
-                    + "However, mods produced with it often have issues that can cause problems in larger modpacks:\n\n"
-                    + "- The generated code can be inefficient, sometimes wrapping and unwrapping code for no reason.\n"
-                    + "- It may use reflection unnecessarily, which can be slow and brittle.\n"
-                    + "- The generated code can sometimes cause issues with other mods, especially in complex areas like world generation.\n"
-                    + "- The code structure can be nonsensical, using nested classes and annotations in confusing ways.\n"
-                    + "- It often doesn't follow standard Forge or Fabric coding practices, making it harder for other developers to ensure compatibility.\n"
-                    + "- The code can be very difficult for a human to read and debug.\n"
-                    + "- If a crash occurs, or if a feature is needed that MCreator doesn't support, it can be very difficult for the author to fix or extend the mod without rewriting it from scratch.";
+            String infoMessage = LanguageProvider.get("gui.analysis.mcreator_detector.why_info");
 
             JEditorPane infoPane = dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI.getEditorPane(infoMessage, true, 500);
 
             JOptionPane.showMessageDialog(
                     dialog,
                     infoPane,
-                    "About MCreator Mods",
+                    LanguageProvider.get("gui.analysis.mcreator_detector.about_title"),
                     JOptionPane.INFORMATION_MESSAGE
             );
         });
         buttonPanel.add(whyButton);
 
-        JButton okButton = new JButton("OK");
+        JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
         okButton.addActionListener(e -> dialog.dispose());
         buttonPanel.add(okButton);
 

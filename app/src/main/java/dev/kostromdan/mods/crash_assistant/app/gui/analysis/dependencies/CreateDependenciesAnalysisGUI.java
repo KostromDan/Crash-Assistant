@@ -1,12 +1,14 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies;
 
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+
 import javax.swing.*;
 import java.util.function.Predicate;
 
 public class CreateDependenciesAnalysisGUI extends DependenciesAnalysisGUIBase {
 
     public CreateDependenciesAnalysisGUI(JFrame parent) {
-        super(parent, "Create Dependencies Analysis", "Wait for analysis to finish.\nTry removing/updating/downgrading all <font color='red'>problematic mods</font> detected below to match the current <font color='#0000FF'>Create mod</font> version.");
+        super(parent, LanguageProvider.get("gui.analysis.create_dependencies.title"), LanguageProvider.get("gui.analysis.create_dependencies.header"));
     }
 
     public static void showCreateAnalysisDialog(JFrame parent) {

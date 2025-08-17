@@ -34,9 +34,9 @@ public abstract class AnalysisGUIBase {
         headerLabel.setHorizontalAlignment(SwingConstants.LEFT);
 
         JPanel topPanel = new JPanel(new BorderLayout());
-        statusLabel = new JLabel("Analyzing mods...");
+        statusLabel = new JLabel(LanguageProvider.get("gui.analysis.analyzing_mods"));
         statusLabel.setHorizontalAlignment(SwingConstants.LEFT);
-        currentJarLabel = new JLabel("Current mod: None");
+        currentJarLabel = new JLabel(LanguageProvider.get("gui.analysis.current_mod") + " " + LanguageProvider.get("gui.analysis.none"));
         currentJarLabel.setHorizontalAlignment(SwingConstants.LEFT);
         progressBar = new JProgressBar(0, 100);
         progressBar.setValue(0);
@@ -97,7 +97,7 @@ public abstract class AnalysisGUIBase {
     }
 
     protected void addOkButton() {
-        JButton okButton = new JButton("OK");
+        JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
         okButton.addActionListener(e -> dialog.dispose());
         dialog.add(okButton, BorderLayout.SOUTH);
         dialog.revalidate();
@@ -109,8 +109,8 @@ public abstract class AnalysisGUIBase {
             if (!isCancelled) {
                 SwingUtilities.invokeLater(() -> {
                     addOkButton();
-                    statusLabel.setText("Analysis complete");
-                    currentJarLabel.setText("Current mod: None");
+                    statusLabel.setText(LanguageProvider.get("gui.analysis.analysis_complete"));
+                    currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + LanguageProvider.get("gui.analysis.none"));
                 });
             }
         }).start();

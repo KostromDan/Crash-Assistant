@@ -18,7 +18,7 @@ public interface IntelCorruptedProcessorChecker {
             // After this line: processors are not officially listed as affected,
             // but we've received reports indicating similar issues with these processors,
             // so they are considered affected.
-            "i9-14900hx"
+            "i9-14900hx", "i9-13950hx"
     ));
 
     static boolean isAffectedProcessor() {

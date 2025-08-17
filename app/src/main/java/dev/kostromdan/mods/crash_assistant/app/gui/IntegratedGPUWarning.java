@@ -171,18 +171,11 @@ public class IntegratedGPUWarning extends JFrame {
      * @return The PowerShell command as a single-line string.
      */
     public static String getGpuPreferenceCommand(String javaPath) {
-        // This PowerShell command modifies the Windows Registry to set a GPU preference.
-        // - & { ... }: A script block to ensure all commands run in the same scope.
-        // - try { ... } catch { ... }: Handles potential errors, returning a specific error message.
-        // - if (-not (Test-Path...)): Checks if the registry key exists and creates it if it doesn't.
-        // - Set-ItemProperty: The core cmdlet that creates or changes a registry value.
-        //   -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences': The key path. HKCU (HKEY_CURRENT_USER)
-        //     means this does not require administrator rights.
-        //   -Name '%s': The registry value's name, which is the full path to the executable.
-        //   -Value 'GpuPreference=2;': The data for the value. '2' stands for "High performance".
-        //   -Force: Ensures the key/value is created if it doesn't exist.
+        // PowerShell command to set GPU preference in Windows registry for Java executable
+        // This modifies the same registry values that Windows GUI changes when setting GPU preferences.
         return String.format(
-                "& { try { if (-not (Test-Path -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences')) { New-Item -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences' -Force | Out-Null; } Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences' -Name '%s' -Value 'GpuPreference=2;' -Force; return 'SUCCESS'; } catch { return \"ERROR: $($_.Exception.Message)\"; } }",
+                "& { try { if (-not (Test-Path -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences')) { New-Item -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences' -Force | Out-Null; } " +
+                        "Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences' -Name '%s' -Value 'GpuPreference=2;' -Force; return 'SUCCESS'; } catch { return \"ERROR: $($_.Exception.Message)\"; } }",
                 javaPath
         );
     }

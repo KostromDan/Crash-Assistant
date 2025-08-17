@@ -209,6 +209,8 @@ public class IntelChipBugWarning {
 
         try {
             try {
+                // PowerShell command to retrieve an Intel processor microcode version from the Windows registry.
+                // This is needed to determine if the processor has vulnerable microcode which is corrupting the CPU.
                 String command = ("$ErrorActionPreference = 'Continue'; " +
                         "(('0x{0:X}' -f [BitConverter]::ToUInt32((Get-ItemProperty 'HKLM:\\HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0' | Select-Object -ExpandProperty 'Update Revision'),0))) " +
                         "*>&1 | Out-String -Stream | Out-File \"$FILE_NAME$\" -Encoding UTF8 -NoNewline")

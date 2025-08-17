@@ -130,7 +130,7 @@ public class Boot {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            String errorDetails = "CrashAssistantApp process failed to start due to errors bellow:\n" +
+            String errorDetails = "CrashAssistantApp process failed to start due to errors below:\n" +
                     "Crash Assistant won't work.\n" +
                     "This won't cause any issues to the main game process, just Crash Assistant won't popup after crash.\n" +
                     "Please report to https://github.com/KostromDan/Crash-Assistant/issues\n"

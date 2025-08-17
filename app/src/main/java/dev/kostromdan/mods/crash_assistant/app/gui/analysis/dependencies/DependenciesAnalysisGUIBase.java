@@ -74,7 +74,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
             });
             return;
         }
-        CrashAssistantApp.LOGGER.info("Using jdeps at: \"" + jdepsPath + "\"");
+        CrashAssistantApp.LOGGER.info("Using jdeps at: \"{}\"", jdepsPath);
 
         Mod targetMod = targetMods.get(0);
         Set<String> currentTargetClasses = getCurrentTargetClasses(targetMod);

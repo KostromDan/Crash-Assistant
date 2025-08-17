@@ -2,32 +2,38 @@
 
 - Fabric: Moved launch of our process from PreLaunchEntrypoint to a LanguageAdapter
   to run from the first possible point.
+  Also fixes Crash Assistant not starting issue if crash happened in some MixinConfigPlugin(before PreLaunchEntrypoint).
 - Forge coremod: Returned launch of our process to a constructor (to the first possible point) instead of
   `initialize()`. This was done earlier because some needed params were unavailable that early. But I've found a way to
   parse them. So now I reverted that old change.
 - Added Auto-Fix option for the Integrated GPU warning. Now can fix the issue with just one click instead of following a
-  quite complex guide for unexperienced users.
+  quite complex guide for inexperienced users.
 - `IntelChipBugWarning`: Added microcode version diagnostics and improved UI/wording.
   Now notifies users if their current microcode version is affected or not.
+- Marked `i9-13950hx` and `i9-13980hx` as affected for `IntelChipBugWarning`, since we've seen crashes caused by them.
+- Replaced `gpu-detect-jni.dll` GPU detection with C# based detection to prevent including DLLs in mod.
+  We're shipping C# source code, which compiles at runtime using `.NET` features available in any Win 10+ system.
 - New log analysis:
     - `LegacyTooManyIds` - Too many ids on 1.12.2 and below.
     - `NeoForgeVersion1_20_1` - Notifies that Neo on 1.20.1 is abandoned and causing many crashes and switching to Forge
       is an official recommendation from Neo on that version.
+- Added handling for missing or corrupted mixin configuration detection in `MixinApply` log analysis.
 - Redesigned GUI analysis, transformed `CreateDependencies` to be able to add new analysis easily and fast.
+- Fixed `CreateDependencies` wasn't localized and had many hardcoded strings.
 - New GUI analysis tools:
-    - `MCreator Mod Detector` - Detects MCreator mods. Was already in `modlist.txt`, but now as sep GUI tool.
+    - `MCreator Mod Detector` - Detects MCreator mods. Was already in `modlist.txt`, but now as separate GUI tool.
     - `Epic Fight mod addons compatibility` - Same as `Create mod addons compatibility` but for Epic Fight mods.
-    - `Package/Class Finder` - Helps to find from which mod class or package came.
+    - `Package/Class Finder` - Helps to find from which mod a class or package came.
+- Now suggesting to use `Epic Fight mod addons compatibility` in `EpicFightAddons` log analysis.
 - 1.12.2 and earlier: Improved `OutOfMemory` analysis recommendations. Now recommending available mods on that version.
 - Prevented a Crash Assistant mod file being locked while the crash assistant is running.
 - Localization: Added missing, fixed outdated and sorted keys across en, ru, it, es, zh;
-- Jvm.dll analysis: Added one more possible reason of this.
-- Improved handling and cleanup for gpu-detect-jni.dll to prevent rubbishing local folder.
-- Fixed rare issue with non-ASCII paths causing Crash Assistant not to start.
+- Jvm.dll analysis: Added one more possible reason for this.
+- Fixed issue with non-ASCII paths causing Crash Assistant not to start. E.g., Cyrillic or Chinese symbols in the path.
 - Removed CrashAssistantAgent and refactored classpath handling to improve stability on non-ASCII paths.
-- `TerminatedProcessesFinder`: Fixed handling of non-standard datetime formats; Which caused PS cmd ignoring time filter
-  and grabbing all available event errors instead of 15 seconds.
-- Fixed mod on Quilt mod-loader wan't working since some version due to bad QuiltZipPath implementation in the loader.
+- `TerminatedProcessesFinder`: Fixed handling of non-standard datetime formats, which caused PS cmd to ignore
+  time filter and grab all available event errors instead of just those from the last 15 seconds.
+- Fixed mod on Quilt mod-loader wasn't working since some version due to bad QuiltZipPath implementation in the loader.
 - Small fixes, formatting cleanups, and internal improvements.
 
 1.9.15

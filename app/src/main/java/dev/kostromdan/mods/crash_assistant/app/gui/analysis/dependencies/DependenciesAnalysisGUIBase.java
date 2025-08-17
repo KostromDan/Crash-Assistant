@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.AnalysisGUIBase;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -49,19 +50,19 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
         if (targetMods.isEmpty()) {
             SwingUtilities.invokeLater(() -> {
-                appendStyledText("No " + getModName() + " mod found.\n", NORMAL_COLOR);
+                String msg = LanguageProvider.get("gui.analysis.dependencies.no_mod")
+                        .replace("$MOD$", getModName());
+                appendStyledText(msg, NORMAL_COLOR);
             });
             return;
         }
 
         if (targetMods.size() > 1) {
-            String message = "Multiple " + getModName() + " mods found: " +
-                    targetMods.stream().map(Mod::getJarName).collect(Collectors.joining(", ")) + "\n" +
-                    "Analysis cannot proceed with multiple " + getModName() + " mods.\n" +
-                    "Please fix the duplicated mods issue first.\n";
-            SwingUtilities.invokeLater(() -> {
-                appendStyledText(message, ERROR_COLOR);
-            });
+            String list = targetMods.stream().map(Mod::getJarName).collect(Collectors.joining(", "));
+            String message = LanguageProvider.get("gui.analysis.dependencies.multiple_mods")
+                    .replace("$MOD$", getModName())
+                    .replace("$LIST$", list);
+            SwingUtilities.invokeLater(() -> appendStyledText(message, ERROR_COLOR));
             return;
         }
 
@@ -84,7 +85,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
         if (totalMods == 0) {
             SwingUtilities.invokeLater(() -> {
-                appendStyledText("No other mods to analyze.\n", NORMAL_COLOR);
+                appendStyledText(LanguageProvider.get("gui.analysis.dependencies.no_other_mods"), NORMAL_COLOR);
             });
             return;
         }
@@ -97,7 +98,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
             executor.submit(() -> {
                 if (isCancelled) return;
 
-                SwingUtilities.invokeLater(() -> currentJarLabel.setText("Current mod: " + mod.getJarName()));
+                SwingUtilities.invokeLater(() -> currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + mod.getJarName()));
                 Process process = null;
                 HashSet<String> deps = new HashSet<>();
                 try {
@@ -151,11 +152,14 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
                     SwingUtilities.invokeLater(() -> {
                         if (!isCancelled) {
-                            appendStyledText("Found ", NORMAL_COLOR);
+                            appendStyledText(LanguageProvider.get("gui.analysis.dependencies.found") + " ", NORMAL_COLOR);
                             appendStyledText(String.valueOf(depCount), ERROR_COLOR);
-                            appendStyledText(" " + getModName() + " mod class dependency(ies) in ", NORMAL_COLOR);
+                            appendStyledText(
+                                    LanguageProvider.get("gui.analysis.dependencies.dependencies_in")
+                                            .replace("$MOD$", getModName()),
+                                    NORMAL_COLOR);
                             appendStyledText(jarName, ERROR_COLOR);
-                            appendStyledText(", which are missing from the current ", NORMAL_COLOR);
+                            appendStyledText(LanguageProvider.get("gui.analysis.dependencies.missing_from_current"), NORMAL_COLOR);
                             appendStyledText(targetJarName, MOD_COLOR);
                             appendStyledText("\n", NORMAL_COLOR);
 
@@ -188,7 +192,10 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
             SwingUtilities.invokeLater(() -> {
                 if (missingClassesMap.isEmpty()) {
                     String targetJarName = targetMod.getJarName();
-                    appendStyledText("Haven't found in any mod, " + getModName() + " mod class dependency(ies), which are missing from the current ", NORMAL_COLOR);
+                    appendStyledText(
+                            LanguageProvider.get("gui.analysis.dependencies.none_missing_start")
+                                    .replace("$MOD$", getModName()),
+                            NORMAL_COLOR);
                     appendStyledText(targetJarName, MOD_COLOR);
                     appendStyledText("\n", NORMAL_COLOR);
 
@@ -198,7 +205,10 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                     );
                     CrashAssistantApp.LOGGER.info(logMessage);
                 } else {
-                    appendStyledText("\n\n\nDetailed walkthrough of mods which rely on missing " + getModName() + " mod classes:\n", NORMAL_COLOR);
+                    appendStyledText(
+                            LanguageProvider.get("gui.analysis.dependencies.walkthrough")
+                                    .replace("$MOD$", getModName()),
+                            NORMAL_COLOR);
 
                     List<Mod> sortedMods = new ArrayList<>(missingClassesMap.keySet());
                     sortedMods.sort(Comparator.comparing(Mod::getJarName));
@@ -208,11 +218,14 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                         List<String> sortedClasses = new ArrayList<>(missingClasses);
                         Collections.sort(sortedClasses);
 
-                        appendStyledText("Mod: ", NORMAL_COLOR);
+                        appendStyledText(LanguageProvider.get("gui.analysis.dependencies.mod_label"), NORMAL_COLOR);
                         appendStyledText(mod.getJarName(), ERROR_COLOR);
                         appendStyledText("\n", NORMAL_COLOR);
 
-                        appendStyledText("Missing classes of " + getModName() + ":\n", NORMAL_COLOR);
+                        appendStyledText(
+                                LanguageProvider.get("gui.analysis.dependencies.missing_classes")
+                                        .replace("$MOD$", getModName()),
+                                NORMAL_COLOR);
                         appendStyledText(String.join("\n", sortedClasses) + "\n\n", NORMAL_COLOR);
 
                         String logMessage = String.format(
@@ -399,18 +412,11 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
     private static class JdkWarningDialog extends JDialog {
         public JdkWarningDialog(JFrame parent, JDialog parentDialog) {
-            super(parent, "JDK Required", true);
+            super(parent, LanguageProvider.get("gui.analysis.dependencies.jdk_required_title"), true);
             setLayout(new BorderLayout());
 
-            String message = "<strong>JDK is required</strong> for analysis of jar files. <strong>JRE is not suitable</strong> for this!\n\n" +
-                    "We've tried JAVA_HOME, jdeps cmd and java used for launching game.\n\n" +
-                    "You have the following options:\n" +
-                    "1. Install JDK via winget (<strong>Oracle JDK 21</strong>)\n" +
-                    "2. Select an existing JDK installation directory\n" +
-                    "3. Close this dialog and install JDK manually from:\n" +
-                    "<a href=\"" + LinksProvider.ADOPTIUM_JDK.getLink() + "\">" + LinksProvider.ADOPTIUM_JDK.getLink() + "</a>\n" +
-                    "Make sure to select <strong>JAVA_HOME</strong> check box in the installation settings.\n\n\n" +
-                    "After any of this done, try to use this analysis again.";
+            String message = LanguageProvider.get("gui.analysis.dependencies.jdk_required_message")
+                    .replace("$ADOPTIUM_JDK_LINK$", LinksProvider.ADOPTIUM_JDK.getLink());
 
             JEditorPane textPane = CrashAssistantGUI.getEditorPane(message, true, 550);
             JScrollPane scrollPane = new JScrollPane(textPane);
@@ -419,15 +425,13 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
-            JButton installButton = new JButton("Install JDK via winget");
+            JButton installButton = new JButton(LanguageProvider.get("gui.analysis.dependencies.install_jdk_via_winget_button"));
             installButton.addActionListener(e -> {
                 try {
                     int option = JOptionPane.showConfirmDialog(
                             this,
-                            "Installing JDK using winget. A console window will open to show progress.\n" +
-                                    "Installation will start after clicking OK.\n\n" +
-                                    "After finished, try analysis again.",
-                            "Installing JDK",
+                            LanguageProvider.get("gui.analysis.dependencies.install_jdk_confirm_message"),
+                            LanguageProvider.get("gui.analysis.dependencies.install_jdk_title"),
                             JOptionPane.OK_CANCEL_OPTION,
                             JOptionPane.INFORMATION_MESSAGE
                     );
@@ -442,17 +446,21 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                         parentDialog.dispose();
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Error installing JDK: " + ex.getMessage(), "Installation Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this,
+                            LanguageProvider.get("gui.analysis.dependencies.install_jdk_error")
+                                    .replace("$ERROR$", ex.getMessage()),
+                            LanguageProvider.get("gui.analysis.dependencies.installation_error_title"),
+                            JOptionPane.ERROR_MESSAGE);
                 }
             });
             buttonPanel.add(installButton);
 
-            JButton selectButton = new JButton("Select JDK");
+            JButton selectButton = new JButton(LanguageProvider.get("gui.analysis.dependencies.select_jdk_button"));
             selectButton.addActionListener(e -> {
-                JOptionPane.showMessageDialog(this, "Please specify path to JDK directory.", "Select JDK", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, LanguageProvider.get("gui.analysis.dependencies.specify_jdk_path"), LanguageProvider.get("gui.analysis.dependencies.select_jdk_title"), JOptionPane.INFORMATION_MESSAGE);
                 JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                fileChooser.setDialogTitle("Select JDK Directory");
+                fileChooser.setDialogTitle(LanguageProvider.get("gui.analysis.dependencies.select_jdk_directory"));
                 fileChooser.setCurrentDirectory(new File("C:\\"));
                 fileChooser.setPreferredSize(new Dimension(600, 400));
 
@@ -460,7 +468,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                     File selectedFolder = fileChooser.getSelectedFile();
                     String jdkPath = selectedFolder.getAbsolutePath();
                     CrashAssistantLocalConfig.set("JDK_PATH", jdkPath);
-                    JOptionPane.showMessageDialog(this, "Success! Try analysis again.", "JDK Path Saved", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, LanguageProvider.get("gui.analysis.dependencies.success"), LanguageProvider.get("gui.analysis.dependencies.jdk_path_saved_title"), JOptionPane.INFORMATION_MESSAGE);
                     dispose();
                     if (parentDialog != null) {
                         parentDialog.dispose();
@@ -469,7 +477,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
             });
             buttonPanel.add(selectButton);
 
-            JButton closeButton = new JButton("Close");
+            JButton closeButton = new JButton(LanguageProvider.get("gui.close"));
             closeButton.addActionListener(e -> {
                 dispose();
                 if (parentDialog != null) {

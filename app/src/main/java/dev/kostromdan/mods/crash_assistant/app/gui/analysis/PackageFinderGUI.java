@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.utils.ModuleFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
@@ -19,7 +20,7 @@ public class PackageFinderGUI extends AnalysisGUIBase {
     private final String originalSearchTerm;
 
     public PackageFinderGUI(JFrame parent, String search) {
-        super(parent, "Package/Class Finder", "This tool scans mods to find which ones contain the specified package or class.\nThis can help identify which mod provides a specific resource.");
+        super(parent, LanguageProvider.get("gui.menu.analysis.package_class_finder"), LanguageProvider.get("gui.analysis.package_finder.header"));
         this.originalSearchTerm = search.trim();
         String term = originalSearchTerm;
         // If it's a class name with an extension, remove it for a broader search.
@@ -34,7 +35,8 @@ public class PackageFinderGUI extends AnalysisGUIBase {
 
         String input = (String) JOptionPane.showInputDialog(
                 parent,
-                "Enter a package or class name to search for inside mods (case-insensitive).\nSupported formats:\n- package name e.g. \"org.mozilla.javascript\"\n- class name e.g. \"IMPConfig\" or \"OkHttpClient$Builder\"\n- class name with package e.g. \"org.mozilla.javascript.BoundFunction\"", "Package/Class Finder",
+                LanguageProvider.get("gui.analysis.package_finder.input_message"),
+                LanguageProvider.get("gui.menu.analysis.package_class_finder"),
                 JOptionPane.PLAIN_MESSAGE,
                 null,
                 null,
@@ -59,7 +61,7 @@ public class PackageFinderGUI extends AnalysisGUIBase {
             executor.submit(() -> {
                 if (isCancelled) return;
 
-                SwingUtilities.invokeLater(() -> currentJarLabel.setText("Current mod: " + mod.getJarName()));
+                SwingUtilities.invokeLater(() -> currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + mod.getJarName()));
 
                 List<String> foundPaths;
                 try {
@@ -73,7 +75,9 @@ public class PackageFinderGUI extends AnalysisGUIBase {
 
                 if (!foundPaths.isEmpty()) {
                     if (foundCounter.getAndIncrement() == 0) {
-                        SwingUtilities.invokeLater(() -> appendStyledText("Found '" + originalSearchTerm + "' in the following location(s):\n\n", NORMAL_COLOR));
+                        String msg = LanguageProvider.get("gui.analysis.package_finder.found")
+                                .replace("$TERM$", originalSearchTerm);
+                        SwingUtilities.invokeLater(() -> appendStyledText(msg, NORMAL_COLOR));
                     }
                     List<String> finalFoundPaths = foundPaths;
                     SwingUtilities.invokeLater(() -> {
@@ -101,7 +105,9 @@ public class PackageFinderGUI extends AnalysisGUIBase {
 
         if (!isCancelled && foundCounter.get() == 0) {
             SwingUtilities.invokeLater(() -> {
-                appendStyledText("'" + originalSearchTerm + "' not found in any mod.\n", NORMAL_COLOR);
+                String msg = LanguageProvider.get("gui.analysis.package_finder.not_found")
+                        .replace("$TERM$", originalSearchTerm);
+                appendStyledText(msg, NORMAL_COLOR);
             });
         }
     }

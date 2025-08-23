@@ -247,6 +247,7 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "CurseForge: launcher_log.txt", Paths.get("../../Install", "launcher_log.txt")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../logs", "ftb-app-electron.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../logs", "PrismLauncher-0.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../logs", "ElyPrismLauncher-0.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "GDLauncher: main.log", Paths.get("../../../../", "main.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../", "MultiMC-0.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../", "PolyMC-0.log")));

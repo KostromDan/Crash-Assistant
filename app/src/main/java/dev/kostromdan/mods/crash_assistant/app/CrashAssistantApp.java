@@ -252,6 +252,8 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../", "MultiMC-0.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../", "PolyMC-0.log")));
 
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "Lunar: ichor-boot.log", Paths.get("logs", "ichor-boot.log")));
+
         FileUtils.getModifiedFiles(Paths.get("../../launcher_logs"), ".log").forEach(path -> {
             LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path));
         });

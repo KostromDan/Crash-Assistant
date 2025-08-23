@@ -37,6 +37,7 @@
 - `TerminatedProcessesFinder`: Fixed handling of non-standard datetime formats, which caused PS cmd to ignore
   time filter and grab all available event errors instead of just those from the last 15 seconds.
 - Fixed mod on Quilt mod-loader wasn't working since some version due to bad QuiltZipPath implementation in the loader.
+- Fixed mod not working on Lunar Client because Lunar was ignoring PreLaunchEntrypoint.
 - Fixed `ResourceLocationException` analysis wasn't triggered in some rare cases.
 - Small fixes, formatting cleanups, and internal improvements.
 

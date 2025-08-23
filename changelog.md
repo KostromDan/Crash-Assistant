@@ -17,6 +17,9 @@
     - `LegacyTooManyIds` - Too many ids on 1.12.2 and below.
     - `NeoForgeVersion1_20_1` - Notifies that Neo on 1.20.1 is abandoned and causing many crashes and switching to Forge
       is an official recommendation from Neo on that version.
+    - `ConnectorIncompatibleFabricMods` - Detects if tried to run fabric mod with connector, but's it's incompatible and
+      won't work. Suggests native forge alternatives if they exist. Currently, Sodium, Iris, Lithium.
+- Added new launcherlogs support: ElyPrism.
 - Added handling for missing or corrupted mixin configuration detection in `MixinApply` log analysis.
 - Redesigned GUI analysis, transformed `CreateDependencies` to be able to add new analysis easily and fast.
 - Fixed `CreateDependencies` wasn't localized and had many hardcoded strings.

@@ -133,6 +133,7 @@ public class LogAnalyser {
         if (reasonsRegistered) {
             return;
         }
+        registerKnownCrashReason(new ConnectorIncompatibleFabricMods());
         registerKnownCrashReason(new MixinApply());
         registerKnownCrashReason(new ModuleFind());
         registerKnownCrashReason(new ModuleResolution());

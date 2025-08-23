@@ -2,11 +2,22 @@ package dev.kostromdan.mods.crash_assistant.fabric.client;
 
 import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommands;
 import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
+import dev.kostromdan.mods.crash_assistant.fabric.entrypoint.CrashAssistantLanguageAdapter;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 
 public final class CrashAssistantFabricClient implements ClientModInitializer {
+
+
+    /**
+     * Lunar Client is ignoring LanguageAdapters, so we're setting up from here.
+     */
+    public CrashAssistantFabricClient() {
+        CrashAssistantLanguageAdapter.SetupRunner runner = new CrashAssistantLanguageAdapter.SetupRunner();
+        runner.run();
+    }
+
     @Override
     public void onInitializeClient() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {

@@ -44,6 +44,9 @@ public enum LinksProvider {
     CENSORED_ASM(() -> "https://www.curseforge.com/minecraft/mc-mods/lolasm"),
 
     EMBEDDIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/embeddium"),
+    OCULUS(() -> "https://www.curseforge.com/minecraft/mc-mods/oculus"),
+    RADIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/radium-reforged"),
+    CONNECTOR(() -> "https://www.curseforge.com/minecraft/mc-mods/sinytra-connector"),
     INDIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/indium"),
     FEATURE_RECYCLER(() -> "https://www.curseforge.com/minecraft/mc-mods/feature-recycler");
 

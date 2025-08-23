@@ -157,6 +157,8 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
     public static class SetupRunner implements Runnable {
         @Override
         public void run() {
+            if (Boolean.getBoolean("dev.kostromdan.mods.crash_assistant.startedFlag")) return;
+            System.setProperty("dev.kostromdan.mods.crash_assistant.startedFlag", "true");
             // This code now runs with a class loader that can see all its dependencies.
             String launchTarget = FabricLoader.getInstance().getEnvironmentType().toString();
             FabricLoader.getInstance().getModContainer("minecraft")

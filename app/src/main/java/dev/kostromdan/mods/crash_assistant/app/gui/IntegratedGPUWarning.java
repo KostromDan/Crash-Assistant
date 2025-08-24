@@ -96,6 +96,8 @@ public class IntegratedGPUWarning extends JFrame {
                                     JOptionPane.INFORMATION_MESSAGE
                             );
                             autoFixButton.setText(LanguageProvider.get("gui.integrated_gpu_autofix_done"));
+                            dontShowAgainCheck.setEnabled(false);
+                            dontShowAgainCheck.setSelected(false);
                         } else {
                             String failureMessage = LanguageProvider.get("gui.integrated_gpu_autofix_failure")
                                     .replace("$ERROR$", result);

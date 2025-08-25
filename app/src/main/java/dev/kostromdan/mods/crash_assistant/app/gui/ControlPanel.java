@@ -477,12 +477,19 @@ public class ControlPanel {
                     sb.append(ModListDiff.getFilePrefix());
                     sb.append(ModListDiff.getFirstString(true, true, link));
                     sb.append("\n```");
-                    if (CrashAssistantConfig.getBoolean("generated_message.color_message")) sb.append("ansi");
-                    sb.append("\n");
-                    sb.append(LanguageProvider.getMsgLang("gui.modlist_changed_label_msg")
-                            .replace("$ADDED_MODS_COUNT$", AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + AnsiColor.postfix)
-                            .replace("$REMOVED_MODS_COUNT$", AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + AnsiColor.postfix)
-                            .replace("$UPDATED_MODS_COUNT$", AnsiColor.BLUE.getColorPrefix() + modListDiff.getUpdatedMods().size() + AnsiColor.postfix));
+                    if (CrashAssistantConfig.getBoolean("generated_message.color_message")) {
+                        sb.append("ansi\n");
+                        sb.append(LanguageProvider.getMsgLang("gui.modlist_changed_label_msg")
+                                .replace("$ADDED_MODS_COUNT$", AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + AnsiColor.postfix)
+                                .replace("$REMOVED_MODS_COUNT$", AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + AnsiColor.postfix)
+                                .replace("$UPDATED_MODS_COUNT$", AnsiColor.BLUE.getColorPrefix() + modListDiff.getUpdatedMods().size() + AnsiColor.postfix));
+                    } else {
+                        sb.append("\n");
+                        sb.append(LanguageProvider.getMsgLang("gui.modlist_changed_label_msg")
+                                .replace("$ADDED_MODS_COUNT$",  Integer.toString(modListDiff.getAddedMods().size()))
+                                .replace("$REMOVED_MODS_COUNT$", Integer.toString(modListDiff.getRemovedMods().size()))
+                                .replace("$UPDATED_MODS_COUNT$", Integer.toString(modListDiff.getUpdatedMods().size())));
+                    }
                     sb.append("\n```");
                 } catch (ExecutionException | InterruptedException | UploadException e) {
                     CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);

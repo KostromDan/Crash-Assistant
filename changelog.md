@@ -8,6 +8,7 @@
   parse them. So now I reverted that old change.
 - Added Auto-Fix option for the Integrated GPU warning. Now can fix the issue with just one click instead of following a
   quite complex guide for inexperienced users.
+- Add clarification for desktop users regarding monitor cable and GPU connection in all translations.
 - `IntelChipBugWarning`: Added microcode version diagnostics and improved UI/wording.
   Now notifies users if their current microcode version is affected or not.
 - Marked `i9-13950hx` and `i9-13980hx` as affected for `IntelChipBugWarning`, since we've seen crashes caused by them.
@@ -19,7 +20,7 @@
       is an official recommendation from Neo on that version.
     - `ConnectorIncompatibleFabricMods` - Detects if tried to run fabric mod with connector, but's it's incompatible and
       won't work. Suggests native forge alternatives if they exist. Currently, Sodium, Iris, Lithium.
-- Added new launcherlogs support: ElyPrism.
+- Added new launcherlogs support: ElyPrism, sklauncher.
 - Added handling for missing or corrupted mixin configuration detection in `MixinApply` log analysis.
 - Redesigned GUI analysis, transformed `CreateDependencies` to be able to add new analysis easily and fast.
 - Fixed `CreateDependencies` wasn't localized and had many hardcoded strings.
@@ -39,6 +40,7 @@
 - Fixed mod on Quilt mod-loader wasn't working since some version due to bad QuiltZipPath implementation in the loader.
 - Fixed mod not working on Lunar Client because Lunar was ignoring PreLaunchEntrypoint.
 - Fixed `ResourceLocationException` analysis wasn't triggered in some rare cases.
+- Fixed ANSI color formatting was still applied in modlist diff, ignoring `generated_message.color_message` setting.
 - Small fixes, formatting cleanups, and internal improvements.
 
 1.9.15

@@ -27,7 +27,8 @@
     "crash_assistant": "dev.kostromdan.mods.crash_assistant.fabric.entrypoint.CrashAssistantLanguageAdapter"
   },
   "mixins": [
-    "crash_assistant.mixins.json"
+    "crash_assistant.mixins.json",
+    "crash_assistant-fabric.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.16.9",

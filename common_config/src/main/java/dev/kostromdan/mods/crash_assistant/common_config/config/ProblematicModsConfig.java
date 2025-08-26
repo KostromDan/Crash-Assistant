@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.config;
 
 import com.electronwill.nightconfig.core.file.FileConfig;
 import com.electronwill.nightconfig.core.io.ParsingException;
+import com.electronwill.nightconfig.json.JsonFormat;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
@@ -26,7 +27,7 @@ public class ProblematicModsConfig {
         } catch (Exception ignored) {
         }
         // Build and load the configuration file
-        FileConfig config = FileConfig.builder(CONFIG_PATH)
+        FileConfig config = FileConfig.builder(CONFIG_PATH, JsonFormat.fancyInstance())
                 .preserveInsertionOrder()
                 .build();
         try {

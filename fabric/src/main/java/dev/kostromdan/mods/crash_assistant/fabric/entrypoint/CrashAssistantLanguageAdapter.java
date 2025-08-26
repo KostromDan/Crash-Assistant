@@ -37,6 +37,9 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
      * Fabric's main class loader is fully configured.
      */
     public CrashAssistantLanguageAdapter() {
+        if (Boolean.getBoolean("dev.kostromdan.mods.crash_assistant.startedFlag")) return;
+        System.setProperty("dev.kostromdan.mods.crash_assistant.startedFlag", "true");
+
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
 
         try {
@@ -157,11 +160,6 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
     public static class SetupRunner implements Runnable {
         @Override
         public void run() {
-            // This code now runs with a class loader that can see all its dependencies.
-
-            if (Boolean.getBoolean("dev.kostromdan.mods.crash_assistant.startedFlag")) return;
-            System.setProperty("dev.kostromdan.mods.crash_assistant.startedFlag", "true");
-
             String launchTarget = FabricLoader.getInstance().getEnvironmentType().toString();
             FabricLoader.getInstance().getModContainer("minecraft")
                     .ifPresent(container -> {

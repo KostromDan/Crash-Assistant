@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.config;
 import com.electronwill.nightconfig.core.AbstractCommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.ParsingException;
+import com.electronwill.nightconfig.toml.TomlFormat;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +27,7 @@ public class CrashAssistantConfig {
 
     static {
         executeWithLock(() -> {
-            config = CommentedFileConfig.builder(CONFIG_PATH)
+            config = CommentedFileConfig.builder(CONFIG_PATH, TomlFormat.instance())
                     .preserveInsertionOrder()
                     .build();
             load();

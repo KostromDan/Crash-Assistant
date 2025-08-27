@@ -32,6 +32,7 @@
 - 1.12.2 and earlier: Improved `OutOfMemory` analysis recommendations. Now recommending available mods on that version.
 - Prevented a Crash Assistant mod file being locked while the crash assistant is running.
 - Localization: Added missing, fixed outdated and sorted keys across en, ru, it, es, zh;
+- Added German localization. Thanks `MagentaCoding` for making PR.
 - Jvm.dll analysis: Added one more possible reason for this.
 - Fixed issue with non-ASCII paths causing Crash Assistant not to start. E.g., Cyrillic or Chinese symbols in the path.
 - Removed CrashAssistantAgent and refactored classpath handling to improve stability on non-ASCII paths.

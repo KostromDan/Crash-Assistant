@@ -31,6 +31,7 @@
 - Now suggesting to use `Epic Fight mod addons compatibility` in `EpicFightAddons` log analysis.
 - 1.12.2 and earlier: Improved `OutOfMemory` analysis recommendations. Now recommending available mods on that version.
 - Prevented a Crash Assistant mod file being locked while the crash assistant is running.
+- Prevented McLogs from censoring IP-like versions.
 - Localization: Added missing, fixed outdated and sorted keys across en, ru, it, es, zh;
 - Added German localization. Thanks `MagentaCoding` for making PR.
 - Jvm.dll analysis: Added one more possible reason for this.

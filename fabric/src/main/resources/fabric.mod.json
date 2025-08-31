@@ -12,7 +12,7 @@
     "sources": "https://github.com/KostromDan/Crash-Assistant",
     "issues": "https://github.com/KostromDan/Crash-Assistant/issues"
   },
-  "license": "GNU LGPLv3",
+  "license": "KostromDan’s Modded Minecraft License (Version 1.0.0)",
   "icon": "assets/crash_assistant/icon.png",
   "environment": "*",
   "entrypoints": {

@@ -128,8 +128,8 @@ If you share changes to this project in any allowed way — for example, a pull 
 temporary‑permission rule, or any code you publish that uses or derives from this mod’s code — you grant me a
 worldwide, free, irrevocable, perpetual license to use, modify, and include your changes (and any derivative code
 based on my code) back into this project and its official releases, without needing further permission.  
-This license‑back also lets me ship features that may compete with your own projects. The Non‑Compete rule does *
-*not restrict me, the Original Author.
+This license‑back also lets me ship features that may compete with your own projects. The Non‑Compete rule does not
+restrict me, the Original Author.
 
 ---
 

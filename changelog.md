@@ -43,6 +43,7 @@
 - Fixed `ResourceLocationException` analysis wasn't triggered in some rare cases.
 - Fixed ANSI color formatting was still applied in modlist diff, ignoring `generated_message.color_message` setting.
 - Small fixes, formatting cleanups, and internal improvements.
+- Mod was relicensed with `KostromDan’s Modded Minecraft License (Version 1.0.0)`.
 
 1.9.15
 

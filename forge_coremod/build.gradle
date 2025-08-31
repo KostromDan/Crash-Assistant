@@ -37,6 +37,12 @@ shadowJar {
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
 }
 
+tasks.withType(Jar).configureEach {
+    manifest {
+        attributes('Automatic-Module-Name': 'dev.kostromdan.crashassistant.forge_coremod')
+    }
+}
+
 remapJar {
     dependsOn(':app:shadowJar', ':forge:build')
 

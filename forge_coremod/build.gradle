@@ -39,7 +39,7 @@ shadowJar {
 
 tasks.withType(Jar).configureEach {
     manifest {
-        attributes('Automatic-Module-Name': 'dev.kostromdan.crash_assistant.forge_coremod')
+        attributes('Automatic-Module-Name': 'dev.kostromdan.mods.crash_assistant.core_mod')
     }
 }
 

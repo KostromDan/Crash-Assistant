@@ -20,7 +20,8 @@
       is an official recommendation from Neo on that version.
     - `ConnectorIncompatibleFabricMods` - Detects if tried to run fabric mod with connector, but's it's incompatible and
       won't work. Suggests native forge alternatives if they exist. Currently, Sodium, Iris, Lithium.
-- Added new launcherlogs support: ElyPrism, sklauncher.
+- Added new launcherlogs support: ElyPrism, sklauncher, legacylauncher.
+- Fixed TLauncher usage was not detected on MacOS or Linux.
 - Added handling for missing or corrupted mixin configuration detection in `MixinApply` log analysis.
 - Redesigned GUI analysis, transformed `CreateDependencies` to be able to add new analysis easily and fast.
 - Fixed `CreateDependencies` wasn't localized and had many hardcoded strings.
@@ -39,6 +40,7 @@
 - Removed CrashAssistantAgent and refactored classpath handling to improve stability on non-ASCII paths.
 - `TerminatedProcessesFinder`: Fixed handling of non-standard datetime formats, which caused PS cmd to ignore
   time filter and grab all available event errors instead of just those from the last 15 seconds.
+- Fixed Jdeps analysis didn't checked version of java, caused analysis detected nothing in case usage of outdated jdk.
 - Fixed mod on Quilt mod-loader wasn't working since some version due to bad QuiltZipPath implementation in the loader.
 - Fixed mod not working on Lunar Client because Lunar was ignoring PreLaunchEntrypoint.
 - Fixed `ResourceLocationException` analysis wasn't triggered in some rare cases.

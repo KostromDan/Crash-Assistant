@@ -258,15 +258,15 @@ public class CrashAssistantApp {
 
         String appdata = System.getenv("APPDATA");
 
-        // Mac atlauncher.log
-        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../logs", "atlauncher.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../logs", "atlauncher.log"))); // Mac atlauncher.log
         if (appdata != null) {
-            // Windows atlauncher.log
+            // Windows
             LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get(appdata, "AtLauncher", "logs", "atlauncher.log")));
 
             FileUtils.getModifiedFiles(Paths.get(appdata, ".tlauncher", "logs", "tlauncher"), ".log").forEach(path -> {
-                LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path)); // To notify modpack creators about TLauncher usage.
+                LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path));
             });
+            LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "LegacyLauncher: launcher.log", Paths.get(appdata, ".tlauncher", "logs", "launcher.log")));
         }
 
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../logs", "ElyPrismLauncher-0.log")));
@@ -274,9 +274,24 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../", "PolyMC-0.log")));
 
         String userHome = System.getProperty("user.home");
-        if (userHome != null && !LogsList.isLauncherLogExist()) {
-            // MacOS CurseForge: launcher_log.txt
-            LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "CurseForge: launcher_log.txt", Paths.get(userHome, "Library", "Application Support", "minecraft", "launcher_log.txt")));
+        if (userHome != null) {
+            Path applicationSupportPath = Paths.get(userHome, "Library", "Application Support");
+            if (Files.exists(applicationSupportPath)) {
+                // MacOS
+                LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "CurseForge: launcher_log.txt", Paths.get(applicationSupportPath.toString(), "minecraft", "launcher_log.txt")));
+
+                FileUtils.getModifiedFiles(Paths.get(applicationSupportPath.toString(), "tlauncher", "logs", "tlauncher"), ".log").forEach(path -> {
+                    LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path));
+                });
+                LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "LegacyLauncher: launcher.log", Paths.get(applicationSupportPath.toString(), "tlauncher", "logs", "launcher.log")));
+            }
+            // Linux
+            LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "CurseForge: launcher_log.txt", Paths.get(userHome, ".minecraft", "launcher_log.txt")));
+
+            FileUtils.getModifiedFiles(Paths.get(userHome, ".tlauncher", "logs", "tlauncher"), ".log").forEach(path -> {
+                LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path));
+            });
+            LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "LegacyLauncher: launcher.log", Paths.get(userHome, ".tlauncher", "logs", "launcher.log")));
         }
 
 

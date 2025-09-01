@@ -6,6 +6,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
@@ -25,7 +26,6 @@ public class LogsList {
         addIfExistsAndModified(log, true, true);
     }
 
-
     public static void addIfExistsAndModified(Log log, boolean checkModified, boolean checkSize) {
         if (Files.exists(log.getPath()) && Files.isRegularFile(log.getPath())) {
             if (CrashAssistantConfig.getBlacklistedLogs().stream().anyMatch(
@@ -42,6 +42,13 @@ public class LogsList {
                 }
             } catch (IOException e) {
                 CrashAssistantApp.LOGGER.error("Error while checking file size \"" + log.getPath() + "\": ", e);
+            }
+            Path newPath = log.getPath().toAbsolutePath().normalize();
+            for (Log existingLog : logs) {
+                if (existingLog.getPath().toAbsolutePath().normalize().equals(newPath)) {
+                    CrashAssistantApp.LOGGER.info("Skipping duplicate log as it's already added to the list: " + log.getPath());
+                    return;
+                }
             }
             CrashAssistantApp.LOGGER.info("Adding {} from {}", log.getName(), log.getPath().toAbsolutePath().toString());
             logs.add(log);

@@ -377,7 +377,22 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
     private boolean validateJdepsPath(String jdepsPath) {
         try {
-            new ProcessBuilder(jdepsPath, "-version").start();
+            ProcessBuilder processBuilder = new ProcessBuilder(jdepsPath, "-version");
+            Process process = processBuilder.start();
+
+            // Read the version output
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String versionOutput = reader.readLine();
+
+                if (versionOutput != null && !PlatformHelp.isJdkVersionSufficient(versionOutput)) {
+
+                    CrashAssistantApp.LOGGER.warn("Found jdeps at \"{}\" but its version ({}) is lower than current major version ({})", 
+                            jdepsPath, versionOutput.trim(), PlatformHelp.getCurrentJdkMajorVersion());
+                    return false;
+                }
+            }
+
+            process.waitFor();
             return true;
         } catch (Exception ex) {
             return false;

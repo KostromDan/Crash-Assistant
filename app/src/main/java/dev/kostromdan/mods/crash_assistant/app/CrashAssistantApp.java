@@ -39,7 +39,9 @@ public class CrashAssistantApp {
     public static String parentXmx = null;
     public static String systemRAM = null;
     public static String processor = null;
+    public static boolean crashed = false;
     public static boolean crashed_with_report = false;
+    public static boolean located_hs_err = false;
     public static String renderer = null;
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
@@ -215,17 +217,10 @@ public class CrashAssistantApp {
 
         new Thread(LanguageProvider::updateLang).start(); // Init lang async.
 
-        boolean crashed = false;
-
         LogsList.addIfExistsAndModified(new Log(LogType.LOG, Paths.get("logs", "latest.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.DEBUG_LOG, Paths.get("logs", "debug.log")));
 
-        Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(Boot.parentPID);
-        if (hsErrLog.isPresent()) {
-            crashed = true;
-            crashed_with_report = true;
-            LogsList.addIfExistsAndModified(new Log(LogType.HS_ERR, hsErrLog.get()));
-        }
+        locateAndAddHsErr();
 
         HashSet<Path> newCrashReports = CrashReportsHelper.getRelevantFiles(Paths.get("crash-reports"), path -> true);
         if (!newCrashReports.isEmpty()) {
@@ -371,6 +366,50 @@ public class CrashAssistantApp {
         }
     }
 
+    public static boolean locateAndAddHsErr() {
+        if (located_hs_err) return false;
+        Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(Boot.parentPID);
+        if (hsErrLog.isPresent()) {
+            crashed = true;
+            crashed_with_report = true;
+            located_hs_err = true;
+            synchronized (KnownCrashReasonMessage.class) {
+                LogsList.addIfExistsAndModified(new Log(LogType.HS_ERR, hsErrLog.get()));
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public static void callUpdateLogsListInGUI() {
+        try {
+            Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
+            Method method = clazz.getMethod("updateLogsListInGUI");
+            method.invoke(null);
+        } catch (Exception e) {
+            LOGGER.error("Exception adding file to gui later:", e);
+        }
+    }
+
+    public static void waitGuiInitialisationFinished() {
+        long startTime = System.currentTimeMillis();
+        while (true) {
+            if (System.currentTimeMillis() >= startTime + 7000) {
+                LOGGER.error("Reached timeout while waiting for GUI initialisation finished.");
+                System.exit(-1);
+            }
+            if (!GUIInitialisationFinished) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                continue;
+            }
+            return;
+        }
+    }
+
     public static void startLocatingTerminatedProcesses() {
         new Thread(() -> {
             long startTime = System.currentTimeMillis();
@@ -379,6 +418,11 @@ public class CrashAssistantApp {
             while (System.currentTimeMillis() < terminatedProcessesLocationEndTime) {
                 try {
                     Thread.sleep(firstIteration ? 3000 : 100);
+                    if (firstIteration && locateAndAddHsErr()) {
+                        LOGGER.info("Added hs_err log later.");
+                        waitGuiInitialisationFinished();
+                        callUpdateLogsListInGUI();
+                    }
                     firstIteration = false;
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -392,27 +436,9 @@ public class CrashAssistantApp {
                     if (!GUIStartedLaunching) {
                         onMinecraftCrashed();
                     } else {
-                        startTime = System.currentTimeMillis();
-                        while (true) {
-                            if (System.currentTimeMillis() >= startTime + 7000) System.exit(-1);
-                            if (!GUIInitialisationFinished) {
-                                try {
-                                    Thread.sleep(50);
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
-                                continue;
-                            }
-                            try {
-                                Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
-                                Method method = clazz.getMethod("updateLogsListInGUI");
-                                method.invoke(null);
-                            } catch (Exception e) {
-                                LOGGER.error("Exception adding file to gui later:", e);
-                            }
-                            terminatedProcessesLocationEndTime = System.currentTimeMillis();
-                            break;
-                        }
+                        waitGuiInitialisationFinished();
+                        callUpdateLogsListInGUI();
+                        terminatedProcessesLocationEndTime = System.currentTimeMillis();
                     }
                     break;
                 }

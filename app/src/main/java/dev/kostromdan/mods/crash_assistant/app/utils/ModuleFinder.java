@@ -3,10 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.utils;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,8 +13,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarInputStream;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,38 +32,25 @@ public class ModuleFinder {
                 .collect(Collectors.toList());
 
         List<String> results = new ArrayList<>();
-        String topName = jarPath.getFileName().toString();
-        try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-            boolean matchedTop = false;
-            Enumeration<JarEntry> entries = jarFile.entries();
-            while (entries.hasMoreElements()) {
-                JarEntry entry = entries.nextElement();
-                String name = entry.getName();
-
-                if (!matchedTop) {
+        JarEntriesScanner.scanJar(jarPath, true, (containerName, entries) -> {
+            boolean matched = false;
+            for (Map.Entry<String, Boolean> e : entries.entrySet()) {
+                String name = e.getKey();
+                boolean isDir = e.getValue();
+                if (!matched) {
                     for (String prefix : searchPrefixes) {
-                        if (matches(entry, prefix, mode)) {
-                            results.add(topName);
-                            matchedTop = true;
+                        if (matches(name, isDir, prefix, mode)) {
+                            results.add(containerName);
+                            matched = true;
                             break;
                         }
                     }
                 }
                 if (name.equals("module-info.class")) {
-                    JarInJarHelper.LOGGER.warn("Found module-info.class in " + topName);
-                }
-                if (!entry.isDirectory() && name.endsWith(".jar")) {
-                    processNestedJar(
-                            () -> readAllBytes(jarFile.getInputStream(entry)),
-                            searchPrefixes,
-                            topName + "!/" + name,
-                            results,
-                            mode);
+                    JarInJarHelper.LOGGER.warn("Found module-info.class in " + containerName);
                 }
             }
-        } catch (IOException e) {
-            // Suppress errors
-        }
+        });
         return results;
     }
 
@@ -114,44 +96,15 @@ public class ModuleFinder {
         return allResults;
     }
 
-    private static void processNestedJar(ByteSupplier supplier, List<String> searchPrefixes, String containerName, List<String> results, SearchMode mode) {
-        try {
-            byte[] data = supplier.get();
-            try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(data))) {
-                boolean matched = false;
-                JarEntry ne;
-                while ((ne = jis.getNextJarEntry()) != null) {
-                    if (!matched) {
-                        for (String prefix : searchPrefixes) {
-                            if (matches(ne, prefix, mode)) {
-                                results.add(containerName);
-                                matched = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (ne.getName().equals("module-info.class")) {
-                        JarInJarHelper.LOGGER.warn("Found module-info.class in " + containerName);
-                    }
-                    if (!ne.isDirectory() && ne.getName().endsWith(".jar")) {
-                        processNestedJar(
-                                () -> readAllBytes(jis),
-                                searchPrefixes,
-                                containerName + "!/" + ne.getName(),
-                                results,
-                                mode);
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
-    }
 
     private static boolean matches(JarEntry entry, String searchTerm, SearchMode mode) {
-        String entryName = entry.getName();
+        return matches(entry.getName(), entry.isDirectory(), searchTerm, mode);
+    }
+
+    private static boolean matches(String entryName, boolean isDirectory, String searchTerm, SearchMode mode) {
         String normalizedEntryName = normalizeModuleName(entryName);
         boolean isClass = entryName.endsWith(".class");
-        boolean isPackage = entry.isDirectory();
+        boolean isPackage = isDirectory;
         if (!isClass && !isPackage) return false;
         if (isPackage) {
             return normalizedEntryName.equals(searchTerm);
@@ -159,12 +112,12 @@ public class ModuleFinder {
         if (mode == SearchMode.PACKAGE) {
             return false;
         }
-        entryName = entryName.substring(0, entryName.length() - 6);
-        normalizedEntryName = normalizedEntryName.substring(0, normalizedEntryName.length() - 6);
-        if (normalizedEntryName.equals(searchTerm)) {
+        String withoutExt = entryName.substring(0, entryName.length() - 6);
+        String normalizedWithout = normalizedEntryName.substring(0, normalizedEntryName.length() - 6);
+        if (normalizedWithout.equals(searchTerm)) {
             return true;
         }
-        String className = entryName.substring(entryName.lastIndexOf('/') + 1).toLowerCase();
+        String className = withoutExt.substring(withoutExt.lastIndexOf('/') + 1).toLowerCase();
         if ((className + "/").equals(searchTerm)) return true;
 
         AtomicBoolean found = new AtomicBoolean(false);
@@ -176,18 +129,6 @@ public class ModuleFinder {
         return found.get();
     }
 
-    private static byte[] readAllBytes(InputStream in) throws IOException {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        byte[] tmp = new byte[8192];
-        int r;
-        while ((r = in.read(tmp)) != -1) buf.write(tmp, 0, r);
-        return buf.toByteArray();
-    }
-
-    @FunctionalInterface
-    private interface ByteSupplier {
-        byte[] get() throws Exception;
-    }
 
     public static String normalizeModuleName(String moduleName) {
         moduleName = moduleName.toLowerCase().replace('.', '/');

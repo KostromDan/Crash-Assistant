@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.AnalysisGUIBase;
+import dev.kostromdan.mods.crash_assistant.app.utils.JarEntriesScanner;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -16,8 +17,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
@@ -25,9 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarInputStream;
 import java.util.stream.Collectors;
 
 public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
@@ -244,29 +242,15 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
     private HashSet<String> getCurrentTargetClasses(Mod targetMod) {
         HashSet<String> currentTargetClasses = new HashSet<>();
         try {
-            try (JarFile jarFile = new JarFile(Paths.get("mods", targetMod.getJarName()).toFile())) {
-                Enumeration<JarEntry> entries = jarFile.entries();
-                while (entries.hasMoreElements()) {
-                    JarEntry entry = entries.nextElement();
-                    String name = entry.getName();
+            Path jarPath = Paths.get("mods", targetMod.getJarName());
+            JarEntriesScanner.scanJar(jarPath, true, (containerName, entries) -> {
+                for (Map.Entry<String, Boolean> e : entries.entrySet()) {
+                    String name = e.getKey();
                     if (isRelevantClass().test(name)) {
                         currentTargetClasses.add(fixClassName(name));
-                        continue;
-                    }
-                    if (name.startsWith("META-INF/jarjar/") && name.endsWith(".jar")) {
-                        InputStream nestedJarStream = jarFile.getInputStream(entry);
-                        try (JarInputStream nestedJar = new JarInputStream(nestedJarStream)) {
-                            JarEntry nestedEntry;
-                            while ((nestedEntry = nestedJar.getNextJarEntry()) != null) {
-                                String className = nestedEntry.getName();
-                                if (isRelevantClass().test(className)) {
-                                    currentTargetClasses.add(fixClassName(className));
-                                }
-                            }
-                        }
                     }
                 }
-            }
+            });
             CrashAssistantApp.LOGGER.info("Found " + currentTargetClasses.size() + " " + getModName() + " classes in " + targetMod.getJarName());
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while analysing " + getModName() + " mod deps: ", e);

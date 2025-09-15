@@ -32,6 +32,7 @@
     - `Package/Class Finder` - Helps to find from which mod a class or package came.
 - Now suggesting to use `Epic Fight mod addons compatibility` in `EpicFightAddons` log analysis.
 - 1.12.2 and earlier: Improved `OutOfMemory` analysis recommendations. Now recommending available mods on that version.
+- 1.12.2: Added compat with `Improved Cleanroom Relauncher` and `Cleanroom relauncher unofficial`. Fixed starting twice.
 - Prevented a Crash Assistant mod file being locked while the crash assistant is running.
 - Prevented McLogs from censoring IP-like versions.
 - Localization: Added missing, fixed outdated and sorted keys across en, ru, it, es, zh;

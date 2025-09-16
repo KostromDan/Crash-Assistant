@@ -54,13 +54,14 @@
 - Fixed `ResourceLocationException` analysis wasn't triggered in some rare cases.
 - Fixed ANSI color formatting was still applied in modlist diff, ignoring `generated_message.color_message` setting.
 - Small fixes, formatting cleanups, and internal improvements.
-- The mod was relicensed under `KostromDan’s Modded Minecraft License (Version 1.0.0)`. Unfortunately, the LGPL did not
+- The mod was relicensed under `KostromDan’s Modded Minecraft License (Version 1.1.0)`. Unfortunately, the LGPL did not
   protect my rights and interests as I expected (it should have covered this case, but CurseForge decided that
   derivative code does not need to comply with LGPL terms and conditions and, moreover, does not need to give any
   attribution to the original project, even allowing others to falsely claim it as their own code). It may be due to
-  some confusion in the situation, but it is what it is. I am now initiating a court case, which will cost me a lot of
-  money, and that fact is quite disappointing. I am also disappointed that I had to relicense, but I don’t see another
-  way. There is a lot of drama. If this drama ever ends, I will most likely revert the license back to LGPL.
+  some confusion and complexity of the situation, but it is what it is. I am now initiating a court case, which will
+  cost me a lot of money, and that fact is quite disappointing. I am also disappointed that I had to relicense, but I
+  don’t see another way. There is a lot of drama. If this drama ever ends, I will most likely revert the license back to
+  LGPL.
 
 1.9.15
 

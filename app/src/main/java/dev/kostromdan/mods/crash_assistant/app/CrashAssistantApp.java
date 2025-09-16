@@ -273,7 +273,7 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../logs", "PollyMC-0.log")));
 
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "Feather: latest.log", Paths.get("feather/logs", "latest.log")));
-        FileUtils.getModifiedFiles(Paths.get("../../logs"), ".log").forEach(path -> {
+        FileUtils.getModifiedFiles(Paths.get("../../../.technic/logs"), ".log").forEach(path -> {
             LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path));
         });
 

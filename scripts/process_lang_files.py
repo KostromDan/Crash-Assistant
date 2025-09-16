@@ -35,7 +35,7 @@ def process_language_files(directory_path):
                 continue
 
             with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, sort_keys=True, indent=4, ensure_ascii=False)
+                json.dump(data, f, sort_keys=True, indent=2, ensure_ascii=False)
 
             if filename != 'en_us.json':
                 current_keys = set(data.keys())

@@ -265,6 +265,7 @@ public class CrashAssistantApp {
         }
 
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../logs", "ElyPrismLauncher-0.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "CrystalLauncher: latest.log", Paths.get("../../../../Crystal-Launcher/logs", "latest.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("sklauncher", "sklauncher_logs.txt")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../", "PolyMC-0.log")));
 

@@ -20,11 +20,12 @@
       is an official recommendation from Neo on that version.
     - `ConnectorIncompatibleFabricMods` - Detects if tried to run fabric mod with connector, but's it's incompatible and
       won't work. Suggests native forge alternatives if they exist. Currently, Sodium, Iris, Lithium.
-- Added new launcherlogs support: ElyPrism, sklauncher, legacylauncher.
+- Added new launcherlogs support: ElyPrism, SKLauncher, LegacyLauncher, CrystalLauncher.
 - Fixed TLauncher usage was not detected on MacOS or Linux.
 - Added handling for missing or corrupted mixin configuration detection in `MixinApply` log analysis.
 - Redesigned GUI analysis, transformed `CreateDependencies` to be able to add new analysis easily and fast.
 - Fixed `CreateDependencies` wasn't localized and had many hardcoded strings.
+- Fixed `CreateDependencies` wasn't looking to jar in jar of mods causing super rare to not detect problematic mod.
 - Fixed `CreateDependencies` was working incorrectly for fabric.
 - New GUI analysis tools:
     - `MCreator Mod Detector` - Detects MCreator mods. Was already in `modlist.txt`, but now as separate GUI tool.

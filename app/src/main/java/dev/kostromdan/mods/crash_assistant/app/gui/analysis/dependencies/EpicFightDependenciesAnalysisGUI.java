@@ -7,6 +7,11 @@ import java.util.function.Predicate;
 
 public class EpicFightDependenciesAnalysisGUI extends DependenciesAnalysisGUIBase {
 
+    @Override
+    protected void recreateSelf() {
+        new EpicFightDependenciesAnalysisGUI((JFrame) dialog.getParent()).start();
+    }
+
     public EpicFightDependenciesAnalysisGUI(JFrame parent) {
         super(parent, LanguageProvider.get("gui.analysis.epicfight.title"), LanguageProvider.get("gui.analysis.epicfight.header"));
     }

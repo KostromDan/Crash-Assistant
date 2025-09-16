@@ -30,6 +30,9 @@
     - `MCreator Mod Detector` - Detects MCreator mods. Was already in `modlist.txt`, but now as separate GUI tool.
     - `Epic Fight mod addons compatibility` - Same as `Create mod addons compatibility` but for Epic Fight mods.
     - `Package/Class Finder` - Helps to find from which mod a class or package came.
+    - `Jdeps Dependencies Analysis` - Helps to find which mod depends on a class. This is especially helpful if you see
+    - NoClassDefFoundError or ClassNotFoundException in your logs and don’t know which mod requires that missing class.
+- Redesigned Analysis menu, now displays a short description.
 - Now suggesting to use `Epic Fight mod addons compatibility` in `EpicFightAddons` log analysis.
 - 1.12.2 and earlier: Improved `OutOfMemory` analysis recommendations. Now recommending available mods on that version.
 - 1.12.2: Added compat with `Improved Cleanroom Relauncher` and `Cleanroom relauncher unofficial`. Fixed starting twice.

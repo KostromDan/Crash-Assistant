@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.PackageFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.EpicFightDependenciesAnalysisGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorGUI;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
@@ -153,6 +154,23 @@ public class CrashAssistantGUI {
     }
 
     private static void addFileMenu() {
+        
+        // Helper to build HTML-based menu items with title and description
+        java.util.function.BiFunction<String, String, JMenuItem> makeMenuItem = (titleKey, descKey) -> {
+            String title = LanguageProvider.get(titleKey);
+            String desc = LanguageProvider.get(descKey);
+
+            // Support multiline descriptions and basic HTML escaping
+            java.util.function.Function<String, String> esc = s -> s == null ? "" :
+                    s.replace("&", "&amp;")
+                     .replace("<", "&lt;")
+                     .replace(">", "&gt;")
+                     .replace("\n", "<br>");
+
+            String html = "<html><b>" + esc.apply(title) + "</b><br>" +
+                    "<span style='color:gray; font-size:10px;'>" + esc.apply(desc) + "</span></html>";
+            return new JMenuItem(html);
+        };
         // Initialize menu bar and main menus
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu(LanguageProvider.get("gui.menu.file"));
@@ -210,21 +228,25 @@ public class CrashAssistantGUI {
         fileMenu.add(openModpackFolderItem);
 
         // Analysis menu items
-        JMenuItem createAnalysisItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.create_dependencies"));
+        JMenuItem createAnalysisItem = makeMenuItem.apply("gui.menu.analysis.create_dependencies", "gui.menu.analysis.create_dependencies.desc");
         createAnalysisItem.addActionListener(e -> CreateDependenciesAnalysisGUI.showCreateAnalysisDialog(frame));
         analysisMenu.add(createAnalysisItem);
 
-        JMenuItem epicFightAnalysisItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.epic_fight_addons_compatibility"));
+        JMenuItem epicFightAnalysisItem = makeMenuItem.apply("gui.menu.analysis.epic_fight_addons_compatibility", "gui.menu.analysis.epic_fight_addons_compatibility.desc");
         epicFightAnalysisItem.addActionListener(e -> EpicFightDependenciesAnalysisGUI.showEpicFightAnalysisDialog(frame));
         analysisMenu.add(epicFightAnalysisItem);
 
-        JMenuItem mcreatorDetectorItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.mcreator_mod_detector"));
+        JMenuItem mcreatorDetectorItem = makeMenuItem.apply("gui.menu.analysis.mcreator_mod_detector", "gui.analysis.mcreator_detector.header");
         mcreatorDetectorItem.addActionListener(e -> MCreatorModDetectorGUI.showMCreatorModDetectorDialog(frame));
         analysisMenu.add(mcreatorDetectorItem);
 
-        JMenuItem packageFinderItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.package_class_finder"));
+        JMenuItem packageFinderItem = makeMenuItem.apply("gui.menu.analysis.package_class_finder", "gui.analysis.package_finder.header");
         packageFinderItem.addActionListener(e -> PackageFinderGUI.showPackageFinderDialog(frame));
         analysisMenu.add(packageFinderItem);
+
+        JMenuItem jdepsAnalysisItem = makeMenuItem.apply("gui.menu.analysis.jdeps_dependencies_analysis", "gui.analysis.jdeps.header");
+        jdepsAnalysisItem.addActionListener(e -> JdepsDependenciesAnalysisGUI.showDialog(frame));
+        analysisMenu.add(jdepsAnalysisItem);
 
         // Privacy menu items
         JMenuItem logsPrivacyItem = new JMenuItem(LanguageProvider.get("gui.menu.privacy.logs_info"));

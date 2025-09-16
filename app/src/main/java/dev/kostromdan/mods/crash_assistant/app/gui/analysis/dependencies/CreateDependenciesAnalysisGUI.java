@@ -7,6 +7,11 @@ import java.util.function.Predicate;
 
 public class CreateDependenciesAnalysisGUI extends DependenciesAnalysisGUIBase {
 
+    @Override
+    protected void recreateSelf() {
+        new CreateDependenciesAnalysisGUI((JFrame) dialog.getParent()).start();
+    }
+
     public CreateDependenciesAnalysisGUI(JFrame parent) {
         super(parent, LanguageProvider.get("gui.analysis.create_dependencies.title"), LanguageProvider.get("gui.analysis.create_dependencies.header"));
     }

@@ -25,6 +25,7 @@ public abstract class AnalysisGUIBase {
     protected JLabel statusLabel;
     protected JLabel currentJarLabel;
     protected JProgressBar progressBar;
+    protected JPanel headerPanel;
 
     public AnalysisGUIBase(JFrame parent, String title, String headerText) {
         dialog = new JDialog(parent, title + " (" + LanguageProvider.get("gui.window_name") + ")", true);
@@ -44,7 +45,7 @@ public abstract class AnalysisGUIBase {
         topPanel.add(currentJarLabel, BorderLayout.CENTER);
         topPanel.add(progressBar, BorderLayout.SOUTH);
 
-        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel = new JPanel(new BorderLayout());
         headerPanel.add(headerLabel, BorderLayout.NORTH);
         headerPanel.add(topPanel, BorderLayout.SOUTH);
 
@@ -101,6 +102,12 @@ public abstract class AnalysisGUIBase {
         okButton.addActionListener(e -> dialog.dispose());
         dialog.add(okButton, BorderLayout.SOUTH);
         dialog.revalidate();
+    }
+
+    protected void addToHeaderCenter(Component component) {
+        headerPanel.add(component, BorderLayout.CENTER);
+        headerPanel.revalidate();
+        headerPanel.repaint();
     }
 
     public void start() {

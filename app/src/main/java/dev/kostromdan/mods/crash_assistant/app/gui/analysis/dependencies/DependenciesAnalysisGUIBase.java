@@ -17,7 +17,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -26,12 +28,76 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
-public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
+public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase { 
+
+    protected static class TargetInfo {
+        public final Path path;
+        public final String display;
+        public TargetInfo(Path path, String display) {
+            this.path = path;
+            this.display = display;
+        }
+    }
+
+    protected static class JdepsScanResult {
+        public boolean matched = false;
+        public String matchedDisplay = null;
+        public final HashSet<String> deps = new HashSet<>();
+        public final Map<String, Set<String>> depsByDisplay = new HashMap<>();
+    }
+
+    protected abstract void recreateSelf();
+
+    private JCheckBox includeNestedCheckbox;
+    private volatile boolean isRestarting = false;
 
     public DependenciesAnalysisGUIBase(JFrame parent, String title, String headerText) {
         super(parent, title, headerText);
+        initOptions();
+    }
+
+    private void initOptions() {
+        JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        boolean defaultValue = true;
+        Object saved = CrashAssistantLocalConfig.get("analysis.jdeps.include_nested");
+        boolean current = saved instanceof Boolean ? (Boolean) saved : defaultValue;
+        if (!(saved instanceof Boolean)) {
+            CrashAssistantLocalConfig.set("analysis.jdeps.include_nested", defaultValue);
+        }
+        includeNestedCheckbox = new JCheckBox(LanguageProvider.get("gui.analysis.jdeps.include_nested"), current);
+        includeNestedCheckbox.addActionListener(e -> onIncludeNestedChanged());
+        optionsPanel.add(includeNestedCheckbox);
+        addToHeaderCenter(optionsPanel);
+    }
+
+    private void onIncludeNestedChanged() {
+        if (isRestarting) return;
+        boolean newValue = includeNestedCheckbox.isSelected();
+        int res = JOptionPane.showConfirmDialog(
+                dialog,
+                LanguageProvider.get("gui.analysis.jdeps.restart_prompt"),
+                LanguageProvider.get("gui.analysis.jdeps.restart_title"),
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+        if (res == JOptionPane.YES_OPTION) {
+            CrashAssistantLocalConfig.set("analysis.jdeps.include_nested", newValue);
+            // Fully cancel and dispose this analysis GUI, then recreate a new one
+            fullyRestartGui();
+        } else {
+            isRestarting = true;
+            includeNestedCheckbox.setSelected(!newValue);
+            isRestarting = false;
+        }
+    }
+
+    protected boolean isIncludeNestedEnabled() {
+        Object saved = CrashAssistantLocalConfig.get("analysis.jdeps.include_nested");
+        return !(saved instanceof Boolean) || (Boolean) saved;
     }
 
     protected abstract Predicate<String> isRelevantClass();
@@ -39,6 +105,27 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
     protected abstract String getModId();
 
     protected abstract String getModName();
+
+    private void fullyRestartGui() {
+        try {
+            // Cancel running tasks and destroy processes
+            isCancelled = true;
+            if (executor != null) executor.shutdownNow();
+            synchronized (runningProcesses) {
+                for (Process p : runningProcesses) {
+                    try { p.destroy(); } catch (Exception ignored) {}
+                }
+                runningProcesses.clear();
+            }
+        } catch (Exception ignored) {}
+        // Dispose current dialog and recreate
+        SwingUtilities.invokeLater(() -> {
+            try {
+                if (dialog != null) dialog.dispose();
+            } catch (Exception ignored) {}
+            recreateSelf();
+        });
+    }
 
     @Override
     protected void performAnalysis() {
@@ -74,6 +161,11 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         }
         CrashAssistantApp.LOGGER.info("Using jdeps at: \"{}\"", jdepsPath);
 
+        // Cleanup temp directory for nested jars if needed
+        if (isIncludeNestedEnabled()) {
+            try { cleanJdepsTmp(); } catch (Exception ignored) {}
+        }
+
         Mod targetMod = targetMods.get(0);
         Set<String> currentTargetClasses = getCurrentTargetClasses(targetMod);
 
@@ -90,6 +182,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         }
 
         Map<Mod, Set<String>> missingClassesMap = new ConcurrentHashMap<>();
+        Map<Mod, String> modDisplayMap = new ConcurrentHashMap<>();
         AtomicInteger completedTasks = new AtomicInteger(0);
         SwingUtilities.invokeLater(() -> progressBar.setMaximum(totalMods));
 
@@ -98,56 +191,31 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                 if (isCancelled) return;
 
                 SwingUtilities.invokeLater(() -> currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + mod.getJarName()));
-                Process process = null;
-                HashSet<String> deps = new HashSet<>();
-                try {
-                    ProcessBuilder jdepsProcessBuilder = new ProcessBuilder(
-                            jdepsPath,
-                            "-verbose:class",
-                            Paths.get("mods", mod.getJarName()).toAbsolutePath().toString()
-                    );
-                    jdepsProcessBuilder.redirectErrorStream(true);
-                    process = jdepsProcessBuilder.start();
-                    runningProcesses.add(process);
 
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            if (isCancelled) break;
-                            line = line.trim();
-                            int arrowIndex = line.indexOf("->");
-                            if (arrowIndex != -1) {
-                                String dependency = line.substring(arrowIndex + 2).trim();
-                                if (dependency.endsWith(".class")) continue;
-                                int spaceIndex = dependency.indexOf(' ');
-                                String classPath = dependency.substring(0, spaceIndex == -1 ? dependency.length() : spaceIndex).replace('.', '/');
-                                classPath += ".class";
-                                if (isRelevantClass().test(classPath)) {
-                                    deps.add(fixClassName(classPath));
-                                }
-                            }
-                        }
-                    }
-                    process.waitFor();
-                } catch (InterruptedException ignored) {
-                    CrashAssistantApp.LOGGER.warn("Analysis of " + mod.getJarName() + " was interrupted.");
-                } catch (Exception e) {
-                    CrashAssistantApp.LOGGER.error("Error while analysing " + getModName() + " mod deps for " + mod.getJarName() + ": ", e);
-                } finally {
-                    if (process != null) {
-                        runningProcesses.remove(process);
-                    }
-                }
+                JdepsScanResult scan = scanModWithJdeps(mod, jdepsPath, isRelevantClass(), false);
 
-                Set<String> invalidDeps = deps.stream()
+                Set<String> invalidDeps = scan.deps.stream()
                         .filter(dep -> !currentTargetClasses.contains(dep))
                         .collect(Collectors.toSet());
+                Map<String, Set<String>> depsByDisplay = scan.depsByDisplay;
 
                 if (!invalidDeps.isEmpty()) {
                     missingClassesMap.put(mod, invalidDeps);
-                    final String jarName = mod.getJarName();
+                    // determine a display for where the deps were found (prefer nested target display containing invalid deps)
+                    String displayForMod = mod.getJarName();
+                    outerCheck:
+                    for (Map.Entry<String, Set<String>> e : depsByDisplay.entrySet()) {
+                        for (String c : e.getValue()) {
+                            if (!currentTargetClasses.contains(c)) {
+                                displayForMod = e.getKey();
+                                break outerCheck;
+                            }
+                        }
+                    }
+                    final String jarDisplay = displayForMod;
                     final int depCount = invalidDeps.size();
                     final String targetJarName = targetMod.getJarName();
+                    modDisplayMap.put(mod, jarDisplay);
 
                     SwingUtilities.invokeLater(() -> {
                         if (!isCancelled) {
@@ -157,14 +225,14 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                                     LanguageProvider.get("gui.analysis.dependencies.dependencies_in")
                                             .replace("$MOD$", getModName()),
                                     NORMAL_COLOR);
-                            appendStyledText(jarName, ERROR_COLOR);
+                            appendStyledText(jarDisplay, ERROR_COLOR);
                             appendStyledText(LanguageProvider.get("gui.analysis.dependencies.missing_from_current"), NORMAL_COLOR);
                             appendStyledText(targetJarName, MOD_COLOR);
                             appendStyledText("\n", NORMAL_COLOR);
 
                             String logMessage = String.format(
                                     "Found %d " + getModName() + " mod class dependency(ies) in %s, which are missing from the current %s",
-                                    depCount, jarName, targetJarName
+                                    depCount, jarDisplay, targetJarName
                             );
                             CrashAssistantApp.LOGGER.info(logMessage);
                         }
@@ -217,8 +285,9 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                         List<String> sortedClasses = new ArrayList<>(missingClasses);
                         Collections.sort(sortedClasses);
 
+                        String displayName = modDisplayMap.get(mod) != null ? modDisplayMap.get(mod) : mod.getJarName();
                         appendStyledText(LanguageProvider.get("gui.analysis.dependencies.mod_label"), NORMAL_COLOR);
-                        appendStyledText(mod.getJarName(), ERROR_COLOR);
+                        appendStyledText(displayName, ERROR_COLOR);
                         appendStyledText("\n", NORMAL_COLOR);
 
                         appendStyledText(
@@ -229,7 +298,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
                         String logMessage = String.format(
                                 "Mod: %s\nMissing classes of " + getModName() + ":\n%s\n\n",
-                                mod.getJarName(),
+                                displayName,
                                 String.join("\n", sortedClasses)
                         );
                         CrashAssistantApp.LOGGER.info(logMessage.trim());
@@ -269,7 +338,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         return className;
     }
 
-    private String getJDepsPath() {
+    protected String getJDepsPath() {
         String javaBinaryPath = JavaBinaryLocator.getJavaBinary();
         if (javaBinaryPath.contains("javaw")) {
             javaBinaryPath = javaBinaryPath.replace("javaw", "java");
@@ -359,7 +428,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         return null;
     }
 
-    private boolean validateJdepsPath(String jdepsPath) {
+    protected boolean validateJdepsPath(String jdepsPath) {
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(jdepsPath, "-version");
             Process process = processBuilder.start();
@@ -383,7 +452,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         }
     }
 
-    private String transformJavaHomeToJdepsPath(String javaHome) {
+    protected String transformJavaHomeToJdepsPath(String javaHome) {
         if (javaHome != null && !javaHome.isEmpty()) {
             String osName = System.getProperty("os.name").toLowerCase();
             if (javaHome.endsWith(File.separator)) {
@@ -398,16 +467,118 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         return null;
     }
 
-    private String transformJavaBinaryPathToJdepsPath(String javaBinaryPath) {
+    protected String transformJavaBinaryPathToJdepsPath(String javaBinaryPath) {
         return javaBinaryPath.replaceAll("(?<=[/\\\\])java(\\.exe)?$", "jdeps$1");
     }
 
-    private String removeVendorPrefix(String folderName) {
+    protected String removeVendorPrefix(String folderName) {
         return folderName.replaceAll("^[a-zA-Z]+-", "");
     }
 
-    private void showJdepsWarn(JFrame parent, JDialog dialog) {
+    protected void showJdepsWarn(JFrame parent, JDialog dialog) {
         new JdkWarningDialog(parent, dialog).setVisible(true);
+    }
+
+    private void cleanJdepsTmp() throws Exception {
+        Path dir = Paths.get("local", "crash_assistant", "jdeps_tmp");
+        if (!java.nio.file.Files.exists(dir)) return;
+        try (java.util.stream.Stream<Path> walk = java.nio.file.Files.walk(dir)) {
+            walk.sorted(Comparator.reverseOrder()).forEach(p -> {
+                try { java.nio.file.Files.deleteIfExists(p); } catch (Exception ignored) {}
+            });
+        }
+    }
+
+    protected JdepsScanResult scanModWithJdeps(Mod mod, String jdepsPath, Predicate<String> predicate, boolean stopAfterFirst) {
+        JdepsScanResult result = new JdepsScanResult();
+        Process process = null;
+        try {
+            Path mainJarPath = Paths.get("mods", mod.getJarName()).toAbsolutePath();
+            java.util.List<TargetInfo> targets = buildTargetInfosFromMod(mainJarPath, mod);
+            outer:
+            for (TargetInfo target : targets) {
+                if (isCancelled) break;
+                ProcessBuilder pb = new ProcessBuilder(jdepsPath, "-verbose:class", target.path.toString());
+                pb.redirectErrorStream(true);
+                process = pb.start();
+                runningProcesses.add(process);
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (isCancelled) break;
+                        line = line.trim();
+                        int arrowIndex = line.indexOf("->");
+                        if (arrowIndex != -1) {
+                            String dependency = line.substring(arrowIndex + 2).trim();
+                            if (dependency.endsWith(".class")) continue;
+                            int spaceIndex = dependency.indexOf(' ');
+                            String classPath = dependency.substring(0, spaceIndex == -1 ? dependency.length() : spaceIndex).replace('.', '/') + ".class";
+                            if (predicate.test(classPath)) {
+                                if (stopAfterFirst) {
+                                    result.matched = true;
+                                    result.matchedDisplay = target.display;
+                                    break outer;
+                                } else {
+                                    String fixed = fixClassName(classPath);
+                                    result.deps.add(fixed);
+                                    result.depsByDisplay.computeIfAbsent(target.display, k -> new HashSet<>()).add(fixed);
+                                }
+                            }
+                        }
+                    }
+                }
+                process.waitFor();
+                runningProcesses.remove(process);
+            }
+        } catch (InterruptedException ignored) {
+            CrashAssistantApp.LOGGER.warn("Analysis of " + mod.getJarName() + " was interrupted.");
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error while analysing jdeps for " + mod.getJarName() + ": ", e);
+        } finally {
+            if (process != null) runningProcesses.remove(process);
+        }
+        return result;
+    }
+
+    protected List<TargetInfo> buildTargetInfosFromMod(Path mainJarPath, Mod mod) {
+        List<TargetInfo> targets = new ArrayList<>();
+        targets.add(new TargetInfo(mainJarPath.toAbsolutePath(), mod.getJarName()));
+        if (!isIncludeNestedEnabled()) return targets;
+        try {
+            cleanJdepsTmp();
+        } catch (Exception ignored) {}
+        try {
+            Path baseOut = Paths.get("local", "crash_assistant", "jdeps_tmp", mainJarPath.getFileName().toString());
+            Files.createDirectories(baseOut);
+            extractRecursivelyDetailed(mainJarPath, mod, baseOut, mod.getJarName(), targets);
+        } catch (Exception ignored) {}
+        return targets;
+    }
+
+    private void extractRecursivelyDetailed(Path currentJarPath, Mod currentMod, Path baseOut, String displayPrefix, List<TargetInfo> out) {
+        List<Mod> children = currentMod.getJarJarMods();
+        if (children == null || children.isEmpty()) return;
+        try (JarFile jarFile = new JarFile(currentJarPath.toFile())) {
+            for (Mod child : children) {
+                String p = child.getPathFromJarJar();
+                if (p == null) p = "";
+                if (p.startsWith("/")) p = p.substring(1);
+                String internal = p + child.getJarName();
+                JarEntry entry = jarFile.getJarEntry(internal);
+                if (entry == null || entry.isDirectory()) continue;
+                Path outPath = baseOut.resolve(internal.replace('/', File.separatorChar));
+                try {
+                    Files.createDirectories(outPath.getParent());
+                    try (InputStream in = jarFile.getInputStream(entry)) {
+                        Files.copy(in, outPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        Path childJar = outPath.toAbsolutePath();
+                        String display = displayPrefix + "!/" + internal;
+                        out.add(new TargetInfo(childJar, display));
+                        extractRecursivelyDetailed(childJar, child, outPath.getParent(), display, out);
+                    }
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
     }
 
     private static class JdkWarningDialog extends JDialog {

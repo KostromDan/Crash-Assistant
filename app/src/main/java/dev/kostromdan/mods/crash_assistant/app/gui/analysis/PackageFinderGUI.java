@@ -35,7 +35,7 @@ public class PackageFinderGUI extends AnalysisGUIBase {
 
         String input = (String) JOptionPane.showInputDialog(
                 parent,
-                LanguageProvider.get("gui.analysis.package_finder.input_message"),
+                LanguageProvider.get("gui.analysis.package_finder.header") + "\n\n" + LanguageProvider.get("gui.analysis.package_finder.input_message"),
                 LanguageProvider.get("gui.menu.analysis.package_class_finder"),
                 JOptionPane.PLAIN_MESSAGE,
                 null,

@@ -20,7 +20,7 @@
       is an official recommendation from Neo on that version.
     - `ConnectorIncompatibleFabricMods` - Detects if tried to run fabric mod with connector, but's it's incompatible and
       won't work. Suggests native forge alternatives if they exist. Currently, Sodium, Iris, Lithium.
-- Added new launcherlogs support: ElyPrism, SKLauncher, LegacyLauncher, CrystalLauncher, KLauncher.
+- Added new launcherlogs support: ElyPrism, SKLauncher, LegacyLauncher, CrystalLauncher, KLauncher, PollyMC, Feather.
 - Fixed TLauncher usage was not detected on MacOS or Linux.
 - Added handling for missing or corrupted mixin configuration detection in `MixinApply` log analysis.
 - Redesigned GUI analysis, transformed `CreateDependencies` to be able to add new analysis easily and fast.

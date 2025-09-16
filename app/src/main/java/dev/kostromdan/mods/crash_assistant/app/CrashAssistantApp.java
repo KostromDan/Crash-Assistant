@@ -270,6 +270,9 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "KLauncher: launcher.log", Paths.get("logs/klauncher", "launcher.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("sklauncher", "sklauncher_logs.txt")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../", "PolyMC-0.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../logs", "PollyMC-0.log")));
+
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "Feather: latest.log", Paths.get("feather/logs", "latest.log")));
 
         String userHome = System.getProperty("user.home");
         if (userHome != null) {

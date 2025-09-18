@@ -1,7 +1,7 @@
 modLoader = "javafml"
 loaderVersion = "[41,)"
 issueTrackerURL = "https://github.com/KostromDan/Crash-Assistant/issues"
-license = "KostromDan’s Modded Minecraft License (Version 1.0.0)"
+license = "KostromDan’s Modded Minecraft License (Version 1.1.1)"
 
 [[mods]]
 modId = "crash_assistant"

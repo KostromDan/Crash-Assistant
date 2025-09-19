@@ -245,8 +245,6 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "GDLauncher: main.log", Paths.get("../../../../", "main.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../", "MultiMC-0.log")));
 
-        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "Lunar: ichor-boot.log", Paths.get("logs", "ichor-boot.log")));
-
         FileUtils.getModifiedFiles(Paths.get("../../launcher_logs"), ".log").forEach(path -> {
             LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path));
         });
@@ -273,7 +271,8 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../logs", "PollyMC-0.log")));
 
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "Feather: latest.log", Paths.get("feather/logs", "latest.log")));
-        if (Paths.get("../../").toAbsolutePath().normalize().getFileName().toString().contains("technic")) {
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "Lunar: ichor-boot.log", Paths.get("logs", "ichor-boot.log")));
+        if (FileUtils.folderNLevelsUpperNameContains(2, "technic")) {
             FileUtils.getModifiedFiles(Paths.get("../../logs"), ".log").forEach(path -> {
                 LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path));
             });

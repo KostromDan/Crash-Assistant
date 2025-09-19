@@ -71,4 +71,13 @@ public interface FileUtils {
         return false;
     }
 
+    static boolean folderNLevelsUpperNameContains(int levels, String sToCheck){
+        StringBuilder path = new StringBuilder();
+        for (int i = 0; i < levels; i++) {
+            path.append("../");
+        }
+        return Paths.get(path.toString()).toAbsolutePath().normalize().getFileName().toString().contains(sToCheck);
+    }
+
+
 }

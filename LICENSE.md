@@ -1,6 +1,6 @@
-SPDX-License-Identifier: LicenseRef-KostromDan-MML-1.1.1
+SPDX-License-Identifier: LicenseRef-KostromDan-MML-1.1.3
 
-# KostromDan's Modded Minecraft License (Version 1.1.1)
+# KostromDan's Modded Minecraft License (Version 1.1.3)
 
 All Rights Reserved unless otherwise explicitly stated.  
 Copyright (c) 2025 KostromDan
@@ -57,8 +57,8 @@ Release candidates, betas, and alphas are not major versions.
 
 Port — An Update (see "Update" above) of this mod that is compatible with a new Major Minecraft Version.
 
-Derived Code — (i) code copied from this project; (ii) code created based on or adapted from this project's code; or (
-iii) code that extends or adds functionality to code described in (i) or (ii). Code that only interacts with this mod
+Derived Code — (i) code copied from this project; (ii) code created based on or adapted from this project's code; or
+(iii) code that extends or adds functionality to code described in (i) or (ii). Code that only interacts with this mod
 through its documented public APIs, or simply checks for its presence, without copying or adapting its code, is not
 considered Derived Code.
 
@@ -67,13 +67,19 @@ or Listed Release Platforms: the README, CHANGELOG, release notes, and end-user 
 source comments, commit messages, issues, pull request conversations, and decompiled or disassembled forms are not
 Public Documentation unless the Original Author expressly marks them as such in a Public Announcement.
 
-Public API — Only those programmatic interfaces of this project that the Original Author has explicitly designated as "
-Public API" in official documentation or in the source code by a prominent notice (for example, a comment "Public API",
+Public API — Only those programmatic interfaces of this project that the Original Author has explicitly designated as
+"Public API" in official documentation or in the source code by a prominent notice (for example, a comment "Public API",
 an annotation such as `@PublicApi`, or placement under a path or package named `api` described as public). Absent such
 explicit designation, no code is Public API.
 
 Internal Code — All parts of the codebase that are not Public API, including non-designated classes, methods, data
 formats, and implementation details.
+
+Affiliate — Any person or entity that directly or indirectly controls, is controlled by, or is under common control with
+you; and any owners, officers, directors, employees, contractors, agents, partners, parents, subsidiaries, maintainers,
+contributors, or other persons acting for or on your behalf or at your request or with your material support. References
+to actions by "you" include actions by your Affiliates to the extent they are done for your benefit or at your
+direction.
 
 ---
 
@@ -115,6 +121,45 @@ restricts the exception in Article 3 (TDM for research organizations and cultura
 general-purpose TDM is permitted absent reservation, rights are hereby reserved by this license and may additionally be
 reserved in machine-readable form in the repository or project website.
 
+Global Anti-Circumvention Rule (No Abuse of Permissions; No Proxy or Affiliate Evasion). Notwithstanding anything to the
+contrary anywhere in this license or in any Public Announcement, you and your Affiliates must not use any permission,
+exception, carve-out, interoperability allowance, platform policy, or safe harbor in or referenced by this license to do
+indirectly what this license prohibits directly, or to obtain an advantage that would allow you or your Affiliates to
+create, improve, assist, contribute to, or market any Competing Work. This global rule applies, without limitation, to
+permissions, carve-outs, and allowances described or referenced in Sections 3 (statutory carve-outs and
+TDM reservations), 4 (Compatibility and Integration), 5 (Temporary Permission if the Project Is Abandoned),
+8 (Republishing Mod Files or Forks), 9 (Republishing on Localized or Alternative Platforms), 10 (Copying Small Parts),
+11 (Contributions, License-Back and Patent Licenses) and 12 (Legal and Platform Harmony) (collectively, the "Permission
+Sections"). If any Permission Section appears to conflict with this rule, this rule and the core Non-Compete
+restrictions in this Section 3 control to the maximum extent permitted by law.
+
+- No permission to access Internal Code for competitive purposes. If exercising any Permission Section would, in
+  practice, expose you or your Affiliates to Internal Code, object-code internals, debug symbols, runtime traces, or
+  non-public know-how beyond what is strictly necessary for a permitted non-competing purpose, and you are working on,
+  planning, advising, funding, or otherwise contributing to any Competing Work, you must refrain from exercising that
+  permission. For avoidance of doubt, a Competing Work may not rely on Section 4.1 (compatibility/integration) or
+  Section 5 (temporary forks) to study, observe, test, decompile, reverse engineer, or learn from this project's code or
+  behavior except to the minimum extent strictly required by non-waivable law, and information so obtained must not be
+  used to create, improve, assist, contribute to, or market any Competing Work.
+
+- No pivot or staged circumvention. You may not (a) start an integration, non-competing add-on, localization, or
+  Temporary Fork under Section 5 and later pivot to a Competing Work using any knowledge, insights, or materials
+  obtained from exposure to this project's code or internals; (b) split roles across teams, contractors, subsidiaries,
+  or related projects to spread steps of a prohibited act; or (c) cause, instruct, encourage, materially support, or
+  knowingly benefit from any third party (including Affiliates) doing what you are not permitted to do. Acts by your
+  Affiliates for your benefit are deemed acts by you.
+
+- Scope of clean-room safe harbor unchanged. The narrow clean-room safe harbor in this Section 3 remains available only
+  where non-waivable law affirmatively guarantees the right and only under its stated conditions (including complete
+  reliance on Public Documentation and Public API, no exposure to Internal Code, and preservation of contemporaneous
+  records). You may not expand that safe harbor by reference to any Permission Section or platform policy.
+
+- Examples (non-exhaustive). The following violate this rule: (i) creating a "compatibility" layer by reading Internal
+  Code, then launching a separate "independent" project that replicates functionality; (ii) opening a Temporary Fork
+  under Section 5 to learn design details and later publishing a "from scratch" competitor; (iii) having one affiliate
+  study the code and a different affiliate implement a nominally independent competitor based on knowledge transfer,
+  whether written, verbal, or via prompts to ML systems.
+
 This Section 3 is intended to be enforceable to the maximum extent permitted by applicable law. If a court holds any
 part unenforceable in a particular jurisdiction, the remainder remains in force, and the provision shall be applied to
 the broadest enforceable extent in that jurisdiction.
@@ -138,11 +183,12 @@ that rely on Internal Code or on Public API. Conditions:
 - You may extend or augment functionality, but you may not copy or replicate this project's code or expressive
   implementation.
 
-4.2 Competing Works. Compatibility for Competing Works is permitted only if it relies solely on Public API or on Public
-Documentation and does not use or depend on Internal Code. Any reverse engineering, observation, study, or testing for
-interoperability must be limited to the minimum extent strictly necessary under applicable non-waivable law and must not
-be used to create, improve, assist, contribute to, or market any Competing Work beyond what such law compels. You must
-not include, copy, adapt, or distribute any of this project's code in or with a Competing Work.
+4.2 Competing Works. Compatibility for Competing Works is permitted only if it relies solely on detecting the presence
+of the mod or Public API or on Public Documentation and does not use or depend on Internal Code. Any reverse engineering,
+observation, study, or testing for interoperability must be limited to the minimum extent strictly necessary under
+applicable non-waivable law and must not be used to create, improve, assist, contribute to, or market any Competing Work
+beyond what such law compels. You must not include, copy, adapt, or distribute any of this project's code in or with a
+Competing Work.
 
 4.3 No waiver. This Section 4 does not waive or narrow the Non-Compete restrictions in Section 3, except as expressly
 stated and only to the extent enforceable under applicable non-waivable law.
@@ -231,8 +277,8 @@ seek equitable relief or contractual damages for breach or infringement.
 
 ## 8) Republishing Mod Files or Forks
 
-- Publicly reuploading or rehosting mod files or associated material on Modrinth or CurseForge is strictly prohibited (
-  unless the Temporary Permission above applies).
+- Publicly reuploading or rehosting mod files or associated material on Modrinth or CurseForge is strictly prohibited
+  (unless the Temporary Permission above applies).
 - You are allowed to make changes to the mod files if you are not publishing them publicly (that is, they are only
   shared with your friends, family, or community). For the avoidance of doubt, this limited permission does not
   authorize, and cannot be used to justify, any circumvention of the Non-Compete rule: you may not study, analyze,

@@ -59,7 +59,7 @@ public interface FileUtils {
         return filesFound;
     }
 
-    static boolean isCurseForgeEnv(){
+    static boolean isCurseForgeEnv() {
         try {
             Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
             List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).collect(Collectors.toList());
@@ -71,12 +71,16 @@ public interface FileUtils {
         return false;
     }
 
-    static boolean folderNLevelsUpperNameContains(int levels, String sToCheck){
+    static boolean folderNLevelsUpperNameContains(int levels, String sToCheck) {
         StringBuilder path = new StringBuilder();
         for (int i = 0; i < levels; i++) {
             path.append("../");
         }
-        return Paths.get(path.toString()).toAbsolutePath().normalize().getFileName().toString().contains(sToCheck);
+        Path fileName = Paths.get(path.toString()).toAbsolutePath().normalize().getFileName();
+        if (fileName == null) {
+            return false;
+        }
+        return fileName.toString().contains(sToCheck);
     }
 
 

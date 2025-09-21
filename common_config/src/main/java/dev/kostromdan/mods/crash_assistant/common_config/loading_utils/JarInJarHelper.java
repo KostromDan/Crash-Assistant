@@ -269,50 +269,53 @@ public class JarInJarHelper {
                 Path processInfoPath = outputDirectory.resolve(processInfo + ".info");
                 Path argsInfoPath = outputDirectory.resolve(processInfo + "_args.info");
                 Path oldDllPath = outputDirectory.resolve(processInfo + "_gpu_detect.cs");
-
-                if (Files.exists(processInfoPath)) {
-                    if (CrashAssistantConfig.getBoolean("general.kill_old_app")) {
-                        Long minecraft_pid = Long.parseLong(processInfo.split("_")[0]);
-                        Long start_time = Long.parseLong(processInfo.split("_")[1]);
-                        Long app_pid;
-                        Long app_start_time = null;
-                        try {
-                            byte[] bytes = Files.readAllBytes(processInfoPath);
-                            String content = new String(bytes, StandardCharsets.UTF_8);
-                            if (content.contains(" : ")) {
-                                app_pid = Long.parseLong(content.split(" : ")[0].trim());
-                                app_start_time = Long.parseLong(content.split(" : ")[1].trim());
-                            } else {
-                                app_pid = Long.parseLong(content);
+                try {
+                    if (Files.exists(processInfoPath)) {
+                        if (CrashAssistantConfig.getBoolean("general.kill_old_app")) {
+                            Long minecraft_pid = Long.parseLong(processInfo.split("_")[0]);
+                            Long start_time = Long.parseLong(processInfo.split("_")[1]);
+                            Long app_pid;
+                            Long app_start_time = null;
+                            try {
+                                byte[] bytes = Files.readAllBytes(processInfoPath);
+                                String content = new String(bytes, StandardCharsets.UTF_8);
+                                if (content.contains(" : ")) {
+                                    app_pid = Long.parseLong(content.split(" : ")[0].trim());
+                                    app_start_time = Long.parseLong(content.split(" : ")[1].trim());
+                                } else {
+                                    app_pid = Long.parseLong(content);
+                                }
+                            } catch (IOException ex) {
+                                LOGGER.error("Error while reading " + processInfoPath + ". This should never happen:", ex);
+                                throw new RuntimeException(ex);
                             }
-                        } catch (IOException ex) {
-                            LOGGER.error("Error while reading " + processInfoPath + ". This should never happen:", ex);
-                            throw new RuntimeException(ex);
-                        }
-                        boolean isAppProcessAlive = ProcessHelper.isProcessAlive(app_pid);
-                        long minecraftStartTime = ProcessHelper.getProcessStartTime(minecraft_pid);
-                        if (isAppProcessAlive && (app_start_time == null || app_start_time == ProcessHelper.getProcessStartTime(app_pid))
-                                && !(ProcessHelper.isProcessAlive(minecraft_pid) && minecraftStartTime == start_time)) {
-                            LOGGER.warn("Closed old CrashAssistantApp process to prevent confusing the player with window containing information from old crash.");
-                            ProcessHelper.destroyProcess(app_pid);
-                            new java.util.Timer().schedule(
-                                    new java.util.TimerTask() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                Files.deleteIfExists(path);
-                                                Files.deleteIfExists(tmpModLibJarPath);
-                                                Files.deleteIfExists(processInfoPath);
-                                                Files.deleteIfExists(argsInfoPath);
-                                                Files.deleteIfExists(oldDllPath);
-                                            } catch (IOException ignored) {
+                            boolean isAppProcessAlive = ProcessHelper.isProcessAlive(app_pid);
+                            long minecraftStartTime = ProcessHelper.getProcessStartTime(minecraft_pid);
+                            if (isAppProcessAlive && (app_start_time == null || app_start_time == ProcessHelper.getProcessStartTime(app_pid))
+                                    && !(ProcessHelper.isProcessAlive(minecraft_pid) && minecraftStartTime == start_time)) {
+                                LOGGER.warn("Closed old CrashAssistantApp process to prevent confusing the player with window containing information from old crash.");
+                                ProcessHelper.destroyProcess(app_pid);
+                                new java.util.Timer().schedule(
+                                        new java.util.TimerTask() {
+                                            @Override
+                                            public void run() {
+                                                try {
+                                                    Files.deleteIfExists(path);
+                                                    Files.deleteIfExists(tmpModLibJarPath);
+                                                    Files.deleteIfExists(processInfoPath);
+                                                    Files.deleteIfExists(argsInfoPath);
+                                                    Files.deleteIfExists(oldDllPath);
+                                                } catch (IOException ignored) {
+                                                }
                                             }
-                                        }
-                                    },
-                                    5000
-                            );
+                                        },
+                                        5000
+                                );
+                            }
                         }
                     }
+                } catch (Exception e) {
+                    LOGGER.warn("Error while removing '{}' or reading '{}'. This should never happen. Maybe files got corrupted?", fileName, processInfoPath.getFileName(), e);
                 }
                 try {
                     Files.deleteIfExists(path);
@@ -330,7 +333,7 @@ public class JarInJarHelper {
                     processInfo = fileName.split("\\.info")[0];
                 } else if (fileName.endsWith(".dll")) {
                     processInfo = fileName.split("_gpu_detect\\.cs")[0];
-                }else {
+                } else {
                     processInfo = fileName.split("_mod\\.jar")[0];
                 }
 

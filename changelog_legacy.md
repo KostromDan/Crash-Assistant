@@ -1,9 +1,75 @@
+1.10.0 major update:
+
+- Fabric: Moved launch of our process from PreLaunchEntrypoint to a LanguageAdapter
+  to run from the first possible point.
+  Also fixes Crash Assistant not starting issue if crash happened in some MixinConfigPlugin(before PreLaunchEntrypoint).
+- Forge coremod: Returned launch of our process to a constructor (to the first possible point) instead of
+  `initialize()`. This was done earlier because some needed params were unavailable that early. But I've found a way to
+  parse them. So now I reverted that old change.
+- Added Auto-Fix option for the Integrated GPU warning. Now can fix the issue with just one click instead of following a
+  quite complex guide for inexperienced users.
+- Add clarification for desktop users regarding monitor cable and GPU connection in all translations.
+- `IntelChipBugWarning`: Added microcode version diagnostics and improved UI/wording.
+  Now notifies users if their current microcode version is affected or not.
+- Marked `i9-13950hx` and `i9-13980hx` as affected for `IntelChipBugWarning`, since we've seen crashes caused by them.
+- Replaced `gpu-detect-jni.dll` GPU detection with C# based detection to prevent including DLLs in mod.
+  We're shipping C# source code, which compiles at runtime using `.NET` features available in any Win 10+ system.
+- New log analysis:
+    - `LegacyTooManyIds` - Too many ids on 1.12.2 and below.
+    - `NeoForgeVersion1_20_1` - Notifies that Neo on 1.20.1 is abandoned and causing many crashes and switching to Forge
+      is an official recommendation from Neo on that version.
+    - `ConnectorIncompatibleFabricMods` - Detects if tried to run fabric mod with connector, but's it's incompatible and
+      won't work. Suggests native forge alternatives if they exist. Currently, Sodium, Iris, Lithium.
+- Added new launcherlogs support: ElyPrism, SKLauncher, LegacyLauncher, CrystalLauncher,
+  KLauncher, PollyMC, Feather, Lunar, Technic.
+- Fixed TLauncher usage was not detected on MacOS or Linux.
+- Added handling for missing or corrupted mixin configuration detection in `MixinApply` log analysis.
+- Redesigned GUI analysis, transformed `CreateDependencies` to be able to add new analysis easily and fast.
+- Fixed `CreateDependencies` wasn't localized and had many hardcoded strings.
+- Fixed `CreateDependencies` wasn't looking to jar in jar of mods causing super rare to not detect problematic mod.
+- Fixed `CreateDependencies` was working incorrectly for fabric.
+- New GUI analysis tools:
+    - `MCreator Mod Detector` - Detects MCreator mods. Was already in `modlist.txt`, but now as separate GUI tool.
+    - `Epic Fight mod addons compatibility` - Same as `Create mod addons compatibility` but for Epic Fight mods.
+    - `Package/Class Finder` - Helps to find from which mod a class or package came.
+    - `Jdeps Dependencies Analysis` - Helps to find which mod depends on a class. This is especially helpful if you see
+    - NoClassDefFoundError or ClassNotFoundException in your logs and don’t know which mod requires that missing class.
+- Redesigned Analysis menu, now displays a short description.
+- Now suggesting to use `Epic Fight mod addons compatibility` in `EpicFightAddons` log analysis.
+- 1.12.2 and earlier: Improved `OutOfMemory` analysis recommendations. Now recommending available mods on that version.
+- 1.12.2: Added compat with `Improved Cleanroom Relauncher` and `Cleanroom relauncher unofficial`. Fixed starting twice.
+- Prevented a Crash Assistant mod file being locked while the crash assistant is running.
+- Prevented McLogs from censoring IP-like versions.
+- Localization: Added missing, fixed outdated and sorted keys across en, ru, it, es, zh;
+- Added German localization. Thanks `MagentaCoding` for making PR.
+- Jvm.dll analysis: Added one more possible reason for this.
+- Fixed issue with non-ASCII paths causing Crash Assistant not to start. E.g., Cyrillic or Chinese symbols in the path.
+- Removed CrashAssistantAgent and refactored classpath handling to improve stability on non-ASCII paths.
+- `TerminatedProcessesFinder`: Fixed handling of non-standard datetime formats, which caused PS cmd to ignore
+  time filter and grab all available event errors instead of just those from the last 15 seconds.
+- Fixed hs_err log can be not added in some rare cases.
+- Fixed Jdeps analysis didn't checked version of java, caused analysis detected nothing in case usage of outdated jdk.
+- Fixed mod on Quilt mod-loader wasn't working since some version due to bad QuiltZipPath implementation in the loader.
+- Fixed mod not working on Lunar Client because Lunar was ignoring PreLaunchEntrypoint.
+- Fixed `ResourceLocationException` analysis wasn't triggered in some rare cases.
+- Fixed ANSI color formatting was still applied in modlist diff, ignoring `generated_message.color_message` setting.
+- Small fixes, formatting cleanups, and internal improvements.
+- The mod was relicensed under `KostromDan’s Modded Minecraft License (Version 1.1.3)`. Unfortunately, the LGPL did not
+  protect my rights and interests as I expected (it should have covered this case, but CurseForge decided that
+  derivative code does not need to comply with LGPL terms and conditions and, moreover, does not need to give any
+  attribution to the original project, even allowing others to falsely claim it as their own code). It may be due to
+  some confusion and complexity of the situation, but it is what it is. I am now initiating a court case, which will
+  cost me a lot of money, and that fact is quite disappointing. I am also disappointed that I had to relicense, but I
+  don’t see another way. There is a lot of drama. If this drama ever ends, I will most likely revert the license back to
+  LGPL.
+
 1.9.15
 
 - Backported to 1.16.1, 1.16.2, 1.16.3, 1.16.4 (forge)
 - Backported to 1.17, 1.17.1, 1.18, 1.18.1, 1.19, 1.19.1 (forge+fabric)
 - Backported to 1.20.5 (neo)
-- Now Crash Assistant is available for all modloaders on every single version on 1.16.5 - 1.21.8 version range without gaps.
+- Now Crash Assistant is available for all modloaders on every single version on 1.16.5 - 1.21.8 version range without
+  gaps.
 - Small fixes and improvements.
 
 1.9.14

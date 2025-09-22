@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.config;
 import com.electronwill.nightconfig.core.AbstractCommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.ParsingException;
+import com.electronwill.nightconfig.toml.TomlFormat;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +27,7 @@ public class CrashAssistantConfig {
 
     static {
         executeWithLock(() -> {
-            config = CommentedFileConfig.builder(CONFIG_PATH)
+            config = CommentedFileConfig.builder(CONFIG_PATH, TomlFormat.instance())
                     .preserveInsertionOrder()
                     .build();
             load();
@@ -159,7 +160,7 @@ public class CrashAssistantConfig {
                 "If enabled, will add modloader jar name to modlist, to easily track if user changed version of modloader.",
                 true);
         addOption("modpack_modlist.add_modlist_txt_as_log",
-                "If enabled, will add generated modlist.txt, with names of all mods / modids / mixin configs / jarjar mods info to logs.\n",
+                "If enabled, will add generated modlist.txt, with names of all mods / modids / mixin configs / jarjar mods info to logs.",
                 true);
 
         config.setComment("analysis", "Settings of analysis feature.\n" +

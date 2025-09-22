@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
 
 import java.util.Optional;
 
@@ -109,5 +110,16 @@ public class ProcessHelper {
      */
     public static boolean destroyProcessForcibly(long pid) {
         return impl.destroyProcessForcibly(pid);
+    }
+
+    /**
+     * Exits the current process with the specified status code.
+     * Uses System.exit() internally. If needed, uses bypasses to ensure termination,
+     * for example in legacy versions.
+     *
+     * @param status the exit status code to use when terminating the process
+     */
+    public static void exitProcess(int status) {
+        ExitVMBypass.exit(status);
     }
 }

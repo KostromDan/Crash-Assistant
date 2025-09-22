@@ -26,7 +26,6 @@ public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
 
         LibrariesJarLocator.setupLoaderJarName(FMLLaunchHandler.class);
         JarInJarHelper.launchCrashAssistantApp(launchTarget);
-        JarInJarHelper.checkForIncompatibleMods(true);
         JarInJarHelper.checkDuplicatedCrashAssistantMod(true);
     }
 

@@ -130,4 +130,85 @@ public enum PlatformHelp {
     public static boolean isForgeBased() {
         return platform == FORGE || platform == NEOFORGE;
     }
+
+    /**
+     * Parses jdeps --version output and extracts major version number.
+     * Example input: "21" or "21.0.8" or "21.0.8+8" or "22-ea" or "22-ea+27" or "1.8.0_202"
+     * 
+     * @param jdepsVersionOutput the output from jdeps --version command
+     * @return major version number, or -1 if parsing fails
+     */
+    public static int parseJdkMajorVersion(String jdepsVersionOutput) {
+        if (jdepsVersionOutput == null || jdepsVersionOutput.trim().isEmpty()) {
+            return -1;
+        }
+
+        String version = jdepsVersionOutput.trim();
+
+        // Handle old format like "1.8.0_202"
+        if (version.startsWith("1.")) {
+            String[] parts = version.split("\\.");
+            if (parts.length >= 2) {
+                try {
+                    return Integer.parseInt(parts[1]);
+                } catch (NumberFormatException e) {
+                    return -1;
+                }
+            }
+        }
+
+        // Handle new format like "21", "21.0.8", "21.0.8+8", "22-ea", "22-ea+27"
+        // Extract the first number before any dot, dash, or plus
+        StringBuilder majorVersionStr = new StringBuilder();
+        for (char c : version.toCharArray()) {
+            if (Character.isDigit(c)) {
+                majorVersionStr.append(c);
+            } else if (c == '.' || c == '-' || c == '+') {
+                break;
+            } else {
+                // Skip non-digit characters at the beginning
+                if (majorVersionStr.length() == 0) {
+                    continue;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        if (majorVersionStr.length() > 0) {
+            try {
+                return Integer.parseInt(majorVersionStr.toString());
+            } catch (NumberFormatException e) {
+                return -1;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     * Gets the major version from the current Java runtime.
+     * 
+     * @return current major version number
+     */
+    public static int getCurrentJdkMajorVersion() {
+        return parseJdkMajorVersion(javaVersion);
+    }
+
+    /**
+     * Compares if the parsed JDK version is sufficient compared to current runtime.
+     * 
+     * @param jdepsVersionOutput the output from jdeps --version command
+     * @return false if parsed version is lower than current major version, true otherwise
+     */
+    public static boolean isJdkVersionSufficient(String jdepsVersionOutput) {
+        int parsedMajorVersion = parseJdkMajorVersion(jdepsVersionOutput);
+        int currentMajorVersion = getCurrentJdkMajorVersion();
+
+        if (parsedMajorVersion == -1 || currentMajorVersion == -1) {
+            return true; // If parsing fails, assume it's sufficient to avoid blocking
+        }
+
+        return parsedMajorVersion >= currentMajorVersion;
+    }
 }

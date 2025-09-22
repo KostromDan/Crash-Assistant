@@ -16,7 +16,7 @@ public class TerminatedProcessesFinder {
                 "Get-WinEvent -FilterHashtable @{ \n" +
                 "  LogName='Application'; \n" +
                 "  Level=2; \n" +
-                "  StartTime=(Get-Date).AddSeconds(-15) \n" +
+                "  StartTime=((Get-Date).AddSeconds(-15).ToString('o')) \n" +
                 "} *>&1 | Format-Table -Wrap -AutoSize | Out-File \"$FILE_NAME$\" -Encoding UTF8".replace("$FILE_NAME$", tempPath.toString());
         try {
             Process process = new ProcessBuilder("powershell.exe", "-Command", command.replaceAll("\\n", ""))

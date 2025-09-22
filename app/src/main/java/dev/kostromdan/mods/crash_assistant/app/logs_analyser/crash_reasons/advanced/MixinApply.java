@@ -16,6 +16,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static dev.kostromdan.mods.crash_assistant.app.utils.ModuleFinder.SearchMode.CLASS_OR_PACKAGE;
+
 public class MixinApply extends KnownCrashReason {
     public MixinApply() {
         super(
@@ -62,7 +64,10 @@ public class MixinApply extends KnownCrashReason {
                     message += LanguageProvider.get("warnings.mixin_apply_java_version");
                     message = message.replace("$REQUIRED_JAVA_VERSION$", "<strong style='color: red;'>" + result.getRequiredJavaVersion() + "</strong>");
                     message = message.replace("$CURRENT_JAVA_VERSION$", "<strong style='color: red;'>JAVA_" + getMajorJavaVersion() + "</strong>");
-                } else {
+                } else if (result.isMissingOrCorruptedMixinConfig()){
+                    message += LanguageProvider.get("warnings.mixin_config_missing_or_corrupted");
+                }
+                else {
                     if (result.getConflictingJarName() != null) {
                         conflictingJarName = result.getConflictingJarName();
                         message += LanguageProvider.get("warnings.mixin_apply_conflicting_with_jar");
@@ -109,12 +114,18 @@ public class MixinApply extends KnownCrashReason {
                         String nextLine = lines.get(j);
                         if (!nextLine.contains("Caused by: ") && !nextLine.contains("at ")) break;
                         if (!nextLine.contains("Caused by: ")) continue;
-                        if (!nextLine.contains("java.lang.IllegalArgumentException: The requested compatibility level ") || !nextLine.contains(" could not be set. Level is not supported by the active JRE or ASM version ")) {
+                        boolean isRequiredJavaVersion = nextLine.contains("java.lang.IllegalArgumentException: The requested compatibility level ") && nextLine.contains(" could not be set. Level is not supported by the active JRE or ASM version ");
+                        boolean isMissingOrCorruptedMixinConfig = nextLine.contains("java.lang.IllegalArgumentException: The specified resource '") && nextLine.contains("' was invalid or could not be read");
+                        if (!isRequiredJavaVersion && !isMissingOrCorruptedMixinConfig) {
                             break;
                         }
-                        String requiredJava = nextLine.split("Caused by: java\\.lang\\.IllegalArgumentException: The requested compatibility level ")[1].split(" ")[0];
                         MixinParsingResult result = new MixinParsingResult(config, null);
-                        result.setRequiredJavaVersion(requiredJava);
+                        if (isRequiredJavaVersion) {
+                            String requiredJava = nextLine.split("Caused by: java\\.lang\\.IllegalArgumentException: The requested compatibility level ")[1].split(" ")[0];
+                            result.setRequiredJavaVersion(requiredJava);
+                        } else {
+                            result.setMissingOrCorruptedMixinConfig(true);
+                        }
                         return result;
                     }
                     continue;
@@ -132,7 +143,7 @@ public class MixinApply extends KnownCrashReason {
                     if (line.contains(pattern)) {
                         String packageName = line.split(pattern)[1].split(" ")[0];
                         if (isInternalClass(packageName)) continue;
-                        List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(packageName), ModListUtils.getCurrentModList(true));
+                        List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(packageName), ModListUtils.getCurrentModList(true), CLASS_OR_PACKAGE);
                         if (jarsContainingModule.isEmpty()) continue;
                         return new MixinParsingResult(configs.iterator().next(), jarsContainingModule.get(0));
                     }
@@ -218,6 +229,7 @@ public class MixinApply extends KnownCrashReason {
         private final String mixinConfig;
         private final String conflictingJarName;
         private String requiredJavaVersion = null;
+        private boolean missingOrCorruptedMixinConfig = false;
 
         public MixinParsingResult(String mixinConfig, String conflictingJarName) {
             this.mixinConfig = mixinConfig;
@@ -238,6 +250,14 @@ public class MixinApply extends KnownCrashReason {
 
         public void setRequiredJavaVersion(String requiredJavaVersion) {
             this.requiredJavaVersion = requiredJavaVersion;
+        }
+
+        public boolean isMissingOrCorruptedMixinConfig() {
+            return missingOrCorruptedMixinConfig;
+        }
+
+        public void setMissingOrCorruptedMixinConfig(boolean missingOrCorruptedMixinConfig) {
+            this.missingOrCorruptedMixinConfig = missingOrCorruptedMixinConfig;
         }
     }
 

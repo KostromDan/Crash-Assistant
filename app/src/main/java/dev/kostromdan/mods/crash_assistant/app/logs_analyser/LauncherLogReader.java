@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 
 import java.util.*;
 
@@ -74,7 +75,7 @@ public class LauncherLogReader extends LogReader {
             }
         }
 
-        if (lastLineEpochMillis > 0 && CrashAssistantApp.parentStarted > lastLineEpochMillis) {
+        if (lastLineEpochMillis > 0 && Boot.parentStarted > lastLineEpochMillis) {
             allLinesListCached = Collections.singletonList("");
             return;
         }

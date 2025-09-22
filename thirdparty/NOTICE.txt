@@ -1,0 +1,24 @@
+Third-Party License Notice
+=======================================
+
+This project contains source code based upon, or includes source code from, the following third-party projects.
+
+The complete text for each software license can be found in the directory "thirdparty/licenses".
+
+* Maven
+  * Copyright (c) 2001-2022 The Apache Software Foundation
+  * License: Apache License Version 2.0, January 2004
+  * Original Source:
+    * https://github.com/apache/maven/blob/maven-3.9.x/maven-artifact/src/main/java/org/apache/maven/artifact/versioning/ComparableVersion.java
+  * Files:
+    * common_config/src/main/java/dev/kostromdan/mods/crash_assistant/common_config/utils/maven_version_cmp/ComparableVersion.java
+
+
+* Localization contributions made to Crash Assistant before relicensing from LGPL v3 to KostromDan’s Modded Minecraft License (Version 1.0.0).
+  * Copyright (c) KostromDan and other Crash Assistant contributors. https://github.com/KostromDan/Crash-Assistant/graphs/contributors
+  * License: GNU LESSER GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+  * Files:
+    * common_config/src/main/resources/lang/es_es.json
+    * common_config/src/main/resources/lang/zh_cn.json
+    * common_config/src/main/resources/lang/it_it.json
+    * common_config/src/main/resources/lang/de_de.json

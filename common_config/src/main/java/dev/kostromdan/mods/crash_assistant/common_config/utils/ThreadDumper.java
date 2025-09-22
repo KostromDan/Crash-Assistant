@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.common.utils;
+package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;

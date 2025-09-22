@@ -41,6 +41,15 @@ jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn(':app:shadowJar')
     dependsOn tasks.shadowJar
+
+    from("$rootDir/LICENSE.md") {
+        rename { "CRASH_ASSISTANT_LICENSE.md" }
+        into ""
+    }
+    from("$rootDir/thirdparty") {
+        into "thirdparty"
+    }
+
     from zipTree(tasks.shadowJar.archiveFile.get().asFile)
     from(project(':app').tasks.shadowJar) {
         into 'META-INF/jarjar'

@@ -27,7 +27,11 @@ public enum LinksProvider {
     CRASH_ASSISTANT_DISCORD(() -> "https://discord.com/invite/dV8WFrJZK6"),
     LAT_DISCORD(() -> "https://discord.gg/lat"),
 
+    NOT_ENOUGH_IDS(() -> "https://www.curseforge.com/minecraft/mc-mods/notenoughids"),
+    ROUGHLY_ENOUGH_IDS(() -> "https://www.curseforge.com/minecraft/mc-mods/reid"),
+
     LITHOSTITCHED(() -> "https://www.curseforge.com/minecraft/mc-mods/lithostitched"),
+
     MODERN_FIX(() -> "https://www.curseforge.com/minecraft/mc-mods/modernfix"),
     FERRITE_CORE(() -> {
         if (PlatformHelp.isForgeBased()) {
@@ -35,7 +39,14 @@ public enum LinksProvider {
         }
         return "https://www.curseforge.com/minecraft/mc-mods/ferritecore-fabric";
     }),
+
+    VINTAGE_FIX(() -> "https://www.curseforge.com/minecraft/mc-mods/vintagefix"),
+    CENSORED_ASM(() -> "https://www.curseforge.com/minecraft/mc-mods/lolasm"),
+
     EMBEDDIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/embeddium"),
+    OCULUS(() -> "https://www.curseforge.com/minecraft/mc-mods/oculus"),
+    RADIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/radium-reforged"),
+    CONNECTOR(() -> "https://www.curseforge.com/minecraft/mc-mods/sinytra-connector"),
     INDIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/indium"),
     FEATURE_RECYCLER(() -> "https://www.curseforge.com/minecraft/mc-mods/feature-recycler");
 

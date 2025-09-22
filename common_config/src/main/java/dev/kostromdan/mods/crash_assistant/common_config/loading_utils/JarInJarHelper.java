@@ -189,6 +189,17 @@ public class JarInJarHelper {
         return new ArrayList<>(resultSet);
     }
 
+    public static boolean isCleanroomRelauncher() {
+        HashSet<String> relauncherModIds = new HashSet<>(Arrays.asList("cleanroom-relauncher", "improved-relauncher", "relauncher"));
+        List<Mod> mods = getModsContainingPart("cleanroom", "relauncher");
+        mods = mods.stream().filter(mod -> relauncherModIds.contains(mod.getModId())).collect(Collectors.toList());
+        if (mods.isEmpty()) return false;
+        if (!ClassExistenceChecker.classExists("com.cleanroommc.boot.Main")) {
+            LOGGER.warn("Detected cleanroom-relauncher env. Crash Assistant will start after relaunching with cleanroom.");
+            return true;
+        }
+        return false;
+    }
 
     public static List<Mod> checkDuplicatedCrashAssistantMod(boolean crashIfDuplicated) {
         try {

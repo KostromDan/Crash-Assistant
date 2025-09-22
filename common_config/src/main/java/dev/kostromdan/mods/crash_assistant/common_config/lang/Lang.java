@@ -1,6 +1,8 @@
 package dev.kostromdan.mods.crash_assistant.common_config.lang;
 
 import com.electronwill.nightconfig.core.file.FileConfig;
+import com.electronwill.nightconfig.json.JsonFormat;
+import com.electronwill.nightconfig.toml.TomlFormat;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -81,7 +83,11 @@ public class Lang {
                     JarInJarHelper.LOGGER.error("BCC config file not found");
                     return "<BCC config file not found>";
                 }
-                BCCConfig = FileConfig.builder(BCCConfigForgePath.toFile().exists() ? BCCConfigForgePath : BCCConfigFabricPath).build();
+                boolean forge = BCCConfigForgePath.toFile().exists();
+                BCCConfig = FileConfig.builder(
+                        forge ? BCCConfigForgePath : BCCConfigFabricPath,
+                        forge ? TomlFormat.instance() : JsonFormat.fancyInstance()
+                ).build();
                 BCCConfig.load();
             }
         } catch (Exception e) {

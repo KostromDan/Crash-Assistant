@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.advanced.MixinApply.isInternalClass;
+import static dev.kostromdan.mods.crash_assistant.app.utils.ModuleFinder.SearchMode.CLASS_OR_PACKAGE;
 
 public class UnsupportedClassVersion extends KnownCrashReason {
     public UnsupportedClassVersion() {
@@ -41,9 +42,9 @@ public class UnsupportedClassVersion extends KnownCrashReason {
                 String compiledJavaVersion = Integer.toString(Integer.parseInt(compiledVer) - 44);
                 String runtimeJavaVersion = Integer.toString(Integer.parseInt(runtimeVer) - 44);
 
-                if (isInternalClass(moduleName))return false;
+                if (isInternalClass(moduleName)) return false;
 
-                List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(moduleName), ModListUtils.getCurrentModList(true));
+                List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(moduleName), ModListUtils.getCurrentModList(true), CLASS_OR_PACKAGE);
 
                 this.message = this.message
                         .replace("$CLASS_NAME$", moduleName)

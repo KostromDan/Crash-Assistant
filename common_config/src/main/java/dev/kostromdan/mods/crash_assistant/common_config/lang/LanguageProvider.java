@@ -71,6 +71,7 @@ public class LanguageProvider {
         CrashAssistantConfig.executeWithLock(() -> {
             LANG_PATH.toFile().mkdirs();
             HashSet<String> langFilesInJarNames = new HashSet<>();
+            langFilesInJarNames.add("lang/de_de.json");
             langFilesInJarNames.add("lang/en_us.json");
             langFilesInJarNames.add("lang/ru_ru.json");
             langFilesInJarNames.add("lang/zh_cn.json");

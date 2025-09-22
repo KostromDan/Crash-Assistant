@@ -1,6 +1,12 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.PackageFinderGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateDependenciesAnalysisGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.EpicFightDependenciesAnalysisGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDependenciesAnalysisGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorGUI;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
@@ -8,11 +14,10 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -23,6 +28,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
@@ -148,6 +154,23 @@ public class CrashAssistantGUI {
     }
 
     private static void addFileMenu() {
+        
+        // Helper to build HTML-based menu items with title and description
+        java.util.function.BiFunction<String, String, JMenuItem> makeMenuItem = (titleKey, descKey) -> {
+            String title = LanguageProvider.get(titleKey);
+            String desc = LanguageProvider.get(descKey);
+
+            // Support multiline descriptions and basic HTML escaping
+            java.util.function.Function<String, String> esc = s -> s == null ? "" :
+                    s.replace("&", "&amp;")
+                     .replace("<", "&lt;")
+                     .replace(">", "&gt;")
+                     .replace("\n", "<br>");
+
+            String html = "<html><b>" + esc.apply(title) + "</b><br>" +
+                    "<span style='color:gray; font-size:10px;'>" + esc.apply(desc) + "</span></html>";
+            return new JMenuItem(html);
+        };
         // Initialize menu bar and main menus
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu(LanguageProvider.get("gui.menu.file"));
@@ -205,9 +228,25 @@ public class CrashAssistantGUI {
         fileMenu.add(openModpackFolderItem);
 
         // Analysis menu items
-        JMenuItem analysisItem = new JMenuItem(LanguageProvider.get("gui.menu.analysis.create_dependencies"));
-        analysisItem.addActionListener(e -> CreateDependencies.showCreateAnalysisDialog(frame));
-        analysisMenu.add(analysisItem);
+        JMenuItem createAnalysisItem = makeMenuItem.apply("gui.menu.analysis.create_dependencies", "gui.menu.analysis.create_dependencies.desc");
+        createAnalysisItem.addActionListener(e -> CreateDependenciesAnalysisGUI.showCreateAnalysisDialog(frame));
+        analysisMenu.add(createAnalysisItem);
+
+        JMenuItem epicFightAnalysisItem = makeMenuItem.apply("gui.menu.analysis.epic_fight_addons_compatibility", "gui.menu.analysis.epic_fight_addons_compatibility.desc");
+        epicFightAnalysisItem.addActionListener(e -> EpicFightDependenciesAnalysisGUI.showEpicFightAnalysisDialog(frame));
+        analysisMenu.add(epicFightAnalysisItem);
+
+        JMenuItem mcreatorDetectorItem = makeMenuItem.apply("gui.menu.analysis.mcreator_mod_detector", "gui.analysis.mcreator_detector.header");
+        mcreatorDetectorItem.addActionListener(e -> MCreatorModDetectorGUI.showMCreatorModDetectorDialog(frame));
+        analysisMenu.add(mcreatorDetectorItem);
+
+        JMenuItem packageFinderItem = makeMenuItem.apply("gui.menu.analysis.package_class_finder", "gui.analysis.package_finder.header");
+        packageFinderItem.addActionListener(e -> PackageFinderGUI.showPackageFinderDialog(frame));
+        analysisMenu.add(packageFinderItem);
+
+        JMenuItem jdepsAnalysisItem = makeMenuItem.apply("gui.menu.analysis.jdeps_dependencies_analysis", "gui.analysis.jdeps.header");
+        jdepsAnalysisItem.addActionListener(e -> JdepsDependenciesAnalysisGUI.showDialog(frame));
+        analysisMenu.add(jdepsAnalysisItem);
 
         // Privacy menu items
         JMenuItem logsPrivacyItem = new JMenuItem(LanguageProvider.get("gui.menu.privacy.logs_info"));
@@ -352,7 +391,7 @@ public class CrashAssistantGUI {
                     JOptionPane optionPane = new JOptionPane(
                             CrashAssistantGUI.getEditorPane(
                                     "<h2>Warning: incompatible mod(s) detected!</h2>\n" +
-                                            "<strong>" + CrashAssistantApp.crashAssistantJarName + "</strong>" + " and " +
+                                            "<strong>" + Boot.crashAssistantModJarName + "</strong>" + " and " +
                                             "<strong>" + String.join(", ", detectedMods.stream().map(Mod::getJarName).collect(Collectors.toList())) + "</strong>" +
                                             " are incompatible.\n" +
                                             "You should remove one them!" +
@@ -462,7 +501,7 @@ public class CrashAssistantGUI {
                     removeCrashAssistantButton.addActionListener(e -> {
                         try {
                             dialog.setAlwaysOnTop(false);
-                            String jarName = CrashAssistantApp.crashAssistantJarName;
+                            String jarName = Boot.crashAssistantModJarName;
                             File modsDir = new File("mods");
                             File modFile = new File(modsDir, jarName);
 
@@ -477,33 +516,20 @@ public class CrashAssistantGUI {
                                 return;
                             }
 
-                            // Get the current process ID
-                            long currentPID = ProcessHelper.getCurrentProcessId();
-
-                            // Get the path to the current JAR
-                            String classPath = System.getProperty("java.class.path");
-
-                            // Build the command to start the remover process
-                            ProcessBuilder processBuilder = new ProcessBuilder(
-                                    JavaBinaryLocator.getJavaBinary(),
-                                    "-cp",
-                                    classPath,
-                                    "dev.kostromdan.mods.crash_assistant.app.utils.ModRemover",
-                                    modFile.getAbsolutePath(),
-                                    String.valueOf(currentPID)
-                            );
-
-                            // Start the remover process
-                            processBuilder.start();
-
-                            // Exit the current process
-                            CrashAssistantApp.LOGGER.info("Exiting to allow Crash Assistant removal. Exiting with code 0.");
-                            System.exit(0);
-                        } catch (Exception ex) {
-                            CrashAssistantApp.LOGGER.error("Error while setting up Crash Assistant removal: ", ex);
+                            Files.delete(modFile.toPath());
                             JOptionPane.showMessageDialog(
                                     frame,
-                                    CrashAssistantGUI.getEditorPane("Failed to set up Crash Assistant removal: " + ex.getMessage(), false),
+                                    CrashAssistantGUI.getEditorPane("Crash Assistant has been successfully removed from:\n" + modFile.getPath() + "\n\n" +
+                                            "Please restart your game.", false),
+                                    "Success",
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+                            System.exit(0);
+                        } catch (Exception ex) {
+                            CrashAssistantApp.LOGGER.error("Error while removing Crash Assistant: ", ex);
+                            JOptionPane.showMessageDialog(
+                                    frame,
+                                    CrashAssistantGUI.getEditorPane("Error while removing Crash Assistant: " + ex.getMessage(), false),
                                     "Error",
                                     JOptionPane.ERROR_MESSAGE
                             );

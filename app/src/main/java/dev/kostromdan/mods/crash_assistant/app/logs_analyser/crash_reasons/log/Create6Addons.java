@@ -1,7 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.app.gui.CreateDependencies;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
@@ -16,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 public class Create6Addons extends KnownCrashReason {
@@ -44,7 +44,9 @@ public class Create6Addons extends KnownCrashReason {
         if (CrashAssistantApp.gameLaunchedSuccessfully) {
             return false;
         }
-        List<Mod> createMods = CreateDependencies.getCurrentCreateMods();
+        List<Mod> createMods = ModListUtils.getCurrentModList(true).stream()
+                .filter(mod -> "create".equals(mod.getModId()))
+                .collect(Collectors.toList());
         if (createMods.isEmpty()) {
             return false;
         }

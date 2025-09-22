@@ -52,4 +52,12 @@ shadowJar {
 
 remapJar {
     input.set shadowJar.archiveFile
+
+    from("$rootDir/LICENSE.md") {
+        rename { "CRASH_ASSISTANT_LICENSE.md" }
+        into ""
+    }
+    from("$rootDir/thirdparty") {
+        into "thirdparty"
+    }
 }

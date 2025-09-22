@@ -22,8 +22,8 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
-import dev.kostromdan.mods.crash_assistant.common.utils.HeapDumper;
-import dev.kostromdan.mods.crash_assistant.common.utils.ThreadDumper;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.HeapDumper;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ThreadDumper;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;

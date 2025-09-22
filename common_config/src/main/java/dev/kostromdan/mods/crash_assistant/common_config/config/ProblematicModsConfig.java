@@ -6,6 +6,7 @@ import com.electronwill.nightconfig.json.JsonFormat;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -121,7 +122,7 @@ public class ProblematicModsConfig {
             }
         }
         if (shouldCrash) {
-            System.exit(-1);
+            ProcessHelper.exitProcess(-1);
         }
     }
 

@@ -199,7 +199,7 @@ public class JarInJarHelper {
             if (modsWithSameModId.size() > 1) {
                 LOGGER.error("Found more than one mod with modid \"crash_assistant\". Crash Assistant is duplicated." + (crashIfDuplicated ? " Crashing!" : "") +
                         "\nDuplicated mods:\n" + duplicatedMods);
-                if (crashIfDuplicated) System.exit(-1);
+                if (crashIfDuplicated) ProcessHelper.exitProcess(-1);
             } else {
                 LOGGER.error("Found more than one mod starting with \"crash_assistant-\":\n" +
                         duplicatedMods + "\n" +
@@ -234,7 +234,7 @@ public class JarInJarHelper {
                 if (CrashAssistantConfig.getBoolean("compatibility.enabled")) {
                     JarInJarHelper.LOGGER.error("Crash Assistant detected incompatible mod(s), crashing to prevent potential issues:\n{}",
                             incompatibleMessage + " Remove one of them.");
-                    System.exit(-1);
+                    ProcessHelper.exitProcess(-1);
                 } else {
                     JarInJarHelper.LOGGER.warn("Crash Assistant detected incompatible mod(s). Compatibility check is disabled! Issues may arise!\n{}",
                             incompatibleMessage + " Continue at your own risk!");

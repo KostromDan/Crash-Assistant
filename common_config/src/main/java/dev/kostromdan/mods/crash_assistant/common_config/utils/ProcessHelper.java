@@ -46,4 +46,15 @@ public class ProcessHelper {
         if (processHandle.isEmpty()) return false;
         return processHandle.get().destroyForcibly();
     }
+
+    /**
+     * Exits the current process with the specified status code.
+     * Uses System.exit() internally. If needed, uses bypasses to ensure termination,
+     * for example in legacy versions.
+     *
+     * @param status the exit status code to use when terminating the process
+     */
+    public static void exitProcess(int status) {
+        System.exit(status);
+    }
 }

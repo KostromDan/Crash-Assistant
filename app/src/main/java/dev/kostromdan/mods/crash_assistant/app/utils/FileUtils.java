@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -48,7 +49,7 @@ public interface FileUtils {
             try {
                 Files.list(dir).forEach(path -> {
                     String fileName = path.getFileName().toString();
-                    if (fileName.endsWith(extension) && path.toFile().lastModified() >= CrashAssistantApp.parentStarted) {
+                    if (fileName.endsWith(extension) && path.toFile().lastModified() >= Boot.parentStarted) {
                         filesFound.add(path);
                     }
                 });
@@ -58,7 +59,7 @@ public interface FileUtils {
         return filesFound;
     }
 
-    static boolean isCurseForgeEnv(){
+    static boolean isCurseForgeEnv() {
         try {
             Path curseForgeDir = Paths.get("").toAbsolutePath().getParent().getParent();
             List<String> curseForgeDirContents = Files.list(curseForgeDir).map(dirPath -> dirPath.getFileName().toString().toLowerCase()).collect(Collectors.toList());
@@ -69,5 +70,18 @@ public interface FileUtils {
         }
         return false;
     }
+
+    static boolean folderNLevelsUpperNameContains(int levels, String sToCheck) {
+        StringBuilder path = new StringBuilder();
+        for (int i = 0; i < levels; i++) {
+            path.append("../");
+        }
+        Path fileName = Paths.get(path.toString()).toAbsolutePath().normalize().getFileName();
+        if (fileName == null) {
+            return false;
+        }
+        return fileName.toString().contains(sToCheck);
+    }
+
 
 }

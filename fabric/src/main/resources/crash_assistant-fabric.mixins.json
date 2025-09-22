@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "dev.kostromdan.mods.crash_assistant.fabric.entrypoint",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "plugin": "dev.kostromdan.mods.crash_assistant.fabric.entrypoint.CrashAssistantIMixinPlugin",
+  "client": [
+  ],
+  "mixins": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

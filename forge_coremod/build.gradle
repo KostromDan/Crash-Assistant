@@ -44,8 +44,22 @@ shadowJar {
     }
 }
 
+tasks.withType(Jar).configureEach {
+    manifest {
+        attributes('Automatic-Module-Name': 'dev.kostromdan.mods.crash_assistant.core_mod')
+    }
+}
+
 remapJar {
     dependsOn(':app:shadowJar', ':forge:build')
+
+    from("$rootDir/LICENSE.md") {
+        rename { "CRASH_ASSISTANT_LICENSE.md" }
+        into ""
+    }
+    from("$rootDir/thirdparty") {
+        into "thirdparty"
+    }
 
     from(project(':app').tasks.shadowJar) {
         into 'META-INF/jarjar'

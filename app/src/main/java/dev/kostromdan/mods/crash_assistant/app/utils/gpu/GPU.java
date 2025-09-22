@@ -67,15 +67,18 @@ public class GPU {
         RendererType[] rendererTypes = RendererType.values();
 
         for (String line : serialisedGPU.split("\n")) {
+            // Trim the line to remove whitespace and leftover carriage returns (\r)
+            String trimmedLine = line.trim();
+
             // Skip empty lines
-            if (line.trim().isEmpty()) {
+            if (trimmedLine.isEmpty()) {
                 continue;
             }
 
             // Check if line starts with any of the RendererType values
             boolean isValidGpuLine = false;
             for (RendererType type : rendererTypes) {
-                if (line.startsWith(type.name())) {
+                if (trimmedLine.startsWith(type.name())) {
                     isValidGpuLine = true;
                     break;
                 }
@@ -86,19 +89,19 @@ public class GPU {
                 continue;
             }
 
-            int index = line.indexOf(" : ");
+            int index = trimmedLine.indexOf(" : ");
             // Check if the line has the expected format
             if (index == -1) {
-                System.err.println("Invalid GPU info format: " + line);
+                System.err.println("Invalid GPU info format: " + trimmedLine);
                 continue;
             }
 
             try {
-                RendererType type = Enum.valueOf(RendererType.class, line.substring(0, index).toUpperCase());
-                String name = line.substring(index + 3);
+                RendererType type = Enum.valueOf(RendererType.class, trimmedLine.substring(0, index).toUpperCase());
+                String name = trimmedLine.substring(index + 3); // The name is now clean
                 gpus.add(new GPU(type, name));
             } catch (Exception e) {
-                System.err.println("Error parsing GPU info: " + line + " - " + e.getMessage());
+                System.err.println("Error parsing GPU info: " + trimmedLine + " - " + e.getMessage());
             }
         }
         return gpus;

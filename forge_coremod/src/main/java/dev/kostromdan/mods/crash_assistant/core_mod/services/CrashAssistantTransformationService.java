@@ -84,7 +84,6 @@ public class CrashAssistantTransformationService implements ITransformationServi
 
     @Override
     public void initialize(IEnvironment environment) {
-
     }
 
     @Override

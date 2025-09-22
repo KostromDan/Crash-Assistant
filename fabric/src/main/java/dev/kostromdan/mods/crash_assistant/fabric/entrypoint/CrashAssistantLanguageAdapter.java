@@ -80,7 +80,7 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
 
         // Find all required dependencies from the classpath
         for (String pathStr : paths) {
-            if (pathStr.contains("commons-io") || pathStr.contains("oshi-core") || pathStr.contains("jna-")) {
+            if (pathStr.contains("commons-io") || pathStr.contains("oshi-core") || pathStr.contains("jna-") || pathStr.contains("platform-")) {
                 try {
                     URL url = Paths.get(pathStr).toUri().toURL();
                     foundUrls.add(url);

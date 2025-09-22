@@ -133,6 +133,7 @@ public class LogAnalyser {
         if (reasonsRegistered) {
             return;
         }
+        registerKnownCrashReason(new ConnectorIncompatibleFabricMods());
         registerKnownCrashReason(new MixinApply());
         registerKnownCrashReason(new ModuleFind());
         registerKnownCrashReason(new ModuleResolution());
@@ -162,10 +163,12 @@ public class LogAnalyser {
         registerKnownCrashReason(new GroovyModLoaderIPv6());
         registerKnownCrashReason(new KubeJSDataPack());
         registerKnownCrashReason(new LanguageProviderMismatch());
+        registerKnownCrashReason(new LegacyTooManyIds());
         registerKnownCrashReason(new MissingEmbeddiumForOculus());
         registerKnownCrashReason(new MissingIndium());
         registerKnownCrashReason(new MissingUnsupportedDependencies());
         registerKnownCrashReason(new ModernFixWatchDog());
+        registerKnownCrashReason(new NeoForgeVersion1_20_1());
         registerKnownCrashReason(new Optifine());
         registerKnownCrashReason(new OutOfMemoryError());
         registerKnownCrashReason(new ResourceLocationException());

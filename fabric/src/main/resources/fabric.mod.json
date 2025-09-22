@@ -16,9 +16,6 @@
     "icon": "${mod_id}.png",
     "environment": "*",
     "entrypoints": {
-        "preLaunch": [
-            "dev.kostromdan.mods.crash_assistant.fabric.pre_launch.CrashAssistantPreLaunch"
-        ],
         "main": [
             "dev.kostromdan.mods.crash_assistant.fabric.CrashAssistantFabric"
         ],
@@ -26,9 +23,12 @@
             "dev.kostromdan.mods.crash_assistant.fabric.client.CrashAssistantFabricClient"
         ]
     },
+    "languageAdapters": {
+        "crash_assistant": "dev.kostromdan.mods.crash_assistant.fabric.entrypoint.CrashAssistantLanguageAdapter"
+    },
     "mixins": [
         "${mod_id}.mixins.json",
-        "${mod_id}.fabric.mixins.json"
+        "${mod_id}-fabric.mixins.json"
     ],
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",

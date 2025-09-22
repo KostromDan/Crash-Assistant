@@ -145,9 +145,6 @@ public class JarInJarHelper {
 
     public static String getProcessorName() {
         try {
-            if (true) {
-                throw new Exception("Failed to create temporary file for /com/sun/jna/win32-x86-64/jnidispatch.dll library: JNA temporary directory 'C:\\Users\\********\\curseforge\\minecraft\\Install\\natives\\neoforge-21.1.209' does not exist");
-            }
             return new SystemInfo().getHardware().getProcessor().getProcessorIdentifier().getName();
         } catch (Throwable e) {
             String errorMessage = e.getMessage();

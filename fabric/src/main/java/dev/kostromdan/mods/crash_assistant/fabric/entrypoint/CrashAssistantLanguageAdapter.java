@@ -172,7 +172,8 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
                     .ifPresent(container -> {
                         PlatformHelp.minecraftVersion = container.getMetadata().getVersion().getFriendlyString();
                     });
-            if (ClassExistenceChecker.classExists("org.sinytra.connector.loader.ConnectorEarlyLoader")) {
+            if (ClassExistenceChecker.classExists("org.sinytra.connector.loader.ConnectorEarlyLoader") ||
+                    ClassExistenceChecker.classExists("org.sinytra.connector.ConnectorEarlyLoader")) {
                 PlatformHelp.modLoadedWithConnector = true;
                 LOGGER.warn("Seems like you using fabric version of Crash Assistant on forge/neoforge with help of Sinytra Connector. " +
                         "It not known to cause issues (except gui won't display on some very early crashes), " +

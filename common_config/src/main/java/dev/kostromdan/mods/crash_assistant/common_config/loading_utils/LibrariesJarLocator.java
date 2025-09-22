@@ -36,7 +36,15 @@ public class LibrariesJarLocator {
 
     public static String getOurModJarPath() throws JarLocatingException, URISyntaxException {
         try {
-            return getLibraryJarPath(JarInJarHelper.class);
+            String result = getLibraryJarPath(JarInJarHelper.class);
+            if (!PlatformHelp.modLoadedWithConnector) return result;
+
+            // Prevent using mapped by connector jar version.
+            Path jarPath = Paths.get(result);
+            String fileNameMapped = jarPath.getFileName().toString();
+            Path modsFolder = jarPath.getParent().getParent();
+            String modNameOriginal = fileNameMapped.split("_mapped_")[0] + ".jar";
+            return modsFolder.resolve(modNameOriginal).toAbsolutePath().toString();
         } catch (Exception e) {
             // Quilt with it's stupid QuiltZipPath
             if (PlatformHelp.platform == PlatformHelp.QUILT) {

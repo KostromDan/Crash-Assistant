@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.fabric.entrypoint;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.LanguageAdapter;
 import net.fabricmc.loader.api.LanguageAdapterException;
@@ -165,14 +166,40 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
                     .ifPresent(container -> {
                         PlatformHelp.minecraftVersion = container.getMetadata().getVersion().getFriendlyString();
                     });
-
-            if (FabricLoader.getInstance().isModLoaded("quilt_loader")) {
+            if (ClassExistenceChecker.classExists("org.sinytra.connector.loader.ConnectorEarlyLoader")) {
+                PlatformHelp.modLoadedWithConnector = true;
+                LOGGER.warn("Seems like you using fabric version of Crash Assistant on forge/neoforge with help of Sinytra Connector. " +
+                        "It not known to cause issues (except gui won't display on some very early crashes), " +
+                        "but not recommended, since native mod version for forge/neoforge exists.");
+                if (FabricLoader.getInstance().isModLoaded("neoforge")) {
+                    PlatformHelp.platform = PlatformHelp.NEOFORGE;
+                } else {
+                    PlatformHelp.platform = PlatformHelp.FORGE;
+                }
+            } else if (FabricLoader.getInstance().isModLoaded("quilt_loader")) {
                 PlatformHelp.platform = PlatformHelp.QUILT;
             } else {
                 PlatformHelp.platform = PlatformHelp.FABRIC;
             }
 
-            LibrariesJarLocator.setupLoaderJarName(FabricLoader.class);
+
+            if (PlatformHelp.modLoadedWithConnector) {
+                try {
+                    if (PlatformHelp.platform == PlatformHelp.NEOFORGE) {
+                        Class<?> fmlLoaderClass = Class.forName("net.neoforged.fml.loading.FMLLoader");
+                        Object versionInfo = fmlLoaderClass.getMethod("versionInfo").invoke(null);
+                        String neoForgeVersion = (String) versionInfo.getClass().getMethod("neoForgeVersion").invoke(versionInfo);
+                        LibrariesJarLocator.setupLoaderJarName("neoforge-" + neoForgeVersion);
+                    } else if (PlatformHelp.platform == PlatformHelp.FORGE) {
+                        Class<?> versionInfoClass = Class.forName("net.minecraftforge.fml.loading.VersionInfo");
+                        LibrariesJarLocator.setupLoaderJarName(versionInfoClass);
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to setup loader jar name via reflection for Connector environment", e);
+                }
+            } else {
+                LibrariesJarLocator.setupLoaderJarName(FabricLoader.class);
+            }
             JarInJarHelper.launchCrashAssistantApp(launchTarget);
         }
     }

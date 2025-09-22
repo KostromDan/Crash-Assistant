@@ -94,6 +94,9 @@ public class JarInJarHelper {
             argsList.add(formatMemorySize(getTotalPhysicalMemory()));
             argsList.add("-processor");
             argsList.add(Base64.getEncoder().encodeToString(getProcessorName().getBytes(StandardCharsets.UTF_8)));
+            if(PlatformHelp.modLoadedWithConnector){
+                argsList.add("-modLoadedWithConnector");
+            }
 
             Path argsFile = Paths.get("local", "crash_assistant", currentProcessData + "_args.info");
             Files.write(argsFile, argsList, StandardCharsets.UTF_8);

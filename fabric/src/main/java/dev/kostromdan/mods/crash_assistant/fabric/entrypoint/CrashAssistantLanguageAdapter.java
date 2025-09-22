@@ -122,7 +122,7 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
                 Class<?> c = findLoadedClass(name);
 
                 if (c == null) {
-                    // 🟢 Исключение: PlatformHelp и другие state-классы всегда загружаются из родителя
+                    // Exception: PlatformHelp and other state classes are always loaded from parent
                     if (name.startsWith("dev.kostromdan.mods.crash_assistant.common_config.platform")) {
                         c = getParent().loadClass(name);
                     } else {

@@ -122,12 +122,17 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
                 Class<?> c = findLoadedClass(name);
 
                 if (c == null) {
-                    // If not loaded, try to load it from our own URLs first
-                    try {
-                        c = findClass(name);
-                    } catch (ClassNotFoundException e) {
-                        // If our loader can't find it, then delegate directly to the parent.
+                    // 🟢 Исключение: PlatformHelp и другие state-классы всегда загружаются из родителя
+                    if (name.startsWith("dev.kostromdan.mods.crash_assistant.common_config.platform")) {
                         c = getParent().loadClass(name);
+                    } else {
+                        // Otherwise, try to load it from our own URLs first
+                        try {
+                            c = findClass(name);
+                        } catch (ClassNotFoundException e) {
+                            // If our loader can't find it, then delegate directly to the parent.
+                            c = getParent().loadClass(name);
+                        }
                     }
                 }
 
@@ -137,6 +142,7 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
                 return c;
             }
         }
+
 
         @Override
         public Enumeration<URL> getResources(String name) throws IOException {

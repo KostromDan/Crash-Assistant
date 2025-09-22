@@ -40,4 +40,14 @@ neoForge {
     }
 }
 
+jar {
+    from("$rootDir/LICENSE.md") {
+        rename { "CRASH_ASSISTANT_LICENSE.md" }
+        into ""
+    }
+    from("$rootDir/thirdparty") {
+        into "thirdparty"
+    }
+}
+
 sourceSets.main.resources { srcDir 'src/generated/resources' }

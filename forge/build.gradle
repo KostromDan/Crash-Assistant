@@ -14,6 +14,13 @@ jar {
     manifest {
         attributes["MixinConfigs"] = "${mod_id}.mixins.json,${mod_id}.forge.mixins.json"
     }
+    from("$rootDir/LICENSE.md") {
+        rename { "CRASH_ASSISTANT_LICENSE.md" }
+        into ""
+    }
+    from("$rootDir/thirdparty") {
+        into "thirdparty"
+    }
 }
 
 minecraft {

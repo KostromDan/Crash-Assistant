@@ -44,7 +44,7 @@ public class McLogsApi implements UploadingApi {
 
     @Override
     public CompletableFuture<UploadLogResponse> uploadLog(String text, Consumer<Integer> onProgressChanged) {
-        final String finalText = text.isEmpty() ? "Log is empty." : text;
+        final String finalText = text.isEmpty() ? "Log is empty." : McLogsAntiVersionCensorer.apply(text);
         return CompletableFuture.supplyAsync(() -> {
             try {
                 // Call onProgressChanged with initial progress

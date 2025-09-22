@@ -23,10 +23,25 @@ shadowJar {
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
 }
 
+tasks.withType(Jar).configureEach {
+    manifest {
+        attributes('Automatic-Module-Name': 'dev.kostromdan.mods.crash_assistant.core_mod')
+    }
+}
+
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn(':app:shadowJar', ':forge:build')
     dependsOn tasks.shadowJar
+
+    from("$rootDir/LICENSE.md") {
+        rename { "CRASH_ASSISTANT_LICENSE.md" }
+        into ""
+    }
+    from("$rootDir/thirdparty") {
+        into "thirdparty"
+    }
+
     from zipTree(tasks.shadowJar.archiveFile.get().asFile)
     from(project(':app').tasks.shadowJar) {
         into 'META-INF/jarjar'

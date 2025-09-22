@@ -51,6 +51,7 @@
 - Fixed Jdeps analysis didn't checked version of java, caused analysis detected nothing in case usage of outdated jdk.
 - Fixed mod on Quilt mod-loader wasn't working since some version due to bad QuiltZipPath implementation in the loader.
 - Fixed mod not working on Lunar Client because Lunar was ignoring PreLaunchEntrypoint.
+- Fixed mod was identifying platform as fabric if was used fabric version of mod on forge with help of Connector.
 - Fixed `ResourceLocationException` analysis wasn't triggered in some rare cases.
 - Fixed ANSI color formatting was still applied in modlist diff, ignoring `generated_message.color_message` setting.
 - Small fixes, formatting cleanups, and internal improvements.

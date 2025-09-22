@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 
@@ -67,6 +68,8 @@ public class Boot {
                     classPath = effectiveArgs.get(i + 1);
                 } else if ("-serialisedGPUs".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
                     serialisedGPUs = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
+                }else if ("-modLoadedWithConnector".equals(effectiveArgs.get(i))){
+                    PlatformHelp.modLoadedWithConnector = true;
                 }
             }
 

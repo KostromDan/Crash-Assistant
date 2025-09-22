@@ -23,6 +23,7 @@ public enum PlatformHelp {
     private final String helpName;
     private final String helpChannel;
     public static PlatformHelp platform = UNKNOWN;
+    public static boolean modLoadedWithConnector = false;
     public static String loaderJarName = "UNDEFINED";
     public static String minecraftVersion = "UNDEFINED";
     public static final String javaVersion = System.getProperty("java.runtime.version", "UNDEFINED");

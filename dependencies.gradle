@@ -41,6 +41,14 @@ dependencies {
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
+    from("$rootDir/LICENSE.md") {
+        rename { "CRASH_ASSISTANT_LICENSE.md" }
+        into ""
+    }
+    from("$rootDir/thirdparty") {
+        into "thirdparty"
+    }
+
     evaluationDependsOn(':app')
     dependsOn project(':app').tasks.named('shadowJar')
     from(project(':app').tasks.shadowJar) {

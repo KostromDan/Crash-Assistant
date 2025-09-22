@@ -69,9 +69,12 @@ tasks.register('shadowJar', ShadowJar) {
     from sourceSets.main.output
     archiveClassifier.set('')
 
-    from("$rootDir/LICENSE") {
-        rename { "CRASH_ASSISTANT_LICENSE" }
+    from("$rootDir/LICENSE.md") {
+        rename { "CRASH_ASSISTANT_LICENSE.md" }
         into ""
+    }
+    from("$rootDir/thirdparty") {
+        into "thirdparty"
     }
     evaluationDependsOn(':common_config')
     dependsOn project(':common_config').tasks.shadowJar
@@ -93,9 +96,6 @@ tasks.register('shadowJar', ShadowJar) {
     manifest {
         attributes(
             'Main-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.Boot',
-            'Launcher-Agent-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
-            'Agent-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
-            'Premain-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.CrashAssistantAgent',
             'Enable-Native-Access': 'ALL-UNNAMED' // Java 22+ prevents warnings and upcoming JNI restrictions in Java 25+
         )
     }

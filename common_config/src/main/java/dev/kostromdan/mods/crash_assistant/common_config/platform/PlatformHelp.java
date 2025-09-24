@@ -26,10 +26,9 @@ public enum PlatformHelp {
     public static boolean modLoadedWithConnector = false;
     public static String loaderJarName = "UNDEFINED";
     public static String minecraftVersion = "UNDEFINED";
+    public static final String OS = System.getProperty("os.name").toLowerCase(Locale.ROOT);
     public static final String javaVersion = ProcessHelper.getJavaVersion();
     public static String childProcessesPIDs = "UNDEFINED";
-    public static final String OS = System.getProperty("os.name").toLowerCase(Locale.ROOT);
-
 
     PlatformHelp(String helpLink, String helpName, String helpChannel) {
         this.helpLink = helpLink;

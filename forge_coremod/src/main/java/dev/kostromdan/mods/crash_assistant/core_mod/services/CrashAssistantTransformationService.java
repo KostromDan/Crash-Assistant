@@ -27,13 +27,12 @@ public class CrashAssistantTransformationService implements ITransformationServi
     public static final Logger LOGGER = LoggerFactory.getLogger("CrashAssistantTransformationService");
 
     private static String earlyLaunchTarget = "unknown";
-    private static String earlyMinecraftVersion = "unknown";
 
     public CrashAssistantTransformationService() {
         try {
             reflectivelyExtractLaunchData();
             PlatformHelp.platform = PlatformHelp.FORGE;
-            PlatformHelp.minecraftVersion = earlyMinecraftVersion;
+            PlatformHelp.minecraftVersion = FMLLoader.versionInfo().mcVersion();
             LibrariesJarLocator.setupLoaderJarName(VersionInfo.class);
             JarInJarHelper.launchCrashAssistantApp(earlyLaunchTarget);
             JarInJarHelper.checkDuplicatedCrashAssistantMod(true);
@@ -65,9 +64,6 @@ public class CrashAssistantTransformationService implements ITransformationServi
             for (int i = 0; i < rawArgs.length - 1; i++) {
                 if ("--launchTarget".equals(rawArgs[i])) {
                     earlyLaunchTarget = rawArgs[i + 1];
-                }
-                if ("--fml.mcVersion".equals(rawArgs[i])) {
-                    earlyMinecraftVersion = rawArgs[i + 1];
                 }
             }
         } catch (NoSuchFieldException | IllegalAccessException | ClassCastException e) {

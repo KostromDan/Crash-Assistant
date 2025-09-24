@@ -30,6 +30,7 @@ public enum PlatformHelp {
     public static final String javaVersion = ProcessHelper.getJavaVersion();
     public static String childProcessesPIDs = "UNDEFINED";
 
+
     PlatformHelp(String helpLink, String helpName, String helpChannel) {
         this.helpLink = helpLink;
         this.helpName = helpName;

@@ -126,7 +126,7 @@ public class ProcessHelper {
     }
 
     public static String getJavaVersion() {
-        return Runtime.version().toString();
+        return System.getProperty("java.runtime.version", "UNDEFINED");
     }
 
     public static List<Class<?>> getNeededForAppClasses() {
@@ -144,7 +144,7 @@ public class ProcessHelper {
         } catch (Throwable e) {
             String errorMessage = e.getMessage();
             if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {
-                LOGGER.error(errorMessage + "\n   \n" +
+                JarInJarHelper.LOGGER.error(errorMessage + "\n   \n" +
                         "   Most likely you have permission issues in your file system.\n" +
                         "   OSHI failed init because it failed to create its tmp files for natives.\n" +
                         "   This won't crash Vanilla, but can crash many other mods using OSHI, like Embeddium.\n" +
@@ -153,7 +153,7 @@ public class ProcessHelper {
                         "   If you seeing Crash Assistant in the stacktrace somewhere upper, it's not the cause of the crash!\n" +
                         "   It's just the first thing tried to use OSHI, which failed to init.\n   ");
             } else {
-                LOGGER.error("Error while getting processor name:", e);
+                JarInJarHelper.LOGGER.error("Error while getting processor name:", e);
             }
             return "UNKNOWN";
         }

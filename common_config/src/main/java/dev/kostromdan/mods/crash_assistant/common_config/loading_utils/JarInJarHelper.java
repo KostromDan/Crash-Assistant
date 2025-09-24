@@ -2,8 +2,6 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import com.sun.jna.Memory;
-import com.sun.jna.platform.win32.Tlhelp32;
 import com.sun.management.OperatingSystemMXBean;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
@@ -14,10 +12,8 @@ import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
-import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Core;
 import oshi.SystemInfo;
 
 import java.io.*;
@@ -60,15 +56,13 @@ public class JarInJarHelper {
                 PlatformHelp.childProcessesPIDs = childProcess;
             }
 
-            String fullClassPath = String.join(System.getProperty("path.separator"),
-                    tempAppJarPath.toString(),
-                    tempModJarPath.toString(),
-                    LibrariesJarLocator.getLibraryJarPath(LogManager.class),
-                    LibrariesJarLocator.getLibraryJarPath(Core.class),
-                    LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    LibrariesJarLocator.getLibraryJarPath(Memory.class),
-                    LibrariesJarLocator.getLibraryJarPath(Tlhelp32.class)
-            );
+            List<String> classPathEntries = new ArrayList<>();
+            classPathEntries.add(tempAppJarPath.toString());
+            classPathEntries.add(tempModJarPath.toString());
+            for (Class<?> clazz : ProcessHelper.getNeededForAppClasses()) {
+                classPathEntries.add(LibrariesJarLocator.getLibraryJarPath(clazz));
+            }
+            String fullClassPath = String.join(System.getProperty("path.separator"), classPathEntries);
 
             List<String> argsList = new ArrayList<>();
             argsList.add("-jarPath");
@@ -96,8 +90,8 @@ public class JarInJarHelper {
             argsList.add("-systemRAM");
             argsList.add(formatMemorySize(getTotalPhysicalMemory()));
             argsList.add("-processor");
-            argsList.add(Base64.getEncoder().encodeToString(getProcessorName().getBytes(StandardCharsets.UTF_8)));
-            if(PlatformHelp.modLoadedWithConnector){
+            argsList.add(Base64.getEncoder().encodeToString(ProcessHelper.getProcessorName().getBytes(StandardCharsets.UTF_8)));
+            if (PlatformHelp.modLoadedWithConnector) {
                 argsList.add("-modLoadedWithConnector");
             }
 
@@ -146,27 +140,6 @@ public class JarInJarHelper {
         } catch (Throwable t) {
             // Either the cast failed (non-HotSpot VM) or the method is unavailable
             return -1L;
-        }
-    }
-
-    public static String getProcessorName() {
-        try {
-            return String.format("%s", (new SystemInfo()).getHardware().getProcessors()[0]).replaceAll("\\s+", " ");
-        } catch (Throwable e) {
-            String errorMessage = e.getMessage();
-            if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {
-                LOGGER.error(errorMessage + "\n   \n" +
-                        "   Most likely you have permission issues in your file system.\n" +
-                        "   OSHI failed init because it failed to create its tmp files for natives.\n" +
-                        "   This won't crash Vanilla, but can crash many other mods using OSHI, like Embeddium.\n" +
-                        "   Try reinstalling your launcher / trying another launcher, make sure to NOT activate admin rights on install,\n" +
-                        "   as this is most likely the cause of this permission issue.\n    \n" +
-                        "   If you seeing Crash Assistant in the stacktrace somewhere upper, it's not the cause of the crash!\n" +
-                        "   It's just the first thing tried to use OSHI, which failed to init.\n   ");
-            } else {
-                LOGGER.error("Error while getting processor name:", e);
-            }
-            return "UNKNOWN";
         }
     }
 

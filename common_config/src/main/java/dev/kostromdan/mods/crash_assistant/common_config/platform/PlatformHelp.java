@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.platform;
 
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp.VersionUtils;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public enum PlatformHelp {
     public static boolean modLoadedWithConnector = false;
     public static String loaderJarName = "UNDEFINED";
     public static String minecraftVersion = "UNDEFINED";
-    public static final String javaVersion = Runtime.version().toString();
+    public static final String javaVersion = ProcessHelper.getJavaVersion();
     public static String childProcessesPIDs = "UNDEFINED";
     public static final String OS = System.getProperty("os.name").toLowerCase(Locale.ROOT);
 

@@ -1,7 +1,12 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp.ComparableVersion;
+import oshi.SystemInfo;
+
 import java.lang.ProcessHandle;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -56,5 +61,39 @@ public class ProcessHelper {
      */
     public static void exitProcess(int status) {
         System.exit(status);
+    }
+
+    public static String getJavaVersion() {
+        return Runtime.version().toString();
+    }
+
+    public static List<Class<?>> getNeededForAppClasses() {
+        return List.of(
+                org.apache.logging.log4j.LogManager.class,
+                org.apache.logging.log4j.core.Core.class,
+                com.google.gson.Gson.class,
+                org.apache.commons.io.input.ReversedLinesFileReader.class
+        );
+    }
+
+    public static String getProcessorName() {
+        try {
+            return new SystemInfo().getHardware().getProcessor().getProcessorIdentifier().getName();
+        } catch (Throwable e) {
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {
+                JarInJarHelper.LOGGER.error(errorMessage + "\n   \n" +
+                        "   Most likely you have permission issues in your file system.\n" +
+                        "   OSHI failed init because it failed to create its tmp files for natives.\n" +
+                        "   This won't crash Vanilla, but can crash many other mods using OSHI, like Embeddium.\n" +
+                        "   Try reinstalling your launcher / trying another launcher, make sure to NOT activate admin rights on install,\n" +
+                        "   as this is most likely the cause of this permission issue.\n    \n" +
+                        "   If you seeing Crash Assistant in the stacktrace somewhere upper, it's not the cause of the crash!\n" +
+                        "   It's just the first thing tried to use OSHI, which failed to init.\n   ");
+            } else {
+                JarInJarHelper.LOGGER.error("Error while getting processor name:", e);
+            }
+            return "UNKNOWN";
+        }
     }
 }

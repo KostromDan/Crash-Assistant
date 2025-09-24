@@ -3,7 +3,9 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.sun.jna.Memory;
+import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.Tlhelp32;
+import com.sun.jna.platform.win32.WinReg;
 import com.sun.management.OperatingSystemMXBean;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
@@ -65,7 +67,7 @@ public class JarInJarHelper {
                     tempAppJarPath.toString(),
                     tempModJarPath.toString(),
                     LibrariesJarLocator.getLibraryJarPath(LogManager.class),
-                    LibrariesJarLocator.getLibraryJarPath(Core.class),
+                    LibrariesJarLocator.getLibraryJarPath(LoggerContext.class),
                     LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
                     LibrariesJarLocator.getLibraryJarPath(Memory.class),
                     LibrariesJarLocator.getLibraryJarPath(Tlhelp32.class)
@@ -154,7 +156,12 @@ public class JarInJarHelper {
         try {
             List<String> cmd;
             if (PlatformHelp.isWindows()) {
-                cmd = Arrays.asList("wmic", "cpu", "get", "Name");
+                String name = Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", "ProcessorNameString");
+                if (name != null) {
+                    name = name.trim();
+                    if (!name.isEmpty()) return name;
+                }
+                return "UNKNOWN";
             } else if (PlatformHelp.isLinux()) {
                 cmd = Arrays.asList("bash", "-c",
                     "grep -m1 \"model name\" /proc/cpuinfo | cut -d ':' -f2");
@@ -191,6 +198,7 @@ public class JarInJarHelper {
 
         return "UNKNOWN";
     }
+
 
     public static List<Path> getModJarPathsContainingPart(String part) {
         try {

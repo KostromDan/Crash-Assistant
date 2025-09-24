@@ -1,4 +1,4 @@
-# 
+#
 <h1 align="center">Crash Assistant  <br>
 	<a href="https://www.curseforge.com/minecraft/mc-mods/crash-assistant/files"><img src="https://cf.way2muchnoise.eu/versions/1154099(c70039).svg" alt="Supported Versions"></a>
 	<a href="https://www.curseforge.com/minecraft/mc-mods/crash-assistant"><img src="http://cf.way2muchnoise.eu/1154099.svg" alt="CF"></a>

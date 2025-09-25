@@ -14,7 +14,6 @@ import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import oshi.SystemInfo;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;

@@ -2,10 +2,6 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import com.sun.jna.Memory;
-import com.sun.jna.platform.win32.Advapi32Util;
-import com.sun.jna.platform.win32.Tlhelp32;
-import com.sun.jna.platform.win32.WinReg;
 import com.sun.management.OperatingSystemMXBean;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
@@ -16,14 +12,11 @@ import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
-import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.LoggerContext;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -31,7 +24,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class JarInJarHelper {
@@ -63,15 +55,13 @@ public class JarInJarHelper {
                 PlatformHelp.childProcessesPIDs = childProcess;
             }
 
-            String fullClassPath = String.join(System.getProperty("path.separator"),
-                    tempAppJarPath.toString(),
-                    tempModJarPath.toString(),
-                    LibrariesJarLocator.getLibraryJarPath(LogManager.class),
-                    LibrariesJarLocator.getLibraryJarPath(LoggerContext.class),
-                    LibrariesJarLocator.getLibraryJarPath(ReversedLinesFileReader.class),
-                    LibrariesJarLocator.getLibraryJarPath(Memory.class),
-                    LibrariesJarLocator.getLibraryJarPath(Tlhelp32.class)
-            );
+            List<String> classPathEntries = new ArrayList<>();
+            classPathEntries.add(tempAppJarPath.toString());
+            classPathEntries.add(tempModJarPath.toString());
+            for (Class<?> clazz : ProcessHelper.getNeededForAppClasses()) {
+                classPathEntries.add(LibrariesJarLocator.getLibraryJarPath(clazz));
+            }
+            String fullClassPath = String.join(System.getProperty("path.separator"), classPathEntries);
 
             List<String> argsList = new ArrayList<>();
             argsList.add("-jarPath");
@@ -99,8 +89,8 @@ public class JarInJarHelper {
             argsList.add("-systemRAM");
             argsList.add(formatMemorySize(getTotalPhysicalMemory()));
             argsList.add("-processor");
-            argsList.add(Base64.getEncoder().encodeToString(getProcessorName().getBytes(StandardCharsets.UTF_8)));
-            if(PlatformHelp.modLoadedWithConnector){
+            argsList.add(Base64.getEncoder().encodeToString(ProcessHelper.getProcessorName().getBytes(StandardCharsets.UTF_8)));
+            if (PlatformHelp.modLoadedWithConnector) {
                 argsList.add("-modLoadedWithConnector");
             }
 
@@ -151,54 +141,6 @@ public class JarInJarHelper {
             return -1L;
         }
     }
-
-    public static String getProcessorName() {
-        try {
-            List<String> cmd;
-            if (PlatformHelp.isWindows()) {
-                String name = Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", "ProcessorNameString");
-                if (name != null) {
-                    name = name.trim();
-                    if (!name.isEmpty()) return name;
-                }
-                return "UNKNOWN";
-            } else if (PlatformHelp.isLinux()) {
-                cmd = Arrays.asList("bash", "-c",
-                    "grep -m1 \"model name\" /proc/cpuinfo | cut -d ':' -f2");
-            } else if (PlatformHelp.isMacOS()) {
-                cmd = Arrays.asList("sysctl", "-n", "machdep.cpu.brand_string");
-            } else {
-                return "UNKNOWN";
-            }
-
-            ProcessBuilder pb = new ProcessBuilder(cmd);
-            pb.redirectErrorStream(true);
-            Process process = pb.start();
-
-            if (!process.waitFor(2, TimeUnit.SECONDS)) {
-                process.destroy();
-                return "UNKNOWN";
-            }
-
-            try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-                    if (line.isEmpty() || (PlatformHelp.isWindows() && line.equalsIgnoreCase("Name"))) {
-                        continue;
-                    }
-                    return line;
-                }
-            }
-        } catch (Throwable e) {
-            LOGGER.error("Error while getting processor name:", e);
-            return "UNKNOWN";
-        }
-
-        return "UNKNOWN";
-    }
-
 
     public static List<Path> getModJarPathsContainingPart(String part) {
         try {

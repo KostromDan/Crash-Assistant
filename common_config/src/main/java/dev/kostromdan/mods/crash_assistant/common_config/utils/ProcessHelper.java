@@ -1,8 +1,11 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
 
+import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -121,5 +124,70 @@ public class ProcessHelper {
      */
     public static void exitProcess(int status) {
         ExitVMBypass.exit(status);
+    }
+
+    public static String getJavaVersion() {
+        return System.getProperty("java.runtime.version", "UNDEFINED");
+    }
+
+    public static List<Class<?>> getNeededForAppClasses() {
+        List<Class<?>> classes = new java.util.ArrayList<>();
+        classes.add(org.apache.logging.log4j.LogManager.class);
+        classes.add(org.apache.logging.log4j.core.Core.class);
+        classes.add(org.apache.commons.io.input.ReversedLinesFileReader.class);
+        classes.add(com.sun.jna.Memory.class);
+        classes.add(com.sun.jna.platform.win32.Tlhelp32.class);
+        return classes;
+    }
+
+    public static String getProcessorName() {
+        try {
+            try {
+                Class<?> sysInfoCls = Class.forName("oshi.SystemInfo");
+                Object sysInfo = sysInfoCls.getDeclaredConstructor().newInstance();
+
+                Object hardware = sysInfoCls.getMethod("getHardware").invoke(sysInfo);
+
+                Object[] processors = (Object[]) hardware.getClass()
+                        .getMethod("getProcessors")
+                        .invoke(hardware);
+                return String.format("%s", processors[0]).replaceAll("\\s+", " ");
+            } catch (NoSuchMethodError | NoSuchMethodException ex) {
+                // new SystemInfo()
+                Class<?> systemInfoCls = Class.forName("oshi.SystemInfo");
+                Object systemInfo = systemInfoCls.getDeclaredConstructor().newInstance();
+
+                // getHardware()
+                Method mGetHardware = systemInfoCls.getMethod("getHardware");
+                Object hardware = mGetHardware.invoke(systemInfo);
+
+                // getProcessor()
+                Method mGetProcessor = hardware.getClass().getMethod("getProcessor");
+                Object processor = mGetProcessor.invoke(hardware);
+
+                // getProcessorIdentifier()
+                Method mGetIdentifier = processor.getClass().getMethod("getProcessorIdentifier");
+                Object identifier = mGetIdentifier.invoke(processor);
+
+                // getName()
+                Method mGetName = identifier.getClass().getMethod("getName");
+                return (String) mGetName.invoke(identifier);
+            }
+        } catch (Throwable e) {
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {
+                JarInJarHelper.LOGGER.error(errorMessage + "\n   \n" +
+                        "   Most likely you have permission issues in your file system.\n" +
+                        "   OSHI failed init because it failed to create its tmp files for natives.\n" +
+                        "   This won't crash Vanilla, but can crash many other mods using OSHI, like Embeddium.\n" +
+                        "   Try reinstalling your launcher / trying another launcher, make sure to NOT activate admin rights on install,\n" +
+                        "   as this is most likely the cause of this permission issue.\n    \n" +
+                        "   If you seeing Crash Assistant in the stacktrace somewhere upper, it's not the cause of the crash!\n" +
+                        "   It's just the first thing tried to use OSHI, which failed to init.\n   ");
+            } else {
+                JarInJarHelper.LOGGER.error("Error while getting processor name:", e);
+            }
+            return "UNKNOWN";
+        }
     }
 }

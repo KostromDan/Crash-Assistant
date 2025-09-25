@@ -68,12 +68,12 @@ public class ProcessHelper {
     }
 
     public static List<Class<?>> getNeededForAppClasses() {
-        return List.of(
-                org.apache.logging.log4j.LogManager.class,
-                org.apache.logging.log4j.core.Core.class,
-                com.google.gson.Gson.class,
-                org.apache.commons.io.input.ReversedLinesFileReader.class
-        );
+        List<Class<?>> classes = new java.util.ArrayList<>();
+        classes.add(org.apache.logging.log4j.LogManager.class);
+        classes.add(org.apache.logging.log4j.core.Core.class);
+        classes.add(com.google.gson.Gson.class);
+        classes.add(org.apache.commons.io.input.ReversedLinesFileReader.class);
+        return classes;
     }
 
     public static String getProcessorName() {

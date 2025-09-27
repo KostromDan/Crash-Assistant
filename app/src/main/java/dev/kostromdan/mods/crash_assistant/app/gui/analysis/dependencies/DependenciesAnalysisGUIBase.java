@@ -331,10 +331,6 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         if (className.endsWith(".class")) {
             className = className.substring(0, className.length() - 6);
         }
-        int dollarIndex = className.indexOf('$');
-        if (dollarIndex != -1) {
-            className = className.substring(0, dollarIndex);
-        }
         return className;
     }
 

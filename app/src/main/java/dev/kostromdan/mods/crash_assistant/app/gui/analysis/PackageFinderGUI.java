@@ -8,6 +8,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import javax.swing.*;
+import java.awt.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -74,6 +75,7 @@ public class PackageFinderGUI extends AnalysisGUIBase {
                 }
 
                 if (!foundPaths.isEmpty()) {
+                    registerDetectedModJar(mod.getJarName());
                     if (foundCounter.getAndIncrement() == 0) {
                         String msg = LanguageProvider.get("gui.analysis.package_finder.found")
                                 .replace("$TERM$", originalSearchTerm);

@@ -29,6 +29,9 @@ public class Lang {
 
     public String get(String key, HashMap<String, String> placeHoldersSurroundedWithHref) {
         String value = lang.getOrDefault(key, LanguageProvider.languages.get("en_us").lang.get(key));
+        if(value == null){
+            throw new NullPointerException("Seems like key '" + key + "' is missing in language files");
+        }
         return applyPlaceHolders(value, placeHoldersSurroundedWithHref);
     }
 

@@ -11,6 +11,7 @@ public enum LinksProvider {
     NVIDIA_DRIVERS(() -> "https://www.nvidia.com/Download/index.aspx?lang=en-us"),
     INTEL_DRIVERS(() -> "https://www.intel.com/content/www/us/en/download-center/home.html"),
     HOW_FORCE_APP_USE_DISCRETE_GPU(() -> "https://www.xda-developers.com/how-force-app-use-discrete-gpu-windows-11/"),
+    CURSEFORGE_COMMUNITY_GPU_FIX(() -> "https://github.com/CurseForgeCommunity/cf-java-gpu-fix/releases"),
     IPV6(() -> "https://nordvpn.com/blog/ipv6-enable-or-disable/"),
     AZUL_DOWNLOAD(() -> "https://www.azul.com/downloads/?version=java-21-lts&os=macos&architecture=arm-64-bit&package=jdk#zulu"),
     GLFW_DOWNLOAD(() -> "https://github.com/Frontear/glfw-libs/releases"),

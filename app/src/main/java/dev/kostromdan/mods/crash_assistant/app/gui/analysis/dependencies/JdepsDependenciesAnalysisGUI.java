@@ -14,7 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 /**
- * Jdeps Dependencies Analysis: finds which mods depend on a given class name (simple or fully-qualified).
+ * Jdeps Dependencies Analysis: finds which mods depend on a given class or package name.
+ * Supports simple and fully-qualified class names, as well as package paths.
  * Reuses jdeps resolution from DependenciesAnalysisGUIBase and supports nested-jar analysis.
  */
 public class JdepsDependenciesAnalysisGUI extends DependenciesAnalysisGUIBase {
@@ -73,28 +74,43 @@ public class JdepsDependenciesAnalysisGUI extends DependenciesAnalysisGUIBase {
 
     private Predicate<String> buildPredicate() {
         String targetLower = targetClassPath;
+        String targetLowerNoExt = targetLower.endsWith(".class") ? targetLower.substring(0, targetLower.length() - 6) : targetLower;
+        CrashAssistantApp.LOGGER.info("Target class path: {}", targetLowerNoExt);
         int slashIdx = targetLower.lastIndexOf('/');
         String simpleWithExt = slashIdx >= 0 ? targetLower.substring(slashIdx + 1) : targetLower;
         String simple = simpleWithExt.endsWith(".class") ? simpleWithExt.substring(0, simpleWithExt.length() - 6) : simpleWithExt;
         final String simpleLower = simple.toLowerCase();
+        final boolean userSpecifiedPackageOrFqn = searchOriginal.contains(".") || searchOriginal.contains("/");
 
-        // Match logic supports all of the following inputs (case-insensitive):
-        // - X       => match any class whose simple name is X (top-level or inner part after '$')
-        // - X$Y     => match classes whose basename is exactly X$Y (ignoring package)
-        // - Y       => match inner classes whose inner simple name is Y, and top-level Y
-        // - Full FQN like a.b.X$Y or a/b/X$Y.class => exact FQN path match
+        // Match logic (case-insensitive):
+        // If user specified a package or FQN (contains dot or slash):
+        //   - Exact FQN match (e.g., a/b/X.class)
+        //   - Package prefix match (e.g., a/b/)
+        //   - This mode DOES NOT match by simple class name only.
+        // If user specified only a simple class name (no package):
+        //   - Match by basename (e.g., Outer$Inner) and inner simple name (e.g., Inner)
+        //   - Also allow exact FQN match just in case
         return classPath -> {
             String n = classPath.toLowerCase();
             if (!n.endsWith(".class")) n = n + ".class";
-            // 1) Exact FQN path match
+
+            // Always allow exact FQN path match
             if (n.equals(targetLower)) return true;
 
-            // 2) Basename (file name without package and extension), e.g., "outer$inner"
+            if (userSpecifiedPackageOrFqn) {
+                // User asked for package or fully qualified class name: respect package/class boundary
+                // Match cases:
+                // - Exact class FQN: a/b/X.class (handled above)
+                // - Inner classes of that FQN: a/b/X$Inner.class
+                // - Any class under the package: a/b/...
+                return n.startsWith(targetLowerNoExt);
+            }
+
+            // User asked for simple name only: match by simple/inner names
             int lastSlash = n.lastIndexOf('/');
             String baseNoExt = n.substring(lastSlash + 1, n.length() - 6);
             if (baseNoExt.equals(simpleLower)) return true; // handles input like "X$Y" and also "X"
 
-            // 3) Simple name after the last '$' (inner simple), e.g., "inner" in "outer$inner"
             int lastDollarInBase = baseNoExt.lastIndexOf('$');
             String innerSimple = lastDollarInBase >= 0 ? baseNoExt.substring(lastDollarInBase + 1) : baseNoExt;
             if (innerSimple.equals(simpleLower)) return true; // handles input like "Y" and also top-level "X"
@@ -128,14 +144,18 @@ public class JdepsDependenciesAnalysisGUI extends DependenciesAnalysisGUIBase {
                 if (isCancelled) return;
                 SwingUtilities.invokeLater(() -> currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + mod.getJarName()));
 
-                JdepsScanResult scan = scanModWithJdeps(mod, jdepsPath, predicate, true);
-                if (scan.matched) {
-                    int first = foundAny.getAndIncrement();
-                    String display = scan.matchedDisplay != null ? scan.matchedDisplay : mod.getJarName();
+                JdepsScanResult scan = scanModWithJdeps(mod, jdepsPath, predicate, false);
+                java.util.LinkedHashSet<String> displays = new java.util.LinkedHashSet<>(scan.depsByDisplay.keySet());
+                // Fallback in case depsByDisplay is empty but a matchedDisplay was recorded
+                if (displays.isEmpty() && scan.matchedDisplay != null) {
+                    displays.add(scan.matchedDisplay);
+                }
+                for (String display : displays) {
+                    int idx = foundAny.getAndIncrement();
                     matchedMods.add(display);
                     CrashAssistantApp.LOGGER.info("Found dependency in {} for target class '{}'.", display, searchOriginal);
                     SwingUtilities.invokeLater(() -> {
-                        if (first == 0) {
+                        if (idx == 0) {
                             String header = LanguageProvider.get("gui.analysis.jdeps.found").replace("$TERM$", searchOriginal);
                             appendStyledText(header, NORMAL_COLOR);
                         }
@@ -177,6 +197,10 @@ public class JdepsDependenciesAnalysisGUI extends DependenciesAnalysisGUIBase {
                 }
                 CrashAssistantApp.LOGGER.info(sb.toString().trim());
             }
+        }
+        // Cleanup temp directory after analysis completes
+        if (isIncludeNestedEnabled()) {
+            try { cleanJdepsTmp(); } catch (Exception e) { CrashAssistantApp.LOGGER.warn("Failed to clean jdeps tmp directory after analysis: {}", e.getMessage()); }
         }
     }
 }

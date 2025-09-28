@@ -2,6 +2,8 @@ package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.app.gui.FilesRemover;
+import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -10,6 +12,10 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -26,6 +32,7 @@ public abstract class AnalysisGUIBase {
     protected JLabel currentJarLabel;
     protected JProgressBar progressBar;
     protected JPanel headerPanel;
+    protected final java.util.LinkedHashSet<String> detectedModJarsForRemoval = new java.util.LinkedHashSet<>();
 
     public AnalysisGUIBase(JFrame parent, String title, String headerText) {
         dialog = new JDialog(parent, title + " (" + LanguageProvider.get("gui.window_name") + ")", true);
@@ -98,10 +105,85 @@ public abstract class AnalysisGUIBase {
     }
 
     protected void addOkButton() {
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+
+        JButton detectedModsButton = new JButton(LanguageProvider.get("gui.analysis.detected_mods_files_remover_button"));
+        detectedModsButton.setEnabled(!detectedModJarsForRemoval.isEmpty());
+        detectedModsButton.addActionListener(e -> {
+            Map<String, Path> map = buildDetectedModsMap();
+            if (map.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                        dialog,
+                        LanguageProvider.get("gui.analysis.no_detected_mods"),
+                        LanguageProvider.get("gui.files_remover.title"),
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+                return;
+            }
+            FilesRemover.showDialog(dialog, map, FilesRemover.Mode.JAR);
+        });
+        buttonPanel.add(detectedModsButton);
+
+        String whyButtonKey = getWhyButtonTextKey();
+        if (whyButtonKey != null) {
+            JButton whyButton = new JButton(LanguageProvider.get(whyButtonKey));
+            whyButton.addActionListener(e -> {
+                String titleKey = getWhyDialogTitleKey();
+                String bodyKey = getWhyDialogBodyKey();
+                String title = titleKey != null ? LanguageProvider.get(titleKey) : "";
+                String body = bodyKey != null ? LanguageProvider.get(bodyKey) : "";
+                int width = getWhyDialogWidth();
+                JEditorPane infoPane = CrashAssistantGUI.getEditorPane(body, true, width);
+                JOptionPane.showMessageDialog(
+                        dialog,
+                        infoPane,
+                        title,
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            });
+            buttonPanel.add(whyButton);
+        }
+
         JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
         okButton.addActionListener(e -> dialog.dispose());
-        dialog.add(okButton, BorderLayout.SOUTH);
+        buttonPanel.add(okButton);
+
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
         dialog.revalidate();
+    }
+
+    protected Map<String, Path> buildDetectedModsMap() {
+        LinkedHashMap<String, Path> map = new LinkedHashMap<>();
+        synchronized (detectedModJarsForRemoval) {
+            for (String jar : detectedModJarsForRemoval) {
+                if (jar == null) continue;
+                map.put(jar, Paths.get("mods", jar));
+            }
+        }
+        return map;
+    }
+
+    protected void registerDetectedModJar(String jarName) {
+        if (jarName == null || jarName.isEmpty()) return;
+        synchronized (detectedModJarsForRemoval) {
+            detectedModJarsForRemoval.add(jarName);
+        }
+    }
+
+    protected String getWhyButtonTextKey() {
+        return null;
+    }
+
+    protected String getWhyDialogTitleKey() {
+        return null;
+    }
+
+    protected String getWhyDialogBodyKey() {
+        return null;
+    }
+
+    protected int getWhyDialogWidth() {
+        return 500;
     }
 
     protected void addToHeaderCenter(Component component) {

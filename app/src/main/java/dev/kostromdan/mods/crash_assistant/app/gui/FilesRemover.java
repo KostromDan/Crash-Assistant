@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  * * Open Mods (JAR mode): lists real files from ./mods (non-recursive)
  * * Open Configs (CONFIG mode): lists real files from ./config (recursive)
  * <p>
- * API:
+ * Usage:
  * FilesRemover.showDialog(parentWindow, List<Path>, Mode)
  * FilesRemover.showDialog(parentWindow, Map<String, Path>, Mode) // custom display name per path
  */

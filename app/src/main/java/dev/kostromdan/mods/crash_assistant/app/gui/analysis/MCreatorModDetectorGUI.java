@@ -37,6 +37,7 @@ public class MCreatorModDetectorGUI extends AnalysisGUIBase {
 
                 if (Boolean.TRUE.equals(mod.IsMCreator())) {
                     mcreatorMods.add(mod);
+                    registerDetectedModJar(mod.getJarName());
                 }
 
                 int completed = completedTasks.incrementAndGet();
@@ -73,29 +74,22 @@ public class MCreatorModDetectorGUI extends AnalysisGUIBase {
 
 
     @Override
-    protected void addOkButton() {
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    protected String getWhyButtonTextKey() {
+        return "gui.analysis.mcreator_detector.why_button";
+    }
 
-        JButton whyButton = new JButton(LanguageProvider.get("gui.analysis.mcreator_detector.why_button"));
-        whyButton.addActionListener(e -> {
-            String infoMessage = LanguageProvider.get("gui.analysis.mcreator_detector.why_info");
+    @Override
+    protected String getWhyDialogTitleKey() {
+        return "gui.analysis.mcreator_detector.about_title";
+    }
 
-            JEditorPane infoPane = dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI.getEditorPane(infoMessage, true, 500);
+    @Override
+    protected String getWhyDialogBodyKey() {
+        return "gui.analysis.mcreator_detector.why_info";
+    }
 
-            JOptionPane.showMessageDialog(
-                    dialog,
-                    infoPane,
-                    LanguageProvider.get("gui.analysis.mcreator_detector.about_title"),
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-        });
-        buttonPanel.add(whyButton);
-
-        JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
-        okButton.addActionListener(e -> dialog.dispose());
-        buttonPanel.add(okButton);
-
-        dialog.add(buttonPanel, BorderLayout.SOUTH);
-        dialog.revalidate();
+    @Override
+    protected int getWhyDialogWidth() {
+        return 500;
     }
 }

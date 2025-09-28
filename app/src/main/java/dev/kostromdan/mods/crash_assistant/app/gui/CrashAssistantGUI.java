@@ -154,7 +154,7 @@ public class CrashAssistantGUI {
     }
 
     private static void addFileMenu() {
-        
+
         // Helper to build HTML-based menu items with title and description
         java.util.function.BiFunction<String, String, JMenuItem> makeMenuItem = (titleKey, descKey) -> {
             String title = LanguageProvider.get(titleKey);
@@ -163,9 +163,9 @@ public class CrashAssistantGUI {
             // Support multiline descriptions and basic HTML escaping
             java.util.function.Function<String, String> esc = s -> s == null ? "" :
                     s.replace("&", "&amp;")
-                     .replace("<", "&lt;")
-                     .replace(">", "&gt;")
-                     .replace("\n", "<br>");
+                            .replace("<", "&lt;")
+                            .replace(">", "&gt;")
+                            .replace("\n", "<br>");
 
             String html = "<html><b>" + esc.apply(title) + "</b><br>" +
                     "<span style='color:gray; font-size:10px;'>" + esc.apply(desc) + "</span></html>";
@@ -174,7 +174,6 @@ public class CrashAssistantGUI {
         // Initialize menu bar and main menus
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu(LanguageProvider.get("gui.menu.file"));
-        JMenu analysisMenu = new JMenu(LanguageProvider.get("gui.menu.analysis"));
         JMenu privacyMenu = new JMenu(LanguageProvider.get("gui.menu.privacy"));
 
         // File menu items
@@ -228,25 +227,42 @@ public class CrashAssistantGUI {
         fileMenu.add(openModpackFolderItem);
 
         // Analysis menu items
-        JMenuItem createAnalysisItem = makeMenuItem.apply("gui.menu.analysis.create_dependencies", "gui.menu.analysis.create_dependencies.desc");
-        createAnalysisItem.addActionListener(e -> CreateDependenciesAnalysisGUI.showCreateAnalysisDialog(frame));
-        analysisMenu.add(createAnalysisItem);
+        boolean analysisMenuEnabled = CrashAssistantConfig.getBoolean("analysis_tools.enabled");
+        JMenu analysisMenu = new JMenu(LanguageProvider.get("gui.menu.analysis"));
+        if (analysisMenuEnabled) {
 
-        JMenuItem epicFightAnalysisItem = makeMenuItem.apply("gui.menu.analysis.epic_fight_addons_compatibility", "gui.menu.analysis.epic_fight_addons_compatibility.desc");
-        epicFightAnalysisItem.addActionListener(e -> EpicFightDependenciesAnalysisGUI.showEpicFightAnalysisDialog(frame));
-        analysisMenu.add(epicFightAnalysisItem);
+            List<String> disabledByConfigTools = CrashAssistantConfig.getBlacklistedAnalysisTools();
 
-        JMenuItem mcreatorDetectorItem = makeMenuItem.apply("gui.menu.analysis.mcreator_mod_detector", "gui.analysis.mcreator_detector.header");
-        mcreatorDetectorItem.addActionListener(e -> MCreatorModDetectorGUI.showMCreatorModDetectorDialog(frame));
-        analysisMenu.add(mcreatorDetectorItem);
+            if (!disabledByConfigTools.contains("CreateDependenciesAnalysisGUI")) {
+                JMenuItem createAnalysisItem = makeMenuItem.apply("gui.menu.analysis.create_dependencies", "gui.menu.analysis.create_dependencies.desc");
+                createAnalysisItem.addActionListener(e -> CreateDependenciesAnalysisGUI.showCreateAnalysisDialog(frame));
+                analysisMenu.add(createAnalysisItem);
+            }
 
-        JMenuItem packageFinderItem = makeMenuItem.apply("gui.menu.analysis.package_class_finder", "gui.analysis.package_finder.header");
-        packageFinderItem.addActionListener(e -> PackageFinderGUI.showPackageFinderDialog(frame));
-        analysisMenu.add(packageFinderItem);
+            if (!disabledByConfigTools.contains("EpicFightDependenciesAnalysisGUI")) {
+                JMenuItem epicFightAnalysisItem = makeMenuItem.apply("gui.menu.analysis.epic_fight_addons_compatibility", "gui.menu.analysis.epic_fight_addons_compatibility.desc");
+                epicFightAnalysisItem.addActionListener(e -> EpicFightDependenciesAnalysisGUI.showEpicFightAnalysisDialog(frame));
+                analysisMenu.add(epicFightAnalysisItem);
+            }
 
-        JMenuItem jdepsAnalysisItem = makeMenuItem.apply("gui.menu.analysis.jdeps_dependencies_analysis", "gui.analysis.jdeps.header");
-        jdepsAnalysisItem.addActionListener(e -> JdepsDependenciesAnalysisGUI.showDialog(frame));
-        analysisMenu.add(jdepsAnalysisItem);
+            if (!disabledByConfigTools.contains("MCreatorModDetectorGUI")) {
+                JMenuItem mcreatorDetectorItem = makeMenuItem.apply("gui.menu.analysis.mcreator_mod_detector", "gui.analysis.mcreator_detector.header");
+                mcreatorDetectorItem.addActionListener(e -> MCreatorModDetectorGUI.showMCreatorModDetectorDialog(frame));
+                analysisMenu.add(mcreatorDetectorItem);
+            }
+
+            if (!disabledByConfigTools.contains("PackageFinderGUI")) {
+                JMenuItem packageFinderItem = makeMenuItem.apply("gui.menu.analysis.package_class_finder", "gui.analysis.package_finder.header");
+                packageFinderItem.addActionListener(e -> PackageFinderGUI.showPackageFinderDialog(frame));
+                analysisMenu.add(packageFinderItem);
+            }
+
+            if (!disabledByConfigTools.contains("JdepsDependenciesAnalysisGUI")) {
+                JMenuItem jdepsAnalysisItem = makeMenuItem.apply("gui.menu.analysis.jdeps_dependencies_analysis", "gui.analysis.jdeps.header");
+                jdepsAnalysisItem.addActionListener(e -> JdepsDependenciesAnalysisGUI.showDialog(frame));
+                analysisMenu.add(jdepsAnalysisItem);
+            }
+        }
 
         // Privacy menu items
         JMenuItem logsPrivacyItem = new JMenuItem(LanguageProvider.get("gui.menu.privacy.logs_info"));
@@ -260,7 +276,9 @@ public class CrashAssistantGUI {
 
         // Add menus to menu bar and set to frame
         menuBar.add(fileMenu);
-        menuBar.add(analysisMenu);
+        if (analysisMenuEnabled) {
+            menuBar.add(analysisMenu);
+        }
         menuBar.add(privacyMenu);
         frame.setJMenuBar(menuBar);
     }

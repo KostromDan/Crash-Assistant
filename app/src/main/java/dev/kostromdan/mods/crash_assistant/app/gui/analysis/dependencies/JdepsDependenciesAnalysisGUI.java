@@ -150,6 +150,10 @@ public class JdepsDependenciesAnalysisGUI extends DependenciesAnalysisGUIBase {
                 if (displays.isEmpty() && scan.matchedDisplay != null) {
                     displays.add(scan.matchedDisplay);
                 }
+                if (!displays.isEmpty()) {
+                    // Track this mod for FilesRemover (use base mod jar only, not nested jars)
+                    registerDetectedModJar(mod.getJarName());
+                }
                 for (String display : displays) {
                     int idx = foundAny.getAndIncrement();
                     matchedMods.add(display);
@@ -200,7 +204,11 @@ public class JdepsDependenciesAnalysisGUI extends DependenciesAnalysisGUIBase {
         }
         // Cleanup temp directory after analysis completes
         if (isIncludeNestedEnabled()) {
-            try { cleanJdepsTmp(); } catch (Exception e) { CrashAssistantApp.LOGGER.warn("Failed to clean jdeps tmp directory after analysis: {}", e.getMessage()); }
+            try {
+                cleanJdepsTmp();
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.warn("Failed to clean jdeps tmp directory after analysis: {}", e.getMessage());
+            }
         }
     }
 }

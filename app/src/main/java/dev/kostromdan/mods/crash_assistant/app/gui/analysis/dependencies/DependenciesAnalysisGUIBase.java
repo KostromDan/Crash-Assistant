@@ -32,11 +32,13 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
-public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase { 
+public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
+
 
     protected static class TargetInfo {
         public final Path path;
         public final String display;
+
         public TargetInfo(Path path, String display) {
             this.path = path;
             this.display = display;
@@ -113,16 +115,21 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
             if (executor != null) executor.shutdownNow();
             synchronized (runningProcesses) {
                 for (Process p : runningProcesses) {
-                    try { p.destroy(); } catch (Exception ignored) {}
+                    try {
+                        p.destroy();
+                    } catch (Exception ignored) {
+                    }
                 }
                 runningProcesses.clear();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         // Dispose current dialog and recreate
         SwingUtilities.invokeLater(() -> {
             try {
                 if (dialog != null) dialog.dispose();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
             recreateSelf();
         });
     }
@@ -163,7 +170,10 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
         // Cleanup temp directory for nested jars if needed
         if (isIncludeNestedEnabled()) {
-            try { cleanJdepsTmp(); } catch (Exception ignored) {}
+            try {
+                cleanJdepsTmp();
+            } catch (Exception ignored) {
+            }
         }
 
         Mod targetMod = targetMods.get(0);
@@ -201,6 +211,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
                 if (!invalidDeps.isEmpty()) {
                     missingClassesMap.put(mod, invalidDeps);
+                    registerDetectedModJar(mod.getJarName());
                     // determine a display for where the deps were found (prefer nested target display containing invalid deps)
                     String displayForMod = mod.getJarName();
                     outerCheck:
@@ -308,7 +319,11 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         }
         // Cleanup temp directory after analysis completes
         if (isIncludeNestedEnabled()) {
-            try { cleanJdepsTmp(); } catch (Exception e) { CrashAssistantApp.LOGGER.warn("Failed to clean jdeps tmp directory after analysis: {}", e.getMessage()); }
+            try {
+                cleanJdepsTmp();
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.warn("Failed to clean jdeps tmp directory after analysis: {}", e.getMessage());
+            }
         }
     }
 
@@ -439,7 +454,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
                 if (versionOutput != null && !PlatformHelp.isJdkVersionSufficient(versionOutput)) {
 
-                    CrashAssistantApp.LOGGER.warn("Found jdeps at \"{}\" but its version ({}) is lower than current major version ({})", 
+                    CrashAssistantApp.LOGGER.warn("Found jdeps at \"{}\" but its version ({}) is lower than current major version ({})",
                             jdepsPath, versionOutput.trim(), PlatformHelp.getCurrentJdkMajorVersion());
                     return false;
                 }
@@ -484,7 +499,10 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         if (!java.nio.file.Files.exists(dir)) return;
         try (java.util.stream.Stream<Path> walk = java.nio.file.Files.walk(dir)) {
             walk.sorted(Comparator.reverseOrder()).forEach(p -> {
-                try { java.nio.file.Files.deleteIfExists(p); } catch (Exception ignored) {}
+                try {
+                    java.nio.file.Files.deleteIfExists(p);
+                } catch (Exception ignored) {
+                }
             });
         }
     }
@@ -547,7 +565,8 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                 Path baseOut = Paths.get("local", "crash_assistant", "jdeps_tmp", mainJarPath.getFileName().toString());
                 Files.createDirectories(baseOut);
                 extractRecursivelyDetailed(mainJarPath, mod, baseOut, mod.getJarName(), targets);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         targets.add(new TargetInfo(mainJarPath.toAbsolutePath(), mod.getJarName()));
         return targets;
@@ -574,9 +593,11 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                         out.add(new TargetInfo(childJar, display));
                         extractRecursivelyDetailed(childJar, child, outPath.getParent(), display, out);
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private static class JdkWarningDialog extends JDialog {
@@ -660,4 +681,5 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
             setLocationRelativeTo(parent);
         }
     }
+
 }

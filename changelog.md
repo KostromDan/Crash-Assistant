@@ -7,6 +7,7 @@
 - Fixed `CreateDependencies` analysis didn't find one rare case.
 - Fixed couple of issues with new `Jdeps Dependencies Analysis`.
 - Now `Jdeps Dependencies Analysis` can also find by package.
+- Reverted PowerShell related logic from `1.10.0` updated, since it can take some time ot be approved on CurseForge.
 
 1.10.0 major update:
 

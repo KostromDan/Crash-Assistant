@@ -63,6 +63,11 @@ public class CrashAssistantConfig {
                 "Before uploading the first log, requires the user to accept the privacy policy.\n" +
                         "Disabling this option may be illegal in some countries if you are modpack creator. Disable at your own risk.",
                 true);
+        addOption("general.enable_mclogs_anti_ip_like_version_censorer",
+                "Unfortunately mclogs censoring ip-like versions as has no way to determine if it's version or IP.\n" +
+                        "This will prevent this by replacing dot's in them to dot-like symbol.\n" +
+                        "Anti censoring only versions, IP's are kept censored.",
+                true);
         ArrayList<String> defaultBlacklistedLogs = new ArrayList<>();
         addOption("general.blacklisted_logs",
                 "List of blacklisted log files (checked with startswith()). This files won't show in GUI logs list.",
@@ -174,6 +179,17 @@ public class CrashAssistantConfig {
                         "For example \"Create6Addons\"",
                 new ArrayList<>());
 
+        config.setComment("analysis_tools", "Settings of analysis tools feature.\n" +
+                "Here you can enable disable showing some analysis tools fot end user.");
+        addOption("analysis_tools.enabled",
+                "Enable feature.",
+                true);
+        addOption("analysis_tools.blacklisted_tools",
+                "Here you can disable some Analysis tools by class names.\n" +
+                        "List of them can be found here: dev.kostromdan.mods.crash_assistant.app.gui.analysis\n" +
+                        "For example \"MCreatorModDetectorGUI\"",
+                new ArrayList<>());
+
         config.setComment("crash_command", "Settings of '/crash_assistant crash' command feature.");
         addOption("crash_command.enabled",
                 "Enable feature.",
@@ -275,6 +291,10 @@ public class CrashAssistantConfig {
 
     public static ArrayList<String> getBlacklistedAnalysis() {
         return get("analysis.blacklisted_reasons");
+    }
+
+    public static ArrayList<String> getBlacklistedAnalysisTools() {
+        return get("analysis_tools.blacklisted_tools");
     }
 
     public static ArrayList<String> getModpackCreators() {

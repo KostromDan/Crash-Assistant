@@ -1,5 +1,9 @@
 1.10.1:
 
+- Added configuration options for enabling/disabling analysis tools.
+- Added configuration options for McLogs anti-IP-like version censoring.
+- Added `FilesRemover` dialog for managing file operations (delete, disable/enable, show in explorer) in GUI.
+- Integrated `FilesRemover` to all analysis tools for convenient management of detected mods.
 - Fixed `CreateDependencies` analysis didn't find one rare case.
 - Fixed couple of issues with new `Jdeps Dependencies Analysis`.
 - Now `Jdeps Dependencies Analysis` can also find by package.
@@ -39,7 +43,7 @@
     - `Epic Fight mod addons compatibility` - Same as `Create mod addons compatibility` but for Epic Fight mods.
     - `Package/Class Finder` - Helps to find from which mod a class or package came.
     - `Jdeps Dependencies Analysis` - Helps to find which mod depends on a class. This is especially helpful if you see
-    - NoClassDefFoundError or ClassNotFoundException in your logs and don’t know which mod requires that missing class.
+      NoClassDefFoundError or ClassNotFoundException in your logs and don’t know which mod requires that missing class.
 - Redesigned Analysis menu, now displays a short description.
 - Now suggesting to use `Epic Fight mod addons compatibility` in `EpicFightAddons` log analysis.
 - 1.12.2 and earlier: Improved `OutOfMemory` analysis recommendations. Now recommending available mods on that version.

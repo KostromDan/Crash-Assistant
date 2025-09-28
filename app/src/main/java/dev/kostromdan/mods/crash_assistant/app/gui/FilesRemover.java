@@ -472,11 +472,27 @@ public class FilesRemover extends JDialog {
         headerSelectAll.setOpaque(false);
         headerSelectAll.setHorizontalAlignment(SwingConstants.CENTER);
         headerSelectAll.setToolTipText(LanguageProvider.get("gui.files_remover.select_all_tooltip"));
-        cm.getColumn(0).setHeaderRenderer((tbl, value, isSelected, hasFocus, row, col) -> {
+
+        cm.getColumn(0).setHeaderRenderer((table, value, isSelected, hasFocus, row, column) -> {
+            // Get the standard header renderer component for styling reference
+            TableCellRenderer defaultRenderer = header.getDefaultRenderer();
+            Component headerComponent = defaultRenderer.getTableCellRendererComponent(table, "", isSelected, hasFocus, row, column);
+
+            // Create a new panel with the same styling
             JPanel panel = new JPanel(new BorderLayout());
-            panel.setOpaque(false);
+            panel.setBackground(headerComponent.getBackground());
+            panel.setForeground(headerComponent.getForeground());
+            panel.setFont(headerComponent.getFont());
+            if (headerComponent instanceof JComponent) {
+                panel.setBorder(((JComponent) headerComponent).getBorder());
+            }
+            panel.setOpaque(true);
+
+            // Configure and add checkbox
             headerSelectAll.setSelected(model.allSelected());
+            headerSelectAll.setOpaque(false);
             panel.add(headerSelectAll, BorderLayout.CENTER);
+
             return panel;
         });
         header.addMouseListener(new MouseAdapter() {
@@ -627,7 +643,7 @@ public class FilesRemover extends JDialog {
     private void updateHeaderCheck() {
         JTableHeader header = table.getTableHeader();
         headerSelectAll.setSelected(model.allSelected());
-        header.repaint();
+        header.repaint();  // triggers header renderer with proper border
     }
 
     /**

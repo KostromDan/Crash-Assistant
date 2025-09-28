@@ -258,7 +258,8 @@ public class JarInJarHelper {
                 Path tmpModLibJarPath = outputDirectory.resolve(processInfo + "_mod.jar");
                 Path processInfoPath = outputDirectory.resolve(processInfo + ".info");
                 Path argsInfoPath = outputDirectory.resolve(processInfo + "_args.info");
-                Path oldDllPath = outputDirectory.resolve(processInfo + "_gpu_detect.cs");
+                Path oldCSPath = outputDirectory.resolve(processInfo + "_gpu_detect.cs");
+                Path oldDllPath = outputDirectory.resolve(processInfo + "_gpu-detect-jni.dll");
                 try {
                     if (Files.exists(processInfoPath)) {
                         if (CrashAssistantConfig.getBoolean("general.kill_old_app")) {
@@ -294,6 +295,7 @@ public class JarInJarHelper {
                                                     Files.deleteIfExists(tmpModLibJarPath);
                                                     Files.deleteIfExists(processInfoPath);
                                                     Files.deleteIfExists(argsInfoPath);
+                                                    Files.deleteIfExists(oldCSPath);
                                                     Files.deleteIfExists(oldDllPath);
                                                 } catch (IOException ignored) {
                                                 }
@@ -312,17 +314,20 @@ public class JarInJarHelper {
                     Files.deleteIfExists(tmpModLibJarPath);
                     Files.deleteIfExists(processInfoPath);
                     Files.deleteIfExists(argsInfoPath);
+                    Files.deleteIfExists(oldCSPath);
                     Files.deleteIfExists(oldDllPath);
                 } catch (IOException ignored) {
                 }
-            } else if (Files.isRegularFile(path) && (fileName.endsWith(".info") || fileName.endsWith("_mod.jar") || fileName.endsWith("_gpu_detect.cs")) && fileName.contains("_")) {
+            } else if (Files.isRegularFile(path) && (fileName.endsWith(".info") || fileName.endsWith("_mod.jar") || fileName.endsWith("_gpu_detect.cs") || fileName.endsWith("_gpu-detect-jni.dll")) && fileName.contains("_")) {
                 String processInfo;
                 if (fileName.endsWith("_args.info")) {
                     processInfo = fileName.split("_args\\.info")[0];
                 } else if (fileName.endsWith(".info")) {
                     processInfo = fileName.split("\\.info")[0];
-                } else if (fileName.endsWith(".dll")) {
+                } else if (fileName.endsWith(".cs")) {
                     processInfo = fileName.split("_gpu_detect\\.cs")[0];
+                } else if (fileName.endsWith(".dll")) {
+                    processInfo = fileName.split("_gpu-detect-jni\\.dll")[0];
                 } else {
                     processInfo = fileName.split("_mod\\.jar")[0];
                 }

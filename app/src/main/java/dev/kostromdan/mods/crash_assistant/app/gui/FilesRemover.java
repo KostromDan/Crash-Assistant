@@ -17,43 +17,46 @@ import java.util.stream.Stream;
 
 /**
  * FilesRemover — modal Swing dialog for disabling/removing specific files.
- *
+ * <p>
  * Key points:
  * - Two modes:
- *   JAR: Disable/Enable (rename <name> -> <name>.disabled) + Remove + Show in Explorer
- *   CONFIG: Open (associated app) + Remove + Show in Explorer
+ * JAR: Disable/Enable (rename <name> -> <name>.disabled) + Remove + Show in Explorer
+ * CONFIG: Open (associated app) + Remove + Show in Explorer
  * - Global actions at the bottom operate on checked rows.
  * - Header has a master checkbox (select/deselect all).
  * - Column widths adapt to the actual localized text (no hardcoded widths).
  * - "File" column is the weak/elastic one; it gets clipped first and shows tooltip with full path.
  * - When a JAR entry is disabled (ends with ".disabled"), the file name text is rendered RED.
- * - **Display-name suffix stays in sync with the actual file name**:
- *   If a custom display name was provided, it is guaranteed to end with the actual file name.
- *   After Disable/Enable (rename), only the trailing file-name portion of the display label is updated,
- *   preserving any custom prefix the caller added.
- *
+ * - Display-name suffix stays in sync with the actual file name.
+ * <p>
  * DEMO LAUNCHER (main):
  * - Two buttons:
- *   * Open Mods (JAR mode): lists real files from ./mods (non-recursive)
- *   * Open Configs (CONFIG mode): lists real files from ./config (recursive)
- *
+ * * Open Mods (JAR mode): lists real files from ./mods (non-recursive)
+ * * Open Configs (CONFIG mode): lists real files from ./config (recursive)
+ * <p>
  * API:
- *   FilesRemover.showDialog(parentWindow, List<Path>, Mode)
- *   FilesRemover.showDialog(parentWindow, Map<String, Path>, Mode) // custom display name per path
+ * FilesRemover.showDialog(parentWindow, List<Path>, Mode)
+ * FilesRemover.showDialog(parentWindow, Map<String, Path>, Mode) // custom display name per path
  */
 public class FilesRemover extends JDialog {
 
-    /** Operation mode. */
-    public enum Mode { JAR, CONFIG }
+    /**
+     * Operation mode.
+     */
+    public enum Mode {JAR, CONFIG}
 
-    /** Open the dialog with display names derived from file names. */
+    /**
+     * Open the dialog with display names derived from file names.
+     */
     public static void showDialog(Window parent, List<Path> paths, Mode mode) {
         List<Row> rows = paths.stream().map(p -> new Row(p, displayNameFrom(p), mode)).collect(Collectors.toList());
         FilesRemover dlg = new FilesRemover(parent, rows, mode);
         dlg.setVisible(true);
     }
 
-    /** Open the dialog with explicit display names (key) and backing paths (value). */
+    /**
+     * Open the dialog with explicit display names (key) and backing paths (value).
+     */
     public static void showDialog(Window parent, Map<String, Path> displayNameToPath, Mode mode) {
         List<Row> rows = displayNameToPath.entrySet().stream()
                 .map(e -> new Row(e.getValue(), e.getKey(), mode))
@@ -64,17 +67,29 @@ public class FilesRemover extends JDialog {
 
     // ------------ Row & Model ------------
 
-    /** One table row: selection state, display name, and actual path. */
+    /**
+     * One table row: selection state, display name, and actual path.
+     */
     private static class Row {
         boolean selected;
         Path path;                 // may change (Disable/Enable renames)
         String displayName;        // shown in the table; must END WITH the actual file name
         final Mode mode;
-        Row(Path p, String displayName, Mode m) { this.path = p; this.displayName = displayName; this.mode = m; }
-        boolean isDisabledJar() { return mode == Mode.JAR && getFileName(path).endsWith(".disabled"); }
+
+        Row(Path p, String displayName, Mode m) {
+            this.path = p;
+            this.displayName = displayName;
+            this.mode = m;
+        }
+
+        boolean isDisabledJar() {
+            return mode == Mode.JAR && getFileName(path).endsWith(".disabled");
+        }
     }
 
-    /** Table model. */
+    /**
+     * Table model.
+     */
     private static class Model extends AbstractTableModel {
         final String[] columns;
         final List<Row> rows;
@@ -83,32 +98,58 @@ public class FilesRemover extends JDialog {
         Model(List<Row> rows, Mode mode) {
             this.rows = rows;
             this.mode = mode;
-            this.columns = new String[] {
+            this.columns = new String[]{
                     "", LanguageProvider.get("gui.files_remover.column.file"),
                     (mode == Mode.JAR ? LanguageProvider.get("gui.files_remover.column.toggle") : LanguageProvider.get("gui.files_remover.column.open")),
                     LanguageProvider.get("gui.files_remover.column.remove"), LanguageProvider.get("gui.show_in_explorer_button")
             };
         }
 
-        @Override public int getRowCount() { return rows.size(); }
-        @Override public int getColumnCount() { return columns.length; }
-        @Override public String getColumnName(int c) { return columns[c]; }
-        @Override public Class<?> getColumnClass(int c) { return c == 0 ? Boolean.class : Object.class; }
-        @Override public boolean isCellEditable(int r, int c) { return c != 1; }
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
 
-        @Override public Object getValueAt(int r, int c) {
+        @Override
+        public int getColumnCount() {
+            return columns.length;
+        }
+
+        @Override
+        public String getColumnName(int c) {
+            return columns[c];
+        }
+
+        @Override
+        public Class<?> getColumnClass(int c) {
+            return c == 0 ? Boolean.class : Object.class;
+        }
+
+        @Override
+        public boolean isCellEditable(int r, int c) {
+            return c != 1;
+        }
+
+        @Override
+        public Object getValueAt(int r, int c) {
             Row row = rows.get(r);
             switch (c) {
-                case 0: return row.selected;
-                case 1: return row.displayName;
-                case 2: return (row.mode == Mode.JAR ? (row.isDisabledJar() ? LanguageProvider.get("gui.files_remover.enable") : LanguageProvider.get("gui.files_remover.disable")) : LanguageProvider.get("gui.files_remover.open"));
-                case 3: return LanguageProvider.get("gui.files_remover.remove");
-                case 4: return LanguageProvider.get("gui.show");
+                case 0:
+                    return row.selected;
+                case 1:
+                    return row.displayName;
+                case 2:
+                    return (row.mode == Mode.JAR ? (row.isDisabledJar() ? LanguageProvider.get("gui.files_remover.enable") : LanguageProvider.get("gui.files_remover.disable")) : LanguageProvider.get("gui.files_remover.open"));
+                case 3:
+                    return LanguageProvider.get("gui.files_remover.remove");
+                case 4:
+                    return LanguageProvider.get("gui.show");
             }
             return null;
         }
 
-        @Override public void setValueAt(Object v, int r, int c) {
+        @Override
+        public void setValueAt(Object v, int r, int c) {
             if (c == 0) {
                 rows.get(r).selected = (Boolean) v;
                 fireTableRowsUpdated(r, r);
@@ -138,34 +179,68 @@ public class FilesRemover extends JDialog {
 
     // ------------ Renderers & Editors ------------
 
-    /** Simple button renderer for action columns. */
+    /**
+     * Simple button renderer for action columns.
+     */
     private static class ButtonRenderer extends JButton implements TableCellRenderer {
-        ButtonRenderer() { setOpaque(true); }
-        @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
-            setText(String.valueOf(v)); return this;
+        ButtonRenderer() {
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
+            setText(String.valueOf(v));
+            return this;
         }
     }
 
-    /** Button editor executing an action on click. */
+    /**
+     * Button editor executing an action on click.
+     */
     private static abstract class ButtonEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
         protected final JButton button = new JButton();
         protected final JTable table;
-        protected int row, col; protected Object label;
-        ButtonEditor(JTable table) { this.table = table; button.addActionListener(this); }
-        @Override public Component getTableCellEditorComponent(JTable t, Object v, boolean s, int r, int c) {
-            this.row = r; this.col = c; this.label = v; button.setText(String.valueOf(v)); return button;
+        protected int row, col;
+        protected Object label;
+
+        ButtonEditor(JTable table) {
+            this.table = table;
+            button.addActionListener(this);
         }
-        @Override public Object getCellEditorValue() { return label; }
-        @Override public void actionPerformed(ActionEvent e) { onClick(row, col); fireEditingStopped(); }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable t, Object v, boolean s, int r, int c) {
+            this.row = r;
+            this.col = c;
+            this.label = v;
+            button.setText(String.valueOf(v));
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return label;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            onClick(row, col);
+            fireEditingStopped();
+        }
+
         protected abstract void onClick(int row, int col);
     }
 
-    /** Renderer for the "File" column: red text if disabled in JAR mode. */
+    /**
+     * Renderer for the "File" column: red text if disabled in JAR mode.
+     */
     private class FileNameRenderer extends DefaultTableCellRenderer {
         private final Color defaultColor = UIManager.getColor("Table.foreground");
         private final Color disabledColor = new Color(180, 0, 0);
-        @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                                 boolean hasFocus, int row, int column) {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                       boolean hasFocus, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             int modelRow = table.convertRowIndexToModel(row);
             Row r = model.rows.get(modelRow);
@@ -177,36 +252,60 @@ public class FilesRemover extends JDialog {
 
     // ------------ File operations & error handling ------------
 
-    /** Show an error dialog. */
+    /**
+     * Show an error dialog.
+     */
     private void showError(String title, String message, Exception ex) {
         String details = (ex == null ? "" : ("\n\nDetails:\n" + ex.getMessage()));
         JOptionPane.showMessageDialog(this, message + details, title, JOptionPane.ERROR_MESSAGE);
     }
 
-    /** Try to rename; return true if succeeded; otherwise show error and return false. */
+    /**
+     * Try to rename; return true if succeeded; otherwise show error and return false.
+     */
     private boolean tryRename(Path from, Path to) {
-        try { Files.move(from, to); return true; }
-        catch (Exception ex) { showError(LanguageProvider.get("gui.files_remover.error.rename_title"), String.format(LanguageProvider.get("gui.files_remover.error.rename_msg"), from, to), ex); return false; }
+        try {
+            Files.move(from, to);
+            return true;
+        } catch (Exception ex) {
+            showError(LanguageProvider.get("gui.files_remover.error.rename_title"), String.format(LanguageProvider.get("gui.files_remover.error.rename_msg"), from, to), ex);
+            return false;
+        }
     }
 
-    /** Try to delete; return true if succeeded; otherwise show error and return false. */
+    /**
+     * Try to delete; return true if succeeded; otherwise show error and return false.
+     */
     private boolean tryDelete(Path p) {
-        try { Files.deleteIfExists(p); return true; }
-        catch (Exception ex) { showError(LanguageProvider.get("gui.files_remover.error.delete_title"), String.format(LanguageProvider.get("gui.files_remover.error.delete_msg"), p), ex); return false; }
+        try {
+            Files.deleteIfExists(p);
+            return true;
+        } catch (Exception ex) {
+            showError(LanguageProvider.get("gui.files_remover.error.delete_title"), String.format(LanguageProvider.get("gui.files_remover.error.delete_msg"), p), ex);
+            return false;
+        }
     }
 
-    /** Try to open associated app; warn on failure. */
+    /**
+     * Try to open associated app; warn on failure.
+     */
     private void tryOpen(Path p) {
-        try { if (Files.exists(p)) Desktop.getDesktop().open(p.toFile()); }
-        catch (Exception ex) { showError(LanguageProvider.get("gui.files_remover.error.open_title"), String.format(LanguageProvider.get("gui.files_remover.error.open_msg"), p), ex); }
+        try {
+            if (Files.exists(p)) Desktop.getDesktop().open(p.toFile());
+        } catch (Exception ex) {
+            showError(LanguageProvider.get("gui.files_remover.error.open_title"), String.format(LanguageProvider.get("gui.files_remover.error.open_msg"), p), ex);
+        }
     }
 
-    /** Try to reveal in file manager; warn on failure. */
+    /**
+     * Try to reveal in file manager; warn on failure.
+     */
     private void tryReveal(Path p) {
         try {
             if (!Files.exists(p)) return;
             String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
-            if (os.contains("win")) new ProcessBuilder("explorer.exe", "/select,", p.toAbsolutePath().toString()).start();
+            if (os.contains("win"))
+                new ProcessBuilder("explorer.exe", "/select,", p.toAbsolutePath().toString()).start();
             else if (os.contains("mac")) new ProcessBuilder("open", "-R", p.toAbsolutePath().toString()).start();
             else {
                 Path dir = Files.isDirectory(p) ? p : p.getParent();
@@ -227,7 +326,10 @@ public class FilesRemover extends JDialog {
         return n.endsWith(".disabled") ? p.resolveSibling(n.substring(0, n.length() - ".disabled".length())) : p;
     }
 
-    private static String displayNameFrom(Path p) { return getFileName(p); }
+    private static String displayNameFrom(Path p) {
+        return getFileName(p);
+    }
+
     private static String getFileName(Path p) {
         Path fn = p.getFileName();
         return fn == null ? p.toString() : fn.toString();
@@ -256,6 +358,9 @@ public class FilesRemover extends JDialog {
     private final JScrollPane scroll;
     private final JCheckBox headerSelectAll = new JCheckBox(); // master checkbox in header
 
+    // Make the global "Disable/Open Selected" button available to inner listeners.
+    private JButton btnDisableOrOpen;
+
     private FilesRemover(Window parent, List<Row> rows, Mode mode) {
         super(parent, LanguageProvider.get("gui.files_remover.title"), ModalityType.APPLICATION_MODAL);
         this.mode = mode;
@@ -265,7 +370,8 @@ public class FilesRemover extends JDialog {
         this.model = new Model(rows, mode);
 
         this.table = new JTable(model) {
-            @Override public String getToolTipText(MouseEvent e) {
+            @Override
+            public String getToolTipText(MouseEvent e) {
                 Point p = e.getPoint();
                 int rowIndex = rowAtPoint(p);
                 int colIndex = columnAtPoint(p);
@@ -275,7 +381,11 @@ public class FilesRemover extends JDialog {
                 }
                 return super.getToolTipText(e);
             }
-            @Override public Dimension getPreferredScrollableViewportSize() { return new Dimension(880, 380); }
+
+            @Override
+            public Dimension getPreferredScrollableViewportSize() {
+                return new Dimension(880, 380);
+            }
         };
         table.setRowHeight(28);
         table.setFillsViewportHeight(true);
@@ -304,7 +414,8 @@ public class FilesRemover extends JDialog {
 
         // Editors
         cm.getColumn(2).setCellEditor(new ButtonEditor(table) {
-            @Override protected void onClick(int viewRow, int col) {
+            @Override
+            protected void onClick(int viewRow, int col) {
                 int r = table.convertRowIndexToModel(viewRow);
                 Row row = model.rows.get(r);
                 if (row.mode == Mode.JAR) {
@@ -331,21 +442,25 @@ public class FilesRemover extends JDialog {
                 }
                 layoutColumns(); // button text may have changed
                 updateHeaderCheck();
+                updateDisableOpenButtonLabel(btnDisableOrOpen); // keep label in sync with selection state
             }
         });
         cm.getColumn(3).setCellEditor(new ButtonEditor(table) {
-            @Override protected void onClick(int viewRow, int col) {
+            @Override
+            protected void onClick(int viewRow, int col) {
                 int r = table.convertRowIndexToModel(viewRow);
                 Row row = model.rows.get(r);
                 if (tryDelete(row.path)) {
                     model.removeRow(r);
                     layoutColumns();
                     updateHeaderCheck();
+                    updateDisableOpenButtonLabel(btnDisableOrOpen);
                 }
             }
         });
         cm.getColumn(4).setCellEditor(new ButtonEditor(table) {
-            @Override protected void onClick(int viewRow, int col) {
+            @Override
+            protected void onClick(int viewRow, int col) {
                 int r = table.convertRowIndexToModel(viewRow);
                 Row row = model.rows.get(r);
                 tryReveal(row.path);
@@ -365,41 +480,69 @@ public class FilesRemover extends JDialog {
             return panel;
         });
         header.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 int col = header.columnAtPoint(e.getPoint());
                 if (col == 0 && SwingUtilities.isLeftMouseButton(e)) {
                     boolean target = !model.allSelected();
                     model.setAllSelected(target);
                     updateHeaderCheck();
+                    updateDisableOpenButtonLabel(btnDisableOrOpen);
                 }
             }
         });
         model.addTableModelListener(new TableModelListener() {
-            @Override public void tableChanged(TableModelEvent e) { updateHeaderCheck(); }
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                updateHeaderCheck();
+                updateDisableOpenButtonLabel(btnDisableOrOpen);
+            }
         });
 
         // Bottom actions
-        JButton btnDisableOrOpen = new JButton(mode == Mode.JAR ? LanguageProvider.get("gui.files_remover.disable_selected") : LanguageProvider.get("gui.files_remover.open_selected"));
+        btnDisableOrOpen = new JButton(
+                mode == Mode.JAR ? LanguageProvider.get("gui.files_remover.disable_selected")
+                        : LanguageProvider.get("gui.files_remover.open_selected"));
         JButton btnRemove = new JButton(LanguageProvider.get("gui.files_remover.remove_selected"));
         JButton btnClose = new JButton(LanguageProvider.get("gui.close"));
 
+        // Warn if nothing selected (both global buttons) and toggle Enable/Disable label if needed
         btnDisableOrOpen.addActionListener(e -> {
-            List<Integer> idxs = selectedRowIndices(); if (idxs.isEmpty()) return;
+            List<Integer> idxs = selectedRowIndices();
+            if (idxs.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        LanguageProvider.get("gui.files_remover.select_first_warning_body"),
+                        LanguageProvider.get("gui.files_remover.select_first_warning_title"),
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             if (mode == Mode.JAR) {
+                boolean enableMode = allSelectedDisabled(idxs);
                 List<String> failures = new ArrayList<>();
                 for (int i = idxs.size() - 1; i >= 0; i--) {
                     int r = idxs.get(i);
                     Row row = model.rows.get(r);
-                    if (!row.isDisabledJar()) {
-                        String oldName = getFileName(row.path);
-                        Path t = withDisabledSuffix(row.path);
-                        if (tryRename(row.path, t)) {
-                            row.path = t;
-                            String newName = getFileName(t);
-                            syncDisplayNameSuffix(row, oldName, newName);
-                            model.refreshRow(r);
-                        } else {
-                            failures.add(row.displayName);
+                    if (enableMode) {
+                        if (row.isDisabledJar()) {
+                            String oldName = getFileName(row.path);
+                            Path t = withoutDisabledSuffix(row.path);
+                            if (tryRename(row.path, t)) {
+                                row.path = t;
+                                String newName = getFileName(t);
+                                syncDisplayNameSuffix(row, oldName, newName);
+                                model.refreshRow(r);
+                            } else failures.add(row.displayName);
+                        }
+                    } else {
+                        if (!row.isDisabledJar()) {
+                            String oldName = getFileName(row.path);
+                            Path t = withDisabledSuffix(row.path);
+                            if (tryRename(row.path, t)) {
+                                row.path = t;
+                                String newName = getFileName(t);
+                                syncDisplayNameSuffix(row, oldName, newName);
+                                model.refreshRow(r);
+                            } else failures.add(row.displayName);
                         }
                     }
                 }
@@ -415,10 +558,18 @@ public class FilesRemover extends JDialog {
                 }
             }
             layoutColumns();
+            updateDisableOpenButtonLabel(btnDisableOrOpen);
         });
 
         btnRemove.addActionListener(e -> {
-            List<Integer> idxs = selectedRowIndices(); if (idxs.isEmpty()) return;
+            List<Integer> idxs = selectedRowIndices();
+            if (idxs.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        LanguageProvider.get("gui.files_remover.select_first_warning_body"),
+                        LanguageProvider.get("gui.files_remover.select_first_warning_title"),
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             List<String> failures = new ArrayList<>();
             for (int i = idxs.size() - 1; i >= 0; i--) {
                 int r = idxs.get(i);
@@ -432,12 +583,15 @@ public class FilesRemover extends JDialog {
                         LanguageProvider.get("gui.files_remover.partial_failure_title"), JOptionPane.WARNING_MESSAGE);
             }
             layoutColumns();
+            updateDisableOpenButtonLabel(btnDisableOrOpen);
         });
 
         btnClose.addActionListener(e -> dispose());
 
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 8));
-        bottom.add(btnDisableOrOpen); bottom.add(btnRemove); bottom.add(btnClose);
+        bottom.add(btnDisableOrOpen);
+        bottom.add(btnRemove);
+        bottom.add(btnClose);
 
         // Layout
         this.scroll = new JScrollPane(table);
@@ -449,22 +603,36 @@ public class FilesRemover extends JDialog {
 
         // Layout columns initially and on resize/show
         addComponentListener(new ComponentAdapter() {
-            @Override public void componentShown(ComponentEvent e) { layoutColumns(); }
-            @Override public void componentResized(ComponentEvent e) { SwingUtilities.invokeLater(FilesRemover.this::layoutColumns); }
+            @Override
+            public void componentShown(ComponentEvent e) {
+                layoutColumns();
+            }
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                SwingUtilities.invokeLater(FilesRemover.this::layoutColumns);
+            }
         });
+
+        // Initialize label for JAR mode based on current selection
+        updateDisableOpenButtonLabel(btnDisableOrOpen);
 
         pack();
         setLocationRelativeTo(parent);
     }
 
-    /** Keep master header checkbox state in sync. */
+    /**
+     * Keep master header checkbox state in sync.
+     */
     private void updateHeaderCheck() {
         JTableHeader header = table.getTableHeader();
         headerSelectAll.setSelected(model.allSelected());
         header.repaint();
     }
 
-    /** Selected rows (model indexes). */
+    /**
+     * Selected rows (model indexes).
+     */
     private List<Integer> selectedRowIndices() {
         List<Integer> res = new ArrayList<>();
         for (int i = 0; i < model.getRowCount(); i++)
@@ -472,7 +640,36 @@ public class FilesRemover extends JDialog {
         return res;
     }
 
-    /** Adaptive column sizing. Non-file columns are sized to content; leftover goes to File column. */
+    /**
+     * Return true if all selected rows (JAR mode) are currently disabled.
+     */
+    private boolean allSelectedDisabled(List<Integer> selectedIdxs) {
+        if (mode != Mode.JAR || selectedIdxs.isEmpty()) return false;
+        for (int r : selectedIdxs) {
+            if (!model.rows.get(r).isDisabledJar()) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Set the Disable/Open button label depending on the current selection.
+     */
+    private void updateDisableOpenButtonLabel(JButton btn) {
+        if (mode != Mode.JAR) {
+            btn.setText(LanguageProvider.get("gui.files_remover.open_selected"));
+            return;
+        }
+        List<Integer> idxs = selectedRowIndices();
+        if (!idxs.isEmpty() && allSelectedDisabled(idxs)) {
+            btn.setText(LanguageProvider.get("gui.files_remover.enable_selected"));
+        } else {
+            btn.setText(LanguageProvider.get("gui.files_remover.disable_selected"));
+        }
+    }
+
+    /**
+     * Adaptive column sizing. Non-file columns are sized to content; leftover goes to File column.
+     */
     private void layoutColumns() {
         TableColumnModel cm = table.getColumnModel();
         JTableHeader header = table.getTableHeader();
@@ -503,7 +700,9 @@ public class FilesRemover extends JDialog {
             if (c == 1) continue;
             TableColumn tc = cm.getColumn(c);
             int w = Math.max(24, minWidths[c]);
-            tc.setMinWidth(w); tc.setPreferredWidth(w); tc.setMaxWidth(w);
+            tc.setMinWidth(w);
+            tc.setPreferredWidth(w);
+            tc.setMaxWidth(w);
         }
 
         int leftover = Math.max(80, viewportW - fixedSum - 4);
@@ -522,11 +721,28 @@ public class FilesRemover extends JDialog {
         comp.doLayout();
         return comp.getPreferredSize().width;
     }
+
     private int getMaxCellPrefWidth(TableCellRenderer r, int col) {
         int max = 0;
         int rows = Math.max(1, model.getRowCount());
         for (int i = 0; i < rows; i++) {
-            Object v = (i < model.getRowCount() ? model.getValueAt(i, col) : "");
+            Object v;
+            if (i < model.getRowCount()) {
+                v = model.getValueAt(i, col);
+            } else {
+                // Provide appropriate default values for each column when table is empty
+                switch (col) {
+                    case 0:
+                        v = Boolean.FALSE;
+                        break;  // checkbox column
+                    case 1:
+                        v = "";
+                        break;             // file name column
+                    default:
+                        v = "";
+                        break;            // button columns
+                }
+            }
             Component comp = r.getTableCellRendererComponent(table, v, false, false, i, col);
             comp.doLayout();
             max = Math.max(max, comp.getPreferredSize().width);
@@ -607,6 +823,7 @@ public class FilesRemover extends JDialog {
             return Collections.emptyList();
         }
     }
+
     private static List<Path> listFilesRecursive(Path dir) {
         try {
             if (!Files.isDirectory(dir)) return Collections.emptyList();

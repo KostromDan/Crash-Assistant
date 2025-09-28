@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
@@ -16,12 +17,15 @@ import java.util.regex.Pattern;
  */
 public final class McLogsAntiVersionCensorer {
 
-    private McLogsAntiVersionCensorer() {}
+    private McLogsAntiVersionCensorer() {
+    }
 
     private static final char SAFE_DOT = '\u2219'; // U+2219 BULLET OPERATOR "∙"
     private static final Pattern DOTTED_CHAIN = Pattern.compile("(?<!\\d)(?:\\d{1,3}\\.){3,}\\d{1,3}(?!\\d)");
 
-    /** Lazily built on first apply(); null until built. */
+    /**
+     * Lazily built on first apply(); null until built.
+     */
     private static volatile Map<String, String> IP_LIKE_VERSION_REPLACEMENTS = null;
 
     /**
@@ -29,6 +33,9 @@ public final class McLogsAntiVersionCensorer {
      * First call builds the replacements map from the current mod list.
      */
     public static synchronized String apply(String text) {
+        if (!CrashAssistantConfig.getBoolean("general.enable_mclogs_anti_ip_like_version_censorer")) {
+            return text;
+        }
         if (text == null || text.isEmpty()) return text;
         ensureBuilt();
         String out = text;
@@ -97,10 +104,14 @@ public final class McLogsAntiVersionCensorer {
         while (m.find()) out.add(m.group());
     }
 
-    /** Masks every '.' in the chain: "0.7.5.0.1" -> "0∙7∙5∙0∙1". */
+    /**
+     * Masks every '.' in the chain: "0.7.5.0.1" -> "0∙7∙5∙0∙1".
+     */
     private static String maskAllDots(String chain) {
         return chain.replace('.', SAFE_DOT);
     }
 
-    private static String nz(String v) { return v == null ? "" : v; }
+    private static String nz(String v) {
+        return v == null ? "" : v;
+    }
 }

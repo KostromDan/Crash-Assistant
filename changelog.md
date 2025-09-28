@@ -1,3 +1,9 @@
+1.10.1:
+
+- Fixed `CreateDependencies` analysis didn't find one rare case.
+- Fixed couple of issues with new `Jdeps Dependencies Analysis`.
+- Now `Jdeps Dependencies Analysis` can also find by package.
+
 1.10.0 major update:
 
 - Fabric: Moved launch of our process from PreLaunchEntrypoint to a LanguageAdapter

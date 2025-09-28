@@ -306,6 +306,10 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                 }
             });
         }
+        // Cleanup temp directory after analysis completes
+        if (isIncludeNestedEnabled()) {
+            try { cleanJdepsTmp(); } catch (Exception e) { CrashAssistantApp.LOGGER.warn("Failed to clean jdeps tmp directory after analysis: {}", e.getMessage()); }
+        }
     }
 
     private HashSet<String> getCurrentTargetClasses(Mod targetMod) {
@@ -475,7 +479,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         new JdkWarningDialog(parent, dialog).setVisible(true);
     }
 
-    private void cleanJdepsTmp() throws Exception {
+    protected void cleanJdepsTmp() throws Exception {
         Path dir = Paths.get("local", "crash_assistant", "jdeps_tmp");
         if (!java.nio.file.Files.exists(dir)) return;
         try (java.util.stream.Stream<Path> walk = java.nio.file.Files.walk(dir)) {
@@ -538,16 +542,14 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
 
     protected List<TargetInfo> buildTargetInfosFromMod(Path mainJarPath, Mod mod) {
         List<TargetInfo> targets = new ArrayList<>();
+        if (isIncludeNestedEnabled()) {
+            try {
+                Path baseOut = Paths.get("local", "crash_assistant", "jdeps_tmp", mainJarPath.getFileName().toString());
+                Files.createDirectories(baseOut);
+                extractRecursivelyDetailed(mainJarPath, mod, baseOut, mod.getJarName(), targets);
+            } catch (Exception ignored) {}
+        }
         targets.add(new TargetInfo(mainJarPath.toAbsolutePath(), mod.getJarName()));
-        if (!isIncludeNestedEnabled()) return targets;
-        try {
-            cleanJdepsTmp();
-        } catch (Exception ignored) {}
-        try {
-            Path baseOut = Paths.get("local", "crash_assistant", "jdeps_tmp", mainJarPath.getFileName().toString());
-            Files.createDirectories(baseOut);
-            extractRecursivelyDetailed(mainJarPath, mod, baseOut, mod.getJarName(), targets);
-        } catch (Exception ignored) {}
         return targets;
     }
 

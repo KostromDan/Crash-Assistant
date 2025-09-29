@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
+import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.WinReg;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
@@ -14,8 +16,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -204,49 +206,27 @@ public class IntelChipBugWarning {
     }
 
     public static void parseMicrocodeVersion() {
-        CrashAssistantApp.LOGGER.warn("Temporary disabled microcode version parsing dut to CurseForge approval of this can tome some time.");
-//        String fileName = "microcode_" + System.currentTimeMillis() + ".txt";
-//        Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"), fileName);
-//
-//        try {
-//            try {
-//                // PowerShell command to retrieve an Intel processor microcode version from the Windows registry.
-//                // This is needed to determine if the processor has vulnerable microcode which is corrupting the CPU.
-//                String command = ("$ErrorActionPreference = 'Continue'; " +
-//                        "(('0x{0:X}' -f [BitConverter]::ToUInt32((Get-ItemProperty 'HKLM:\\HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0' | Select-Object -ExpandProperty 'Update Revision'),0))) " +
-//                        "*>&1 | Out-String -Stream | Out-File \"$FILE_NAME$\" -Encoding UTF8 -NoNewline")
-//                        .replace("$FILE_NAME$", tempPath.toString());
-//
-//                Process process = new ProcessBuilder("powershell.exe", "-NoProfile", "-Command", command)
-//                        .redirectErrorStream(true)
-//                        .start();
-//
-//                process.waitFor();
-//
-//                String output = new String(Files.readAllBytes(tempPath), StandardCharsets.UTF_8);
-//
-//                // Remove the UTF-8 Byte Order Mark (BOM) if it exists.
-//                if (output.startsWith("\uFEFF")) {
-//                    output = output.substring(1);
-//                }
-//
-//                String trimmedOutput = output.trim();
-//
-//                if (trimmedOutput.matches("^0x[0-9A-Fa-f]+$")) {
-//                    microcodeVertionString = trimmedOutput;
-//                    microcodeVersion = Long.parseLong(microcodeVertionString.substring(2), 16);
-//                    CrashAssistantApp.LOGGER.info("Microcode version: " + microcodeVertionString);
-//                } else {
-//                    throw new java.io.IOException("PowerShell script failed or returned invalid format: " + output);
-//                }
-//
-//            } finally {
-//                Files.deleteIfExists(tempPath);
-//            }
-//        } catch (Exception e) {
-//            microcodeVertionString = "ERROR - FAILED TO GET MICROCODE";
-//            CrashAssistantApp.LOGGER.error("Error getting microcode version: ", e);
-//        }
+        try {
+            // Get the raw binary data in one line.
+            byte[] buffer = Advapi32Util.registryGetBinaryValue(
+                    WinReg.HKEY_LOCAL_MACHINE,
+                    "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+                    "Update Revision"
+            );
+
+            // Convert the byte array into a number (long).
+            microcodeVersion = ByteBuffer.wrap(buffer)
+                    .order(ByteOrder.LITTLE_ENDIAN)
+                    .getInt() & 0xFFFFFFFFL;
+
+            // Format the number as a hex string.
+            microcodeVertionString = String.format("0x%X", microcodeVersion);
+            CrashAssistantApp.LOGGER.info("Microcode version: " + microcodeVertionString);
+
+        } catch (Exception e) {
+            microcodeVertionString = "ERROR - FAILED TO GET MICROCODE";
+            CrashAssistantApp.LOGGER.error("Error getting microcode version: ", e);
+        }
     }
 
     public static void main(String[] args) {

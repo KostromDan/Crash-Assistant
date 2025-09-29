@@ -1,5 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
+import com.sun.jna.platform.win32.Advapi32;
+import com.sun.jna.platform.win32.Win32Exception;
+import com.sun.jna.platform.win32.WinError;
+import com.sun.jna.platform.win32.WinReg;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -9,13 +13,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 public class IntegratedGPUWarning extends JFrame {
 
@@ -63,62 +64,59 @@ public class IntegratedGPUWarning extends JFrame {
         JButton okButton = new JButton("OK");
         okButton.addActionListener(e -> dispose());
 
-//        // Auto-Fix button.
-//        JButton autoFixButton = new JButton(LanguageProvider.get("gui.integrated_gpu_autofix_button"));
-//        autoFixButton.addActionListener(e -> {
-//            String javaPath = JavaBinaryLocator.getJavaBinary();
-//            String commandToExecute = getGpuPreferenceCommand(javaPath);
-//            // Use HTML tags for better formatting in the dialog
-//            String formattedCommand = "<code style='background-color: #d1e7ff; padding: 2px 4px;'>" + commandToExecute.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</code>";
-//
-//            String confirmationMessage = LanguageProvider.get("gui.integrated_gpu_autofix_confirm_message")
-//                    .replace("$COMMAND$", formattedCommand);
-//
-//            int choice = JOptionPane.showConfirmDialog(
-//                    this,
-//                    CrashAssistantGUI.getEditorPane(confirmationMessage, true, 500),
-//                    LanguageProvider.get("gui.integrated_gpu_autofix_confirm_title"),
-//                    JOptionPane.YES_NO_OPTION,
-//                    JOptionPane.QUESTION_MESSAGE
-//            );
-//
-//            if (choice == JOptionPane.YES_OPTION) {
-//                autoFixButton.setEnabled(false);
-//                autoFixButton.setText(LanguageProvider.get("gui.integrated_gpu_autofix_working"));
-//                new Thread(() -> {
-//                    String result = applyGpuPreference(javaPath);
-//                    SwingUtilities.invokeLater(() -> {
-//                        if ("SUCCESS".equals(result)) {
-//                            JOptionPane.showMessageDialog(
-//                                    this,
-//                                    LanguageProvider.get("gui.integrated_gpu_autofix_success"),
-//                                    LanguageProvider.get("gui.integrated_gpu_autofix_result_title"),
-//                                    JOptionPane.INFORMATION_MESSAGE
-//                            );
-//                            autoFixButton.setText(LanguageProvider.get("gui.integrated_gpu_autofix_done"));
-//                            dontShowAgainCheck.setEnabled(false);
-//                            dontShowAgainCheck.setSelected(false);
-//                        } else {
-//                            String failureMessage = LanguageProvider.get("gui.integrated_gpu_autofix_failure")
-//                                    .replace("$ERROR$", result);
-//                            JOptionPane.showMessageDialog(
-//                                    this,
-//                                    failureMessage,
-//                                    LanguageProvider.get("gui.integrated_gpu_autofix_result_title"),
-//                                    JOptionPane.ERROR_MESSAGE
-//                            );
-//                            autoFixButton.setEnabled(true);
-//                            autoFixButton.setText(LanguageProvider.get("gui.integrated_gpu_autofix_button"));
-//                        }
-//                    });
-//                }).start();
-//            }
-//        });
+        // Auto-Fix button.
+        JButton autoFixButton = new JButton(LanguageProvider.get("gui.integrated_gpu_autofix_button"));
+        autoFixButton.addActionListener(e -> {
+            String javaPath = JavaBinaryLocator.getJavaBinary();
+
+            String confirmationMessage = LanguageProvider.get("gui.integrated_gpu_autofix_confirm_message")
+                    .replace("$JAVA_PATH$", javaPath);
+
+            int choice = JOptionPane.showConfirmDialog(
+                    this,
+                    CrashAssistantGUI.getEditorPane(confirmationMessage, true, 500),
+                    LanguageProvider.get("gui.integrated_gpu_autofix_confirm_title"),
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (choice == JOptionPane.YES_OPTION) {
+                autoFixButton.setEnabled(false);
+                autoFixButton.setText(LanguageProvider.get("gui.integrated_gpu_autofix_working"));
+                new Thread(() -> {
+                    String result = applyGpuPreference(javaPath);
+                    SwingUtilities.invokeLater(() -> {
+                        if ("SUCCESS".equals(result)) {
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    LanguageProvider.get("gui.integrated_gpu_autofix_success"),
+                                    LanguageProvider.get("gui.integrated_gpu_autofix_result_title"),
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+                            autoFixButton.setText(LanguageProvider.get("gui.integrated_gpu_autofix_done"));
+                            dontShowAgainCheck.setEnabled(false);
+                            dontShowAgainCheck.setSelected(false);
+                        } else {
+                            String failureMessage = LanguageProvider.get("gui.integrated_gpu_autofix_failure")
+                                    .replace("$ERROR$", result);
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    failureMessage,
+                                    LanguageProvider.get("gui.integrated_gpu_autofix_result_title"),
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+                            autoFixButton.setEnabled(true);
+                            autoFixButton.setText(LanguageProvider.get("gui.integrated_gpu_autofix_button"));
+                        }
+                    });
+                }).start();
+            }
+        });
 
         // Bottom panel that centers both the checkbox and the OK button in the same row.
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         bottomPanel.add(dontShowAgainCheck);
-//        bottomPanel.add(autoFixButton);
+        bottomPanel.add(autoFixButton);
         bottomPanel.add(okButton);
 
         // Main panel to hold textPanel in the center and bottomPanel at the bottom.
@@ -166,55 +164,82 @@ public class IntegratedGPUWarning extends JFrame {
     }
 
 
-//    /**
-//     * Generates the PowerShell command string needed to set the GPU preference.
-//     *
-//     * @param javaPath The absolute path to the javaw.exe file.
-//     * @return The PowerShell command as a single-line string.
-//     */
-//    public static String getGpuPreferenceCommand(String javaPath) {
-//        // PowerShell command to set GPU preference in Windows registry for Java executable
-//        // This modifies the same registry values that Windows GUI changes when setting GPU preferences.
-//        return String.format(
-//                "& { try { if (-not (Test-Path -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences')) { New-Item -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences' -Force | Out-Null; } " +
-//                        "Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\DirectX\\UserGpuPreferences' -Name '%s' -Value 'GpuPreference=2;' -Force; return 'SUCCESS'; } catch { return \"ERROR: $($_.Exception.Message)\"; } }",
-//                javaPath
-//        );
-//    }
+    /**
+     * Sets the GPU preference for the specified Java executable to "High performance".
+     * This is done by writing directly to the Windows Registry using JNA.
+     * This method does not require administrator rights.
+     *
+     * @param javaPath The absolute path to the javaw.exe file.
+     * @return "SUCCESS" if the operation completes without errors, otherwise an error message.
+     */
+    public static String applyGpuPreference(String javaPath) {
+        // A local interface to hold missing constants for compatibility with older JNA versions.
+        interface RegAuth {
+            int KEY_SET_VALUE = 0x0002;
+            int REG_OPTION_NON_VOLATILE = 0x0000;
+            int REG_SZ = 1;
+        }
 
-//    /**
-//     * Executes the PowerShell command to apply the high-performance GPU preference.
-//     *
-//     * @param javaPath The absolute path to the javaw.exe file.
-//     * @return "SUCCESS" if the operation completes, or an error message if it fails.
-//     */
-//    public static String applyGpuPreference(String javaPath) {
-//        String psCommand = getGpuPreferenceCommand(javaPath);
-//
-//        try {
-//            // Use ProcessBuilder to run PowerShell with the command
-//            ProcessBuilder builder = new ProcessBuilder(
-//                    "powershell.exe",
-//                    "-NoProfile",
-//                    "-ExecutionPolicy", "Bypass",
-//                    "-Command", psCommand
-//            );
-//            Process process = builder.start();
-//
-//            // Read the output from PowerShell to get the SUCCESS or ERROR message
-//            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-//                String result = reader.lines().collect(Collectors.joining("\n")).trim();
-//                int exitCode = process.waitFor();
-//                if (exitCode == 0 && result.equals("SUCCESS")) {
-//                    return "SUCCESS";
-//                }
-//                return result.isEmpty() ? "ERROR: Unknown PowerShell execution error." : result;
-//            }
-//        } catch (IOException | InterruptedException e) {
-//            Thread.currentThread().interrupt(); // Restore interrupted status
-//            return "ERROR: " + e.getMessage();
-//        }
-//    }
+        final String keyPath = "Software\\Microsoft\\DirectX\\UserGpuPreferences";
+        final String valueData = "GpuPreference=2;";
+
+        WinReg.HKEYByReference phkResult = null;
+        try {
+            phkResult = new WinReg.HKEYByReference();
+
+            // Try to open the key first.
+            int openResult = Advapi32.INSTANCE.RegOpenKeyEx(
+                    WinReg.HKEY_CURRENT_USER,
+                    keyPath,
+                    0,
+                    RegAuth.KEY_SET_VALUE,
+                    phkResult
+            );
+
+            // If the key doesn't exist, create it.
+            if (openResult == WinError.ERROR_FILE_NOT_FOUND) {
+                int createResult = Advapi32.INSTANCE.RegCreateKeyEx(
+                        WinReg.HKEY_CURRENT_USER,
+                        keyPath,
+                        0,
+                        null,
+                        RegAuth.REG_OPTION_NON_VOLATILE,
+                        RegAuth.KEY_SET_VALUE,
+                        null,
+                        phkResult,
+                        null
+                );
+                if (createResult != WinError.ERROR_SUCCESS) {
+                    throw new Win32Exception(createResult);
+                }
+            } else if (openResult != WinError.ERROR_SUCCESS) {
+                throw new Win32Exception(openResult);
+            }
+
+            // Now, set the string value.
+            int setResult = Advapi32.INSTANCE.RegSetValueEx(
+                    phkResult.getValue(),
+                    javaPath,
+                    0,
+                    RegAuth.REG_SZ,
+                    valueData.toCharArray(),
+                    (valueData.length() + 1) * 2
+            );
+
+            if (setResult != WinError.ERROR_SUCCESS) {
+                throw new Win32Exception(setResult);
+            }
+
+            return "SUCCESS";
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
+        } finally {
+            // Always close the registry key handle.
+            if (phkResult != null && phkResult.getValue() != null) {
+                Advapi32.INSTANCE.RegCloseKey(phkResult.getValue());
+            }
+        }
+    }
 
     // Demo main method for testing.
     public static void main(String[] args) {

@@ -10,6 +10,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorG
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
+import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -147,6 +148,7 @@ public class CrashAssistantGUI {
         showIncompatibleModsWarning();
         IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         IntelChipBugWarning.showIfAffected(false);
+        showEarlyIntegratedGPUWarning();
         new Thread(() -> {
             LogAnalyser.analyseLogs();
             showKnownCrashReasonsWarnings();
@@ -389,6 +391,38 @@ public class CrashAssistantGUI {
                 });
             } catch (Exception e) {
                 CrashAssistantApp.LOGGER.error("Error while showing crash assistant duplicated warning: ", e);
+            }
+        }
+    }
+
+    public static void showEarlyIntegratedGPUWarning() {
+        synchronized (KnownCrashReasonMessage.class) {
+            try {
+                if (Boot.serialisedGPUs == null) return;
+                if (CrashAssistantApp.renderer != null && !Objects.equals(CrashAssistantApp.renderer, "UNDEFINED"))
+                    return;
+                Log latest = null;
+                for (Log log : LogsList.getLogs()) {
+                    if (log.getType() == LogType.LOG) {
+                        latest = log;
+                        break;
+                    }
+                }
+                if (latest == null) return;
+                latest.getReader().readLogFileSafe();
+                List<String> firstLines = latest.getReader().getFirstLinesList();
+                String renderer = null;
+                for (int i = 0; i < Math.min(firstLines.size(), 1000); i++) {
+                    renderer = RendererParser.getRenderer(firstLines.get(i));
+                    if (renderer != null) break;
+                }
+                if (renderer == null) return;
+                if (Objects.equals(CrashAssistantApp.renderer, "UNDEFINED")) CrashAssistantApp.renderer = null;
+                ProcessSignalIO.postAsOtherProcess("renderer", renderer, Boot.parentPID);
+                CrashAssistantApp.LOGGER.info("Minecraft process have not reached out our renderer parsing hook, but successfully parsed renderer from logs: {}", renderer);
+                CrashAssistantApp.checkRendererFile();
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.error("Error while showing early IGPU warning: ", e);
             }
         }
     }

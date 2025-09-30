@@ -118,7 +118,10 @@ public class LogReader {
 
     public String getFirstLinesString() {
         return String.join("\n", firstLines);
+    }
 
+    public List<String> getFirstLinesList() {
+        return firstLines;
     }
 
     public String getLastLinesString() {

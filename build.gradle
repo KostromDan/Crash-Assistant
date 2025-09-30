@@ -3,7 +3,7 @@ plugins {
     // see https://fabricmc.net/develop/ for new versions
     id 'fabric-loom' version '1.10-SNAPSHOT' apply false
     // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
-    id 'net.neoforged.moddev' version '2.0.62-beta' apply false
+    id 'net.neoforged.moddev' version '2.0.110' apply false
 }
 
 apply plugin: 'idea'
@@ -15,7 +15,11 @@ idea {
 
 
 task collectJars(type: Copy) {
-    dependsOn(":fabric:build", ":forge_coremod:build", ":neoforge_coremod:build")
+    dependsOn(
+//            ":fabric:build",
+//            ":forge_coremod:build",
+            ":neoforge_coremod:build"
+    )
 
     from("fabric/build/libs") {
         include '*.jar'

@@ -6,7 +6,7 @@ plugins {
 }
 
 base {
-    archivesName = "CrashAssistant-${project.name}-1.21.5-1.21.9"
+    archivesName = "CrashAssistant-${project.name}-1.21.9"
 }
 
 configurations {
@@ -80,38 +80,34 @@ loom {
     }
 }
 
-unifiedPublishing {
-    project {
-        gameVersions = [
-                "1.21.5",
-                "1.21.6",
-                "1.21.7",
-                "1.21.8",
-                "1.21.9"
-        ]
-        gameLoaders = ["fabric", "quilt"]
-
-        displayName = tasks.remapJar.archiveFile.get().asFile.name
-        version = project.version
-        changelog = file('../changelog.md').text
-        releaseType = release_type
-
-        mainPublication tasks.remapJar
-
-        var cfToken = System.getenv("CF_TOKEN")
-        if (cfToken != null) {
-            curseforge {
-                token = cfToken
-                id = "1154099"
-            }
-        }
-
-        var mrToken = System.getenv("MODRINTH_TOKEN")
-        if (mrToken != null) {
-            modrinth {
-                token = mrToken
-                id = "ix1qq8Ux"
-            }
-        }
-    }
-}
+//unifiedPublishing {
+//    project {
+//        gameVersions = [
+//                "1.21.9"
+//        ]
+//        gameLoaders = ["fabric", "quilt"]
+//
+//        displayName = tasks.remapJar.archiveFile.get().asFile.name
+//        version = project.version
+//        changelog = file('../changelog.md').text
+//        releaseType = release_type
+//
+//        mainPublication tasks.remapJar
+//
+//        var cfToken = System.getenv("CF_TOKEN")
+//        if (cfToken != null) {
+//            curseforge {
+//                token = cfToken
+//                id = "1154099"
+//            }
+//        }
+//
+//        var mrToken = System.getenv("MODRINTH_TOKEN")
+//        if (mrToken != null) {
+//            modrinth {
+//                token = mrToken
+//                id = "ix1qq8Ux"
+//            }
+//        }
+//    }
+//}

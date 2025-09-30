@@ -2,6 +2,7 @@
 
 - 1.21.9 support.
 - Added early GPU renderer detection so the Integrated GPU warning is shown even on very early crashes.
+- Added Swedish `WasClosedByWindows` crash reason pattern for Windows event analysis.
 
 1.10.2:
 

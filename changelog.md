@@ -1,3 +1,7 @@
+1.10.2:
+
+- Reimplemented removed in the previous update PowerShell functionality by allowed by CF ways without PowerShell usage.
+
 1.10.1:
 
 - Added configuration options for enabling/disabling analysis tools.

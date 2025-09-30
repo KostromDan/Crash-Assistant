@@ -70,6 +70,39 @@ public final class ProcessSignalIO {
         post(name, Long.toString(System.currentTimeMillis()));
     }
 
+    /**
+     * Writes {@code data} into a file named {@code <name>_pid<pid>.tmp} for the specified process.
+     * If the target file already exists, it will be overwritten.
+     *
+     * @param name logical identifier for the signal
+     * @param data payload to store
+     * @param pid  process ID to target
+     */
+    public static void postAsOtherProcess(String name, String data, long pid) {
+        String fileName = name + "_pid" + pid + ".tmp";
+        Path filePath = BASE_DIR.resolve(fileName);
+        try {
+            Files.write(
+                    filePath,
+                    data.getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE);
+        } catch (IOException e) {
+            JarInJarHelper.LOGGER.error("Error while saving data to {}", fileName, e);
+        }
+    }
+
+    /**
+     * Convenience overload: writes the current system time (ms) to the specified process's file.
+     *
+     * @param name logical identifier for the signal
+     * @param pid  process ID to target
+     */
+    public static void postAsOtherProcess(String name, long pid) {
+        postAsOtherProcess(name, Long.toString(System.currentTimeMillis()), pid);
+    }
+
     /** Reads the contents of {@code <name>_pid<pid>.tmp}. */
     public static Optional<String> get(String name, long pid) {
         String fileName = name + "_pid" + pid + ".tmp";

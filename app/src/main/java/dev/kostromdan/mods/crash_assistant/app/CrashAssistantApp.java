@@ -156,7 +156,7 @@ public class CrashAssistantApp {
         return false;
     }
 
-    private static void checkRendererFile() {
+    public static void checkRendererFile() {
         if (renderer != null) return;
         if (Boot.serialisedGPUs == null) return;
         Optional<String> potentialRenderer = ProcessSignalIO.get("renderer", Boot.parentPID);

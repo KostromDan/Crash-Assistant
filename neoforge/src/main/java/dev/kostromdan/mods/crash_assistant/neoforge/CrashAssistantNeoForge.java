@@ -16,7 +16,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 public final class CrashAssistantNeoForge {
     public CrashAssistantNeoForge() {
         CrashAssistant.init();
-        if (FMLEnvironment.dist.isClient()) {
+        if (FMLEnvironment.getDist().isClient()) {
             NeoForge.EVENT_BUS.register(ClientModEvents.class);
         }
     }

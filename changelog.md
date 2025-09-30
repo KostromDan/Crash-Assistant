@@ -1,3 +1,8 @@
+1.10.3:
+
+- 1.21.9 support.
+- Added early GPU renderer detection so the Integrated GPU warning is shown even on very early crashes.
+
 1.10.2:
 
 - Reimplemented removed in the previous update PowerShell functionality by allowed by CF ways without PowerShell usage.

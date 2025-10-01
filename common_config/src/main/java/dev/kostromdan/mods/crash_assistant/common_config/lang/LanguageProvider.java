@@ -18,7 +18,7 @@ import java.util.function.Function;
 public class LanguageProvider {
     private static final Logger LOGGER = LogManager.getLogger();
     public static Path OPTIONS_PATH = Paths.get("options.txt");
-    public static Path LANG_PATH = Paths.get("config", "crash_assistant", "ca_lang");
+    public static Path LANG_PATH = Paths.get("config", "crash_assistant", "crash_assistant_localization");
     public static HashMap<String, Lang> languages = new HashMap<>();
     public static String currentLangName;
     public static String msgLangName;
@@ -71,13 +71,13 @@ public class LanguageProvider {
         CrashAssistantConfig.executeWithLock(() -> {
             LANG_PATH.toFile().mkdirs();
             HashSet<String> langFilesInJarNames = new HashSet<>();
-            langFilesInJarNames.add("ca_lang/de_de.json");
-            langFilesInJarNames.add("ca_lang/en_us.json");
-            langFilesInJarNames.add("ca_lang/ru_ru.json");
-            langFilesInJarNames.add("ca_lang/zh_cn.json");
-            langFilesInJarNames.add("ca_lang/es_es.json");
-            langFilesInJarNames.add("ca_lang/it_it.json");
-            langFilesInJarNames.add("ca_lang/README.md");
+            langFilesInJarNames.add("crash_assistant_localization/de_de.json");
+            langFilesInJarNames.add("crash_assistant_localization/en_us.json");
+            langFilesInJarNames.add("crash_assistant_localization/ru_ru.json");
+            langFilesInJarNames.add("crash_assistant_localization/zh_cn.json");
+            langFilesInJarNames.add("crash_assistant_localization/es_es.json");
+            langFilesInJarNames.add("crash_assistant_localization/it_it.json");
+            langFilesInJarNames.add("crash_assistant_localization/README.md");
             HashMap<String, HashMap<String, String>> jarLangFiles = new HashMap<>();
             for (String langFile : langFilesInJarNames) {
                 if (langFile.endsWith("/")) {

@@ -180,6 +180,16 @@ public class JarInJarHelper {
         return false;
     }
 
+    public static Optional<Long> getCleanroomRelauncherParentPid() {
+        String pid = System.getProperty("cleanroom.relauncher.parent");
+        if (pid == null) return Optional.empty();
+        try {
+            return Optional.of(Long.parseLong(pid));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
+
     public static List<Mod> checkDuplicatedCrashAssistantMod(boolean crashIfDuplicated) {
         try {
             List<Mod> mods = getModsContainingPart("crash_assistant-", "CrashAssistant-");
@@ -282,27 +292,42 @@ public class JarInJarHelper {
                             }
                             boolean isAppProcessAlive = ProcessHelper.isProcessAlive(app_pid);
                             long minecraftStartTime = ProcessHelper.getProcessStartTime(minecraft_pid);
-                            if (isAppProcessAlive && (app_start_time == null || app_start_time == ProcessHelper.getProcessStartTime(app_pid))
-                                    && !(ProcessHelper.isProcessAlive(minecraft_pid) && minecraftStartTime == start_time)) {
-                                LOGGER.warn("Closed old CrashAssistantApp process to prevent confusing the player with window containing information from old crash.");
-                                ProcessHelper.destroyProcess(app_pid);
-                                new java.util.Timer().schedule(
-                                        new java.util.TimerTask() {
-                                            @Override
-                                            public void run() {
-                                                try {
-                                                    Files.deleteIfExists(path);
-                                                    Files.deleteIfExists(tmpModLibJarPath);
-                                                    Files.deleteIfExists(processInfoPath);
-                                                    Files.deleteIfExists(argsInfoPath);
-                                                    Files.deleteIfExists(oldCSPath);
-                                                    Files.deleteIfExists(oldDllPath);
-                                                } catch (IOException ignored) {
+                            if (isAppProcessAlive && (app_start_time == null || app_start_time == ProcessHelper.getProcessStartTime(app_pid))) {
+                                boolean oldMinecraftIsAlive = ProcessHelper.isProcessAlive(minecraft_pid) && minecraftStartTime == start_time;
+                                boolean isOldPidIsRelauncher = false;
+                                if (Objects.equals(PlatformHelp.minecraftVersion, "1.12.2")) {
+                                    Optional<Long> cleanroomRelauncherParentPid = getCleanroomRelauncherParentPid();
+                                    if (cleanroomRelauncherParentPid.isPresent()) {
+                                        isOldPidIsRelauncher = minecraft_pid.equals(cleanroomRelauncherParentPid.get());
+                                    }
+                                }
+
+
+                                if (oldMinecraftIsAlive && isOldPidIsRelauncher) {
+                                    LOGGER.warn("Closed old CrashAssistantApp process since relaunch with Cleanroom happened.");
+                                } else if (!oldMinecraftIsAlive) {
+                                    LOGGER.warn("Closed old CrashAssistantApp process to prevent confusing the player with window containing information from old crash.");
+                                }
+                                if (!oldMinecraftIsAlive || isOldPidIsRelauncher) {
+                                    ProcessHelper.destroyProcess(app_pid);
+                                    new java.util.Timer().schedule(
+                                            new java.util.TimerTask() {
+                                                @Override
+                                                public void run() {
+                                                    try {
+                                                        Files.deleteIfExists(path);
+                                                        Files.deleteIfExists(tmpModLibJarPath);
+                                                        Files.deleteIfExists(processInfoPath);
+                                                        Files.deleteIfExists(argsInfoPath);
+                                                        Files.deleteIfExists(oldCSPath);
+                                                        Files.deleteIfExists(oldDllPath);
+                                                    } catch (IOException ignored) {
+                                                    }
                                                 }
-                                            }
-                                        },
-                                        5000
-                                );
+                                            },
+                                            5000
+                                    );
+                                }
                             }
                         }
                     }

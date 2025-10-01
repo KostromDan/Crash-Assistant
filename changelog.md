@@ -1,3 +1,9 @@
+1.10.4:
+
+- 1.12.2: fixed some issues with Cleanroom relauncher.
+- Added Auto-Fix button customization for `IntegratedGPUWarning`. Made bigger and more noticeable by default.
+- Small fixes.
+
 1.10.3:
 
 - 1.21.9 support.

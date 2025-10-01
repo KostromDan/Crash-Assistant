@@ -27,6 +27,11 @@ import java.util.Optional;
 public class CrashAssistantDependencyLocator extends JarInJarDependencyLocator implements IDependencyLocator {
     public static final Logger LOGGER = LoggerFactory.getLogger("CrashAssistantDependencyLocator");
 
+    /**
+     * CrashAssistantApp should be launched as soon as possible after game start
+     * to be able to help players even with coremod/mixin/hs_err crashes.
+     * So we launch it from the constructor of the IDependencyLocator, the first point, we can launch it from neoforge.
+     */
     public CrashAssistantDependencyLocator() {
         try {
             PlatformHelp.platform = PlatformHelp.NEOFORGE;

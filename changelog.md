@@ -6,6 +6,7 @@
 
 - 1.12.2: fixed some issues with Cleanroom relauncher.
 - Added Auto-Fix button customization for `IntegratedGPUWarning`. Made bigger and more noticeable by default.
+- Fixed one log uploading issue in the 1.17-1.18.1 branch.
 - Small fixes.
 
 1.10.3:

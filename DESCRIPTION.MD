@@ -82,7 +82,7 @@ Crash Assistant includes a suite of powerful analysis tools accessible from the 
 ## Integrated GPU Detection:
 Checks if the game is running on an integrated GPU when a more powerful dedicated GPU is available and displays a warning. Includes a one-click **Auto-Fix** button to configure Windows to use the correct GPU for Java.
 
-![IGPU](https://cdn.modrinth.com/data/cached_images/0d0c0ed36592694f3180f32384c860ec1c3f47e3.png)
+![IGPU](https://cdn.modrinth.com/data/cached_images/9f193960176a4880b8f8feaf0413adc09960214e.png)
 
 ## Intel Chip Bug Warning:
 Detects if your CPU is among the Intel 13th/14th generation models known to have a critical stability bug. It checks your microcode version and provides a detailed warning and recommendations.

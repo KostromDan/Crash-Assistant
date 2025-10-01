@@ -5,6 +5,7 @@ import com.sun.jna.platform.win32.Win32Exception;
 import com.sun.jna.platform.win32.WinError;
 import com.sun.jna.platform.win32.WinReg;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
@@ -66,6 +67,11 @@ public class IntegratedGPUWarning extends JFrame {
 
         // Auto-Fix button.
         JButton autoFixButton = new JButton(LanguageProvider.get("gui.integrated_gpu_autofix_button"));
+        autoFixButton.setFont(autoFixButton.getFont().deriveFont(Font.BOLD,
+                CrashAssistantConfig.getInteger("gui_customisation.auto_fix_button_font_size")));
+        autoFixButton.setForeground(
+                ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.auto_fix_button_foreground_color"),
+                        autoFixButton.getForeground()));
         autoFixButton.addActionListener(e -> {
             String javaPath = JavaBinaryLocator.getJavaBinary();
 
@@ -113,17 +119,29 @@ public class IntegratedGPUWarning extends JFrame {
             }
         });
 
+        // Auto-Fix button panel - full width like Upload All button
+        JPanel autoFixPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.gridy = 0;
+        autoFixPanel.add(autoFixButton, gbc);
+
         // Bottom panel that centers both the checkbox and the OK button in the same row.
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         bottomPanel.add(dontShowAgainCheck);
-        bottomPanel.add(autoFixButton);
         bottomPanel.add(okButton);
 
-        // Main panel to hold textPanel in the center and bottomPanel at the bottom.
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        // Combined bottom section with Auto-Fix button and checkbox/OK button
+        JPanel combinedBottomPanel = new JPanel(new BorderLayout(0, 5));
+        combinedBottomPanel.add(autoFixPanel, BorderLayout.NORTH);
+        combinedBottomPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        // Main panel to hold textPanel in the center and combinedBottomPanel at the bottom.
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 5));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));  // Extra margin around everything
         mainPanel.add(textPanel, BorderLayout.CENTER);
-        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+        mainPanel.add(combinedBottomPanel, BorderLayout.SOUTH);
 
         // Set up the frame.
         setContentPane(mainPanel);

@@ -18,14 +18,34 @@ import java.util.function.Function;
 public class LanguageProvider {
     private static final Logger LOGGER = LogManager.getLogger();
     public static Path OPTIONS_PATH = Paths.get("options.txt");
-    public static Path LANG_PATH = Paths.get("config", "crash_assistant", "crash_assistant_localization");
+    public static Path LANG_PATH = Paths.get("config", "crash_assistant", "crash_assistant_localization_overrides");
     public static HashMap<String, Lang> languages = new HashMap<>();
     public static String currentLangName;
     public static String msgLangName;
 
     static {
+        migrateLangDirectory();
         updateLang();
         unzipAndUpdateLangFiles();
+    }
+
+    private static void migrateLangDirectory() {
+        Path oldLangPath = Paths.get("config", "crash_assistant", "lang");
+        if (Files.exists(oldLangPath) && Files.isDirectory(oldLangPath)) {
+            try {
+                LANG_PATH.toFile().mkdirs();
+                Files.list(oldLangPath).forEach(file -> {
+                    try {
+                        Files.move(file, LANG_PATH.resolve(file.getFileName()));
+                    } catch (IOException e) {
+                        LOGGER.error("Failed to move file: " + file, e);
+                    }
+                });
+                Files.delete(oldLangPath);
+            } catch (IOException e) {
+                LOGGER.error("Failed to migrate lang directory", e);
+            }
+        }
     }
 
     public static String get(String key) {

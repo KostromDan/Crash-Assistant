@@ -163,6 +163,14 @@ public class IntegratedGPUWarning extends JFrame {
         }
     }
 
+    /**
+     * A local interface to hold missing constants for compatibility with older JNA versions.
+     */
+    private interface RegAuth {
+        int KEY_SET_VALUE = 0x0002;
+        int REG_OPTION_NON_VOLATILE = 0x0000;
+        int REG_SZ = 1;
+    }
 
     /**
      * Sets the GPU preference for the specified Java executable to "High performance".
@@ -173,13 +181,6 @@ public class IntegratedGPUWarning extends JFrame {
      * @return "SUCCESS" if the operation completes without errors, otherwise an error message.
      */
     public static String applyGpuPreference(String javaPath) {
-        // A local interface to hold missing constants for compatibility with older JNA versions.
-        interface RegAuth {
-            int KEY_SET_VALUE = 0x0002;
-            int REG_OPTION_NON_VOLATILE = 0x0000;
-            int REG_SZ = 1;
-        }
-
         final String keyPath = "Software\\Microsoft\\DirectX\\UserGpuPreferences";
         final String valueData = "GpuPreference=2;";
 

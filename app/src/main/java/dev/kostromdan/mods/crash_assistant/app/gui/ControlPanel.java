@@ -148,7 +148,7 @@ public class ControlPanel {
 //                        button.getBackground())); // todo: Swing brakes gradient if we try to customize BG color,
     }
 
-    public Color deserializeColor(String colorString, Color fallbackColor) {
+    public static Color deserializeColor(String colorString, Color fallbackColor) {
         if (colorString.equalsIgnoreCase("default")) return fallbackColor;
         try {
             int[] rgb = Arrays.stream(colorString.split("_")).mapToInt(Integer::parseInt).toArray();

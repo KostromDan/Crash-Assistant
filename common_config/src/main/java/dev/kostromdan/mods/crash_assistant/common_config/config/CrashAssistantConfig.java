@@ -236,6 +236,13 @@ public class CrashAssistantConfig {
                 "Same as upload_all_button_foreground_color, but for Request Help button.\n" +
                         "Default for this button is \"0_0_178\" (dark blue color).",
                 "0_0_178");
+        addOption("gui_customisation.auto_fix_button_font_size",
+                "Same as upload_all_button_font_size, but for Auto-Fix button (in integrated GPU warning).",
+                16);
+        addOption("gui_customisation.auto_fix_button_foreground_color",
+                "Same as upload_all_button_foreground_color, but for Auto-Fix button (in integrated GPU warning).\n" +
+                        "Default for this button is \"0_178_0\" (dark green color).",
+                "0_178_0");
 //        addOption("gui_customisation.upload_all_button_background_color",
 //                "You can change Upload All Button background color to request user attention.\n" +
 //                        "format is same as in upload_all_button_color.\n" +

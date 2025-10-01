@@ -43,6 +43,7 @@ dependencies {
     implementation 'net.java.dev.jna:jna:4.4.0'
     implementation 'net.java.dev.jna:platform:3.4.0'
 
+
     implementation "org.lwjgl:lwjgl:$lwjglVersion"
     runtimeOnly "org.lwjgl:lwjgl:$lwjglVersion:$lwjglNatives"
     implementation "org.lwjgl:lwjgl-vulkan:$lwjglVersion"
@@ -76,7 +77,6 @@ shadowJar {
 
     dependencies {
         exclude(dependency('org.apache.logging.log4j:.*'))
-        exclude(dependency('com.google.code.gson:.*'))
         exclude(dependency('commons-io:commons-io:2.15.1'))
         exclude(dependency('com.electronwill.night-config:.*'))
         exclude(dependency('net.java.dev.jna:.*'))

@@ -68,6 +68,11 @@ public class CrashAssistantConfig {
                         "This will prevent this by replacing dot's in them to dot-like symbol.\n" +
                         "Anti censoring only versions, IP's are kept censored.",
                 true);
+        addOption("general.prevent_generating_crash_assistant_app_logs",
+                "Prevents creating \"crash_assistant\" folder in the logs folder.\n" +
+                        "So this option prevents our app logging at all.\n" +
+                        "HIGHLY UNRECOMMENDED to disable! Contains many useful info.",
+                false);
         ArrayList<String> defaultBlacklistedLogs = new ArrayList<>();
         addOption("general.blacklisted_logs",
                 "List of blacklisted log files (checked with startswith()). This files won't show in GUI logs list.",

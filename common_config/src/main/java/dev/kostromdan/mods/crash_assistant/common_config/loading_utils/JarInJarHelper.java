@@ -97,20 +97,25 @@ public class JarInJarHelper {
             Path argsFile = Paths.get("local", "crash_assistant", currentProcessData + "_args.info");
             Files.write(argsFile, argsList, StandardCharsets.UTF_8);
 
-            ProcessBuilder crashAssistantAppProcessBuilder = new ProcessBuilder(
-                    JavaBinaryLocator.getJavaBinary(),
-                    "-XX:+UseSerialGC",
-                    "-XX:MaxHeapFreeRatio=30",
-                    "-XX:MinHeapFreeRatio=10",
-                    "-XX:MaxGCPauseMillis=10000",
-                    "-Xms8m",
-                    "-Xmx512m",
-                    "-cp",
-                    fullClassPath,
-                    "dev.kostromdan.mods.crash_assistant.app.class_loading.Boot",
-                    "--args-file",
-                    argsFile.toString()
-            );
+
+            List<String> jvmArgs = new ArrayList<>();
+            jvmArgs.add(JavaBinaryLocator.getJavaBinary());
+            jvmArgs.add("-XX:+UseSerialGC");
+            jvmArgs.add("-XX:MaxHeapFreeRatio=30");
+            jvmArgs.add("-XX:MinHeapFreeRatio=10");
+            jvmArgs.add("-XX:MaxGCPauseMillis=10000");
+            jvmArgs.add("-Xms8m");
+            jvmArgs.add("-Xmx512m");
+            if (CrashAssistantConfig.getBoolean("general.prevent_generating_crash_assistant_app_logs")) {
+                jvmArgs.add("-Dlog4j2.configurationFile=log4j2-no-logging.xml");
+            }
+            jvmArgs.add("-cp");
+            jvmArgs.add(fullClassPath);
+            jvmArgs.add("dev.kostromdan.mods.crash_assistant.app.class_loading.Boot");
+            jvmArgs.add("--args-file");
+            jvmArgs.add(argsFile.toString());
+
+            ProcessBuilder crashAssistantAppProcessBuilder = new ProcessBuilder(jvmArgs);
 
             // Added by Embeddedt request. Since he is crashing very often for debugging and don't need window opening after crash.
             if ("true".equals(System.getenv("DisableEntirelyCrashAssistantModOnSystem"))) {

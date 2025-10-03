@@ -86,6 +86,11 @@ public class ControlPanel {
         uploadAllButton.addActionListener(e -> uploadAllFiles());
 
         uploadAllButton.setEnabled(false);
+
+        if(CrashAssistantConfig.getBoolean("gui_customisation.disable_upload_all_button")){
+            uploadAllButton.setVisible(false);
+        }
+
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
 

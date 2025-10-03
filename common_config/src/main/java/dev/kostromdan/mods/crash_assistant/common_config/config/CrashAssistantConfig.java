@@ -218,6 +218,9 @@ public class CrashAssistantConfig {
                 false);
 
         config.setComment("gui_customisation", "You can customise GUI with this options.");
+        addOption("gui_customisation.disable_upload_all_button",
+                "Will hide Upload All Button from GUI.",
+                false);
         addOption("gui_customisation.show_dont_send_screenshot_of_gui_notice",
                 "Append comment text with notice about sending screenshot of this gui tells nothing to modpack creators.",
                 true);

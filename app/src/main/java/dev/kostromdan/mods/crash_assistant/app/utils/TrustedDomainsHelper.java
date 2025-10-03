@@ -27,6 +27,7 @@ public class TrustedDomainsHelper {
         add("github.com");
         add("gnomebot.dev");
         add("mclo.gs");
+        add("download.fo");
 
         // Add domains from LinksProvider
         addAll(getDomainsFromLinksProvider());

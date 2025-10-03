@@ -1,3 +1,7 @@
+1.10.5:
+
+- Added `download.fo` to trusted domains.
+
 1.10.4:
 
 - 1.12.2: fixed some issues with Cleanroom relauncher.

@@ -48,7 +48,7 @@ def process_language_files(directory_path):
                         print(f"  - {key}")
 
 if __name__ == '__main__':
-    lang_directory = 'common_config/src/main/resources/lang'
+    lang_directory = 'common_config/src/main/resources/crash_assistant_localization'
 
     if not os.path.isdir(lang_directory):
         print(f"The directory '{lang_directory}' does not exist.")

@@ -185,7 +185,7 @@ unifiedPublishing {
         gameLoaders = ["forge"]
 
         displayName = tasks.remapForgeJar.archiveFile.get().asFile.name
-        version = version
+        version = rootProject.version
         changelog = file('changelog.md').text
         releaseType = release_type
 

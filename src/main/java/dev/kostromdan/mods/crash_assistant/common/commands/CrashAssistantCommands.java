@@ -16,10 +16,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChatStyle;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
+import net.minecraft.util.*;
 
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.HeapDumper;
@@ -350,11 +347,6 @@ public class CrashAssistantCommands extends CommandBase {
         }
     }
 
-    @Override
-    public int compareTo(@NotNull Object o) {
-        return 0;
-    }
-
     private static class LineBuilder {
 
         final List<IChatComponent> lines = new ArrayList<IChatComponent>();
@@ -474,7 +466,7 @@ public class CrashAssistantCommands extends CommandBase {
     }
 
     @Override
-    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
+    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
         if (args.length == 1) return getListOfStringsMatchingLastWord(args, new String[] { "modlist", "crash" });
 
         if ("modlist".equals(args[0]) && args.length == 2)

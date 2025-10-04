@@ -33,7 +33,7 @@ shadowJar {
     dependencies {
         exclude(dependency('org.apache.logging.log4j:.*'))
         exclude(dependency('commons-io:commons-io:2.15.1'))
-//        exclude(dependency('net.java.dev.jna:.*'))
+        exclude(dependency('net.java.dev.jna:.*'))
         exclude(dependency('com.google.code.gson:.*'))
     }
 }

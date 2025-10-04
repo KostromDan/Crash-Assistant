@@ -2,9 +2,9 @@ package dev.kostromdan.mods.crash_assistant.forge_coremod;
 
 import java.util.Map;
 
-import cpw.mods.fml.common.Loader;
-import cpw.mods.fml.relauncher.FMLLaunchHandler;
-import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
+import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;

@@ -1,17 +1,7 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
-buildscript {
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
-    }
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
-
-apply plugin: 'java'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 java {
     toolchain {
@@ -34,19 +24,11 @@ dependencies {
     implementation 'com.electronwill.night-config:json:3.6.3'
 }
 
-jar {
-    from sourceSets.main.output
-}
-
-tasks.register('shadowJar', ShadowJar) {
-    from sourceSets.main.output
+shadowJar {
     archiveClassifier.set('')
 
     // Relocate Night Config packages
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
-
-    // Explicitly include Night Config dependencies
-    configurations = [project.configurations.runtimeClasspath]
 
     dependencies {
         exclude(dependency('org.apache.logging.log4j:.*'))

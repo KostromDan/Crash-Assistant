@@ -1,17 +1,7 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
-buildscript {
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
-    }
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
-
-apply plugin: 'java'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 group = 'dev.kostromdan.mods'
 version = ''
@@ -62,13 +52,15 @@ dependencies {
 }
 
 jar {
-    from sourceSets.main.output
+    manifest {
+        attributes(
+                'Main-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.Boot',
+                'Enable-Native-Access': 'ALL-UNNAMED' // Java 22+ prevents warnings and upcoming JNI restrictions in Java 25+
+        )
+    }
 }
 
-tasks.register('shadowJar', ShadowJar) {
-    from sourceSets.main.output
-    archiveClassifier.set('')
-
+shadowJar {
     from("$rootDir/LICENSE.md") {
         rename { "CRASH_ASSISTANT_LICENSE.md" }
         into ""
@@ -76,11 +68,10 @@ tasks.register('shadowJar', ShadowJar) {
     from("$rootDir/thirdparty") {
         into "thirdparty"
     }
-    evaluationDependsOn(':common_config')
-    dependsOn project(':common_config').tasks.shadowJar
 
-    // Explicitly include Night Config dependencies
-    configurations = [project.configurations.runtimeClasspath]
+    evaluationDependsOn(':common_config')
+    dependsOn project(':common_config').tasks.named('shadowJar')
+    archiveClassifier.set('')
 
     // Relocate Night Config packages
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
@@ -92,12 +83,6 @@ tasks.register('shadowJar', ShadowJar) {
         exclude(dependency('net.java.dev.jna:.*'))
         exclude(dependency('org.lwjgl:.*'))
         exclude(project(':common_config'))
-    }
-    manifest {
-        attributes(
-            'Main-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.Boot',
-            'Enable-Native-Access': 'ALL-UNNAMED' // Java 22+ prevents warnings and upcoming JNI restrictions in Java 25+
-        )
     }
 }
 

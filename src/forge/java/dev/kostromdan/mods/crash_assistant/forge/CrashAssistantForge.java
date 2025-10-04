@@ -15,17 +15,16 @@ import cpw.mods.fml.common.gameevent.PlayerEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import dev.kostromdan.mods.crash_assistant.Tags;
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
 import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommands;
 import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
 import dev.kostromdan.mods.crash_assistant.forge_coremod.CrashAssistantHooks;
 
 @Mod(
-    modid = CrashAssistant.MOD_ID,
-    version = Tags.VERSION,
-    name = "Crash Assistant",
-    acceptedMinecraftVersions = "[1.7.10]")
+        modid = CrashAssistant.MOD_ID,
+        name = "Crash Assistant",
+        useMetadata = true
+)
 public final class CrashAssistantForge {
 
     private boolean mainMenuOpened = false;
@@ -38,8 +37,8 @@ public final class CrashAssistantForge {
             CrashAssistant.init();
             MinecraftForge.EVENT_BUS.register(this);
             FMLCommonHandler.instance()
-                .bus()
-                .register(this);
+                    .bus()
+                    .register(this);
         }
     }
 

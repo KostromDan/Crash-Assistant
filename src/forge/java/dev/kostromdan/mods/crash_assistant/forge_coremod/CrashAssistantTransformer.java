@@ -65,8 +65,10 @@ public class CrashAssistantTransformer implements IClassTransformer, Opcodes {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void transformMinecraft(ClassNode cn) {
-        for (MethodNode m : cn.methods) {
+        for (Object methodObj : cn.methods) {
+            MethodNode m = (MethodNode) methodObj;
             if (SHUTDOWN_METHOD.containsKey(m.name) && m.desc.equals(SHUTDOWN_METHOD.get(m.name))) {
                 injectBeforeReturn(
                         m,
@@ -77,8 +79,10 @@ public class CrashAssistantTransformer implements IClassTransformer, Opcodes {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void transformGuiErrorScreen(ClassNode cn) {
-        for (MethodNode m : cn.methods) {
+        for (Object methodObj : cn.methods) {
+            MethodNode m = (MethodNode) methodObj;
             if (INIT_GUI_METHOD.containsKey(m.name) && m.desc.equals(INIT_GUI_METHOD.get(m.name))) {
                 injectBeforeReturn(
                         m,

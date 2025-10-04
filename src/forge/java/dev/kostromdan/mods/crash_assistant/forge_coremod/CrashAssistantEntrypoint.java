@@ -2,8 +2,6 @@ package dev.kostromdan.mods.crash_assistant.forge_coremod;
 
 import java.util.Map;
 
-import javax.annotation.Nullable;
-
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.relauncher.FMLLaunchHandler;
 import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
@@ -41,7 +39,6 @@ public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
         return null;
     }
 
-    @Nullable
     public String getSetupClass() {
         return null;
     }

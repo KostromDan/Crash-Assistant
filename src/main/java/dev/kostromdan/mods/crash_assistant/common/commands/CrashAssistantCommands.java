@@ -29,6 +29,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiffStringBuilder;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import org.jetbrains.annotations.NotNull;
 import sun.misc.Unsafe;
 
 public class CrashAssistantCommands extends CommandBase {
@@ -347,6 +348,11 @@ public class CrashAssistantCommands extends CommandBase {
         for (IChatComponent sib : (List<IChatComponent>) comp.getSiblings()) {
             walk(sib, lb);
         }
+    }
+
+    @Override
+    public int compareTo(@NotNull Object o) {
+        return 0;
     }
 
     private static class LineBuilder {

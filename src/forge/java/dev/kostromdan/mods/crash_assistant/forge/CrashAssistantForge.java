@@ -20,6 +20,7 @@ import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommand
 import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
 import dev.kostromdan.mods.crash_assistant.forge_coremod.CrashAssistantHooks;
 
+
 @Mod(
         modid = CrashAssistant.MOD_ID,
         name = "Crash Assistant",

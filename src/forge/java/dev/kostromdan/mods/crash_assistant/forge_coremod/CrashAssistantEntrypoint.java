@@ -1,26 +1,27 @@
 package dev.kostromdan.mods.crash_assistant.forge_coremod;
 
-import java.util.Map;
-
-import cpw.mods.fml.common.Loader;
-import cpw.mods.fml.relauncher.FMLLaunchHandler;
-import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import net.minecraftforge.common.ForgeVersion;
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
+import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
-@IFMLLoadingPlugin.MCVersion("1.7.10")
+import java.util.Map;
+
+@IFMLLoadingPlugin.MCVersion("1.12.2")
 public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
 
     public CrashAssistantEntrypoint() {
+        if (JarInJarHelper.isCleanroomRelauncher()) return;
+
         if (Boolean.getBoolean("dev.kostromdan.mods.crash_assistant.startedFlag")) return;
         System.setProperty("dev.kostromdan.mods.crash_assistant.startedFlag", "true");
-
 
         String launchTarget = FMLLaunchHandler.side()
             .isClient() ? "client" : "server";
         PlatformHelp.platform = PlatformHelp.FORGE;
-        PlatformHelp.minecraftVersion = Loader.MC_VERSION;
+        PlatformHelp.minecraftVersion = ForgeVersion.mcVersion;
 
         LibrariesJarLocator.setupLoaderJarName(FMLLaunchHandler.class);
         JarInJarHelper.launchCrashAssistantApp(launchTarget);

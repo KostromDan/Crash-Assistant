@@ -1,18 +1,12 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
-import com.sun.jna.platform.win32.Advapi32Util;
-import com.sun.jna.platform.win32.WinReg;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Utility class for process management operations.
@@ -139,7 +133,7 @@ public class ProcessHelper {
     public static List<Class<?>> getNeededForAppClasses() {
         List<Class<?>> classes = new java.util.ArrayList<>();
         classes.add(org.apache.logging.log4j.LogManager.class);
-        classes.add(org.apache.logging.log4j.core.LoggerContext.class);
+        classes.add(org.apache.logging.log4j.core.Core.class);
         classes.add(org.apache.commons.io.input.ReversedLinesFileReader.class);
         classes.add(com.sun.jna.Memory.class);
         classes.add(com.sun.jna.platform.win32.Tlhelp32.class);
@@ -148,48 +142,52 @@ public class ProcessHelper {
 
     public static String getProcessorName() {
         try {
-            List<String> cmd;
-            if (PlatformHelp.isWindows()) {
-                String name = Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", "ProcessorNameString");
-                if (name != null) {
-                    name = name.trim();
-                    if (!name.isEmpty()) return name;
-                }
-                return "UNKNOWN";
-            } else if (PlatformHelp.isLinux()) {
-                cmd = Arrays.asList("bash", "-c",
-                    "grep -m1 \"model name\" /proc/cpuinfo | cut -d ':' -f2");
-            } else if (PlatformHelp.isMacOS()) {
-                cmd = Arrays.asList("sysctl", "-n", "machdep.cpu.brand_string");
-            } else {
-                return "UNKNOWN";
-            }
+            try {
+                Class<?> sysInfoCls = Class.forName("oshi.SystemInfo");
+                Object sysInfo = sysInfoCls.getDeclaredConstructor().newInstance();
 
-            ProcessBuilder pb = new ProcessBuilder(cmd);
-            pb.redirectErrorStream(true);
-            Process process = pb.start();
+                Object hardware = sysInfoCls.getMethod("getHardware").invoke(sysInfo);
 
-            if (!process.waitFor(2, TimeUnit.SECONDS)) {
-                process.destroy();
-                return "UNKNOWN";
-            }
+                Object[] processors = (Object[]) hardware.getClass()
+                        .getMethod("getProcessors")
+                        .invoke(hardware);
+                return String.format("%s", processors[0]).replaceAll("\\s+", " ");
+            } catch (NoSuchMethodError | NoSuchMethodException ex) {
+                // new SystemInfo()
+                Class<?> systemInfoCls = Class.forName("oshi.SystemInfo");
+                Object systemInfo = systemInfoCls.getDeclaredConstructor().newInstance();
 
-            try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-                    if (line.isEmpty() || (PlatformHelp.isWindows() && line.equalsIgnoreCase("Name"))) {
-                        continue;
-                    }
-                    return line;
-                }
+                // getHardware()
+                Method mGetHardware = systemInfoCls.getMethod("getHardware");
+                Object hardware = mGetHardware.invoke(systemInfo);
+
+                // getProcessor()
+                Method mGetProcessor = hardware.getClass().getMethod("getProcessor");
+                Object processor = mGetProcessor.invoke(hardware);
+
+                // getProcessorIdentifier()
+                Method mGetIdentifier = processor.getClass().getMethod("getProcessorIdentifier");
+                Object identifier = mGetIdentifier.invoke(processor);
+
+                // getName()
+                Method mGetName = identifier.getClass().getMethod("getName");
+                return (String) mGetName.invoke(identifier);
             }
         } catch (Throwable e) {
-            JarInJarHelper.LOGGER.error("Error while getting processor name:", e);
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {
+                JarInJarHelper.LOGGER.error(errorMessage + "\n   \n" +
+                        "   Most likely you have permission issues in your file system.\n" +
+                        "   OSHI failed init because it failed to create its tmp files for natives.\n" +
+                        "   This won't crash Vanilla, but can crash many other mods using OSHI, like Embeddium.\n" +
+                        "   Try reinstalling your launcher / trying another launcher, make sure to NOT activate admin rights on install,\n" +
+                        "   as this is most likely the cause of this permission issue.\n    \n" +
+                        "   If you seeing Crash Assistant in the stacktrace somewhere upper, it's not the cause of the crash!\n" +
+                        "   It's just the first thing tried to use OSHI, which failed to init.\n   ");
+            } else {
+                JarInJarHelper.LOGGER.error("Error while getting processor name:", e);
+            }
             return "UNKNOWN";
         }
-
-        return "UNKNOWN";
     }
 }

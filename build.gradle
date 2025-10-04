@@ -7,7 +7,7 @@ plugins {
 group 'dev.kostromdan.mods.crash_assistant'
 
 base {
-    archivesName = '!!!CrashAssistant-1.7.10'
+    archivesName = '!!!CrashAssistant-' + minecraft_version
 }
 
 
@@ -42,7 +42,7 @@ unimined.minecraft {
 
     mappings {
         searge()
-        mcp("stable", "12-1.7.10")
+        mcp("stable", "39-1.12")
     }
 
     defaultRemapJar = false
@@ -128,10 +128,10 @@ forgeJar {
 
 def configureJarNames() {
     def jarConfigurations = [
-            remapForgeJar: "!!!CrashAssistant-forge-1.7.10-${version}.jar",
-            remapFabricJar: "!!!CrashAssistant-fabric-1.7.10-${version}.jar",
-            forgeJar: "!!!CrashAssistant-forge-1.7.10-${version}-dev.jar",
-            fabricJar: "!!!CrashAssistant-fabric-1.7.10-${version}-dev.jar"
+            remapForgeJar : "!!!CrashAssistant-forge-${minecraft_version}-${version}.jar",
+            remapFabricJar: "!!!CrashAssistant-fabric-${minecraft_version}-${version}.jar",
+            forgeJar      : "!!!CrashAssistant-forge-${minecraft_version}-${version}-dev.jar",
+            fabricJar     : "!!!CrashAssistant-fabric-${minecraft_version}-${version}-dev.jar"
     ]
 
     jarConfigurations.each { taskName, fileName ->
@@ -140,6 +140,7 @@ def configureJarNames() {
         }
     }
 }
+
 configureJarNames()
 
 ['compileJava', 'compileFabricJava', 'compileForgeJava'].each { taskName ->

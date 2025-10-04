@@ -1,24 +1,22 @@
 package dev.kostromdan.mods.crash_assistant.forge;
 
-import net.minecraft.client.gui.GuiMainMenu;
-import net.minecraftforge.client.ClientCommandHandler;
-import net.minecraftforge.client.event.GuiOpenEvent;
-import net.minecraftforge.common.MinecraftForge;
-
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-import cpw.mods.fml.common.event.FMLPostInitializationEvent;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
 import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommands;
 import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
 import dev.kostromdan.mods.crash_assistant.forge_coremod.CrashAssistantHooks;
+import net.minecraft.client.gui.GuiMainMenu;
+import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.client.event.GuiOpenEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 @Mod(
         modid = CrashAssistant.MOD_ID,
@@ -36,9 +34,6 @@ public final class CrashAssistantForge {
         if (event.getSide() == Side.CLIENT) {
             CrashAssistant.init();
             MinecraftForge.EVENT_BUS.register(this);
-            FMLCommonHandler.instance()
-                    .bus()
-                    .register(this);
         }
     }
 
@@ -83,7 +78,7 @@ public final class CrashAssistantForge {
     @SubscribeEvent
     @SideOnly(Side.CLIENT)
     public void onGuiOpen(GuiOpenEvent event) {
-        if (event.gui instanceof GuiMainMenu) {
+        if (event.getGui() instanceof GuiMainMenu) {
             mainMenuOpened = true;
             ticksAfterMainMenu = 0;
         }

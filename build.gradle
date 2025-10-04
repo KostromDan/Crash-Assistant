@@ -125,14 +125,21 @@ forgeJar {
     }
 }
 
-tasks.named("remapForgeJar") {
-    archiveFileName = "!!!CrashAssistant-forge-1.7.10-" + version + ".jar"
-}
-tasks.named("remapFabricJar") {
-    archiveFileName = "!!!CrashAssistant-fabric-1.7.10-" + version + ".jar"
-}
-forge
+def configureJarNames() {
+    def jarConfigurations = [
+            remapForgeJar: "!!!CrashAssistant-forge-1.7.10-${version}.jar",
+            remapFabricJar: "!!!CrashAssistant-fabric-1.7.10-${version}.jar",
+            forgeJar: "!!!CrashAssistant-forge-1.7.10-${version}-dev.jar",
+            fabricJar: "!!!CrashAssistant-fabric-1.7.10-${version}-dev.jar"
+    ]
 
+    jarConfigurations.each { taskName, fileName ->
+        tasks.named(taskName) {
+            archiveFileName = fileName
+        }
+    }
+}
+configureJarNames()
 
 ['compileJava', 'compileFabricJava', 'compileForgeJava'].each { taskName ->
     tasks.named(taskName) {

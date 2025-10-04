@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id "me.shedaniel.unified-publishing" version "0.1.+"
     id 'xyz.wagyourtail.unimined' version '1.4.1'
 }
 
@@ -174,5 +175,35 @@ processForgeResources {
 
     filesMatching("mcmod.info") {
         expand "version": project.version
+    }
+}
+
+unifiedPublishing {
+    project {
+        gameVersions = [minecraft_version]
+        gameLoaders = ["forge"]
+
+        displayName = tasks.remapForgeJar.archiveFile.get().asFile.name
+        version = version
+        changelog = file('../changelog.md').text
+        releaseType = release_type
+
+        mainPublication tasks.remapForgeJar
+
+        var cfToken = System.getenv("CF_TOKEN")
+        if (cfToken != null) {
+            curseforge {
+                token = cfToken
+                id = "1154099"
+            }
+        }
+
+        var mrToken = System.getenv("MODRINTH_TOKEN")
+        if (mrToken != null) {
+            modrinth {
+                token = mrToken
+                id = "ix1qq8Ux"
+            }
+        }
     }
 }

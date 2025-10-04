@@ -25,7 +25,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = '1.7.10-Forge-Fabric'
+rootProject.name = 'crash_assistant'
 
 include 'app'
 include 'common_config'

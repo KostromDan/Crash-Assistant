@@ -1,6 +1,11 @@
 1.10.5:
 
+- Initial release for 1.8.9.
+- Switched mdk for 1.7.10 and 1.12.2 to make maintaining legacy versions easier.
 - Added `download.fo` to trusted domains.
+- Improved some English strings. (Thanks `Madis0` for making PR)
+- Added config option to disable crash assistant app logs generation.
+- Added config option to hide "Upload All" button from GUI.
 
 1.10.4:
 

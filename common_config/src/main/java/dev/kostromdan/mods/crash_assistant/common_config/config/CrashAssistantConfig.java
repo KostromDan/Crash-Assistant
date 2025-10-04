@@ -68,6 +68,11 @@ public class CrashAssistantConfig {
                         "This will prevent this by replacing dot's in them to dot-like symbol.\n" +
                         "Anti censoring only versions, IP's are kept censored.",
                 true);
+        addOption("general.prevent_generating_crash_assistant_app_logs",
+                "Prevents creating \"crash_assistant\" folder in the logs folder.\n" +
+                        "So this option prevents our app logging at all.\n" +
+                        "HIGHLY UNRECOMMENDED to disable! Contains many useful info.",
+                false);
         ArrayList<String> defaultBlacklistedLogs = new ArrayList<>();
         addOption("general.blacklisted_logs",
                 "List of blacklisted log files (checked with startswith()). This files won't show in GUI logs list.",
@@ -213,6 +218,9 @@ public class CrashAssistantConfig {
                 false);
 
         config.setComment("gui_customisation", "You can customise GUI with this options.");
+        addOption("gui_customisation.disable_upload_all_button",
+                "Will hide Upload All Button from GUI.",
+                false);
         addOption("gui_customisation.show_dont_send_screenshot_of_gui_notice",
                 "Append comment text with notice about sending screenshot of this gui tells nothing to modpack creators.",
                 true);

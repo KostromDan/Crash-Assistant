@@ -120,10 +120,18 @@ forgeJar {
     manifest {
         attributes([
                 'FMLCorePluginContainsFMLMod': 'true',
-                'FMLCorePlugin': 'dev.kostromdan.mods.crash_assistant.forge_coremod.CrashAssistantEntrypoint'
+                'FMLCorePlugin'              : 'dev.kostromdan.mods.crash_assistant.forge_coremod.CrashAssistantEntrypoint'
         ])
     }
 }
+
+tasks.named("remapForgeJar") {
+    archiveFileName = "!!!CrashAssistant-forge-1.7.10-" + version + ".jar"
+}
+tasks.named("remapFabricJar") {
+    archiveFileName = "!!!CrashAssistant-fabric-1.7.10-" + version + ".jar"
+}
+forge
 
 
 ['compileJava', 'compileFabricJava', 'compileForgeJava'].each { taskName ->

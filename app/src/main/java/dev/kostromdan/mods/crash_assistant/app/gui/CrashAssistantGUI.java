@@ -62,7 +62,7 @@ public class CrashAssistantGUI {
 
         addFileMenu();
 
-        String titleText = LanguageProvider.get("gui.oops") + getTitleCrashedText(false) + "!";
+        String titleText = getTitleCrashedText(false);
         JLabel titleLabel = new JLabel(titleText, SwingConstants.LEFT);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         titleLabel.setFont(titleLabel.getFont().deriveFont(16f));

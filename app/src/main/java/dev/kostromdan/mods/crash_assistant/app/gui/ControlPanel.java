@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 public class ControlPanel {
     public static boolean stopMovingToTop = false;
-    public static boolean uploadButtonsActivated = false;
+    public static boolean uploadButtonsActivated = CrashAssistantConfig.getBoolean("general.prevent_upload_buttons_delay");
     private static boolean uploadAllButtonWarningShown = false;
     private static JPanel panel;
     public static JDialog dialog;
@@ -87,7 +87,7 @@ public class ControlPanel {
 
         uploadAllButton.setEnabled(false);
 
-        if(CrashAssistantConfig.getBoolean("gui_customisation.disable_upload_all_button")){
+        if (CrashAssistantConfig.getBoolean("gui_customisation.disable_upload_all_button")) {
             uploadAllButton.setVisible(false);
         }
 
@@ -106,21 +106,23 @@ public class ControlPanel {
                         uploadAllButton.setEnabled(true);
                         CrashAssistantGUI.resize();
 
-                        Timer enableButtonsTimer = new Timer();
-                        enableButtonsTimer.schedule(new TimerTask() {
-                            @Override
-                            public void run() {
-                                synchronized (ControlPanel.class) {
-                                    uploadButtonsActivated = true;
-                                }
-                                SwingUtilities.invokeLater(() -> {
-                                    for (FilePanel panel : fileListPanel.filePanelList) {
-                                        panel.setUploadButtonEnabled(true);
-                                        panel.setWaiting(false);
+                        if (!CrashAssistantConfig.getBoolean("general.prevent_upload_buttons_delay")) {
+                            Timer enableButtonsTimer = new Timer();
+                            enableButtonsTimer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    synchronized (ControlPanel.class) {
+                                        uploadButtonsActivated = true;
                                     }
-                                });
-                            }
-                        }, 1000);
+                                    SwingUtilities.invokeLater(() -> {
+                                        for (FilePanel panel : fileListPanel.filePanelList) {
+                                            panel.setUploadButtonEnabled(true);
+                                            panel.setWaiting(false);
+                                        }
+                                    });
+                                }
+                            }, 1000);
+                        }
 
                         this.cancel();
                     }
@@ -491,7 +493,7 @@ public class ControlPanel {
                     } else {
                         sb.append("\n");
                         sb.append(LanguageProvider.getMsgLang("gui.modlist_changed_label_msg")
-                                .replace("$ADDED_MODS_COUNT$",  Integer.toString(modListDiff.getAddedMods().size()))
+                                .replace("$ADDED_MODS_COUNT$", Integer.toString(modListDiff.getAddedMods().size()))
                                 .replace("$REMOVED_MODS_COUNT$", Integer.toString(modListDiff.getRemovedMods().size()))
                                 .replace("$UPDATED_MODS_COUNT$", Integer.toString(modListDiff.getUpdatedMods().size())));
                     }

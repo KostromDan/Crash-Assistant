@@ -9,10 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 public class LanguageProvider {
@@ -89,7 +86,13 @@ public class LanguageProvider {
     @SuppressWarnings("unchecked")
     public static void unzipAndUpdateLangFiles() {
         CrashAssistantConfig.executeWithLock(() -> {
-            LANG_PATH.toFile().mkdirs();
+            boolean generateLocalizationFolderWithReadme = CrashAssistantConfig.get("general.generate_localization_overrides_folder_with_readme");
+            String priorityLangForOverrides = CrashAssistantConfig.get("general.priority_lang_for_overrides");
+
+            if (generateLocalizationFolderWithReadme) {
+                LANG_PATH.toFile().mkdirs();
+            }
+
             HashSet<String> langFilesInJarNames = new HashSet<>();
             langFilesInJarNames.add("crash_assistant_localization/de_de.json");
             langFilesInJarNames.add("crash_assistant_localization/en_us.json");
@@ -98,61 +101,105 @@ public class LanguageProvider {
             langFilesInJarNames.add("crash_assistant_localization/es_es.json");
             langFilesInJarNames.add("crash_assistant_localization/it_it.json");
             langFilesInJarNames.add("crash_assistant_localization/README.md");
+
             HashMap<String, HashMap<String, String>> jarLangFiles = new HashMap<>();
+            HashMap<String, HashMap<String, String>> configLangFiles = new HashMap<>();
+
             for (String langFile : langFilesInJarNames) {
                 if (langFile.endsWith("/")) {
                     continue;
                 }
                 String langFileName = langFile.split("/")[1];
-                if (!langFile.endsWith(".json")) {
+                if (!langFile.endsWith(".json") && generateLocalizationFolderWithReadme) {
                     JarInJarHelper.unzipFromJar(langFile, LANG_PATH.resolve(langFileName));
                     continue;
                 }
                 jarLangFiles.put(langFileName.split("\\.json")[0], JarInJarHelper.readJsonFromJar(langFile));
             }
 
+            Lang en_usFromFar = new Lang(jarLangFiles.get("en_us"));
+
             HashSet<Path> langFilesInConfigNames = getLangFilesInConfigPaths();
-            HashMap<String, HashMap<String, String>> configLangFiles = new HashMap<>();
+            HashSet<Path> langFilesToRemove = new HashSet<>();
             for (Path path : langFilesInConfigNames) {
-                configLangFiles.put(path.getFileName().toString().split("\\.json")[0], JarInJarHelper.readJsonFromFile(path));
+                HashMap<String, String> lang = JarInJarHelper.readJsonFromFile(path);
+
+                if (lang.isEmpty()) {
+                    langFilesToRemove.add(path);
+                    continue;
+                }
+
+                String langName = path.getFileName().toString().split("\\.json")[0];
+                HashSet<String> keysToRemove = new HashSet<>();
+
+                for (Map.Entry<String, String> entry : lang.entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+
+                    if (!en_usFromFar.lang.containsKey(key)) {
+                        keysToRemove.add(key);
+                        continue;
+                    }
+                    if (value.equals("$DEFAULT")) {
+                        keysToRemove.add(key);
+                        continue;
+                    }
+                    if (jarLangFiles.containsKey(langName) && jarLangFiles.get(langName).containsKey(key) && jarLangFiles.get(langName).get(key).equals(value)) {
+                        keysToRemove.add(key);
+                        continue;
+                    }
+                }
+                for (String key : keysToRemove) {
+                    lang.remove(key);
+                }
+                if (lang.isEmpty()) {
+                    langFilesToRemove.add(path);
+                    continue;
+                }
+                if (!keysToRemove.isEmpty()) {
+                    JarInJarHelper.writeJsonToFile(lang, path);
+                }
+                configLangFiles.put(langName, lang);
+            }
+
+            for (Path path : langFilesToRemove) {
+                try {
+                    Files.delete(path);
+                } catch (IOException e) {
+                }
             }
 
             HashSet<String> allLanguages = new HashSet<>();
             allLanguages.addAll(configLangFiles.keySet());
             allLanguages.addAll(jarLangFiles.keySet());
 
-
-            Lang en_us_jar = new Lang(jarLangFiles.get("en_us"));
+            HashMap<String, String> FirstPriorityLangForOverrides = configLangFiles.getOrDefault(priorityLangForOverrides, new HashMap<>());
             for (String langName : allLanguages) {
-                Lang jar = new Lang(jarLangFiles.getOrDefault(langName, new HashMap<>()));
-                final Lang unmodified_jar = new Lang((HashMap<String, String>) jar.lang.clone());
-                Lang config = new Lang(configLangFiles.getOrDefault(langName, new HashMap<>()));
-                config.lang.forEach((key, value) -> {
-                    if (en_us_jar.lang.containsKey(key) && !Objects.equals(value, "$DEFAULT")) {
-                        jar.lang.put(key, value);
+                HashMap<String, String> lang = configLangFiles.getOrDefault(langName, new HashMap<>());
+                for (Map.Entry<String, String> entry : FirstPriorityLangForOverrides.entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+                    if (!lang.containsKey(key)) {
+                        lang.put(key, value);
                     }
-                });
-                languages.put(langName, jar);
-                HashMap<String, String> outputJson = new HashMap<>();
-
-                en_us_jar.lang.forEach((key, value) -> {
-                    String outputValue;
-                    if (Objects.equals(config.lang.get(key), "$DEFAULT")) {
-                        outputValue = "$DEFAULT";
-                    } else if (Objects.equals(unmodified_jar.lang.get(key), config.lang.get(key))) {
-                        outputValue = "$DEFAULT";
-                    } else if (!unmodified_jar.lang.containsKey(key) && Objects.equals(value, config.lang.get(key))) {
-                        outputValue = "$DEFAULT";
-                    } else outputValue = config.lang.getOrDefault(key, "$DEFAULT");
-                    outputJson.put(key, outputValue);
-                });
-                JarInJarHelper.writeJsonToFile(outputJson, LANG_PATH.resolve(langName + ".json"));
+                }
+                for (Map.Entry<String, String> entry : jarLangFiles.getOrDefault(langName, new HashMap<>()).entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+                    if (!lang.containsKey(key)) {
+                        lang.put(key, value);
+                    }
+                }
+                languages.put(langName, new Lang(lang));
             }
         });
     }
 
     public static HashSet<Path> getLangFilesInConfigPaths() {
         HashSet<Path> langFilesInConfigNames = new HashSet<>();
+        if (!Files.exists(LANG_PATH)) {
+            return langFilesInConfigNames;
+        }
         try {
             Files.list(LANG_PATH).forEach(path -> {
                 if (path.getFileName().toString().endsWith(".json")) {

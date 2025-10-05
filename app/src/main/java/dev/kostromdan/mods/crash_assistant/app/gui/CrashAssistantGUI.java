@@ -180,18 +180,6 @@ public class CrashAssistantGUI {
 
         // File menu items
 
-        // Open config file (existing)
-        JMenuItem openConfigItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_config"));
-        openConfigItem.addActionListener(e -> {
-            try {
-                File configFile = new File("config/crash_assistant/config.toml");
-                Desktop.getDesktop().open(configFile);
-            } catch (IOException ex) {
-                CrashAssistantApp.LOGGER.error("Error opening config file", ex);
-            }
-        });
-        fileMenu.add(openConfigItem);
-
         // Open mods folder
         JMenuItem openModsFolderItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_mods_folder"));
         openModsFolderItem.addActionListener(e -> {
@@ -227,6 +215,18 @@ public class CrashAssistantGUI {
             }
         });
         fileMenu.add(openModpackFolderItem);
+
+        // Open config file (existing)
+        JMenuItem openConfigItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_config"));
+        openConfigItem.addActionListener(e -> {
+            try {
+                File configFile = new File("config/crash_assistant/config.toml");
+                Desktop.getDesktop().open(configFile);
+            } catch (IOException ex) {
+                CrashAssistantApp.LOGGER.error("Error opening config file", ex);
+            }
+        });
+        fileMenu.add(openConfigItem);
 
         // Analysis menu items
         boolean analysisMenuEnabled = CrashAssistantConfig.getBoolean("analysis_tools.enabled");

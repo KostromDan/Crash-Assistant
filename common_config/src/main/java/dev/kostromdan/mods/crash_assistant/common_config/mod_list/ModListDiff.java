@@ -87,6 +87,9 @@ public class ModListDiff {
 
     public static boolean isModpackCreator() {
         List<String> modpackCreators = CrashAssistantConfig.getModpackCreators();
+        if (modpackCreators.isEmpty() && !CrashAssistantConfig.getBoolean("modpack_modlist.enabled")){
+            return false;
+        }
         return modpackCreators.contains(ModListUtils.getCurrentUsername()) || modpackCreators.isEmpty();
     }
 

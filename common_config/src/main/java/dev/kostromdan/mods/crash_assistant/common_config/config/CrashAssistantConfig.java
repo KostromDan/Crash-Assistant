@@ -68,6 +68,11 @@ public class CrashAssistantConfig {
         addOption("general.generate_localization_overrides_folder_with_readme",
                 "By changing this value you can disable creating \"crash_assistant_localization_overrides\" folder and placing \"README.md\" file there.",
                 true);
+        addOption("general.prevent_upload_buttons_delay",
+                "By default our process is scanning for terminated processes(they can appear with delay) and after finish of scan enabling upload buttons.\n" +
+                        "This option can prevent this and enable individual upload buttons immediately after crash.\n" +
+                        "However can confuse users and make them clicking individual upload buttons instead of Upload All Button.",
+                false);
         addOption("general.enable_privacy_policy_acceptance",
                 "Before uploading the first log, requires the user to accept the privacy policy.\n" +
                         "Disabling this option may be illegal in some countries if you are modpack creator. Disable at your own risk.",

@@ -59,6 +59,15 @@ public class CrashAssistantConfig {
         addOption("general.default_lang",
                 "If options.txt doesn't exist, the default language will be used.",
                 "en_us");
+        addOption("general.priority_lang_for_overrides",
+                "By default, crash assistant will get the value for the current language from the overrides folder, then from the jar.\n" +
+                        "By changing this option, it will first try to get it from the current overrides, then (if no override exists for this language)\n" +
+                        "from the override for the language specified here, and only then from the jar language.\n" +
+                        "Use \"NONE\" to disable this feature. Or language key, like \"en_us\" to enable it.",
+                "NONE");
+        addOption("general.generate_localization_overrides_folder_with_readme",
+                "By changing this value you can disable creating \"crash_assistant_localization_overrides\" folder and placing \"README.md\" file there.",
+                true);
         addOption("general.enable_privacy_policy_acceptance",
                 "Before uploading the first log, requires the user to accept the privacy policy.\n" +
                         "Disabling this option may be illegal in some countries if you are modpack creator. Disable at your own risk.",

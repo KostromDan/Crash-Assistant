@@ -110,8 +110,10 @@ public class LanguageProvider {
                     continue;
                 }
                 String langFileName = langFile.split("/")[1];
-                if (!langFile.endsWith(".json") && generateLocalizationFolderWithReadme) {
-                    JarInJarHelper.unzipFromJar(langFile, LANG_PATH.resolve(langFileName));
+                if (!langFile.endsWith(".json")) {
+                    if (generateLocalizationFolderWithReadme) {
+                        JarInJarHelper.unzipFromJar(langFile, LANG_PATH.resolve(langFileName));
+                    }
                     continue;
                 }
                 jarLangFiles.put(langFileName.split("\\.json")[0], JarInJarHelper.readJsonFromJar(langFile));

@@ -38,6 +38,7 @@ public class ControlPanel {
     public static boolean stopMovingToTop = false;
     public static boolean uploadButtonsActivated = CrashAssistantConfig.getBoolean("general.prevent_upload_buttons_delay");
     private static boolean uploadAllButtonWarningShown = false;
+    private static boolean isInsideTrustedDomainsWarning = false;
     private static JPanel panel;
     public static JDialog dialog;
     private final FileListPanel fileListPanel;
@@ -228,6 +229,7 @@ public class ControlPanel {
 
     public static void validateIsDomainTrustedAndOpenInBrowser(String link) throws URISyntaxException, IOException {
         URI uri = new URI(link);
+        if (isInsideTrustedDomainsWarning) return;
         if (TrustedDomainsHelper.isTrustedTopDomain(uri)) {
             Desktop.getDesktop().browse(new URI(link));
             return;
@@ -238,14 +240,34 @@ public class ControlPanel {
                     "If you think your domain(" + TrustedDomainsHelper.getTopDomainName(uri) + ") should be in trusted domains,\n" +
                     "please contact us on <a href =https://github.com/KostromDan/Crash-Assistant/blob/1.19.2-1.20.1/app/src/main/java/dev/kostromdan/mods/crash_assistant/app/utils/TrustedDomainsHelper.java>GitHub</a>.";
         }
-        int result = JOptionPane.showConfirmDialog(
-                null,
-                CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.untrusted_domain_question") + "\n<a href =" + link + ">" + link + "</a>" + creatorWarning, false),
-                LanguageProvider.get("gui.untrusted_domain_title"),
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
+        isInsideTrustedDomainsWarning = true;
+
+        JEditorPane editorPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.untrusted_domain_question") + "\n<a href =" + link + ">" + link + "</a>" + creatorWarning, false);
+        JOptionPane optionPane = new JOptionPane(
+                editorPane,
+                JOptionPane.WARNING_MESSAGE,
+                JOptionPane.YES_NO_OPTION
         );
-        if (result != JOptionPane.YES_OPTION) return;
+        JDialog warningDialog = optionPane.createDialog(null, LanguageProvider.get("gui.untrusted_domain_title"));
+
+        editorPane.addHyperlinkListener(e -> {
+            if (e.getEventType() == javax.swing.event.HyperlinkEvent.EventType.ACTIVATED) {
+                try {
+                    URI clickedUri = e.getURL().toURI();
+                    Desktop.getDesktop().browse(clickedUri);
+                    if (clickedUri.toString().equals(link)) {
+                        warningDialog.dispose();
+                    }
+                } catch (Exception ex) {
+                    CrashAssistantApp.LOGGER.error("Failed to open link from untrusted domain warning", ex);
+                }
+            }
+        });
+
+        warningDialog.setVisible(true);
+        Object result = optionPane.getValue();
+        isInsideTrustedDomainsWarning = false;
+        if (result == null || !result.equals(JOptionPane.YES_OPTION)) return;
         Desktop.getDesktop().browse(new URI(link));
     }
 

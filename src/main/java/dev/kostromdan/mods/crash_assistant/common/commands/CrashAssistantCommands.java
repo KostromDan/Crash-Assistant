@@ -65,30 +65,30 @@ public class CrashAssistantCommands {
 
     public static Component getModConfigComponent() {
         TextComponent component = new TextComponent("[mod config]");
-        Style style = Style.EMPTY
-                .withColor(ChatFormatting.YELLOW)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, CrashAssistantConfig.getConfigPath().toAbsolutePath().toString()))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.mod_config_tooltip"))));
+        Style style = new Style()
+                .setColor(ChatFormatting.YELLOW)
+                .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, CrashAssistantConfig.getConfigPath().toAbsolutePath().toString()))
+                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.mod_config_tooltip"))));
         component.setStyle(style);
         return component;
     }
 
     public static Component getCopyNicknameComponent(String playerNickname) {
         TextComponent component = new TextComponent("[nickname]");
-        Style style = Style.EMPTY
-                .withColor(ChatFormatting.YELLOW)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, '"' + playerNickname + '"'))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.nickname_tooltip"))));
+        Style style = new Style()
+                .setColor(ChatFormatting.YELLOW)
+                .setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, '"' + playerNickname + '"'))
+                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.nickname_tooltip"))));
         component.setStyle(style);
         return component;
     }
 
     public static Component getCopyDiffComponent(ModListDiffStringBuilder diff) {
         TextComponent component = new TextComponent("[" + LanguageProvider.get("commands.diff_copy") + "]");
-        Style style = Style.EMPTY
-                .withColor(ChatFormatting.YELLOW)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, diff.toText()))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.diff_tooltip"))));
+        Style style = new Style()
+                .setColor(ChatFormatting.YELLOW)
+                .setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, diff.toText()))
+                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.diff_tooltip"))));
         component.setStyle(style);
         return component;
     }
@@ -107,7 +107,7 @@ public class CrashAssistantCommands {
         TextComponent msg = new TextComponent("");
         msg.append(new TextComponent(LanguageProvider.get("commands.modlist_disabled_error_msg")));
         msg.append(getModConfigComponent());
-        msg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+        msg.setStyle(new Style().setColor(ChatFormatting.RED));
         sendClientMsg(msg);
         return false;
     }
@@ -123,21 +123,21 @@ public class CrashAssistantCommands {
             msg.append(new TextComponent(LanguageProvider.get("commands.modlist_overwritten_success")));
             if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update")) {
                 TextComponent autoUpdateMsg = new TextComponent(LanguageProvider.get("commands.modlist_auto_update_msg"));
-                autoUpdateMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE));
+                autoUpdateMsg.setStyle(new Style().setColor(ChatFormatting.WHITE));
                 msg.append(autoUpdateMsg);
             } else {
                 TextComponent enableAutoUpdateMsg = new TextComponent(LanguageProvider.get("commands.modlist_enable_auto_update_msg"));
-                enableAutoUpdateMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE));
+                enableAutoUpdateMsg.setStyle(new Style().setColor(ChatFormatting.WHITE));
                 msg.append(enableAutoUpdateMsg);
             }
             msg.append(getModConfigComponent());
-            msg.setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
+            msg.setStyle(new Style().setColor(ChatFormatting.GREEN));
         } else {
             msg.append(new TextComponent(LanguageProvider.get("commands.not_creator_error_msg")));
             msg.append(getCopyNicknameComponent(CrashAssistant.playerNickname));
             msg.append(new TextComponent(LanguageProvider.get("commands.add_to_creator_list_msg")));
             msg.append(getModConfigComponent());
-            msg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+            msg.setStyle(new Style().setColor(ChatFormatting.RED));
         }
 
         sendClientMsg(msg);
@@ -180,7 +180,7 @@ public class CrashAssistantCommands {
             }
         } catch (IllegalArgumentException ignored) {
             TextComponent errorMsg = new TextComponent(LanguageProvider.get("commands.crash_command_validation_failed_to_crash") + " '" + toCrash + "'");
-            errorMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+            errorMsg.setStyle(new Style().setColor(ChatFormatting.RED));
             sendClientMsg(errorMsg);
             return 0;
         }
@@ -195,7 +195,7 @@ public class CrashAssistantCommands {
                 if (!validateCrashArgs(args)) return;
                 if (!args.isEmpty()) {
                     TextComponent applyingArgsMsg = new TextComponent(LanguageProvider.get("commands.crash_command_applying_args"));
-                    applyingArgsMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW));
+                    applyingArgsMsg.setStyle(new Style().setColor(ChatFormatting.YELLOW));
                     sendClientMsg(applyingArgsMsg);
                     try {
                         Thread.sleep(100); // Wait while main thread sends msg, since next operations are blocking.
@@ -221,7 +221,7 @@ public class CrashAssistantCommands {
 
                 if (!noCrash) {
                     TextComponent crashingMsg = new TextComponent(LanguageProvider.get("commands.crash_command_crashing"));
-                    crashingMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                    crashingMsg.setStyle(new Style().setColor(ChatFormatting.RED));
                     sendClientMsg(crashingMsg);
                 } else {
                     sendClientMsg(new TextComponent(LanguageProvider.get("commands.crash_command_done")));
@@ -242,14 +242,14 @@ public class CrashAssistantCommands {
 
         msg.append(new TextComponent(LanguageProvider.get("commands.crash_command_1")));
         TextComponent toCrashComponent = new TextComponent(toCrash);
-        toCrashComponent.setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW));
+        toCrashComponent.setStyle(new Style().setColor(ChatFormatting.YELLOW));
         msg.append(toCrashComponent);
         msg.append(new TextComponent(LanguageProvider.get("commands.crash_command_2")));
         TextComponent secondsComponent = new TextComponent(Integer.toString(secondsToCrash));
-        secondsComponent.setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW));
+        secondsComponent.setStyle(new Style().setColor(ChatFormatting.YELLOW));
         msg.append(secondsComponent);
         msg.append(new TextComponent(LanguageProvider.get("commands.crash_command_3")));
-        msg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+        msg.setStyle(new Style().setColor(ChatFormatting.RED));
         sendClientMsg(msg);
         return 0;
     }
@@ -258,7 +258,7 @@ public class CrashAssistantCommands {
         for (String arg : args) {
             if (!supportedCrashArgs.contains(arg)) {
                 TextComponent errorMsg = new TextComponent(LanguageProvider.get("commands.crash_command_validation_failed") + " '" + arg + "'");
-                errorMsg.setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                errorMsg.setStyle(new Style().setColor(ChatFormatting.RED));
                 sendClientMsg(errorMsg);
                 return false;
             }
@@ -318,7 +318,7 @@ public class CrashAssistantCommands {
                 TextComponent part = new TextComponent(cs.getText());
                 if (!cs.getColor().isEmpty()) {
                     ChatFormatting color = ChatFormatting.valueOf(cs.getColor().toUpperCase());
-                    part.setStyle(Style.EMPTY.withColor(color));
+                    part.setStyle(new Style().setColor(color));
                 }
                 msg.append(part);
                 if (cs.isEndsWithNewLine()) {

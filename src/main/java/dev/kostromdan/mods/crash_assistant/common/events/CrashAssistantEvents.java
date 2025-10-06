@@ -23,10 +23,10 @@ public class CrashAssistantEvents {
 
         // Create and style the "Crash Assistant" component
         TextComponent crashAssistantComponent = new TextComponent("Crash Assistant");
-        Style style = Style.EMPTY
-                .withColor(ChatFormatting.LIGHT_PURPLE)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/KostromDan/Crash-Assistant"))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("text.opens_url"))));
+        Style style = new Style()
+                .setColor(ChatFormatting.LIGHT_PURPLE)
+                .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/KostromDan/Crash-Assistant"))
+                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("text.opens_url"))));
         crashAssistantComponent.setStyle(style);
 
         msg.append(crashAssistantComponent);

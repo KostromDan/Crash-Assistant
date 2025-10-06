@@ -40,6 +40,7 @@ unimined.minecraft {
     version project.minecraft_version
 
     mappings {
+        intermediary()
         mojmap()
     }
 
@@ -61,7 +62,6 @@ unimined.minecraft(sourceSets.forge) {
 
     minecraftForge {
         loader project.forge_version
-        mixinConfig "crash_assistant.mixins.json", "crash_assistant-forge.mixins.json"
     }
 
     defaultRemapJar = true

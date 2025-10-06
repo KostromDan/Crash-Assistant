@@ -25,7 +25,7 @@ public class CrashAssistantDependencyLocator extends AbstractJarFileLocator {
     public List<IModFile> scanMods() {
         return IModLocatorInjector.getJarPath()
                 .map(p -> {
-                    final ModFile modFile = new ModFile(p, this, ModFileParser::modsTomlParser);
+                    final ModFile modFile = new ModFile(p, this);
                     this.modJars.compute(modFile, (mf, fs) -> this.createFileSystem(mf));
 
                     return Collections.singletonList((IModFile) modFile);

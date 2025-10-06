@@ -28,7 +28,7 @@
 - Removed funny GIF from `Intel chip bug warning`, as it may have stolen attention from the actual text and some rare
   users found it not funny.
 - Significantly improved text of `Intel chip bug warning` in all languages to be less confusing.
-- Fixed clicking the link inside the trusted domain warning will just reopen link.
+- Fixed clicking the link inside the trusted domain warning will just reopen the trusted domain warning.
 - Small fixes and improvements.
 
 1.10.5:

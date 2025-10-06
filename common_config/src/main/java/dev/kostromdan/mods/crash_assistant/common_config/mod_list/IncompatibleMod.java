@@ -11,7 +11,7 @@ public class IncompatibleMod {
     private final List<Mod> detectedMods = new ArrayList<>();
     public static final HashSet<IncompatibleMod> incompatibleMods = new HashSet<IncompatibleMod>() {{
         add(new IncompatibleMod(
-                "crashdetectormc",
+                "crashdetector",
                 "crashdetector",
                 "These mods perform very similar functions and are implemented in very similar ways.\n" +
                         "There is no reason to have both. Please remove one of them.\n" +

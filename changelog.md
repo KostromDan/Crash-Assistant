@@ -1,3 +1,7 @@
+1.10.6.1:
+
+- Fixed internal api changes in Neo 1.21.9.
+
 1.10.6:
 
 - Added config option to prevent individual upload buttons delay after a crash.

@@ -40,6 +40,7 @@ unimined.minecraft {
     version project.minecraft_version
 
     mappings {
+        intermediary()
         mojmap()
     }
 

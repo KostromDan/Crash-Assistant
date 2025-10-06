@@ -222,9 +222,6 @@ public class CrashAssistantConfig {
         addOption("intel_corrupted.enabled",
                 "Enable feature.",
                 true);
-        addOption("intel_corrupted.show_gif",
-                "Show funny related gif in warning message.",
-                true);
 
         addOption("greeting.shown_greeting",
                 "You don't need to touch this option.\n" +

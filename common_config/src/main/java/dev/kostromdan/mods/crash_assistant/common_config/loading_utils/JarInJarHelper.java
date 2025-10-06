@@ -235,7 +235,7 @@ public class JarInJarHelper {
                     crashAssistantString = Paths.get(LibrariesJarLocator.getOurModJarPath()).getFileName().toString();
                 } catch (Exception ignored) {
                 }
-                String incompatibleMessage = crashAssistantString + " and " + incompatibleModsString + "are incompatible.";
+                String incompatibleMessage = crashAssistantString + " and " + incompatibleModsString + " are incompatible.";
                 if (CrashAssistantConfig.getBoolean("compatibility.enabled")) {
                     JarInJarHelper.LOGGER.error("Crash Assistant detected incompatible mod(s), crashing to prevent potential issues:\n{}",
                             incompatibleMessage + " Remove one of them.");

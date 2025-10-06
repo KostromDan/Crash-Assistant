@@ -5,9 +5,9 @@
 - LanguageProvider redesign:
     - **New Configuration Options:**
         - Added `general.priority_lang_for_overrides` - Allows specifying a fallback language for overrides before
-          falling back to JAR language (default: "NONE")
+          falling back to JAR language
         - Added `general.generate_localization_overrides_folder_with_readme` - Option to disable creating the
-          localization overrides folder and README.md (default: true)
+          localization overrides folder and README.md
     - **Language File Processing Improvements:**
         - Override files now only contain translations that differ from JAR defaults
         - Automatic cleanup of redundant entries:
@@ -25,6 +25,9 @@
         - Cleaner override files containing only actual customizations
 - Revamped localization README with detailed contribution and customization guidelines. With LanguageProvider redesign
   description.
+- Removed funny GIF from `Intel chip bug warning`, as it may have stolen attention from the actual text and some rare
+  users found it not funny.
+- Significantly improved text of `Intel chip bug warning` in all languages to be less confusing.
 - Fixed clicking the link inside the trusted domain warning will just reopen link.
 - Small fixes and improvements.
 
@@ -687,7 +690,6 @@
 
 1.4.0:
 
-- Load Intel bug GIF asynchronously from github to reduce mod size.
 - Improved Intel bug message.
 - Introducing Logs Analyser. Analysing logs dor most common crash reasons and displaying message with fix.
   Currently implemented 2 checks:
@@ -734,7 +736,6 @@
     - Replaces "\n" separator between logs to "|" to make message vertically smaller. Enabled by default.
 - Added waning screen about processors affected by critical Intel Chip Bug.
     - Config option `intel_corrupted.enabled`
-    - Config option `intel_corrupted.show_gif`. Show funny related gif in warning message.
 - Very many small fixes.
 
 1.3.4:

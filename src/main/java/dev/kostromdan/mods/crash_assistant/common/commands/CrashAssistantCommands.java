@@ -73,21 +73,26 @@ public class CrashAssistantCommands {
         return component;
     }
 
+    private static String latestDiffText = "";
+    private static String latestNickname = "";
+
     public static Component getCopyNicknameComponent(String playerNickname) {
+        latestNickname = playerNickname;
         TextComponent component = new TextComponent("[nickname]");
         Style style = new Style()
                 .setColor(ChatFormatting.YELLOW)
-                .setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, '"' + playerNickname + '"'))
+                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/crash_assistant crash copy_to_clipboard nickname"))
                 .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.nickname_tooltip"))));
         component.setStyle(style);
         return component;
     }
 
     public static Component getCopyDiffComponent(ModListDiffStringBuilder diff) {
+        latestDiffText = diff.toText();
         TextComponent component = new TextComponent("[" + LanguageProvider.get("commands.diff_copy") + "]");
         Style style = new Style()
                 .setColor(ChatFormatting.YELLOW)
-                .setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, diff.toText()))
+                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/crash_assistant crash copy_to_clipboard"))
                 .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(LanguageProvider.get("commands.diff_tooltip"))));
         component.setStyle(style);
         return component;
@@ -175,10 +180,42 @@ public class CrashAssistantCommands {
         String toCrash = "null";
         try {
             toCrash = context.getArgument("to_crash", String.class);
-            if (!supportedCrashCommands.containsKey(toCrash)) {
-                throw new IllegalArgumentException();
-            }
         } catch (IllegalArgumentException ignored) {
+            TextComponent errorMsg = new TextComponent(LanguageProvider.get("commands.crash_command_validation_failed_to_crash") + " '" + toCrash + "'");
+            errorMsg.setStyle(new Style().setColor(ChatFormatting.RED));
+            sendClientMsg(errorMsg);
+            return 0;
+        }
+
+        // Hidden clipboard subcommand (not shown by SuggestionProvider):
+        if ("copy_to_clipboard".equals(toCrash)) {
+            List<String> args = parseCrashArgs(context);
+            boolean isNickname = !args.isEmpty() && Objects.equals(args.get(0), "nickname");
+            String text = isNickname ? latestNickname : latestDiffText;
+            if (text == null || text.isEmpty()) {
+                TextComponent errorMsg = new TextComponent(isNickname ? "No nickname available to copy" : "No diff text available to copy");
+                errorMsg.setStyle(new Style().setColor(ChatFormatting.RED));
+                sendClientMsg(errorMsg);
+                return 0;
+            }
+            // Set clipboard on client thread
+            String finalText = text;
+            Minecraft.getInstance().execute(() -> {
+                try {
+                    Minecraft.getInstance().keyboardHandler.setClipboard(finalText);
+                    TextComponent okMsg = new TextComponent(isNickname ? "Nickname copied to clipboard" : "Mod list diff copied to clipboard");
+                    okMsg.setStyle(new Style().setColor(ChatFormatting.GREEN));
+                    sendClientMsg(okMsg);
+                } catch (Throwable t) {
+                    TextComponent errorMsg = new TextComponent("Failed to copy to clipboard");
+                    errorMsg.setStyle(new Style().setColor(ChatFormatting.RED));
+                    sendClientMsg(errorMsg);
+                }
+            });
+            return 0;
+        }
+
+        if (!supportedCrashCommands.containsKey(toCrash)) {
             TextComponent errorMsg = new TextComponent(LanguageProvider.get("commands.crash_command_validation_failed_to_crash") + " '" + toCrash + "'");
             errorMsg.setStyle(new Style().setColor(ChatFormatting.RED));
             sendClientMsg(errorMsg);

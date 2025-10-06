@@ -444,8 +444,8 @@ public class CrashAssistantGUI {
                             CrashAssistantGUI.getEditorPane(
                                     "<h2>Warning: incompatible mod(s) detected!</h2>\n" +
                                             "<strong>" + Boot.crashAssistantModJarName + "</strong>" + " and " +
-                                            "<strong>" + String.join(", ", detectedMods.stream().map(Mod::getJarName).collect(Collectors.toList())) + "</strong>" +
-                                            " are incompatible.\n" +
+                                            "<strong>" + String.join(", ", detectedMods.stream().map(Mod::getJarName).collect(Collectors.toList())) + " </strong>" +
+                                            "are incompatible.\n" +
                                             "You should remove one them!" +
                                             "<h4><strong>Why did Crash Assistant mark this mod as incompatible?</strong></h4>" +
                                             incompatibleMod.get().getExplainMessage(),

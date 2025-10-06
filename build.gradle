@@ -61,7 +61,7 @@ unimined.minecraft(sourceSets.forge) {
 
     minecraftForge {
         loader project.forge_version
-//        mixinConfig "modid.mixins.json"
+        mixinConfig "crash_assistant.mixins.json", "crash_assistant-forge.mixins.json"
     }
 
     defaultRemapJar = true
@@ -84,7 +84,7 @@ sourceSets {
 
 dependencies {
     mainImplementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
-    fabricImplementation "net.fabricmc.fabric-api:fabric-api:0.28.5+1.15"
+    fabricImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 
     implementation project(path: ':common_config')
     forgeImplementation project(path: ':common_config')

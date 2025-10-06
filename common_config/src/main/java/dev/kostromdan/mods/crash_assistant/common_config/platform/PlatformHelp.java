@@ -10,15 +10,14 @@ import java.util.Locale;
 import java.util.Objects;
 
 public enum PlatformHelp {
-    //    FORGE("https://discord.minecraftforge.net", "Minecraft Forge Discord", "#player-support channel"),
+    FORGE("https://discord.minecraftforge.net", "Minecraft Forge Discord", "#player-support channel"),
     NEOFORGE("https://discord.neoforged.net", "NeoForge Discord", "#user_support channel"),
     FABRIC("https://discord.gg/v6v4pMv", "Fabric Discord", "#player-support channel"),
     QUILT("https://discord.quiltmc.org/", "QuiltMC Discord", "#player-support channel"),
 
     UNKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help channel"),
     CLEANROOM("https://discord.gg/sgQxDJdrnY", "Cleanroom Discord", "#lobby channel"),
-    LEGACY_MODDING("https://discord.com/invite/AJxEFs6YBN", "Legacy Modding Discord", "#modding-help forums"),
-    FORGE(LEGACY_MODDING);
+    LEGACY_MODDING("https://discord.com/invite/AJxEFs6YBN", "Legacy Modding Discord", "#modding-help forums");
 
     private final String helpLink;
     private final String helpName;

@@ -26,23 +26,22 @@ sourceSets {
 }
 
 repositories {
+    mavenCentral()
     maven {
-        name = "wagyourtail releases"
-        url = "https://maven.wagyourtail.xyz/releases"
+        url = "https://maven.wagyourtail.xyz/snapshots"
     }
     maven {
         name = "sponge"
         url = "https://repo.spongepowered.org/maven"
     }
-    mavenCentral()
 }
 
 unimined.minecraft {
     version project.minecraft_version
 
     mappings {
-        searge()
-        mcp("stable", "39-1.12")
+        intermediary()
+        yarn(project.mapping_version)
     }
 
     defaultRemapJar = false
@@ -51,7 +50,7 @@ unimined.minecraft {
 unimined.minecraft(sourceSets.fabric) {
     combineWith(sourceSets.main)
 
-    legacyFabric {
+    fabric {
         loader project.fabric_version
     }
 
@@ -85,6 +84,8 @@ sourceSets {
 }
 
 dependencies {
+    mainImplementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
+
     implementation project(path: ':common_config')
     forgeImplementation project(path: ':common_config')
 }
@@ -171,10 +172,6 @@ processForgeResources {
     inputs.property "version", project.version
 
     filesMatching("META-INF/mods.toml") {
-        expand "version": project.version
-    }
-
-    filesMatching("mcmod.info") {
         expand "version": project.version
     }
 }

@@ -2,9 +2,8 @@ package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
-import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
+import oshi.SystemInfo;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 
@@ -123,7 +122,7 @@ public class ProcessHelper {
      * @param status the exit status code to use when terminating the process
      */
     public static void exitProcess(int status) {
-        ExitVMBypass.exit(status);
+        System.exit(status);
     }
 
     public static String getJavaVersion() {
@@ -142,37 +141,7 @@ public class ProcessHelper {
 
     public static String getProcessorName() {
         try {
-            try {
-                Class<?> sysInfoCls = Class.forName("oshi.SystemInfo");
-                Object sysInfo = sysInfoCls.getDeclaredConstructor().newInstance();
-
-                Object hardware = sysInfoCls.getMethod("getHardware").invoke(sysInfo);
-
-                Object[] processors = (Object[]) hardware.getClass()
-                        .getMethod("getProcessors")
-                        .invoke(hardware);
-                return String.format("%s", processors[0]).replaceAll("\\s+", " ");
-            } catch (NoSuchMethodError | NoSuchMethodException ex) {
-                // new SystemInfo()
-                Class<?> systemInfoCls = Class.forName("oshi.SystemInfo");
-                Object systemInfo = systemInfoCls.getDeclaredConstructor().newInstance();
-
-                // getHardware()
-                Method mGetHardware = systemInfoCls.getMethod("getHardware");
-                Object hardware = mGetHardware.invoke(systemInfo);
-
-                // getProcessor()
-                Method mGetProcessor = hardware.getClass().getMethod("getProcessor");
-                Object processor = mGetProcessor.invoke(hardware);
-
-                // getProcessorIdentifier()
-                Method mGetIdentifier = processor.getClass().getMethod("getProcessorIdentifier");
-                Object identifier = mGetIdentifier.invoke(processor);
-
-                // getName()
-                Method mGetName = identifier.getClass().getMethod("getName");
-                return (String) mGetName.invoke(identifier);
-            }
+            return String.format("%s", (new SystemInfo()).getHardware().getProcessors()[0]).replaceAll("\\s+", " ");
         } catch (Throwable e) {
             String errorMessage = e.getMessage();
             if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {

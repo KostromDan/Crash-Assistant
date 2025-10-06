@@ -17,6 +17,13 @@ repositories {
     maven {
         url 'https://repo.lwjgl.org/'
     }
+    maven {
+        url = "https://maven.wagyourtail.xyz/snapshots"
+    }
+    maven {
+        name = "sponge"
+        url = "https://repo.spongepowered.org/maven"
+    }
 }
 
 def lwjglVersion = '3.1.0'
@@ -42,6 +49,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'net.java.dev.jna:jna:4.4.0'
     implementation 'net.java.dev.jna:platform:3.4.0'
+    implementation 'oshi-project:oshi-core:1.1'
 
 
     implementation "org.lwjgl:lwjgl:$lwjglVersion"
@@ -81,6 +89,7 @@ shadowJar {
         exclude(dependency('commons-io:commons-io:2.15.1'))
         exclude(dependency('com.electronwill.night-config:.*'))
         exclude(dependency('net.java.dev.jna:.*'))
+        exclude(dependency('oshi-project:.*'))
         exclude(dependency('org.lwjgl:.*'))
         exclude(project(':common_config'))
     }

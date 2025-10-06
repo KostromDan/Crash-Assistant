@@ -1,9 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.core_mod.services;
 
-import cpw.mods.jarhandling.SecureJar;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import net.neoforged.fml.classloading.SecureJar;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.moddiscovery.locators.JarInJarDependencyLocator;
 import net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader;

@@ -1,3 +1,7 @@
+1.10.6.2:
+
+- Moved launch of our process on Neo 1.21.9 earlier.
+
 1.10.6.1:
 
 - Fixed internal api changes in Neo 1.21.9.

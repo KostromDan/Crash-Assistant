@@ -121,9 +121,9 @@ dependencies {
 
 def configureJarNames() {
     def jarConfigurations = [
-            remapForgeJar : "!!!CrashAssistant-forge-${minecraft_version}-${version}.jar",
+            remapForgeJar : "!!!CrashAssistant-forge-${minecraft_version}-1.15.1-${version}.jar",
             remapFabricJar: "CrashAssistant-fabric-${minecraft_version}-${version}.jar",
-            forgeJar      : "!!!CrashAssistant-forge-${minecraft_version}-${version}-dev.jar",
+            forgeJar      : "!!!CrashAssistant-forge-${minecraft_version}-1.15.1-${version}-dev.jar",
             fabricJar     : "CrashAssistant-fabric-${minecraft_version}-${version}-dev.jar"
     ]
 
@@ -170,7 +170,7 @@ processForgeResources {
 
 unifiedPublishing {
     project {
-        gameVersions = [minecraft_version]
+        gameVersions = [minecraft_version, "1.15", "1.15.1"]
         gameLoaders = ["forge"]
 
         displayName = tasks.remapForgeJar.archiveFile.get().asFile.name

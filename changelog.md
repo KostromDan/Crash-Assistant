@@ -1,3 +1,11 @@
+1.10.7:
+
+- Backported to:
+    - forge: 1.9.4, 1.10.2, 1.11.2, 1.13.2, 1.14.4, 1.15, 1.15.1, 1.15.2
+    - fabric: 1.14.4, 1.15.2
+- Fixed `oops` appearing in generated messages.
+- Small fixes.
+
 1.10.6.2:
 
 - Moved launch of our process on Neo 1.21.9 earlier.

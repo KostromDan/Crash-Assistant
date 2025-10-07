@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.common;
 
+import dev.kostromdan.mods.crash_assistant.common.utils.CurrentGPUDetector;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,5 +11,6 @@ public final class CrashAssistant {
     public static String playerNickname;
 
     public static void init() {
+        CurrentGPUDetector.writeCurrentGPU();
     }
 }

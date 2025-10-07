@@ -97,6 +97,61 @@ public class CrashAssistantTransformationService implements ITransformationServi
 
     @Override
     public @NotNull List<ITransformer> transformers() {
-        return new ArrayList<>();
+        List<ITransformer> list = new ArrayList<>();
+        list.add(new InnerCrashAssistantTransformer());
+        return list;
+    }
+
+    private static class InnerCrashAssistantTransformer implements ITransformer<org.objectweb.asm.tree.ClassNode>, org.objectweb.asm.Opcodes {
+        private static final java.util.List<String> TRANSFORM_CLASSES = java.util.Arrays.asList(
+                "net.minecraft.client.Minecraft"
+        );
+        private static final java.util.Map<String, String> SHUTDOWN_METHOD = new java.util.HashMap<>();
+        static {
+            SHUTDOWN_METHOD.put("shutdown", "()V");
+            SHUTDOWN_METHOD.put("func_71400_g", "()V");
+        }
+        @Override
+        public org.objectweb.asm.tree.ClassNode transform(org.objectweb.asm.tree.ClassNode input, cpw.mods.modlauncher.api.ITransformerVotingContext context) {
+            try {
+                String transformedName = input.name.replace('/', '.');
+                if (!TRANSFORM_CLASSES.contains(transformedName)) {
+                    return input;
+                }
+                switch (transformedName) {
+                    case "net.minecraft.client.Minecraft":
+                        transformMinecraft(input);
+                        break;
+                }
+            } catch (Throwable t) { }
+            return input;
+        }
+        private void transformMinecraft(org.objectweb.asm.tree.ClassNode cn) {
+            for (org.objectweb.asm.tree.MethodNode m : cn.methods) {
+                if (SHUTDOWN_METHOD.containsKey(m.name) && m.desc.equals(SHUTDOWN_METHOD.get(m.name))) {
+                    injectBeforeReturn(m, "dev/kostromdan/mods/crash_assistant/core_mod/CrashAssistantHooks", "onMinecraftShutdown", "()V");
+                }
+            }
+        }
+        private static void injectBeforeReturn(org.objectweb.asm.tree.MethodNode method, String owner, String name, String desc) {
+            org.objectweb.asm.tree.InsnList call = new org.objectweb.asm.tree.InsnList();
+            call.add(new org.objectweb.asm.tree.MethodInsnNode(INVOKESTATIC, owner, name, desc, false));
+            for (org.objectweb.asm.tree.AbstractInsnNode insn = method.instructions.getLast(); insn != null; insn = insn.getPrevious()) {
+                if (insn.getOpcode() == RETURN) {
+                    method.instructions.insertBefore(insn, call);
+                    break;
+                }
+            }
+        }
+        @Override
+        public java.util.Set<Target> targets() {
+            java.util.Set<Target> set = new java.util.HashSet<>();
+            set.add(Target.targetClass("net.minecraft.client.Minecraft"));
+            return set;
+        }
+        @Override
+        public cpw.mods.modlauncher.api.TransformerVoteResult castVote(cpw.mods.modlauncher.api.ITransformerVotingContext context) {
+            return cpw.mods.modlauncher.api.TransformerVoteResult.YES;
+        }
     }
 }

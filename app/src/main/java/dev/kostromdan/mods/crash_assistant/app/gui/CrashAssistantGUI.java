@@ -745,9 +745,10 @@ public class CrashAssistantGUI {
 
     public static String getTitleCrashedText(boolean forMsg) {
         Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
+        String oops = forMsg ? "" : "_oops";
         return CrashAssistantApp.crashed_with_report ?
-                langFunc.apply("gui.title_crashed_with_report") :
-                langFunc.apply("gui.title_crashed_without_report");
+                langFunc.apply("gui.title_crashed_with_report" + oops) :
+                langFunc.apply("gui.title_crashed_without_report" + oops);
     }
 
     public static JFrame getFrame() {

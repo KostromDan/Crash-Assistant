@@ -9,7 +9,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarH
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
-@IFMLLoadingPlugin.MCVersion("1.8.9")
+@IFMLLoadingPlugin.MCVersion("1.9.4")
 public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
 
     public CrashAssistantEntrypoint() {

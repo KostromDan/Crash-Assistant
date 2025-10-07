@@ -31,7 +31,7 @@ public class CrashAssistantTransformer implements IClassTransformer, Opcodes {
 
     static {
         SHUTDOWN_METHOD.put("shutdown", "()V");
-        SHUTDOWN_METHOD.put("m", "()V");
+        SHUTDOWN_METHOD.put("n", "()V");
 
         INIT_GUI_METHOD.put("initGui", "()V");
         INIT_GUI_METHOD.put("b", "()V");

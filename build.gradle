@@ -84,7 +84,7 @@ sourceSets {
 
 dependencies {
     mainImplementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
-    fabricImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    fabricModImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 
     implementation project(path: ':common_config')
     forgeImplementation project(path: ':common_config')

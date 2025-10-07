@@ -20,6 +20,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
+import net.minecraft.util.math.BlockPos;
 
 import java.time.Instant;
 import java.util.*;
@@ -54,12 +55,12 @@ public class CrashAssistantCommands extends CommandBase{
     private static Instant lastCrashCommand = Instant.EPOCH;
 
     @Override
-    public String getCommandName() {
+    public String getName() {
         return "crash_assistant";
     }
 
     @Override
-    public String getCommandUsage(ICommandSender sender) {
+    public String getUsage(ICommandSender sender) {
         return "/crash_assistant <modlist|crash> …";
     }
 
@@ -68,7 +69,7 @@ public class CrashAssistantCommands extends CommandBase{
         LanguageProvider.updateLang();
 
         if (args.length == 0) {
-            sendClientMsg(red(getCommandUsage(sender)));
+            sendClientMsg(red(getUsage(sender)));
             return;
         }
 
@@ -83,7 +84,7 @@ public class CrashAssistantCommands extends CommandBase{
                 handleCopyToClipboard(Arrays.copyOfRange(args, 1, args.length));
                 break;
             default:
-                sendClientMsg(red(getCommandUsage(sender)));
+                sendClientMsg(red(getUsage(sender)));
         }
     }
 
@@ -248,7 +249,7 @@ public class CrashAssistantCommands extends CommandBase{
                     String reason = "Minecraft crashed by '/crash_assistant crash'";
                     CrashReport report = CrashReport.makeCrashReport(
                             new Throwable(reason), reason);
-                    if (Minecraft.getMinecraft().theWorld != null) {
+                    if (Minecraft.getMinecraft().world != null) {
                         Minecraft.getMinecraft().addGraphicsAndWorldToCrashReport(report);
                     }
                     Minecraft.getMinecraft().displayCrashReport(report);
@@ -359,7 +360,7 @@ public class CrashAssistantCommands extends CommandBase{
     }
 
     @Override
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, net.minecraft.util.math.BlockPos pos) {
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
         if (args.length == 1)
             return getListOfStringsMatchingLastWord(args, Arrays.asList("modlist", "crash"));
 

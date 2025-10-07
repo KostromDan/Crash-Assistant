@@ -129,9 +129,9 @@ forgeJar {
 def configureJarNames() {
     def jarConfigurations = [
             remapForgeJar : "!!!CrashAssistant-forge-${minecraft_version}-${version}.jar",
-            remapFabricJar: "!!!CrashAssistant-fabric-${minecraft_version}-${version}.jar",
+            remapFabricJar: "CrashAssistant-fabric-${minecraft_version}-${version}.jar",
             forgeJar      : "!!!CrashAssistant-forge-${minecraft_version}-${version}-dev.jar",
-            fabricJar     : "!!!CrashAssistant-fabric-${minecraft_version}-${version}-dev.jar"
+            fabricJar     : "CrashAssistant-fabric-${minecraft_version}-${version}-dev.jar"
     ]
 
     jarConfigurations.each { taskName, fileName ->

@@ -14,8 +14,8 @@ public class CrashAssistantHooks {
 
     public static void afterMinecraftInit() {
         CrashAssistant.playerNickname = Minecraft.getInstance()
-            .getUser()
-            .getName();
+            .getSession()
+            .getUsername();
         ProcessSignalIO.postInfo("username", CrashAssistant.playerNickname);
     }
 

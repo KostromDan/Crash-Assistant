@@ -87,6 +87,7 @@ sourceSets {
 dependencies {
     implementation project(path: ':common_config')
     forgeImplementation project(path: ':common_config')
+    fabricImplementation project(path: ':common_config')
 }
 
 [forgeJar, fabricJar].each { task ->
@@ -119,9 +120,9 @@ dependencies {
 
 def configureJarNames() {
     def jarConfigurations = [
-            remapForgeJar : "!!!CrashAssistant-forge-${minecraft_version}-1.15.1-${version}.jar",
+            remapForgeJar : "!!!CrashAssistant-forge-${minecraft_version}-${version}.jar",
             remapFabricJar: "CrashAssistant-fabric-${minecraft_version}-${version}.jar",
-            forgeJar      : "!!!CrashAssistant-forge-${minecraft_version}-1.15.1-${version}-dev.jar",
+            forgeJar      : "!!!CrashAssistant-forge-${minecraft_version}-${version}-dev.jar",
             fabricJar     : "CrashAssistant-fabric-${minecraft_version}-${version}-dev.jar"
     ]
 

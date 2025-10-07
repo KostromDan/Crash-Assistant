@@ -5,13 +5,13 @@ import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
 import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommands;
 import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistantHooks;
-import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.GuiOpenEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 
@@ -62,7 +62,7 @@ public final class CrashAssistantForge {
         public static void onGuiOpen(GuiOpenEvent event) {
             Object gui = event.getGui();
             if (gui != null) {
-                if (gui instanceof TitleScreen) {
+                if (gui instanceof GuiMainMenu) {
                     mainMenuOpened = true;
                     ticksAfterMainMenu = 0;
                 }

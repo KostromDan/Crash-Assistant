@@ -9,7 +9,6 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
-import dev.kostromdan.mods.crash_assistant.common.utils.ManualCrashThrower;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
@@ -17,6 +16,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiffStr
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.HeapDumper;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ThreadDumper;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
@@ -56,16 +57,16 @@ public class CrashAssistantCommands {
     private static String latestNickname = "";
 
     public static <S> LiteralArgumentBuilder<S> getCommands() {
-        return (LiteralArgumentBuilder<S>)((LiteralArgumentBuilder)LiteralArgumentBuilder.literal("crash_assistant")
+        return (LiteralArgumentBuilder<S>) ((LiteralArgumentBuilder) LiteralArgumentBuilder.literal("crash_assistant")
                 .then(
-                        ((LiteralArgumentBuilder)LiteralArgumentBuilder.literal("modlist")
+                        ((LiteralArgumentBuilder) LiteralArgumentBuilder.literal("modlist")
                                 .then(LiteralArgumentBuilder.literal("save").executes(CrashAssistantCommands::saveModlist)))
                                 .then(LiteralArgumentBuilder.literal("diff").executes(CrashAssistantCommands::showDiff))
                 ))
                 .then(
-                        ((LiteralArgumentBuilder)LiteralArgumentBuilder.literal("crash").requires(c -> CrashAssistantConfig.getBoolean("crash_command.enabled")))
+                        ((LiteralArgumentBuilder) LiteralArgumentBuilder.literal("crash").requires(c -> CrashAssistantConfig.getBoolean("crash_command.enabled")))
                                 .then(
-                                        ((RequiredArgumentBuilder)RequiredArgumentBuilder.argument("to_crash", StringArgumentType.string())
+                                        ((RequiredArgumentBuilder) RequiredArgumentBuilder.argument("to_crash", StringArgumentType.string())
                                                 .suggests(new CrashAssistantCommands.CrashCommandsSuggestionProvider())
                                                 .executes(CrashAssistantCommands::crash))
                                                 .then(getCrashArg(1).then(getCrashArg(2).then(getCrashArg(3))))
@@ -180,7 +181,6 @@ public class CrashAssistantCommands {
     }
 
     private static int deadlockIntegratedServer(CommandContext<?> context) {
-        // Not implemented for 1.13.2; avoid direct server executor API differences
         isDeadLocked = true;
         return 0;
     }
@@ -196,7 +196,7 @@ public class CrashAssistantCommands {
         String toCrash = "null";
 
         try {
-            toCrash = (String)context.getArgument("to_crash", String.class);
+            toCrash = (String) context.getArgument("to_crash", String.class);
         } catch (IllegalArgumentException var7) {
             TextComponentString errorMsg = new TextComponentString(
                     LanguageProvider.get("commands.crash_command_validation_failed_to_crash") + " '" + toCrash + "'"
@@ -218,7 +218,7 @@ public class CrashAssistantCommands {
                 toCrash = supportedCrashCommands.get(toCrash);
                 int secondsToCrash = CrashAssistantConfig.<Integer>get("crash_command.seconds");
                 boolean noCrash = Objects.equals(toCrash, "noCrash");
-                if (secondsToCrash > 0 && !Instant.now().isBefore(lastCrashCommand.plusSeconds((long)secondsToCrash)) && !noCrash) {
+                if (secondsToCrash > 0 && !Instant.now().isBefore(lastCrashCommand.plusSeconds((long) secondsToCrash)) && !noCrash) {
                     lastCrashCommand = Instant.now();
                     msg.appendSibling(new TextComponentString(LanguageProvider.get("commands.crash_command_1")));
                     TextComponentString toCrashComponent = new TextComponentString(toCrash);
@@ -236,59 +236,71 @@ public class CrashAssistantCommands {
                     final String toCrashFinal = toCrash;
                     final boolean noCrashFinal = noCrash;
                     List<String> args = parseCrashArgs(context);
+
                     new Thread(() -> {
-                        if (validateCrashArgs(args)) {
-                            if (!args.isEmpty()) {
-                                TextComponentString applyingArgsMsg = new TextComponentString(LanguageProvider.get("commands.crash_command_applying_args"));
-                                applyingArgsMsg.setStyle(new Style().setColor(TextFormatting.YELLOW));
-                                sendClientMsg(applyingArgsMsg);
+                        if (!validateCrashArgs(args)) {
+                            return;
+                        }
 
-                                try {
-                                    Thread.sleep(100L);
-                                } catch (InterruptedException var6x) {
-                                    throw new RuntimeException(var6x);
-                                }
+                        if (!args.isEmpty()) {
+                            TextComponentString applyingArgsMsg = new TextComponentString(LanguageProvider.get("commands.crash_command_applying_args"));
+                            applyingArgsMsg.setStyle(new Style().setColor(TextFormatting.YELLOW));
+                            sendClientMsg(applyingArgsMsg);
+
+                            try {
+                                Thread.sleep(100L);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+
+                        if (args.contains("--withThreadDump")) {
+                            CrashAssistant.LOGGER.error("Detected '--withThreadDump' crash command argument. ThreadDump:\n" + ThreadDumper.obtainThreadDump());
+                        }
+
+                        if (args.contains("--withHeapDump")) {
+                            if (args.contains("--GCBeforeHeapDump")) {
+                                CrashAssistant.LOGGER.error("Detected '--GCBeforeHeapDump' crash command argument. Performing garbage collection before heap dump.");
+                                System.gc();
                             }
 
-                            if (args.contains("--withThreadDump")) {
-                                CrashAssistant.LOGGER.error("Detected '--withThreadDump' crash command argument. ThreadDump:\n" + ThreadDumper.obtainThreadDump());
+                            CrashAssistant.LOGGER.error("Detected '--withHeapDump' crash command argument. Creating heap dump.");
+
+                            try {
+                                CrashAssistant.LOGGER.error("Created heap dump at: " + HeapDumper.createHeapDump());
+                            } catch (Exception var5x) {
+                                CrashAssistant.LOGGER.error("Failed to create heap dump.", var5x);
                             }
+                        }
 
-                            if (args.contains("--withHeapDump")) {
-                                if (args.contains("--GCBeforeHeapDump")) {
-                                    CrashAssistant.LOGGER.error("Detected '--GCBeforeHeapDump' crash command argument. Performing garbage collection before heap dump.");
-                                    System.gc();
+                        if (!noCrashFinal) {
+                            TextComponentString crashingMsg = new TextComponentString(LanguageProvider.get("commands.crash_command_crashing"));
+                            crashingMsg.setStyle(new Style().setColor(TextFormatting.RED));
+                            sendClientMsg(crashingMsg);
+                        } else {
+                            sendClientMsg(new TextComponentString(LanguageProvider.get("commands.crash_command_done")));
+                        }
+
+                        if (Objects.equals(toCrashFinal, "Minecraft")) {
+                            Minecraft.getInstance().addScheduledTask(() -> {
+                                String reason = "Minecraft crashed by '/crash_assistant crash' command.";
+                                net.minecraft.crash.CrashReport report = net.minecraft.crash.CrashReport.makeCrashReport(
+                                        new Throwable(reason), reason);
+                                if (Minecraft.getInstance().world != null) {
+                                    Minecraft.getInstance().addGraphicsAndWorldToCrashReport(report);
                                 }
-
-                                CrashAssistant.LOGGER.error("Detected '--withHeapDump' crash command argument. Creating heap dump.");
-
-                                try {
-                                    CrashAssistant.LOGGER.error("Created heap dump at: " + HeapDumper.createHeapDump());
-                                } catch (Exception var5x) {
-                                    CrashAssistant.LOGGER.error("Failed to create heap dump.", var5x);
-                                }
-                            }
-
-                            if (!noCrashFinal) {
-                                TextComponentString crashingMsg = new TextComponentString(LanguageProvider.get("commands.crash_command_crashing"));
-                                crashingMsg.setStyle(new Style().setColor(TextFormatting.RED));
-                                sendClientMsg(crashingMsg);
-                            } else {
-                                sendClientMsg(new TextComponentString(LanguageProvider.get("commands.crash_command_done")));
-                            }
-
-                            if (Objects.equals(toCrashFinal, "Minecraft")) {
-                                Minecraft.getInstance().addScheduledTask(() -> ManualCrashThrower.crashGame("Minecraft crashed by '/crash_assistant crash' command."));
-                            } else if (Objects.equals(toCrashFinal, "JVM")) {
-                                CrashAssistant.LOGGER.error("JVM crashed by '/crash_assistant crash jvm' command.");
-                                try {
-                                    UNSAFE.setMemory(0L, 1L, (byte) 0);
-                                } catch (Throwable t) {
-                                    CrashAssistant.LOGGER.error("Failed to crash JVM via Unsafe", t);
-                                }
+                                Minecraft.getInstance().displayCrashReport(report);
+                            });
+                        } else if (Objects.equals(toCrashFinal, "JVM")) {
+                            CrashAssistant.LOGGER.error("JVM crashed by '/crash_assistant crash jvm' command.");
+                            try {
+                                UNSAFE.setMemory(0L, 1L, (byte) 0);
+                            } catch (Throwable t) {
+                                CrashAssistant.LOGGER.error("Failed to crash JVM via Unsafe", t);
                             }
                         }
                     }).start();
+
                     return 0;
                 }
             }
@@ -337,7 +349,7 @@ public class CrashAssistantCommands {
 
         for (int i = 1; i <= supportedCrashArgs.size(); i++) {
             try {
-                args.add((String)context.getArgument("arg" + i, String.class));
+                args.add((String) context.getArgument("arg" + i, String.class));
             } catch (IllegalArgumentException var4) {
                 break;
             }

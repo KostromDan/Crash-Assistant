@@ -35,22 +35,15 @@ public class CrashAssistantTransformationService implements ITransformationServi
     private static String earlyMinecraftVersion = "unknown";
 
     public CrashAssistantTransformationService() {
-        // This is the earliest point of execution we have.
-        // We will add our own JAR to the classpath so the ServiceLoader can find our locator.
         try {
-            LOGGER.info("Attempting to inject self into classpath for service loading...");
             URL selfUrl = CrashAssistantTransformationService.class.getProtectionDomain().getCodeSource().getLocation();
-            LOGGER.info("Found self URL: {}", selfUrl);
 
-            // We target the classloader that loaded ModLauncher itself.
             ClassLoader classLoader = Launcher.class.getClassLoader();
-            LOGGER.info("Targeting ClassLoader: {}", classLoader.getClass().getName());
 
             if (classLoader instanceof URLClassLoader) {
                 Method addUrlMethod = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
                 addUrlMethod.setAccessible(true);
                 addUrlMethod.invoke(classLoader, selfUrl);
-                LOGGER.info("Successfully injected self into URLClassLoader.");
             } else {
                 LOGGER.warn("ClassLoader is not a URLClassLoader. Cannot inject self. This might be okay if it's already on the classpath.");
             }
@@ -117,7 +110,6 @@ public class CrashAssistantTransformationService implements ITransformationServi
         @Override
         public @NotNull ClassNode transform(ClassNode input, cpw.mods.modlauncher.api.ITransformerVotingContext context) {
             if (input.name.replace('/', '.').equals(MINECRAFT_CLASS)) {
-                LOGGER.debug("Transforming class: {}", MINECRAFT_CLASS);
                 transformMinecraft(input);
             }
             return input;
@@ -130,7 +122,6 @@ public class CrashAssistantTransformationService implements ITransformationServi
 
             for (MethodNode m : cn.methods) {
                 if (SHUTDOWN_METHOD.containsKey(m.name) && m.desc.equals(SHUTDOWN_METHOD.get(m.name))) {
-                    LOGGER.info("Found shutdown method: {}{}", m.name, m.desc);
                     injectBeforeReturn(m, "dev/kostromdan/mods/crash_assistant/common/CrashAssistantHooks", "onMinecraftShutdown", "()V");
                 }
             }
@@ -142,7 +133,6 @@ public class CrashAssistantTransformationService implements ITransformationServi
             for (org.objectweb.asm.tree.AbstractInsnNode insn = method.instructions.getLast(); insn != null; insn = insn.getPrevious()) {
                 if (insn.getOpcode() == RETURN) {
                     method.instructions.insertBefore(insn, call);
-                    LOGGER.info("Injected call to {}.{}{}", owner, name, desc);
                     break;
                 }
             }

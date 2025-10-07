@@ -42,7 +42,7 @@ unimined.minecraft {
 
     mappings {
         searge()
-        mcp("stable", "29-1.10.2")
+        mcp("stable", "32-1.11")
     }
 
     defaultRemapJar = false

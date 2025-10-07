@@ -26,22 +26,23 @@ sourceSets {
 }
 
 repositories {
-    mavenCentral()
     maven {
-        url = "https://maven.wagyourtail.xyz/snapshots"
+        name = "wagyourtail releases"
+        url = "https://maven.wagyourtail.xyz/releases"
     }
     maven {
         name = "sponge"
         url = "https://repo.spongepowered.org/maven"
     }
+    mavenCentral()
 }
 
 unimined.minecraft {
     version project.minecraft_version
 
     mappings {
-        intermediary()
-        mojmap()
+        searge()
+        mcp("stable", "47-1.13.2")
     }
 
     defaultRemapJar = false
@@ -50,7 +51,7 @@ unimined.minecraft {
 unimined.minecraft(sourceSets.fabric) {
     combineWith(sourceSets.main)
 
-    fabric {
+    legacyFabric {
         loader project.fabric_version
     }
 
@@ -62,6 +63,7 @@ unimined.minecraft(sourceSets.forge) {
 
     minecraftForge {
         loader project.forge_version
+//        mixinConfig "modid.mixins.json"
     }
 
     defaultRemapJar = true
@@ -83,12 +85,8 @@ sourceSets {
 }
 
 dependencies {
-    mainImplementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
-    fabricModImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
-
     implementation project(path: ':common_config')
     forgeImplementation project(path: ':common_config')
-    fabricImplementation project(path: ':common_config')
 }
 
 [forgeJar, fabricJar].each { task ->
@@ -170,7 +168,7 @@ processForgeResources {
 
 unifiedPublishing {
     project {
-        gameVersions = [minecraft_version, "1.15", "1.15.1"]
+        gameVersions = [minecraft_version]
         gameLoaders = ["forge"]
 
         displayName = tasks.remapForgeJar.archiveFile.get().asFile.name

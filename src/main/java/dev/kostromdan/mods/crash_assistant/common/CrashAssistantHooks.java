@@ -1,6 +1,6 @@
-package dev.kostromdan.mods.crash_assistant.core_mod;
+package dev.kostromdan.mods.crash_assistant.common;
 
-import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
+import dev.kostromdan.mods.crash_assistant.common.utils.CurrentGPUDetector;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
@@ -27,6 +27,7 @@ public class CrashAssistantHooks {
     public static void onClientLoaded() {
         if (CrashAssistant.clientLoaded) return;
         CrashAssistant.clientLoaded = true;
+        CurrentGPUDetector.writeCurrentGPU();
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             if (CrashAssistantConfig.getModpackCreators()

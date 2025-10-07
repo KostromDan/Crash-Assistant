@@ -4,7 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
 import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommands;
 import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
-import dev.kostromdan.mods.crash_assistant.core_mod.CrashAssistantHooks;
+import dev.kostromdan.mods.crash_assistant.common.CrashAssistantHooks;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.GuiOpenEvent;
@@ -18,6 +18,7 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 @Mod(CrashAssistant.MOD_ID)
 public final class CrashAssistantForge {
     public CrashAssistantForge() {
+        CrashAssistant.init();
     }
 
     @Mod.EventBusSubscriber(modid = CrashAssistant.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -50,7 +51,6 @@ public final class CrashAssistantForge {
             if (event.phase == TickEvent.Phase.END && mainMenuOpened) {
                 ticksAfterMainMenu++;
                 if (ticksAfterMainMenu >= TICKS_TO_WAIT) {
-                    CrashAssistant.init();
                     CrashAssistantHooks.onClientLoaded();
                     mainMenuOpened = false;
                     ticksAfterMainMenu = 0;

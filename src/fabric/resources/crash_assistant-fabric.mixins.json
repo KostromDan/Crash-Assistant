@@ -1,4 +1,4 @@
-{
+﻿{
   "required": true,
   "package": "dev.kostromdan.mods.crash_assistant.fabric.entrypoint",
   "compatibilityLevel": "JAVA_8",

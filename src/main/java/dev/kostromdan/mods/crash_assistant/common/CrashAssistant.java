@@ -11,6 +11,5 @@ public final class CrashAssistant {
     public static String playerNickname;
 
     public static void init() {
-        CurrentGPUDetector.writeCurrentGPU();
     }
 }

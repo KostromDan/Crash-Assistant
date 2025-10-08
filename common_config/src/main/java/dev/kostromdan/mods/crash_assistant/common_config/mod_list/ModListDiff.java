@@ -52,7 +52,7 @@ public class ModListDiff {
             UpdatedPair pair = entry.getValue();
 
             if (pair.getOldMods().isEmpty() || pair.getNewMods().isEmpty() ||
-                    pair.getOldMods().equals(pair.getNewMods())) {
+                    pair.oldModsEqualsNewMods()) {
                 iterator.remove();
             }
         }

@@ -64,10 +64,9 @@ public class MixinApply extends KnownCrashReason {
                     message += LanguageProvider.get("warnings.mixin_apply_java_version");
                     message = message.replace("$REQUIRED_JAVA_VERSION$", "<strong style='color: red;'>" + result.getRequiredJavaVersion() + "</strong>");
                     message = message.replace("$CURRENT_JAVA_VERSION$", "<strong style='color: red;'>JAVA_" + getMajorJavaVersion() + "</strong>");
-                } else if (result.isMissingOrCorruptedMixinConfig()){
+                } else if (result.isMissingOrCorruptedMixinConfig()) {
                     message += LanguageProvider.get("warnings.mixin_config_missing_or_corrupted");
-                }
-                else {
+                } else {
                     if (result.getConflictingJarName() != null) {
                         conflictingJarName = result.getConflictingJarName();
                         message += LanguageProvider.get("warnings.mixin_apply_conflicting_with_jar");
@@ -99,7 +98,7 @@ public class MixinApply extends KnownCrashReason {
     }
 
     private static MixinParsingResult parseLatestMixinError(Log log, HashMap<String, String> configToJarMap) {
-        List<String> lines = log.getType() == LogType.CRASH_REPORT ? log.getReader().getAllLinesList() : log.getReader().getLastNLines(300);
+        List<String> lines = log.getType() == LogType.CRASH_REPORT ? log.getReader().getAllLinesList() : log.getReader().getLastNLines(1000);
         for (int i = lines.size() - 1; i >= 0; i--) {
             String line = lines.get(i);
             if (line.contains("org.spongepowered.asm.")) {
@@ -132,7 +131,9 @@ public class MixinApply extends KnownCrashReason {
                 }
 
 
-                if (!line.contains("Caused by: org.spongepowered.asm.mixin.")) continue;
+                if (!line.contains("org.spongepowered.asm.mixin.")) continue;
+                if (!line.contains("Caused by: org.spongepowered.asm.mixin.") &&
+                        !line.contains("Exception message: org.spongepowered.asm.mixin.")) continue;
 
                 HashSet<String> configs = extractFromLineMixinConfigs(line, configToJarMap);
                 if (configs.size() != 1) {

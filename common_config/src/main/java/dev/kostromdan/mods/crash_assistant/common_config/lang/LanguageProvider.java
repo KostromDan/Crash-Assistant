@@ -73,7 +73,7 @@ public class LanguageProvider {
             List<String> lines = Files.readAllLines(OPTIONS_PATH);
             for (String line : lines) {
                 if (line.startsWith("lang:")) {
-                    return line.split(":", 2)[1].trim();
+                    return line.split(":", 2)[1].trim().toLowerCase();
                 }
             }
         } catch (IOException e) {

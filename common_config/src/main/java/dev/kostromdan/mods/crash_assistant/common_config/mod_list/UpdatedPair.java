@@ -1,6 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 
 public class UpdatedPair {
     private final LinkedHashSet<Mod> oldMods;
@@ -19,11 +22,48 @@ public class UpdatedPair {
         return newMods;
     }
 
-    public String getModId(){
+    public boolean oldModsEqualsNewMods() {
+        if (oldMods.equals(newMods)) {
+            return true;
+        }
+        if (oldMods.size() == newMods.size() && oldMods.size() == 1) {
+            return oldMods.iterator().next().getJarName().equalsIgnoreCase(newMods.iterator().next().getJarName());
+        }
+        return false;
+    }
+
+    public String getModId() {
         return oldMods.iterator().next().getModId();
     }
 
-    public boolean isAnyModMessedUpWithVersion(){
+    public boolean isAnyModMessedUpWithVersion() {
+        block:
+        {
+            HashMap<String, HashSet<String>> versionToJarNames = new HashMap<>();
+
+            for (Mod mod : oldMods) {
+                String version = mod.getVersion();
+                if (version == null || version.isEmpty()) {
+                    break block;
+                }
+                versionToJarNames.computeIfAbsent(version, k -> new HashSet<>()).add(mod.getJarName());
+            }
+
+            for (Mod mod : newMods) {
+                String version = mod.getVersion();
+                if (version == null || version.isEmpty()) {
+                    break block;
+                }
+                versionToJarNames.computeIfAbsent(version, k -> new HashSet<>()).add(mod.getJarName());
+            }
+
+            for (Map.Entry<String, HashSet<String>> entry : versionToJarNames.entrySet()) {
+                HashSet<String> jarNames = entry.getValue();
+                if (jarNames.size() >= 2) {
+                    return true;
+                }
+            }
+        }
         return oldMods.stream().anyMatch(Mod::isModMessedUpWithVersion) || newMods.stream().anyMatch(Mod::isModMessedUpWithVersion);
     }
 }

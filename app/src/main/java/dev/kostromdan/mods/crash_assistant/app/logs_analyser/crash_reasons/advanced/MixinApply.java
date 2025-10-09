@@ -30,8 +30,6 @@ public class MixinApply extends KnownCrashReason {
     }
 
     private static final Pattern JSON_CONFIG_PATTERN = Pattern.compile("\\b(?![\\w.\\-]*refmap)[\\w.\\-]+\\.json\\b");
-    private String autoFixButtonText = null;
-    private Consumer<JDialog> autoFixButtonAction = null;
 
 
     @Override
@@ -66,10 +64,9 @@ public class MixinApply extends KnownCrashReason {
                     message = message.replace("$MISSING_CLASS$", "<strong style='color: red;'>" + result.getMissingClass() + "</strong>");
                     message = startWarn + message;
 
-                    autoFixButtonText = LanguageProvider.get("warnings.mixin_apply_missing_class_auto_fix");
-                    autoFixButtonAction = (dialog) -> {
+                    autoFixButtons.put(LanguageProvider.get("warnings.mixin_apply_missing_class_auto_fix"), (dialog) -> {
                         new JdepsDependenciesAnalysisGUI((JFrame) dialog.getOwner(), result.getMissingClass()).start();
-                    };
+                    });
 
                     return true;
                 }
@@ -181,15 +178,6 @@ public class MixinApply extends KnownCrashReason {
         return null;
     }
 
-    @Override
-    public String getAutoFixButtonText() {
-        return autoFixButtonText;
-    }
-
-    @Override
-    public Consumer<JDialog> getAutoFixButtonAction() {
-        return autoFixButtonAction;
-    }
 
     private static String findConflictingMixin(String mixinConfig, Log log, HashMap<String, String> configToJarMap) {
         List<String> lines = log.getReader().getLastNLines(1000);

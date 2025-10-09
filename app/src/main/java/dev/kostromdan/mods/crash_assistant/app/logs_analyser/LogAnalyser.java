@@ -105,14 +105,18 @@ public class LogAnalyser {
 
         for (KnownCrashReason reason : registeredReasonsForThisLog) {
             pool.submit(() -> {
-                if (reason.matches(log)
+                try {
+                    if (reason.matches(log)
 //                        || true //dubug too see all available warnings
-                ) {
-                    synchronized (pool) {
-                        KnownCrashReasonMessage.addCrashReasonMessage(
-                                new KnownCrashReasonMessage(log, reason)
-                        );
+                    ) {
+                        synchronized (pool) {
+                            KnownCrashReasonMessage.addCrashReasonMessage(
+                                    new KnownCrashReasonMessage(log, reason)
+                            );
+                        }
                     }
+                } catch (Exception e) {
+                    CrashAssistantApp.LOGGER.error("Error while analysing " + log.getFileName() + " with " + reason.getClass().getSimpleName(), e);
                 }
             });
         }

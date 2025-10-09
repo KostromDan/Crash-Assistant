@@ -24,6 +24,7 @@ public class EpicFightAddons extends KnownCrashReason {
                 LanguageProvider.get("warnings.epic_fight_addons"),
                 "(?i)java\\.lang\\.(ClassNotFoundException|NoClassDefFoundError): yesman[./]epicfight"
         );
+        autoFixButtons.put(LanguageProvider.get("gui.analysis.find_incompatible_epic_fight_addons"), (dialog) -> EpicFightDependenciesAnalysisGUI.showEpicFightAnalysisDialog((JFrame) dialog.getOwner()));
     }
 
     @Override
@@ -35,13 +36,5 @@ public class EpicFightAddons extends KnownCrashReason {
         return super.matches(log);
     }
 
-    @Override
-    public String getAutoFixButtonText() {
-        return LanguageProvider.get("gui.analysis.find_incompatible_epic_fight_addons");
-    }
 
-    @Override
-    public Consumer<JDialog> getAutoFixButtonAction() {
-        return (dialog) -> EpicFightDependenciesAnalysisGUI.showEpicFightAnalysisDialog((JFrame) dialog.getOwner());
-    }
 }

@@ -27,8 +27,8 @@ public class ModuleFind extends KnownCrashReason {
             String line = lastLines.get(i);
             if (line.contains("java.lang.module.FindException: Module ") && line.contains(" not found, required by ")) {
                 String errorLine = line.split("java.lang.module.FindException: ")[1].trim();
-                String requiredByModuleName = errorLine.split(" not found, required by ")[1];
-                List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(requiredByModuleName), ModListUtils.getCurrentModList(true));
+                String notFoundModule = line.split("java.lang.module.FindException: Module ")[1].split(" not found, required by ")[0].trim();
+                List<String> jarsContainingModule = ModuleFinder.findJarsInFolderAsync(Collections.singletonList(notFoundModule), ModListUtils.getCurrentModList(true));
 
                 message = message.replace("$LINE_FROM_LOG$", errorLine);
                 message = message.replace("$JARS$", "<strong style='color: red;'>" + String.join("\n", jarsContainingModule) + "</strong>");

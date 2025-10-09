@@ -48,6 +48,8 @@
   "gui.analysis.detected_mods_files_remover_button": "Disable / Remove / Show In Folder Detected Mods",
   "gui.analysis.epicfight.header": "Wait for analysis to finish.\nTry removing/updating/downgrading all <font color='red'>problematic mods</font> detected below to match the current <font color='#0000FF'>Epic Fight mod</font> version.",
   "gui.analysis.epicfight.title": "Epic Fight Dependencies Analysis",
+  "gui.analysis.find_incompatible_create_addons": "Find incompatible mods with the current Create mod",
+  "gui.analysis.find_incompatible_epic_fight_addons": "Find incompatible mods with the current Epic Fight mod",
   "gui.analysis.jdeps.found": "Found references to '$TERM$' in the following mod(s):\n\n",
   "gui.analysis.jdeps.header": "Scans mods to find which ones depend on a specific class or package.\nThis is especially helpful if you see NoClassDefFoundError or ClassNotFoundException in your logs\nand don’t know which mod requires that missing class.",
   "gui.analysis.jdeps.include_nested": "Include nested jars (jar-in-jar) in analysis (disabling can speed up analysis, but won't detect some rare cases)",

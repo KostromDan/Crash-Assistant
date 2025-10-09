@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
@@ -11,10 +12,12 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 
@@ -70,5 +73,15 @@ public class Create6Addons extends KnownCrashReason {
         }
         return super.matches(log);
 
+    }
+
+    @Override
+    public String getAutoFixButtonText() {
+        return LanguageProvider.get("gui.analysis.find_incompatible_create_addons");
+    }
+
+    @Override
+    public Consumer<JDialog> getAutoFixButtonAction() {
+        return (dialog) -> CreateDependenciesAnalysisGUI.showCreateAnalysisDialog((JFrame) dialog.getOwner());
     }
 }

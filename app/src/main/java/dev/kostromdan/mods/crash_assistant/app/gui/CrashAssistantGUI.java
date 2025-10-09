@@ -34,6 +34,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -330,35 +331,76 @@ public class CrashAssistantGUI {
         synchronized (KnownCrashReasonMessage.class) {
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    for (KnownCrashReasonMessage crashReason : KnownCrashReasonMessage.getAllMessages()) {
-                        if (crashReason.isShownWarn()) continue;
-                        if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason.getReason())) continue;
-                        HashSet<String> conflictingReasons = crashReason.getReason().getConflictingReasons();
+                    for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessages()) {
+                        if (crashReasonMessage.isShownWarn()) continue;
+                        KnownCrashReason crashReason = crashReasonMessage.getReason();
+                        if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason)) continue;
+                        HashSet<String> conflictingReasons = crashReason.getConflictingReasons();
                         if (!conflictingReasons.isEmpty() &&
                                 KnownCrashReason.shownKnownCrashReasons.stream()
                                         .anyMatch(x -> conflictingReasons
                                                 .contains(x.getClass().getSimpleName()))) {
                             CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}",
-                                    crashReason.getReason().getClass().getSimpleName());
+                                    crashReason.getClass().getSimpleName());
                             continue;
                         }
 
-                        KnownCrashReason.shownKnownCrashReasons.add(crashReason.getReason());
+                        KnownCrashReason.shownKnownCrashReasons.add(crashReason);
                         CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
-                                crashReason.getReason().getClass().getSimpleName(),
-                                crashReason.isCodexMessage() ? crashReason.getMessage() : crashReason.getMessage().split("\n")[0] + "...");
-                        crashReason.setShownWarn(true);
-                        JOptionPane optionPane = new JOptionPane(
-                                CrashAssistantGUI.getEditorPane(crashReason.getMessage(), crashReason.isCodexMessage()),
-                                JOptionPane.WARNING_MESSAGE,
-                                JOptionPane.DEFAULT_OPTION
-                        );
-                        JDialog dialog = optionPane.createDialog(
-                                frame,
-                                crashReason.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyser") : LanguageProvider.get("gui.logs_analyser")
-                        );
+                                crashReason.getClass().getSimpleName(),
+                                crashReasonMessage.isCodexMessage() ? crashReasonMessage.getMessage() : crashReasonMessage.getMessage().split("\n")[0] + "...");
+                        crashReasonMessage.setShownWarn(true);
+
+                        JEditorPane messagePane = CrashAssistantGUI.getEditorPane(crashReasonMessage.getMessage(), crashReasonMessage.isCodexMessage());
+
+                        String autoFixButtonText = crashReason.getAutoFixButtonText();
+                        Consumer<JDialog> autoFixButtonAction = crashReason.getAutoFixButtonAction();
+
+                        JDialog dialog;
+                        if (autoFixButtonText != null && autoFixButtonAction != null) {
+                            JButton autoFixButton = new JButton(autoFixButtonText);
+                            autoFixButton.setFont(autoFixButton.getFont().deriveFont(Font.BOLD,
+                                    CrashAssistantConfig.getInteger("gui_customisation.auto_fix_button_font_size")));
+                            autoFixButton.setForeground(
+                                    ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.auto_fix_button_foreground_color"),
+                                            autoFixButton.getForeground()));
+
+                            JPanel autoFixPanel = new JPanel(new GridBagLayout());
+                            GridBagConstraints gbc = new GridBagConstraints();
+                            gbc.fill = GridBagConstraints.HORIZONTAL;
+                            gbc.weightx = 1.0;
+                            gbc.gridy = 0;
+                            autoFixPanel.add(autoFixButton, gbc);
+
+                            JPanel mainPanel = new JPanel(new BorderLayout(10, 5));
+                            mainPanel.add(messagePane, BorderLayout.CENTER);
+                            mainPanel.add(autoFixPanel, BorderLayout.SOUTH);
+
+                            JOptionPane optionPane = new JOptionPane(
+                                    mainPanel,
+                                    JOptionPane.WARNING_MESSAGE,
+                                    JOptionPane.DEFAULT_OPTION
+                            );
+
+                            dialog = optionPane.createDialog(
+                                    frame,
+                                    crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyser") : LanguageProvider.get("gui.logs_analyser")
+                            );
+                            autoFixButton.addActionListener(e -> autoFixButtonAction.accept(dialog));
+                        } else {
+                            JOptionPane optionPane = new JOptionPane(
+                                    messagePane,
+                                    JOptionPane.WARNING_MESSAGE,
+                                    JOptionPane.DEFAULT_OPTION
+                            );
+                            dialog = optionPane.createDialog(
+                                    frame,
+                                    crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyser") : LanguageProvider.get("gui.logs_analyser")
+                            );
+                        }
+                        long showStartTime = System.currentTimeMillis();
                         dialog.setVisible(true);
-                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {}", crashReason.getReason().getClass().getSimpleName());
+                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {} (Seen warning for {}s)", crashReason.getClass().getSimpleName(), (System.currentTimeMillis() - showStartTime)/1000.0);
                     }
                 });
             } catch (Exception e) {

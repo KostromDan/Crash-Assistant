@@ -1,14 +1,17 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.EpicFightDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 
 public class EpicFightAddons extends KnownCrashReason {
@@ -30,5 +33,15 @@ public class EpicFightAddons extends KnownCrashReason {
             return false;
         }
         return super.matches(log);
+    }
+
+    @Override
+    public String getAutoFixButtonText() {
+        return LanguageProvider.get("gui.analysis.find_incompatible_epic_fight_addons");
+    }
+
+    @Override
+    public Consumer<JDialog> getAutoFixButtonAction() {
+        return (dialog) -> EpicFightDependenciesAnalysisGUI.showEpicFightAnalysisDialog((JFrame) dialog.getOwner());
     }
 }

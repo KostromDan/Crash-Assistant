@@ -37,6 +37,7 @@ public class Create6Addons extends KnownCrashReason {
                 "(?i)java\\.lang\\.(ClassNotFoundException|NoClassDefFoundError): net[./]createmod",
                 ".*Caused by: org\\.spongepowered\\.asm\\.mixin\\.throwables\\.ClassMetadataNotFoundException: net\\.createmod\\.catnip\\.data\\.Couple.*"
         );
+        autoFixButtons.put(LanguageProvider.get("gui.analysis.find_incompatible_create_addons"), (dialog) -> CreateDependenciesAnalysisGUI.showCreateAnalysisDialog((JFrame) dialog.getOwner()));
     }
 
     @Override
@@ -75,13 +76,5 @@ public class Create6Addons extends KnownCrashReason {
 
     }
 
-    @Override
-    public String getAutoFixButtonText() {
-        return LanguageProvider.get("gui.analysis.find_incompatible_create_addons");
-    }
 
-    @Override
-    public Consumer<JDialog> getAutoFixButtonAction() {
-        return (dialog) -> CreateDependenciesAnalysisGUI.showCreateAnalysisDialog((JFrame) dialog.getOwner());
-    }
 }

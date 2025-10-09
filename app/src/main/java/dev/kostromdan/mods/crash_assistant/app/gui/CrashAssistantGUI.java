@@ -25,6 +25,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -353,24 +354,32 @@ public class CrashAssistantGUI {
 
                         JEditorPane messagePane = CrashAssistantGUI.getEditorPane(crashReasonMessage.getMessage(), crashReasonMessage.isCodexMessage());
 
-                        String autoFixButtonText = crashReason.getAutoFixButtonText();
-                        Consumer<JDialog> autoFixButtonAction = crashReason.getAutoFixButtonAction();
+                        LinkedHashMap<String, Consumer<JDialog>> autoFixButtons = crashReason.getAutoFixButtons();
 
                         JDialog dialog;
-                        if (autoFixButtonText != null && autoFixButtonAction != null) {
-                            JButton autoFixButton = new JButton(autoFixButtonText);
-                            autoFixButton.setFont(autoFixButton.getFont().deriveFont(Font.BOLD,
-                                    CrashAssistantConfig.getInteger("gui_customisation.auto_fix_button_font_size")));
-                            autoFixButton.setForeground(
-                                    ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.auto_fix_button_foreground_color"),
-                                            autoFixButton.getForeground()));
-
+                        if (!autoFixButtons.isEmpty()) {
                             JPanel autoFixPanel = new JPanel(new GridBagLayout());
                             GridBagConstraints gbc = new GridBagConstraints();
                             gbc.fill = GridBagConstraints.HORIZONTAL;
                             gbc.weightx = 1.0;
                             gbc.gridy = 0;
-                            autoFixPanel.add(autoFixButton, gbc);
+
+                            // Create a list to hold buttons, so we can add listeners later
+                            List<JButton> buttons = new ArrayList<>();
+                            List<Consumer<JDialog>> actions = new ArrayList<>();
+
+                            for (Map.Entry<String, Consumer<JDialog>> entry : autoFixButtons.entrySet()) {
+                                JButton autoFixButton = new JButton(entry.getKey());
+                                autoFixButton.setFont(autoFixButton.getFont().deriveFont(Font.BOLD,
+                                        CrashAssistantConfig.getInteger("gui_customisation.auto_fix_button_font_size")));
+                                autoFixButton.setForeground(
+                                        ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.auto_fix_button_foreground_color"),
+                                                autoFixButton.getForeground()));
+                                autoFixPanel.add(autoFixButton, gbc);
+                                gbc.gridy++;
+                                buttons.add(autoFixButton);
+                                actions.add(entry.getValue());
+                            }
 
                             JPanel mainPanel = new JPanel(new BorderLayout(10, 5));
                             mainPanel.add(messagePane, BorderLayout.CENTER);
@@ -386,7 +395,14 @@ public class CrashAssistantGUI {
                                     frame,
                                     crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyser") : LanguageProvider.get("gui.logs_analyser")
                             );
-                            autoFixButton.addActionListener(e -> autoFixButtonAction.accept(dialog));
+
+                            // Add listeners now that the dialog is created
+                            for (int i = 0; i < buttons.size(); i++) {
+                                JButton button = buttons.get(i);
+                                Consumer<JDialog> action = actions.get(i);
+                                JDialog finalDialog = dialog;
+                                button.addActionListener(e -> action.accept(finalDialog));
+                            }
                         } else {
                             JOptionPane optionPane = new JOptionPane(
                                     messagePane,
@@ -400,7 +416,7 @@ public class CrashAssistantGUI {
                         }
                         long showStartTime = System.currentTimeMillis();
                         dialog.setVisible(true);
-                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {} (Seen warning for {}s)", crashReason.getClass().getSimpleName(), (System.currentTimeMillis() - showStartTime)/1000.0);
+                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {} (Seen warning for {}s)", crashReason.getClass().getSimpleName(), (System.currentTimeMillis() - showStartTime) / 1000.0);
                     }
                 });
             } catch (Exception e) {

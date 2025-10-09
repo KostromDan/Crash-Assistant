@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -13,6 +14,8 @@ public class KnownCrashReason {
     protected int priority;
     protected HashSet<String> conflictingReasons = new HashSet<>();
     public static HashSet<KnownCrashReason> shownKnownCrashReasons = new HashSet<>();
+
+    protected LinkedHashMap<String, Consumer<JDialog>> autoFixButtons = new LinkedHashMap<>();
 
     protected KnownCrashReason(LogType logType, String message, List<String> patterns) {
         this.logTypes = new HashSet<LogType>() {{
@@ -62,12 +65,8 @@ public class KnownCrashReason {
         return conflictingReasons;
     }
 
-    public String getAutoFixButtonText() {
-        return null;
-    }
-
-    public Consumer<JDialog> getAutoFixButtonAction() {
-        return null;
+    public LinkedHashMap<String, Consumer<JDialog>> getAutoFixButtons() {
+        return autoFixButtons;
     }
 
     public boolean matches(Log log) {

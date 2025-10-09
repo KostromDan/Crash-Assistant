@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.advanced;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
@@ -12,7 +13,9 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
+import javax.swing.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +30,8 @@ public class MixinApply extends KnownCrashReason {
     }
 
     private static final Pattern JSON_CONFIG_PATTERN = Pattern.compile("\\b(?![\\w.\\-]*refmap)[\\w.\\-]+\\.json\\b");
+    private String autoFixButtonText = null;
+    private Consumer<JDialog> autoFixButtonAction = null;
 
 
     @Override
@@ -56,6 +61,19 @@ public class MixinApply extends KnownCrashReason {
         for (Log log : logs) {
             MixinParsingResult result = parseLatestMixinError(log, configToJarMap);
             if (result != null) {
+                if (result.isMissingClass()) {
+                    message += LanguageProvider.get("warnings.mixin_apply_missing_class");
+                    message = message.replace("$MISSING_CLASS$", "<strong style='color: red;'>" + result.getMissingClass() + "</strong>");
+                    message = startWarn + message;
+
+                    autoFixButtonText = LanguageProvider.get("warnings.mixin_apply_missing_class_auto_fix");
+                    autoFixButtonAction = (dialog) -> {
+                        new JdepsDependenciesAnalysisGUI((JFrame) dialog.getOwner(), result.getMissingClass()).start();
+                    };
+
+                    return true;
+                }
+
                 String mixinConfig = result.getMixinConfig();
                 String jarName = configToJarMap.get(mixinConfig);
                 String conflictingJarName = null;
@@ -135,6 +153,13 @@ public class MixinApply extends KnownCrashReason {
                 if (!line.contains("Caused by: org.spongepowered.asm.mixin.") &&
                         !line.contains("Exception message: org.spongepowered.asm.mixin.")) continue;
 
+                if (line.contains("org.spongepowered.asm.mixin.throwables.ClassMetadataNotFoundException: ")) {
+                    String missingClass = line.split("org.spongepowered.asm.mixin.throwables.ClassMetadataNotFoundException: ")[1].trim();
+                    MixinParsingResult result = new MixinParsingResult(null, null);
+                    result.setMissingClass(missingClass);
+                    return result;
+                }
+
                 HashSet<String> configs = extractFromLineMixinConfigs(line, configToJarMap);
                 if (configs.size() != 1) {
                     continue;
@@ -154,6 +179,16 @@ public class MixinApply extends KnownCrashReason {
             }
         }
         return null;
+    }
+
+    @Override
+    public String getAutoFixButtonText() {
+        return autoFixButtonText;
+    }
+
+    @Override
+    public Consumer<JDialog> getAutoFixButtonAction() {
+        return autoFixButtonAction;
     }
 
     private static String findConflictingMixin(String mixinConfig, Log log, HashMap<String, String> configToJarMap) {
@@ -231,6 +266,7 @@ public class MixinApply extends KnownCrashReason {
         private final String conflictingJarName;
         private String requiredJavaVersion = null;
         private boolean missingOrCorruptedMixinConfig = false;
+        private String missingClass = null;
 
         public MixinParsingResult(String mixinConfig, String conflictingJarName) {
             this.mixinConfig = mixinConfig;
@@ -249,12 +285,24 @@ public class MixinApply extends KnownCrashReason {
             return requiredJavaVersion;
         }
 
+        public String getMissingClass() {
+            return missingClass;
+        }
+
+        public void setMissingClass(String missingClass) {
+            this.missingClass = missingClass;
+        }
+
         public void setRequiredJavaVersion(String requiredJavaVersion) {
             this.requiredJavaVersion = requiredJavaVersion;
         }
 
         public boolean isMissingOrCorruptedMixinConfig() {
             return missingOrCorruptedMixinConfig;
+        }
+
+        public boolean isMissingClass() {
+            return missingClass != null;
         }
 
         public void setMissingOrCorruptedMixinConfig(boolean missingOrCorruptedMixinConfig) {

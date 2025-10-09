@@ -148,7 +148,8 @@ public class MixinApply extends KnownCrashReason {
 
                 if (!line.contains("org.spongepowered.asm.mixin.")) continue;
                 if (!line.contains("Caused by: org.spongepowered.asm.mixin.") &&
-                        !line.contains("Exception message: org.spongepowered.asm.mixin.")) continue;
+                        !line.contains("Exception message: org.spongepowered.asm.mixin.") &&
+                        !line.contains(" from mod ")) continue;
 
                 if (line.contains("org.spongepowered.asm.mixin.throwables.ClassMetadataNotFoundException: ")) {
                     String missingClass = line.split("org.spongepowered.asm.mixin.throwables.ClassMetadataNotFoundException: ")[1].trim();

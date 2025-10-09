@@ -1,3 +1,16 @@
+1.10.8:
+
+- Implemented an optional Auto-Fix button inside the log analysis warning.
+    - Added buttons for Create6Addons, EpicFightAddons.
+- Added `ClassMetadataNotFoundException` analysis to `MixinApply` log analysis.
+    - Added auto fix option for it.
+- Fixed `MixinApply` was not detecting some cases.
+- New `GeckoLibOculusCompat` crash reason. Warns what on 1.20.1+ mod is no longer needed and causing crashes due to
+  GeckoLib by itself added compatibility with Oculus/Isis.
+- ModListDiff:
+    - Show jar name in case of version is same but jar name changed for ModListDiff.
+    - Fixed 2 mods were different if different was only case of the different chars.
+
 1.10.7:
 
 - Backported to:

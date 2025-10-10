@@ -1,3 +1,14 @@
+1.10.9:
+
+- Added Auto-Fix for `GroovyModLoaderIPv6`. Now can fix the issue just by one click.
+- Improved `GroovyModLoaderIPv6` issue detection.
+- New `FerriteCoreNeighborTable` log analysis.
+- Refactored auto-fix button system to support multiple actions per crash reason. Updated `Create6Addons`,
+  `EpicFightAddons`, and `MixinApply` to use the new structure.
+- Fixed MixinApply was not detecting some cases.
+- Fixed `ModuleFind` log analysis detected not all mods containing package.
+- Fixed exceptions inside `matches()` of log analysis were not logged.
+
 1.10.8:
 
 - Implemented an optional Auto-Fix button inside the log analysis warning.
@@ -13,6 +24,7 @@
 
 1.10.7:
 
+- 1.21.10 support.
 - Backported to:
     - forge: 1.9.4, 1.10.2, 1.11.2, 1.13.2, 1.14.4, 1.15, 1.15.1, 1.15.2
     - fabric: 1.14.4, 1.15.2

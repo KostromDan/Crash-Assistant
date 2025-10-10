@@ -1,13 +1,16 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log;
 
+import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDependenciesAnalysisGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.gml.GroovyModLoaderAutoFixGUI;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
-import java.util.ArrayList;
+import javax.swing.*;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class GroovyModLoaderIPv6 extends KnownCrashReason {
     public GroovyModLoaderIPv6() {
@@ -15,6 +18,26 @@ public class GroovyModLoaderIPv6 extends KnownCrashReason {
                 LogType.CRASH_REPORT,
                 LanguageProvider.get("warnings.groovy_mod_loader_ipv6")
         );
+
+        PlatformHelp.minecraftVersion = "1.20.1";
+        autoFixButtons.put(LanguageProvider.get("gui.analysis.gml_autofix.button"), parentDialog -> {
+            int response = JOptionPane.showConfirmDialog(
+                    parentDialog,
+                    CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.analysis.gml_autofix.confirm_message"), true),
+                    LanguageProvider.get("gui.analysis.gml_autofix.confirm_title"),
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            if (response == JOptionPane.YES_OPTION) {
+                parentDialog.dispose();
+                JFrame rootFrame = (JFrame) SwingUtilities.getWindowAncestor(parentDialog);
+                new GroovyModLoaderAutoFixGUI(rootFrame).start();
+            }
+        });
+        autoFixButtons.put(LanguageProvider.get("gui.analysis.gml_autofix.find_mods"), (dialog) -> {
+            new JdepsDependenciesAnalysisGUI((JFrame) dialog.getOwner(), "org.groovymc.gml").start();
+        });
     }
 
     @Override
@@ -22,51 +45,14 @@ public class GroovyModLoaderIPv6 extends KnownCrashReason {
         List<String> lines = log.getReader().getAllLinesList();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).trim();
-            if (!line.startsWith("at org.groovymc.gml.mappings.MappingsProvider.downloadFile(MappingsProvider.groovy:")) {
+            if (!line.startsWith("at org.groovymc.gml.mappings.MappingsProvider.")) {
                 continue;
             }
-            if (i - 3 < 0) {
-                return false;
-            }
-            String stacktraceStartLine = lines.get(i - 3).trim();
-            if (!stacktraceStartLine.equals("java.net.ConnectException: null") && !stacktraceStartLine.equals("javax.net.ssl.SSLHandshakeException: Remote host terminated the handshake")) {
-                return false;
-            }
-            List<String> causedByLines = new ArrayList<>();
-            for (int j = i + 1; j < lines.size(); j++) {
-                String stacktraceLine = lines.get(j);
-                if (!isStackTraceLine(stacktraceLine)) {
-                    return false;
-                }
-                if (stacktraceLine.startsWith("Caused by: ")) {
-                    causedByLines.add(stacktraceLine.trim());
-                    if (causedByLines.size() == 2) break;
-                }
-            }
-            if (causedByLines.size() != 2) return false;
-            if (causedByLines.get(0).equals("Caused by: java.net.ConnectException") && causedByLines.get(1).equals("Caused by: java.nio.channels.ClosedChannelException")) {
+            if (line.startsWith("at org.groovymc.gml.mappings.MappingsProvider.downloadFile(MappingsProvider.groovy:") ||
+                    line.startsWith("at org.groovymc.gml.mappings.MappingsProvider.loadLayeredMappings(MappingsProvider.groovy:")){
                 return true;
             }
-            if (causedByLines.get(0).equals("Caused by: javax.net.ssl.SSLHandshakeException: Remote host terminated the handshake") && causedByLines.get(1).equals("Caused by: java.net.SocketException: Connection reset")) {
-                return true;
-            }
-            break;
         }
         return false;
-    }
-
-
-    private static final Pattern AT_PATTERN = Pattern.compile("^\\s*at\\s+.*");
-    private static final Pattern MORE_PATTERN = Pattern.compile("^\\s*\\.{3}\\s+\\d+\\s+more$");
-    private static final Pattern CAUSED_BY_PATTERN = Pattern.compile("^\\s*Caused\\s+by:.*");
-
-    private static boolean isStackTraceLine(String line) {
-        if (line == null || line.trim().isEmpty()) {
-            return false;
-        }
-
-        return AT_PATTERN.matcher(line).matches() ||
-                MORE_PATTERN.matcher(line).matches() ||
-                CAUSED_BY_PATTERN.matcher(line).matches();
     }
 }

@@ -164,6 +164,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new DuplicatedMods());
         registerKnownCrashReason(new EpicFightAddons());
         registerKnownCrashReason(new FeatureOrderCycle());
+        registerKnownCrashReason(new FerriteCoreNeighborTable());
         registerKnownCrashReason(new GeckoLibOculusCompat());
         registerKnownCrashReason(new GroovyModLoaderIPv6());
         registerKnownCrashReason(new KubeJSDataPack());

@@ -19,58 +19,58 @@ Analyzes logs for many known reasons for crashes. If a known issue is detected, 
 
 ### Supported analysis:
 
-- **hs_err (JVM Crash)**:
-    - `AlLibAlcCleanup` (Some RAM allocation-related cursed issue)
-    - `atio6axx.dll` (AMD driver issue)
-    - `glfw.dll` (Generic GPU driver issue)
-    - `ig7icd64.dll` (Old Intel integrated GPU driver issue)
-    - `InsufficientMemory` (System is out of physical RAM or swap space)
-    - `JavaTooHigh` (e.g., Spark mod crashing on Java ≥ 22)
-    - `jemalloc.dll` (Issue with the jemalloc memory allocator)
-    - `jvm.dll` (Potential hardware issue or a bug in the JVM itself)
-    - `libglfw.so` / `libopenal.so` (Common Linux library problems)
-    - `libGLProgrammability.dylib` (Incompatible shader pack on macOS)
-    - `~StubRoutines::SafeFetch32` (macOS on Apple Silicon with an incorrect JDK)
-    - `nglMultiDrawElementsBaseVertex` / `0x0000` (GPU driver issue)
-    - `nvoglv64.dll` (Nvidia driver issue)
+**hs_err (JVM Crash)**:
+- `AlLibAlcCleanup` (Some RAM allocation-related cursed issue)
+- `atio6axx.dll` (AMD driver issue)
+- `glfw.dll` (Generic GPU driver issue)
+- `ig7icd64.dll` (Old Intel integrated GPU driver issue)
+- `InsufficientMemory` (System is out of physical RAM or swap space)
+- `JavaTooHigh` (e.g., Spark mod crashing on Java ≥ 22)
+- `jemalloc.dll` (Issue with the jemalloc memory allocator)
+- `jvm.dll` (Potential hardware issue or a bug in the JVM itself)
+- `libglfw.so` / `libopenal.so` (Common Linux library problems)
+- `libGLProgrammability.dylib` (Incompatible shader pack on macOS)
+- `~StubRoutines::SafeFetch32` (macOS on Apple Silicon with an incorrect JDK)
+- `nglMultiDrawElementsBaseVertex` / `0x0000` (GPU driver issue)
+- `nvoglv64.dll` (Nvidia driver issue)
 
-- **log / crash-report**:
-    - `ConnectorIncompatibleFabricMods` (Detects incompatible Fabric mods like Sodium/Iris when using Sinytra Connector)
-    - `Create6Addons` (Incompatibility between Create versions and its addons)
-    - `CtovWithoutLithostitched` (ChoiceTheorem's Overhauled Village mod missing a required dependency)
-    - `CurseForgeCorrupted` (Corrupted Minecraft/Loader installation from the CurseForge launcher)
-    - `DiskSpaceEnded` (System has run out of disk space)
-    - `DuplicatedMods` (Multiple versions of the same mod are installed)
-    - `EpicFightAddons` (Incompatibility between Epic Fight versions and its addons)
-    - `FeatureOrderCycle` (Circular dependency in world generation features)
-    - `FerriteCoreNeighborTable` (Detects when a mod improperly accesses FerriteCore's neighbor table, provides a temporary config workaround)
-    - `GeckoLibOculusCompat` (Warns that GeckoLib Oculus Compat mod is no longer needed on Minecraft 1.20.1+ and causes crashes)
-    - `GroovyModLoaderIPv6` (GML failed to download mappings due to IPv6 issues, includes Auto-Fix to find mods relying on GML)
-    - `KubeJSDataPack` (Error while loading a datapack with KubeJS)
-    - `LanguageProviderMismatch` (Mod requires a different version of Forge/NeoForge)
-    - `LegacyTooManyIds` (Exceeded the block/item ID limit on old Minecraft versions like 1.12.2)
-    - `MixinApply` (Detects a wide range of crashes caused by Mixin conflicts or errors, includes missing class detection and Auto-Fix to find mods relying on the missing class)
-    - `MissingEmbeddiumForOculus` (Oculus mod is installed without its required dependency, Embeddium)
-    - `MissingIndium` (A mod requires Indium for Fabric Renderer API compatibility but it's not installed)
-    - `MissingUnsupportedDependencies` (General dependency conflicts detected by Forge/NeoForge)
-    - `ModernFixWatchDog` (Integrated server has deadlocked)
-    - `NeoForgeVersion1_20_1` (Notifies that Neo on 1.20.1 is abandoned and causing many crashes and switching to Forge is an official recommendation from Neo on that version.)
-    - `ModuleFind` / `ModuleResolution` (Java module system errors, often due to dependency conflicts, immediately identifies which mod is causing the issue, without our mod binary search was needed to find this)
-    - `Optifine` (Warns that OptiFine is known to cause many incompatibility issues and suggests modern alternatives)
-    - `OutOfMemoryError` (Minecraft ran out of allocated RAM)
-    - `ResourceLocationException` (A resource name contains invalid characters, often due to non-English system settings)
-    - `Rubidium` (Warns that Rubidium is abandoned and causes issues, suggests Embeddium)
-    - `ServerConfigCorrupted` (A server-side config file is malformed)
-    - `UnsupportedClassVersion` (A mod was compiled with a newer version of Java than the one being used)
-    - `UsedByAnotherProcess` (A file is locked by another program)
-    - `Version1_21` (Warns that Minecraft 1.21 is outdated and causing manny issues; suggests switching to 1.21.1)
+**log / crash-report**:
+- `ConnectorIncompatibleFabricMods` (Detects incompatible Fabric mods like Sodium/Iris when using Sinytra Connector)
+- `Create6Addons` (Incompatibility between Create versions and its addons)
+- `CtovWithoutLithostitched` (ChoiceTheorem's Overhauled Village mod missing a required dependency)
+- `CurseForgeCorrupted` (Corrupted Minecraft/Loader installation from the CurseForge launcher)
+- `DiskSpaceEnded` (System has run out of disk space)
+- `DuplicatedMods` (Multiple versions of the same mod are installed)
+- `EpicFightAddons` (Incompatibility between Epic Fight versions and its addons)
+- `FeatureOrderCycle` (Circular dependency in world generation features)
+- `FerriteCoreNeighborTable` (Detects when a mod improperly accesses FerriteCore's neighbor table, provides a temporary config workaround)
+- `GeckoLibOculusCompat` (Warns that GeckoLib Oculus Compat mod is no longer needed on Minecraft 1.20.1+ and causes crashes)
+- `GroovyModLoaderIPv6` (GML failed to download mappings due to IPv6 issues, includes Auto-Fix to find mods relying on GML)
+- `KubeJSDataPack` (Error while loading a datapack with KubeJS)
+- `LanguageProviderMismatch` (Mod requires a different version of Forge/NeoForge)
+- `LegacyTooManyIds` (Exceeded the block/item ID limit on old Minecraft versions like 1.12.2)
+- `MixinApply` (Detects a wide range of crashes caused by Mixin conflicts or errors, includes missing class detection and Auto-Fix to find mods relying on the missing class)
+- `MissingEmbeddiumForOculus` (Oculus mod is installed without its required dependency, Embeddium)
+- `MissingIndium` (A mod requires Indium for Fabric Renderer API compatibility but it's not installed)
+- `MissingUnsupportedDependencies` (General dependency conflicts detected by Forge/NeoForge)
+- `ModernFixWatchDog` (Integrated server has deadlocked)
+- `NeoForgeVersion1_20_1` (Notifies that Neo on 1.20.1 is abandoned and causing many crashes and switching to Forge is an official recommendation from Neo on that version.)
+- `ModuleFind` / `ModuleResolution` (Java module system errors, often due to dependency conflicts, immediately identifies which mod is causing the issue, without our mod binary search was needed to find this)
+- `Optifine` (Warns that OptiFine is known to cause many incompatibility issues and suggests modern alternatives)
+- `OutOfMemoryError` (Minecraft ran out of allocated RAM)
+- `ResourceLocationException` (A resource name contains invalid characters, often due to non-English system settings)
+- `Rubidium` (Warns that Rubidium is abandoned and causes issues, suggests Embeddium)
+- `ServerConfigCorrupted` (A server-side config file is malformed)
+- `UnsupportedClassVersion` (A mod was compiled with a newer version of Java than the one being used)
+- `UsedByAnotherProcess` (A file is locked by another program)
+- `Version1_21` (Warns that Minecraft 1.21 is outdated and causing manny issues; suggests switching to 1.21.1)
 
-- **win_event (Windows Event Log)**:
-    - `WasClosedByWindows` (Game froze and was terminated by the OS, often from user input during loading)
+**win_event (Windows Event Log)**:
+- `WasClosedByWindows` (Game froze and was terminated by the OS, often from user input during loading)
 
-- **Codex Logs Analyzer Integration**:
-    - After uploading, every supported log is analyzed by `mclo.gs`'s Codex logs analyzer. Sometimes Codex messages can be unclear for average users. In such cases, a detailed message with a how-to-fix guide is displayed:
-        - Erroring block/entity
+**Codex Logs Analyzer Integration**:
+- After uploading, every supported log is analyzed by `mclo.gs`'s Codex logs analyzer. Sometimes Codex messages can be unclear for average users. In such cases, a detailed message with a how-to-fix guide is displayed:
+    - Erroring block/entity
 
 This significantly reduces the load on modpack support, as a large percentage (more than 75%) of issues are common and easily solvable problems. You can blacklist any analysis in the config if desired.
 

@@ -27,6 +27,7 @@ runs
 /config/
 /logs/
 /mods/
+/mod_data/
 /crash-reports/
 win_event*.txt
 launcher_log.txt

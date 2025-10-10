@@ -33,6 +33,8 @@ public enum LinksProvider {
 
     LITHOSTITCHED(() -> "https://www.curseforge.com/minecraft/mc-mods/lithostitched"),
 
+    FERRITE_CORE_ISSUES(() -> "https://github.com/malte0811/FerriteCore/issues"),
+
     MODERN_FIX(() -> "https://www.curseforge.com/minecraft/mc-mods/modernfix"),
     FERRITE_CORE(() -> {
         if (PlatformHelp.isForgeBased()) {

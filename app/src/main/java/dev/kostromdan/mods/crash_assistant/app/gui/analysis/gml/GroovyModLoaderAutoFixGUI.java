@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.AnalysisGUIBase;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import org.apache.commons.io.FileUtils;
 
 import javax.swing.*;
@@ -73,7 +74,7 @@ public class GroovyModLoaderAutoFixGUI extends AnalysisGUIBase {
 
             String classpath = System.getProperty("java.class.path");
             ProcessBuilder pb = new ProcessBuilder(
-                    "java",
+                    JavaBinaryLocator.getJavaBinary(),
                     "-Djava.net.preferIPv4Stack=true",
                     "-cp",
                     classpath,

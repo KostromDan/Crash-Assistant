@@ -2,12 +2,13 @@ package dev.kostromdan.mods.crash_assistant.app.gui.analysis.gml;
 
 import com.google.gson.Gson;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,14 +23,12 @@ import java.util.zip.GZIPInputStream;
 public class GMLMappingDownloaderImpl {
 
     private final Consumer<String> logger;
-    private final HttpClient httpClient;
     private final Gson gson;
 
     private static final String PISTON_META_URL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 
     public GMLMappingDownloaderImpl(Consumer<String> logger) {
         this.logger = logger;
-        this.httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
         this.gson = new Gson();
     }
 
@@ -51,7 +50,7 @@ public class GMLMappingDownloaderImpl {
     }
 
 
-    public void download(String mcVersion, String mcpVersion) throws IOException, InterruptedException, NoSuchAlgorithmException {
+    public void download(String mcVersion, String mcpVersion) throws IOException, NoSuchAlgorithmException {
         Path cacheDir = Paths.get("mod_data", "gml", mcVersion);
         Files.createDirectories(cacheDir);
         logger.accept("Cache directory created at: " + cacheDir);
@@ -69,7 +68,7 @@ public class GMLMappingDownloaderImpl {
         // 2. Download and process the specific version.json
         Path versionJsonPath = cacheDir.resolve("version.json");
         downloadAndVerify(versionInfo.url, versionJsonPath, versionInfo.sha1, "version.json");
-        VersionMeta versionMeta = gson.fromJson(Files.readString(versionJsonPath), VersionMeta.class);
+        VersionMeta versionMeta = gson.fromJson(new String(Files.readAllBytes(versionJsonPath), StandardCharsets.UTF_8), VersionMeta.class);
 
         // 3. Download official client mappings
         VersionMeta.Download clientMappings = versionMeta.downloads.get("client_mappings");
@@ -89,16 +88,29 @@ public class GMLMappingDownloaderImpl {
         logger.accept("All necessary mapping files have been downloaded successfully.");
     }
 
-    private <T> T getJson(String url, Class<T> classOfT) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) {
-            throw new IOException("Failed to download JSON from " + url + ". Status code: " + response.statusCode());
+    private <T> T getJson(String urlString, Class<T> classOfT) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                throw new IOException("Failed to download JSON from " + urlString + ". Status code: " + responseCode);
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                return gson.fromJson(reader, classOfT);
+            }
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
-        return gson.fromJson(response.body(), classOfT);
     }
 
-    private void downloadAndVerify(String url, Path destination, String expectedSha1, String fileDescription) throws IOException, InterruptedException, NoSuchAlgorithmException {
+    private void downloadAndVerify(String url, Path destination, String expectedSha1, String fileDescription) throws IOException, NoSuchAlgorithmException {
         if (Files.exists(destination)) {
             String actualSha1 = calculateSha1(destination);
             if (expectedSha1.equalsIgnoreCase(actualSha1)) {
@@ -116,22 +128,34 @@ public class GMLMappingDownloaderImpl {
         logger.accept("Verified " + fileDescription + " successfully.");
     }
 
-    private void downloadFile(String url, Path destination, String fileDescription) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                .setHeader("Accept-Encoding", "gzip")
-                .GET().build();
+    private void downloadFile(String urlString, Path destination, String fileDescription) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("Accept-Encoding", "gzip");
+            connection.setInstanceFollowRedirects(true);
 
-        HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            int responseCode = connection.getResponseCode();
 
-        if (response.statusCode() != 200) {
-            throw new IOException("Failed to download " + fileDescription + " from " + url + ". Status code: " + response.statusCode());
-        }
+            if (responseCode < 200 || responseCode >= 300) {
+                throw new IOException("Failed to download " + fileDescription + " from " + urlString + ". Status code: " + responseCode);
+            }
 
-        try (InputStream bodyStream = response.body()) {
-            InputStream streamToRead = response.headers().firstValue("Content-Encoding").map("gzip"::equalsIgnoreCase).orElse(false)
-                    ? new GZIPInputStream(bodyStream)
-                    : bodyStream;
-            Files.copy(streamToRead, destination, StandardCopyOption.REPLACE_EXISTING);
+            try (InputStream bodyStream = connection.getInputStream()) {
+                InputStream streamToRead;
+                String contentEncoding = connection.getContentEncoding();
+                if ("gzip".equalsIgnoreCase(contentEncoding)) {
+                    streamToRead = new GZIPInputStream(bodyStream);
+                } else {
+                    streamToRead = bodyStream;
+                }
+                Files.copy(streamToRead, destination, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
     }
 

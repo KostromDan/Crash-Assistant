@@ -1,3 +1,9 @@
+1.10.10:
+
+- Fixed Auto-Fix for `GroovyModLoaderIPv6` may use incorrect java.
+- Fixed Auto-Fix for `GroovyModLoaderIPv6` didn't work for 1.19.x due to folder changes.
+- Fixed `GroovyModLoaderIPv6` issue detection on 1.19.x.
+
 1.10.9:
 
 - Added Auto-Fix for `GroovyModLoaderIPv6`. Now can fix the issue just by one click.

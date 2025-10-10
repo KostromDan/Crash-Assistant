@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -51,7 +52,17 @@ public class GMLMappingDownloaderImpl {
 
 
     public void download(String mcVersion, String mcpVersion) throws IOException, NoSuchAlgorithmException {
-        Path cacheDir = Paths.get("mod_data", "gml", mcVersion);
+        Path cacheDir;
+        List<String> oldVersions = Arrays.asList("1.19.2", "1.19.3", "1.19.4");
+
+        if (oldVersions.contains(mcVersion)) {
+            // For old versions, save directly to mod_data/gml
+            cacheDir = Paths.get("mod_data", "gml");
+        } else {
+            // For new versions (like 1.20.1+), use a version-specific subdirectory
+            cacheDir = Paths.get("mod_data", "gml", mcVersion);
+        }
+
         Files.createDirectories(cacheDir);
         logger.accept("Cache directory created at: " + cacheDir);
 

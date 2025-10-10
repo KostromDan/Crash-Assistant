@@ -43,11 +43,12 @@ public class GroovyModLoaderIPv6 extends KnownCrashReason {
         List<String> lines = log.getReader().getAllLinesList();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).trim();
-            if (!line.startsWith("at org.groovymc.gml.mappings.MappingsProvider.")) {
+            if (!line.startsWith("at ") || !line.contains(".gml.mappings.Mapping")) {
                 continue;
             }
             if (line.startsWith("at org.groovymc.gml.mappings.MappingsProvider.downloadFile(MappingsProvider.groovy:") ||
-                    line.startsWith("at org.groovymc.gml.mappings.MappingsProvider.loadLayeredMappings(MappingsProvider.groovy:")){
+                    line.startsWith("at org.groovymc.gml.mappings.MappingsProvider.loadLayeredMappings(MappingsProvider.groovy:") ||
+                    line.startsWith(("at com.matyrobbrt.gml.mappings.MappingMetaClassCreationHandle.applyCreationHandle(MappingMetaClassCreationHandle.groovy:"))) {
                 return true;
             }
         }

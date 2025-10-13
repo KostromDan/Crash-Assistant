@@ -6,11 +6,13 @@ import net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReade
 import net.neoforged.neoforgespi.locating.IDependencyLocator;
 import net.neoforged.neoforgespi.locating.IDiscoveryPipeline;
 import net.neoforged.neoforgespi.locating.IModFile;
+import net.neoforged.neoforgespi.locating.ModFileInfoParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -29,32 +31,30 @@ public class CrashAssistantDependencyLocator extends JarInJarDependencyLocator i
         try {
             IModFile modFile;
             try {
-                // New way
                 JarContents jarContents = JarContents.ofPath(Path.of(CrashAssistantDependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
                 modFile = IModFile.create(jarContents, JarModsDotTomlModFileReader::manifestParser);
-            } catch (NoClassDefFoundError e) {
-                // Old way via reflection
-                LOGGER.warn("JarContents not found, falling back to SecureJar via reflection for older NeoForge.");
-                try {
-                    Path path = Path.of(CrashAssistantDependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-                    Class<?> secureJarClass = Class.forName("net.neoforged.fml.classloading.SecureJar");
-                    Method fromMethod = secureJarClass.getMethod("from", Path.class);
-                    Object secureJar = fromMethod.invoke(null, path);
+            } catch (NoClassDefFoundError | NoSuchMethodError e) {
+                Path path = Path.of(CrashAssistantDependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 
-                    Class<?> modFileClass = Class.forName("net.neoforged.neoforgespi.locating.IModFile");
-                    Class<?> parserInterface = Class.forName("net.neoforged.neoforgespi.locating.IModFile$ModFileInfoParser");
+                Class<?> secureJarClass = Class.forName("net.neoforged.fml.classloading.SecureJar");
+                Method fromMethod = secureJarClass.getDeclaredMethod("from", Path[].class);
+                Object secureJar = fromMethod.invoke(null, (Object) new Path[]{path});
 
-                    Object parserProxy = Proxy.newProxyInstance(
-                            CrashAssistantDependencyLocator.class.getClassLoader(),
-                            new Class<?>[]{parserInterface},
-                            (proxy, method, args) -> JarModsDotTomlModFileReader.class.getMethod("manifestParser", IModFile.class).invoke(null, args)
-                    );
+                Class<?> readerClass = Class.forName("net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader");
+                Method manifestParserMethod = readerClass.getDeclaredMethod("manifestParser", IModFile.class);
 
-                    Method createMethod = modFileClass.getMethod("create", secureJarClass, parserInterface);
-                    modFile = (IModFile) createMethod.invoke(null, secureJar, parserProxy);
-                } catch (ReflectiveOperationException ex) {
-                    throw new RuntimeException("Failed to create mod file with reflection fallback", ex);
-                }
+                MethodHandles.Lookup lookup = MethodHandles.lookup();
+                MethodHandle manifestParserHandle = lookup.unreflect(manifestParserMethod);
+                ModFileInfoParser parser = (iModFile) -> {
+                    try {
+                        return (net.neoforged.neoforgespi.language.IModFileInfo) manifestParserHandle.invoke(iModFile);
+                    } catch (Throwable e1) {
+                        throw new RuntimeException("Failed to invoke manifestParser", e1);
+                    }
+                };
+
+                Method createMethod = IModFile.class.getDeclaredMethod("create", secureJarClass, ModFileInfoParser.class);
+                modFile = (IModFile) createMethod.invoke(null, secureJar, parser);
             }
 
             // Use reflection to access the private loadModFileFrom method

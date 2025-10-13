@@ -1,3 +1,7 @@
+1.10.10.1:
+
+- Fixed changes in neoforge 1.21.10.
+
 1.10.10:
 
 - Fixed Auto-Fix for `GroovyModLoaderIPv6` may use incorrect java.

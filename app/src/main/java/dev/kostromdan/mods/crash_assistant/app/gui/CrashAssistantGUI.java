@@ -79,7 +79,7 @@ public class CrashAssistantGUI {
                 LanguageProvider.get("gui.comment_under_title_pls_report", hrefOptions);
 
         // Main comment text (excluding screenshot notice)
-        String commentText = firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions);
+        String commentText = "<div style='margin-left: 5px;'>" + firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions) + "</div>";
         JEditorPane commentPane = getEditorPaneNoMargins(commentText, false);
 
         labelPanel = new JPanel();
@@ -99,8 +99,13 @@ public class CrashAssistantGUI {
             if (CrashAssistantConfig.getBoolean("gui_customisation.screenshot_of_gui_notice_animated_border")) {
                 screenshotNoticePane.setBorder(new AnimatedBorder(screenshotNoticePane, Color.RED, false));
             }
+            // Add vertical spacing between the main comment and the red notice
+            labelPanel.add(Box.createVerticalStrut(3));
             labelPanel.add(screenshotNoticePane);
         }
+
+        // Add only padding to avoid extra visual clutter from an outline
+        labelPanel.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
 
         frame.add(labelPanel, BorderLayout.NORTH);
 

@@ -273,9 +273,16 @@ public class CrashAssistantConfig {
                         "Path is relative to the Minecraft instance folder. Leave empty to disable.",
                 "");
         addOption("gui_customisation.modpack_logo_large_mode",
-                "If true, the logo will be larger, displacing some of the text content.\n" +
-                        "If false, it will be smaller and appear to the right of the main text.",
+                "If true, the logo will be larger, Replacing a some of `don't send screenshot` notice.\n" +
+                        "If false, it will be smaller and logo will be end right where the `don't send screenshot` notice starts.\n" +
+                        "You should try both, but most likely:\n" +
+                        "- If you have some long text in the discord description, you will love the small one.\n" +
+                        "- If the text is short, you will love the large one.",
                 false);
+        addOption("gui_customisation.modpack_logo_size",
+                "Hardcode modpack logo size. Default is -1, which means it's calculated automatically.\n" +
+                        "By default, this should not needed. But if you have heavily customized GUI, you may want to decrease its size, so this option could be needed in such case. ",
+                -1);
 
         config.setComment("compatibility", "Checks crash_assistant compatibility with other incompatible mods.\n" +
                 "Highly unrecommended to disable!");

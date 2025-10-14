@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
 
+// This code simulates the behavior of the original mod for downloading mappings.
+// Link to the original project: https://github.com/GroovyMC/GroovyModLoader
+
 public class GMLMappingDownloaderImpl {
 
     private final Consumer<String> logger;
@@ -194,6 +197,7 @@ public class GMLMappingDownloaderImpl {
     // --- GSON Data Classes ---
     private static class PistonMeta {
         List<VersionInfo> versions;
+
         private static class VersionInfo {
             String id;
             String url;
@@ -203,6 +207,7 @@ public class GMLMappingDownloaderImpl {
 
     private static class VersionMeta {
         Map<String, Download> downloads;
+
         private static class Download {
             String sha1;
             String url;

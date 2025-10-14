@@ -20,6 +20,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -28,9 +29,12 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
@@ -46,6 +50,58 @@ public class CrashAssistantGUI {
     private static JPanel labelPanel;
     private static HashSet<JComponent> highlightedButtons = new HashSet<>();
     private static Integer heightWithoutScrollPane = null;
+
+
+    /**
+     * Helper method to load the image from the specified path.
+     * @param path The relative path to the image file.
+     * @return A BufferedImage object, or null if loading fails.
+     */
+    private static BufferedImage loadModpackLogo(String path) {
+        if (path == null || path.trim().isEmpty()) {
+            return null;
+        }
+        Path logoPath = Paths.get(path);
+        if (!Files.exists(logoPath) || !Files.isRegularFile(logoPath)) {
+            CrashAssistantApp.LOGGER.error("Modpack logo not found or is not a file: {}", logoPath.toAbsolutePath());
+            return null;
+        }
+        try {
+            return ImageIO.read(logoPath.toFile());
+        } catch (IOException e) {
+            CrashAssistantApp.LOGGER.error("Failed to load modpack logo from path: {}", logoPath.toAbsolutePath(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Helper method to resize a BufferedImage into an ImageIcon while maintaining aspect ratio.
+     * @param originalImage The source image.
+     * @param maxWidth The maximum width for the resized image.
+     * @param maxHeight The maximum height for the resized image.
+     * @return A resized ImageIcon, or null if the original image is invalid.
+     */
+    private static ImageIcon resizeLogo(BufferedImage originalImage, int maxWidth, int maxHeight) {
+        if (originalImage == null) return null;
+
+        int originalWidth = originalImage.getWidth();
+        int originalHeight = originalImage.getHeight();
+        if (originalWidth <= 0 || originalHeight <= 0) {
+            return new ImageIcon(originalImage); // Cannot resize, return as is
+        }
+
+        double ratio = Math.min((double) maxWidth / originalWidth, (double) maxHeight / originalHeight);
+
+        int newWidth = (int) (originalWidth * ratio);
+        int newHeight = (int) (originalHeight * ratio);
+
+        if (newWidth <= 0 || newHeight <= 0) { // Check for invalid dimensions
+            return new ImageIcon(originalImage);
+        }
+
+        Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+        return new ImageIcon(resizedImage);
+    }
 
 
     public CrashAssistantGUI() {
@@ -64,6 +120,13 @@ public class CrashAssistantGUI {
 
         addFileMenu();
 
+        // --- Configuration reading ---
+        String logoPath = CrashAssistantConfig.get("gui_customisation.modpack_logo_path");
+        boolean largeLogoMode = CrashAssistantConfig.getBoolean("gui_customisation.modpack_logo_large_mode");
+        BufferedImage logoImage = loadModpackLogo(logoPath);
+        boolean showScreenshotNotice = CrashAssistantConfig.getBoolean("gui_customisation.show_dont_send_screenshot_of_gui_notice");
+
+        // --- Component Creation ---
         String titleText = getTitleCrashedText(false);
         JLabel titleLabel = new JLabel(titleText, SwingConstants.LEFT);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -78,34 +141,87 @@ public class CrashAssistantGUI {
                 LanguageProvider.get("gui.comment_under_title_cant_resolve", hrefOptions) :
                 LanguageProvider.get("gui.comment_under_title_pls_report", hrefOptions);
 
-        // Main comment text (excluding screenshot notice)
-        String commentText = "<div style='margin-left: 5px;'>" + firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions) + "</div>";
+        String commentText = "<div>" + firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions) + "</div>";
         JEditorPane commentPane = getEditorPaneNoMargins(commentText, false);
 
-        labelPanel = new JPanel();
-        labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.Y_AXIS));
-        labelPanel.add(titleLabel);
-        if (!commentText.isEmpty()) {
-            labelPanel.add(commentPane);
+        String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
+        String screenshotHtml = "<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
+        JEditorPane screenshotNoticePane = getEditorPaneNoMargins(screenshotHtml, false);
+        if (showScreenshotNotice && CrashAssistantConfig.getBoolean("gui_customisation.screenshot_of_gui_notice_animated_border")) {
+            screenshotNoticePane.setBorder(new AnimatedBorder(screenshotNoticePane, Color.RED, false));
         }
 
-        // Screenshot notice in a separate JEditorPane
-        if (CrashAssistantConfig.getBoolean("gui_customisation.show_dont_send_screenshot_of_gui_notice")) {
-            String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
-            String screenshotHtml = "<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
-            JEditorPane screenshotNoticePane = getEditorPaneNoMargins(screenshotHtml, false);
-
-            // Apply the animated border
-            if (CrashAssistantConfig.getBoolean("gui_customisation.screenshot_of_gui_notice_animated_border")) {
-                screenshotNoticePane.setBorder(new AnimatedBorder(screenshotNoticePane, Color.RED, false));
-            }
-            // Add vertical spacing between the main comment and the red notice
-            labelPanel.add(Box.createVerticalStrut(3));
-            labelPanel.add(screenshotNoticePane);
-        }
-
-        // Add only padding to avoid extra visual clutter from an outline
+        // --- Panel Construction ---
+        labelPanel = new JPanel(new BorderLayout()); // Main container for the top section
         labelPanel.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
+
+        JPanel mainTextPanel = new JPanel();
+        mainTextPanel.setLayout(new BoxLayout(mainTextPanel, BoxLayout.Y_AXIS));
+        mainTextPanel.setOpaque(false);
+        mainTextPanel.add(titleLabel);
+        if (!commentText.isEmpty()) {
+            mainTextPanel.add(commentPane);
+        }
+
+        JLabel modpackLogoLabel = new JLabel();
+
+        // --- Layout Logic ---
+        if (logoImage == null) {
+            // Case 1: No Logo
+            JPanel contentPanel = new JPanel();
+            contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+            contentPanel.add(mainTextPanel);
+            if (showScreenshotNotice) {
+                contentPanel.add(Box.createVerticalStrut(3));
+                contentPanel.add(screenshotNoticePane);
+            }
+            labelPanel.add(contentPanel, BorderLayout.CENTER);
+        } else {
+            if (largeLogoMode) {
+                // Case 2: Large Logo Mode
+                JPanel leftColumn = new JPanel();
+                leftColumn.setOpaque(false);
+                leftColumn.setLayout(new BoxLayout(leftColumn, BoxLayout.Y_AXIS));
+                leftColumn.add(mainTextPanel);
+                if (showScreenshotNotice) {
+                    leftColumn.add(Box.createVerticalStrut(3));
+                    leftColumn.add(screenshotNoticePane);
+                }
+                labelPanel.add(leftColumn, BorderLayout.CENTER);
+
+                // Determine height for the logo to match the text block
+                int textHeight = leftColumn.getPreferredSize().height;
+                modpackLogoLabel.setIcon(resizeLogo(logoImage, 150, textHeight));
+
+                JPanel logoWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+                logoWrapper.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0)); // Add padding
+                logoWrapper.add(modpackLogoLabel);
+                labelPanel.add(logoWrapper, BorderLayout.EAST);
+
+            } else {
+                // Case 3: Small Logo Mode
+                JPanel topRowPanel = new JPanel(new BorderLayout(5, 0));
+                topRowPanel.add(mainTextPanel, BorderLayout.CENTER);
+
+                modpackLogoLabel.setIcon(resizeLogo(logoImage, 150, 60));
+                JPanel logoWrapper = new JPanel(new GridBagLayout()); // To center vertically
+                logoWrapper.add(modpackLogoLabel);
+                topRowPanel.add(logoWrapper, BorderLayout.EAST);
+
+                JPanel contentPanel = new JPanel(new GridBagLayout());
+                GridBagConstraints gbc = new GridBagConstraints();
+
+                gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 1.0; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.anchor = GridBagConstraints.WEST;
+                contentPanel.add(topRowPanel, gbc);
+
+                if (showScreenshotNotice) {
+                    gbc.gridy = 1; gbc.insets = new Insets(1, 0, 0, 0); // Reduced top padding from 3 to 1
+                    contentPanel.add(screenshotNoticePane, gbc);
+                }
+                labelPanel.add(contentPanel, BorderLayout.CENTER);
+            }
+        }
+
 
         frame.add(labelPanel, BorderLayout.NORTH);
 
@@ -818,3 +934,4 @@ public class CrashAssistantGUI {
         return frame;
     }
 }
+

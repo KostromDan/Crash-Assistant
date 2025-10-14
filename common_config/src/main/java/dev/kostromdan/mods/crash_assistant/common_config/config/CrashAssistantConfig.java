@@ -87,6 +87,12 @@ public class CrashAssistantConfig {
                         "So this option prevents our app logging at all.\n" +
                         "HIGHLY UNRECOMMENDED to disable! Contains many useful info.",
                 false);
+        addOption("general.logs_priority_overrides",
+                "Here you can change priority for logs.\n" +
+                        "For example if you want crash report to be shown earlier than latest.log in the available logs list.\n" +
+                        "Supported values: https://github.com/KostromDan/Crash-Assistant/blob/1.19-1.20.1/app/src/main/java/dev/kostromdan/mods/crash_assistant/app/logs_analyser/LogType.java\n" +
+                        "Usage: [\"CRASH_REPORT\", \"LOG\"]",
+                new ArrayList<>());
         ArrayList<String> defaultBlacklistedLogs = new ArrayList<>();
         addOption("general.blacklisted_logs",
                 "List of blacklisted log files (checked with startswith()). This files won't show in GUI logs list.",
@@ -313,6 +319,10 @@ public class CrashAssistantConfig {
 
     public static ArrayList<String> getBlacklistedLogs() {
         return get("general.blacklisted_logs");
+    }
+
+    public static ArrayList<String> getPriorityOverridesForLogsOrder() {
+        return get("general.logs_priority_overrides");
     }
 
     public static ArrayList<String> getBlacklistedAnalysis() {

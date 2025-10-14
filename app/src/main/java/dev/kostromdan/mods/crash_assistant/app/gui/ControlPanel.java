@@ -58,6 +58,8 @@ public class ControlPanel {
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             modListLabel = new JLabel(LanguageProvider.get("gui.modlist_loading"));
+            // Add a bit of left padding to the detected mods text for better spacing
+            modListLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
             modListLabel.setMaximumSize(modListLabel.getPreferredSize());
 
             showModListButton = new JButton(LanguageProvider.get("gui.show_modlist_diff_button"));

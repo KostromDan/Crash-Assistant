@@ -141,7 +141,7 @@ public class CrashAssistantGUI {
                 LanguageProvider.get("gui.comment_under_title_cant_resolve", hrefOptions) :
                 LanguageProvider.get("gui.comment_under_title_pls_report", hrefOptions);
 
-        String commentText = "<div>" + firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions) + "</div>";
+        String commentText = "<div style='margin-left: 5px;'>" + firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions) + "</div>";
         JEditorPane commentPane = getEditorPaneNoMargins(commentText, false);
 
         String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");

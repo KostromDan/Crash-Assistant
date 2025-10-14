@@ -33,6 +33,10 @@ public class LogComparator implements Comparator<Log> {
         for (String logTypeString : logTypePriorityOverridesFromConfig) {
             try {
                 LogType logType = Enum.valueOf(LogType.class, logTypeString);
+                if (addedLogTypes.contains(logType)) {
+                    CrashAssistantApp.LOGGER.warn("Duplicated key in \"general.logs_priority_overrides\": \"{}\", skipping...", logTypeString);
+                    continue;
+                }
                 FINAL_LOG_TYPE_ORDER.add(logType);
                 addedLogTypes.add(logType);
             } catch (IllegalArgumentException e) {

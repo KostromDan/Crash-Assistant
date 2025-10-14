@@ -268,15 +268,14 @@ public class CrashAssistantConfig {
                 "Same as upload_all_button_foreground_color, but for Auto-Fix button (in integrated GPU warning).\n" +
                         "Default for this button is \"0_178_0\" (dark green color).",
                 "0_178_0");
-//        addOption("gui_customisation.upload_all_button_background_color",
-//                "You can change Upload All Button background color to request user attention.\n" +
-//                        "format is same as in upload_all_button_color.\n" +
-//                        "Default for this button is \"255_110_0\" (dark orange color).",
-//                "238_238_238");
-//        addOption("gui_customisation.request_help_button_background_color",
-//                "Same as upload_all_button_background_color, but for Request Help button.\n" +
-//                        "Default for this button is \"0_0_0\" (black color).",
-//                "238_238_238");
+        addOption("gui_customisation.modpack_logo_path",
+                "Path to a modpack logo to display in the top of the GUI.\n" +
+                        "Path is relative to the Minecraft instance folder. Leave empty to disable.",
+                "");
+        addOption("gui_customisation.modpack_logo_large_mode",
+                "If true, the logo will be larger, displacing some of the text content.\n" +
+                        "If false, it will be smaller and appear to the right of the main text.",
+                false);
 
         config.setComment("compatibility", "Checks crash_assistant compatibility with other incompatible mods.\n" +
                 "Highly unrecommended to disable!");

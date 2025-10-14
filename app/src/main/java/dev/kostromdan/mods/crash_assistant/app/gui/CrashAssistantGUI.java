@@ -123,6 +123,7 @@ public class CrashAssistantGUI {
         // --- Configuration reading ---
         String logoPath = CrashAssistantConfig.get("gui_customisation.modpack_logo_path");
         boolean largeLogoMode = CrashAssistantConfig.getBoolean("gui_customisation.modpack_logo_large_mode");
+        int modpackLogoSize = CrashAssistantConfig.getInteger("gui_customisation.modpack_logo_size");
         BufferedImage logoImage = loadModpackLogo(logoPath);
         boolean showScreenshotNotice = CrashAssistantConfig.getBoolean("gui_customisation.show_dont_send_screenshot_of_gui_notice");
 
@@ -191,22 +192,32 @@ public class CrashAssistantGUI {
 
                 // Determine height for the logo to match the text block
                 int textHeight = leftColumn.getPreferredSize().height;
-                modpackLogoLabel.setIcon(resizeLogo(logoImage, 150, textHeight));
+                modpackLogoLabel.setIcon(resizeLogo(logoImage, modpackLogoSize != -1 ? modpackLogoSize : 150, modpackLogoSize != -1 ? modpackLogoSize : textHeight));
 
                 JPanel logoWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+                logoWrapper.setOpaque(false);
                 logoWrapper.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0)); // Add padding
                 logoWrapper.add(modpackLogoLabel);
-                labelPanel.add(logoWrapper, BorderLayout.EAST);
+
+                JPanel logoContainer = new JPanel(new BorderLayout());
+                logoContainer.setOpaque(false);
+                logoContainer.add(logoWrapper, BorderLayout.NORTH);
+                labelPanel.add(logoContainer, BorderLayout.EAST);
 
             } else {
                 // Case 3: Small Logo Mode
                 JPanel topRowPanel = new JPanel(new BorderLayout(5, 0));
                 topRowPanel.add(mainTextPanel, BorderLayout.CENTER);
 
-                modpackLogoLabel.setIcon(resizeLogo(logoImage, 150, 60));
-                JPanel logoWrapper = new JPanel(new GridBagLayout()); // To center vertically
+                int textHeight = mainTextPanel.getPreferredSize().height;
+                modpackLogoLabel.setIcon(resizeLogo(logoImage, modpackLogoSize != -1 ? modpackLogoSize : 150, modpackLogoSize != -1 ? modpackLogoSize : textHeight-3));
+                JPanel logoWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+                logoWrapper.setOpaque(false);
                 logoWrapper.add(modpackLogoLabel);
-                topRowPanel.add(logoWrapper, BorderLayout.EAST);
+                JPanel logoContainer = new JPanel(new BorderLayout());
+                logoContainer.setOpaque(false);
+                logoContainer.add(logoWrapper, BorderLayout.NORTH);
+                topRowPanel.add(logoContainer, BorderLayout.EAST);
 
                 JPanel contentPanel = new JPanel(new GridBagLayout());
                 GridBagConstraints gbc = new GridBagConstraints();

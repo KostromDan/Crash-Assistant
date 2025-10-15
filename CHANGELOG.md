@@ -1,3 +1,9 @@
+1.10.11:
+
+- Added the config option to customize log order in available logs.
+- Added some padding for better looking.
+- Add a config option to include the modpack logo to the GUI.
+
 1.10.10.1:
 
 - Fixed changes in neoforge 1.21.10.

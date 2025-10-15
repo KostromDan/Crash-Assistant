@@ -44,7 +44,7 @@ public class ConnectorIncompatibleFabricMods extends KnownCrashReason {
             } else {
                 messageLine = LanguageProvider.get("warnings.connector_incompatible_fabric_mods_no_alternative");
             }
-            messageLine = messageLine.replace("$MODID$", "<strong style='color: red;'>" + foundMod.getModId() + "</strong> (" + foundMod.getJarName() + ")");
+            messageLine = messageLine.replace("$MOD_ID$", "<strong style='color: red;'>" + foundMod.getModId() + "</strong> (" + foundMod.getJarName() + ")");
             messageLine += "\n";
             message += messageLine;
 

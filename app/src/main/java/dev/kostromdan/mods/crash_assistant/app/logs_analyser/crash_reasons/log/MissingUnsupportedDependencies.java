@@ -59,7 +59,7 @@ public class MissingUnsupportedDependencies extends KnownCrashReason {
                 modIdsToJarNames.add(mod.getModId() + " -> " + mod.getJarName());
             }
         });
-        message = message.replace("$MODIDS_TO_JARNAMES$", String.join("\n", modIdsToJarNames));
+        message = message.replace("$MOD_IDS_TO_JAR_NAMES$", String.join("\n", modIdsToJarNames));
         return true;
     }
 

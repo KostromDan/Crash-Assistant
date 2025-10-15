@@ -156,6 +156,7 @@ public class IntegratedGPUWarning extends JFrame {
         SwingUtilities.invokeLater(() -> {
             CrashAssistantApp.LOGGER.warn("Showing IntegratedGPUWarning.");
             IntegratedGPUWarning frame = new IntegratedGPUWarning(integratedGPU, dedicatedGPUs);
+            CrashAssistantGUI.setUpIcon(frame);
 
             // Add a window listener to wait for the frame to be closed
             frame.addWindowListener(new WindowAdapter() {

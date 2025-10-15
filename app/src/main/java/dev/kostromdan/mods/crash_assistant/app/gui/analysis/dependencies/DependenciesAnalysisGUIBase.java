@@ -242,7 +242,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                             appendStyledText("\n", NORMAL_COLOR);
 
                             String logMessage = String.format(
-                                    "Found %d " + getModName() + " mod class dependency(ies) in %s, which are missing from the current %s",
+                                    "Found %d " + getModName() + " mod class dependencies in %s, which are missing from the current %s",
                                     depCount, jarDisplay, targetJarName
                             );
                             CrashAssistantApp.LOGGER.info(logMessage);
@@ -278,7 +278,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                     appendStyledText("\n", NORMAL_COLOR);
 
                     String logMessage = String.format(
-                            "Haven't found in any mod, " + getModName() + " mod class dependency(ies), which are missing from the current %s",
+                            "No mod analyzed contained " + getModName() + " mod class dependencies, which are missing from the current %s",
                             targetJarName
                     );
                     CrashAssistantApp.LOGGER.info(logMessage);

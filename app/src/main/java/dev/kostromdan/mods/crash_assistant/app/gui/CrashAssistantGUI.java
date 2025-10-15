@@ -559,7 +559,7 @@ public class CrashAssistantGUI {
 
                             dialog = optionPane.createDialog(
                                     frame,
-                                    crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyser") : LanguageProvider.get("gui.logs_analyser")
+                                    crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyzer") : LanguageProvider.get("gui.logs_analyzer")
                             );
 
                             // Add listeners now that the dialog is created
@@ -577,7 +577,7 @@ public class CrashAssistantGUI {
                             );
                             dialog = optionPane.createDialog(
                                     frame,
-                                    crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyser") : LanguageProvider.get("gui.logs_analyser")
+                                    crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyzer") : LanguageProvider.get("gui.logs_analyzer")
                             );
                         }
                         long showStartTime = System.currentTimeMillis();

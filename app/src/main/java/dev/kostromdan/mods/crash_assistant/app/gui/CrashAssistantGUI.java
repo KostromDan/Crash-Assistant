@@ -26,7 +26,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
@@ -132,6 +131,7 @@ public class CrashAssistantGUI {
         frame.setSize(500, 400);
         frame.setLayout(new BorderLayout());
 
+        setUpIcon(frame);
         addFileMenu();
 
         // --- Configuration reading ---
@@ -308,6 +308,21 @@ public class CrashAssistantGUI {
         }).start();
     }
 
+    public static void setUpIcon(JFrame frame) {
+        try {
+            java.io.InputStream iconStream = JarInJarHelper.class.getResourceAsStream("/crash_assistant_ico.png");
+            if (iconStream != null) {
+                BufferedImage iconImage = ImageIO.read(iconStream);
+                frame.setIconImage(iconImage);
+                iconStream.close();
+            } else {
+                CrashAssistantApp.LOGGER.warn("Could not find crash_assistant_logo.png in jar root");
+            }
+        } catch (IOException e) {
+            CrashAssistantApp.LOGGER.error("Failed to load window icon", e);
+        }
+    }
+
     private static void addFileMenu() {
 
         // Helper to build HTML-based menu items with title and description
@@ -473,9 +488,9 @@ public class CrashAssistantGUI {
     }
 
     public static void resize() {
-        frame.setSize(Math.max(Math.max(fileListPanel.getFileListPanel().getPreferredSize().width + 12, controlPanel.getPanel().getPreferredSize().width) + 26, labelPanel.getPreferredSize().width + 20),
-                Math.min(heightWithoutScrollPane + fileListPanel.getFileListPanel().getPreferredSize().height + 39, 700));
-        frame.setMinimumSize(new Dimension(frame.getSize().width, heightWithoutScrollPane + 73));
+        frame.setSize(frame.getPreferredSize().width + 17, Math.min(frame.getPreferredSize().height, 700));
+        frame.setMinimumSize(new Dimension(frame.getSize().width, frame.getSize().height));
+        frame.repaint();
     }
 
     public static synchronized void showKnownCrashReasonsWarnings() {

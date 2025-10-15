@@ -48,12 +48,25 @@ public class CrashAssistantGUI {
     public static FileListPanel fileListPanel;
     private static ControlPanel controlPanel;
     private static JPanel labelPanel;
-    private static HashSet<JComponent> highlightedButtons = new HashSet<>();
+    private static final Map<JComponent, OriginalState> highlightedComponents = new HashMap<>();
+
+    private static class OriginalState {
+        final Color originalBackground;
+        final Object originalStyle;
+        volatile int generation = 0;
+
+        OriginalState(JComponent component) {
+            this.originalBackground = component.getBackground();
+            this.originalStyle = component.getClientProperty("FlatLaf.style");
+        }
+    }
+
     private static Integer heightWithoutScrollPane = null;
 
 
     /**
      * Helper method to load the image from the specified path.
+     *
      * @param path The relative path to the image file.
      * @return A BufferedImage object, or null if loading fails.
      */
@@ -76,9 +89,10 @@ public class CrashAssistantGUI {
 
     /**
      * Helper method to resize a BufferedImage into an ImageIcon while maintaining aspect ratio.
+     *
      * @param originalImage The source image.
-     * @param maxWidth The maximum width for the resized image.
-     * @param maxHeight The maximum height for the resized image.
+     * @param maxWidth      The maximum width for the resized image.
+     * @param maxHeight     The maximum height for the resized image.
      * @return A resized ImageIcon, or null if the original image is invalid.
      */
     private static ImageIcon resizeLogo(BufferedImage originalImage, int maxWidth, int maxHeight) {
@@ -210,7 +224,7 @@ public class CrashAssistantGUI {
                 topRowPanel.add(mainTextPanel, BorderLayout.CENTER);
 
                 int textHeight = mainTextPanel.getPreferredSize().height;
-                modpackLogoLabel.setIcon(resizeLogo(logoImage, modpackLogoSize != -1 ? modpackLogoSize : 150, modpackLogoSize != -1 ? modpackLogoSize : textHeight-3));
+                modpackLogoLabel.setIcon(resizeLogo(logoImage, modpackLogoSize != -1 ? modpackLogoSize : 150, modpackLogoSize != -1 ? modpackLogoSize : textHeight - 3));
                 JPanel logoWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
                 logoWrapper.setOpaque(false);
                 logoWrapper.add(modpackLogoLabel);
@@ -222,11 +236,16 @@ public class CrashAssistantGUI {
                 JPanel contentPanel = new JPanel(new GridBagLayout());
                 GridBagConstraints gbc = new GridBagConstraints();
 
-                gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 1.0; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.anchor = GridBagConstraints.WEST;
+                gbc.gridx = 0;
+                gbc.gridy = 0;
+                gbc.weightx = 1.0;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.anchor = GridBagConstraints.WEST;
                 contentPanel.add(topRowPanel, gbc);
 
                 if (showScreenshotNotice) {
-                    gbc.gridy = 1; gbc.insets = new Insets(1, 0, 0, 0); // Reduced top padding from 3 to 1
+                    gbc.gridy = 1;
+                    gbc.insets = new Insets(1, 0, 0, 0); // Reduced top padding from 3 to 1
                     contentPanel.add(screenshotNoticePane, gbc);
                 }
                 labelPanel.add(contentPanel, BorderLayout.CENTER);
@@ -793,28 +812,42 @@ public class CrashAssistantGUI {
     }
 
     public static void highlightButton(JComponent button, Color color, long time) {
-        if (highlightedButtons.contains(button)) {
-            return;
-        }
-        highlightedButtons.add(button);
-        Color originalColor = button.getBackground();
+        // Get or create the state for the button, storing the original look only once.
+        OriginalState state = highlightedComponents.computeIfAbsent(button, OriginalState::new);
+        final int currentGeneration = ++state.generation;
 
         javax.swing.Timer timer = new javax.swing.Timer(400, null);
         final int[] count = {0};
         long startTime = Instant.now().toEpochMilli();
+
+        final String highlightStyle = "disabledBackground: " + String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+
         timer.addActionListener(e -> {
-            if (count[0] % 2 == 0) {
-                button.setBackground(color);
-            } else {
-                button.setBackground(originalColor);
+            // If a newer animation has started for this button, this timer is obsolete.
+            if (state.generation != currentGeneration) {
+                timer.stop();
+                return;
             }
 
-            count[0]++;
             if (Instant.now().toEpochMilli() - startTime > time) {
-                button.setBackground(originalColor);
-                highlightedButtons.remove(button);
                 timer.stop();
+                // This is the last timer for this button, so restore the true original state.
+                button.setBackground(state.originalBackground);
+                button.putClientProperty("FlatLaf.style", state.originalStyle);
+                button.repaint(); // Repaint needed for style change
+                highlightedComponents.remove(button);
+                return;
             }
+
+            // Blinking logic: toggle between the new highlight color and the original state.
+            boolean isHighlightPhase = count[0] % 2 == 0;
+
+            // Always set both properties to cover all Look and Feels.
+            button.setBackground(isHighlightPhase ? color : state.originalBackground);
+            button.putClientProperty("FlatLaf.style", isHighlightPhase ? highlightStyle : state.originalStyle);
+            button.repaint(); // Repaint is necessary for disabled buttons with FlatLaf
+
+            count[0]++;
         });
 
         timer.start();

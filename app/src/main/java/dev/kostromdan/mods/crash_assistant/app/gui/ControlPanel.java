@@ -119,8 +119,10 @@ public class ControlPanel {
                                     }
                                     SwingUtilities.invokeLater(() -> {
                                         for (FilePanel panel : fileListPanel.filePanelList) {
-                                            panel.setUploadButtonEnabled(true);
-                                            panel.setWaiting(false);
+                                            if (panel.isWaiting()) {
+                                                panel.setUploadButtonEnabled(true);
+                                                panel.setWaiting(false);
+                                            }
                                         }
                                     });
                                 }

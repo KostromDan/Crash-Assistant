@@ -1,3 +1,10 @@
+1.10.12:
+
+- Added logo of mod.
+- Added icon for app.
+- Fixed one bug.
+- Preparation for theme support.
+
 1.10.11:
 
 - Added the config option to customize log order in available logs.

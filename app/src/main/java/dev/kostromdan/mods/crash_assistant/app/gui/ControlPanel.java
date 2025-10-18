@@ -42,7 +42,7 @@ public class ControlPanel {
     private static JPanel panel;
     public static JDialog dialog;
     private final FileListPanel fileListPanel;
-    public final JButton uploadAllButton;
+    public final UploadAllButton uploadAllButton;
     public final JButton requestHelpButton;
     private String generatedMsg = null;
     private JLabel modListLabel;
@@ -83,7 +83,7 @@ public class ControlPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        uploadAllButton = new JButton(LanguageProvider.get("gui.upload_all_button"));
+        uploadAllButton = new UploadAllButton(LanguageProvider.get("gui.upload_all_button"));
         customizeButton(uploadAllButton, "upload_all");
         uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
         uploadAllButton.addActionListener(e -> uploadAllFiles());
@@ -107,6 +107,7 @@ public class ControlPanel {
                     if (Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
                         uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
                         uploadAllButton.setEnabled(true);
+                        uploadAllButton.setPreferredSize(uploadAllButton.getPreferredSize());
                         CrashAssistantGUI.resize();
 
                         if (!CrashAssistantConfig.getBoolean("general.prevent_upload_buttons_delay")) {
@@ -137,6 +138,7 @@ public class ControlPanel {
 
 
         gbc.gridy = 0;
+        gbc.insets = new Insets(3, 0, 0, 0);
         bottomPanel.add(uploadAllButton, gbc);
 
         requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));
@@ -144,6 +146,7 @@ public class ControlPanel {
         requestHelpButton.addActionListener(e -> requestHelp());
         requestHelpButton.setToolTipText(PlatformHelp.getActualHelpLink());
         gbc.gridy = 1;
+        gbc.insets = new Insets(5, 0, 0, 0);
         bottomPanel.add(requestHelpButton, gbc);
 
         panel.add(bottomPanel, BorderLayout.SOUTH);
@@ -572,5 +575,54 @@ public class ControlPanel {
     public static String getCurrentMemoryAgsMessage() {
         return LanguageProvider.getMsgLang("warnings_common.memory_args")
                 .replace("$CURRENT_MEMORY_ARGS$", getCurrentMemoryArgsString());
+    }
+
+
+    public class UploadAllButton extends JButton {
+        static String uploadAllText = LanguageProvider.get("gui.upload_all_button");
+        static String copyAllText = LanguageProvider.get("gui.upload_all_finished_button");
+
+        public UploadAllButton(String text) {
+            super(processTextBeforeChange(text));
+        }
+
+        @Override
+        public void setText(String text) {
+            super.setText(processTextBeforeChange(text));
+        }
+
+        private static String processTextBeforeChange(String text) {
+            if (text.equals(uploadAllText) || text.equals(copyAllText)) {
+                text = "<html><center>" + splitIntoTwoLines(text) + "</center></html>";
+            }
+            return text;
+        }
+
+        private static String splitIntoTwoLines(String text) {
+            int length = text.length();
+            // Bias the midpoint about 10% toward the right
+            int biasedMid = (int) (length * 0.50);
+            int bestSpace = -1;
+            int minDistance = Integer.MAX_VALUE;
+
+            // Find the space nearest to the biased midpoint
+            for (int i = 0; i < length; i++) {
+                if (text.charAt(i) == ' ') {
+                    int distance = Math.abs(biasedMid - i);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        bestSpace = i;
+                    }
+                }
+            }
+
+            // If no space found, return as-is
+            if (bestSpace == -1) {
+                return text;
+            }
+
+            // Replace the chosen space with <br> for HTML rendering
+            return text.substring(0, bestSpace) + "<br>" + text.substring(bestSpace + 1);
+        }
     }
 }

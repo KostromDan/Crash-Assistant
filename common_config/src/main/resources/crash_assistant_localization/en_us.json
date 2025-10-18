@@ -68,7 +68,7 @@
   "gui.analysis.jdeps.header": "Scans mods to find which ones depend on or using a specific class or package.\nThis is especially helpful if you see NoClassDefFoundError or ClassNotFoundException in your logs\nand don't know which mod requires that missing class.",
   "gui.analysis.jdeps.include_nested": "Include nested jars (jarInJar) in the analysis. Disabling can speed up the analysis but won't detect some rare cases.",
   "gui.analysis.jdeps.input_message": "Enter a class or package to search for dependencies (case-insensitive).\nSupported formats:\n- simple class name like 'IMPConfig' or 'OkHttpClient$Builder'\n- fully qualified class name like 'org.mozilla.javascript.BoundFunction'\n- package name like 'org.mozilla.javascript' (matches everything under this package)",
-  "gui.analysis.jdeps.not_found": "Usages of '$TERM$' not found in any mod.\n",
+  "gui.analysis.jdeps.not_found": "No usage of '$TERM$' found in any mod.\n",
   "gui.analysis.jdeps.restart_prompt": "Do you want to restart the analysis to apply this setting?",
   "gui.analysis.jdeps.restart_title": "Restart Analysis?",
   "gui.analysis.mcreator_detector.about_title": "About MCreator Mods",

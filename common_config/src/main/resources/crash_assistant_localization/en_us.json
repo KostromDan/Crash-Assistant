@@ -96,7 +96,7 @@
   "gui.copy_split_log_dialog_title": "Choose Log Part",
   "gui.delayed": "Delayed...",
   "gui.disable_mod": "Disable mod",
-  "gui.duplicated_mod": "Duplicated Crash Assistant Mod",
+  "gui.duplicated_mod": "Duplicate Crash Assistant Mod",
   "gui.duplicated_mod_warn": "Multiple 'crash_assistant' mods found:\n$MODS$\n\nKeep only one of them.\nIf you are seeing this message while trying to run the modpack, the modpack\ninstallation is probably corrupted (possibly due to an incorrect update). To fix this, you need to reinstall the modpack.",
   "gui.error": "Error!",
   "gui.error_delete_mod_exception": "Error while deleting the mod file: %s",

@@ -64,7 +64,7 @@
   "gui.analysis.gml_autofix.success_message": "Auto-Fix applied successfully.\nPlease restart the game for the changes to take effect.",
   "gui.analysis.gml_autofix.title": "Auto-Fix GML (IPv6)",
   "gui.analysis.gml_autofix.unsupported_version_error": "This Minecraft version is not supported by the Auto-Fix.\nThis shouldn't happen. Please report this issue to the Crash Assistant developers.",
-  "gui.analysis.jdeps.found": "Found references to '$TERM$' in the following mod(s):\n\n",
+  "gui.analysis.jdeps.found": "Found usage of '$TERM$' in the following mod(s):\n\n",
   "gui.analysis.jdeps.header": "Scans mods to find which ones depend on or using a specific class or package.\nThis is especially helpful if you see NoClassDefFoundError or ClassNotFoundException in your logs\nand don't know which mod requires that missing class.",
   "gui.analysis.jdeps.include_nested": "Include nested jars (jarInJar) in the analysis. Disabling can speed up the analysis but won't detect some rare cases.",
   "gui.analysis.jdeps.input_message": "Enter a class or package to search for dependencies (case-insensitive).\nSupported formats:\n- simple class name like 'IMPConfig' or 'OkHttpClient$Builder'\n- fully qualified class name like 'org.mozilla.javascript.BoundFunction'\n- package name like 'org.mozilla.javascript' (matches everything under this package)",

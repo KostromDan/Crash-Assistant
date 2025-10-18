@@ -82,7 +82,7 @@
   "gui.analysis.package_finder.found": "Found '$TERM$' in the following location(s):\n\n",
   "gui.analysis.package_finder.header": "Scans mods to find which ones contain the specified package or class.\nThis can help identify which mod provides a specific resource.",
   "gui.analysis.package_finder.input_message": "Enter a class or package to search for inside mods (case-insensitive).\nSupported formats:\n- simple class name like 'IMPConfig' or 'OkHttpClient$Builder'\n- fully qualified class name like 'org.mozilla.javascript.BoundFunction'\n- package name like 'org.mozilla.javascript' (matches everything under this package)",
-  "gui.analysis.package_finder.not_found": "'$TERM$' not found in any mod.\n",
+  "gui.analysis.package_finder.not_found": "No usage of '$TERM$' found in any mod.\n",
   "gui.browser_button_tooltip": "Open link in browser",
   "gui.close": "Close",
   "gui.codex_logs_analyzer": "Codex Logs Analyzer ($LANG.gui.window_name$)",

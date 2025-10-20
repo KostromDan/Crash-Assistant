@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CorruptedJarFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.PackageFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.EpicFightDependenciesAnalysisGUI;
@@ -431,6 +432,12 @@ public class CrashAssistantGUI {
                 JMenuItem jdepsAnalysisItem = makeMenuItem.apply("gui.menu.analysis.jdeps_dependencies_analysis", "gui.analysis.jdeps.header");
                 jdepsAnalysisItem.addActionListener(e -> JdepsDependenciesAnalysisGUI.showDialog(frame));
                 analysisMenu.add(jdepsAnalysisItem);
+            }
+
+            if (!disabledByConfigTools.contains("CorruptedJarFinderGUI")) {
+                JMenuItem corruptedJarFinderItem = makeMenuItem.apply("gui.menu.analysis.corrupted_jar_finder", "gui.menu.analysis.corrupted_jar_finder.desc");
+                corruptedJarFinderItem.addActionListener(e -> CorruptedJarFinderGUI.showDialog(frame));
+                analysisMenu.add(corruptedJarFinderItem);
             }
         }
 
@@ -993,4 +1000,3 @@ public class CrashAssistantGUI {
         return frame;
     }
 }
-

@@ -1,3 +1,13 @@
+1.10.13:
+
+- Reword translatable strings. Thanks Miroma (`its-miroma`) for making PR.
+    - Improved formulations, style, consistency, clarity, and American-English grammar in many English strings.
+- Updated some strings in all languages to reflect recently changed behavior.
+- Fixed missing empty line at the end of language files.
+- Added new analysis tools:
+    - Corrupted Jar Finder
+    - Corrupted Config Finder
+
 1.10.12:
 
 - Added logo of mod.
@@ -287,9 +297,9 @@
 
 1.9.6:
 
-- Redesigned `ModDataParser` to parse jar in jar, mixin configs and isMCreator.
+- Redesigned `ModDataParser` to parse jar in jar, mixin configs, and isMCreator.
 - Improved `modlist.txt` log. Now prints as a properly formated table, and with a
-  list of mixins, jar in jar and isMCreator.
+  list of mixins, jar in jar, and isMCreator.
   Note: `modlist.json` in config keeps the same, this is only about `modlist.txt` log.
 - Improved error message on OSHI failed to init because of permission issues and ways to fix it.
 - Moved config option `modpack_modlist.force_add_full_modlist_as_log` to `modpack_modlist.add_modlist_txt_as_log`.
@@ -613,7 +623,7 @@
 
 1.7.2:
 
-- 1.21.5 initial release for Forge, NeoForge and Fabric.
+- 1.21.5 initial release for Forge, NeoForge, and Fabric.
 - Improved start time. Especially if massive logs exist. Now almost no effect.
 - Added logging of time of analysing logs for crash reasons.
 - Improved logging wording on time of parsing mods metadata time.
@@ -732,7 +742,7 @@
 - Improved check for duplicated Crash Assistant mod.
 - Fixed issue where I forgot to update the license in mod data.
 - Added some logging.
-- Marked 1.21.5 as incompatible. I will port to 1.22, but 1.21.5 is not mainstream, will never be it and where too much
+- Marked 1.21.5 as incompatible. I will port to 1.22, but 1.21.5 is not mainstream, will never be it, and where too much
   changes. If you need it, feel free to open an issue, maybe I'll change my position.
 
 1.4.3:

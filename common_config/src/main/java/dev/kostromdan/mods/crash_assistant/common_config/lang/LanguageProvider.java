@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,6 +35,12 @@ public class LanguageProvider {
                 Files.list(oldLangPath).forEach(file -> {
                     try {
                         Files.move(file, LANG_PATH.resolve(file.getFileName()));
+                    } catch (FileAlreadyExistsException e) {
+                        LOGGER.warn("Tried to migrate file {}, but seems like it's already migrated, removing from the old folder...", file);
+                        try {
+                            Files.deleteIfExists(file);
+                        } catch (IOException ignored) {
+                        }
                     } catch (IOException e) {
                         LOGGER.error("Failed to move file: " + file, e);
                     }

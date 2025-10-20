@@ -27,7 +27,7 @@ public class ConnectorIncompatibleFabricMods extends KnownCrashReason {
 
     @Override
     public boolean matches(Log log) {
-        if (!PlatformHelp.isFabricBased()) return false;
+        if (!PlatformHelp.isForgeBased()) return false;
         LinkedHashSet<Mod> mods = ModListUtils.getCurrentModList(true);
         if (mods.stream().noneMatch(ConnectorIncompatibleFabricMods::isConnectorMod)) return false;
         boolean triggered = false;
@@ -55,8 +55,13 @@ public class ConnectorIncompatibleFabricMods extends KnownCrashReason {
     }
 
     private static boolean isConnectorMod(Mod mod) {
-        if (mod.getJarJarMods().size() != 1) return false;
-        return Objects.equals(mod.getJarJarMods().get(0).getModId(), "connectormod");
+        for (Mod jarJarMod : mod.getJarJarMods()) {
+            String modId = jarJarMod.getModId();
+            if ( Objects.equals(modId, "connectormod") || Objects.equals(modId, "connector")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public enum IncompatibleFabricMods {

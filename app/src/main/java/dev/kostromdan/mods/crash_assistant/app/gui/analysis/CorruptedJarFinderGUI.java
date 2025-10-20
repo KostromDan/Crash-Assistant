@@ -324,7 +324,10 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
             addRecord(records, visited, new CorruptionRecord(containerId, CorruptionReason.IO_ERROR, ioe.getMessage()));
         } finally {
             if (tmp != null) {
-                try { Files.deleteIfExists(tmp); } catch (IOException ignore) {}
+                try {
+                    Files.deleteIfExists(tmp);
+                } catch (IOException ignore) {
+                }
             }
         }
     }

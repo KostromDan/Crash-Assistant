@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.analysis.config;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -13,7 +14,7 @@ import java.util.Set;
  */
 public final class ConfigCheckerRegistry {
 
-    private static final List<ConfigChecker> CHECKERS = List.of(
+    private static final List<ConfigChecker> CHECKERS = Arrays.asList(
             new TomlNightConfigChecker(),
             new NightConfigJsonChecker(),
             new GsonJsonChecker()

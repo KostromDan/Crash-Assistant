@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CorruptedConfigFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CorruptedJarFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.PackageFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateDependenciesAnalysisGUI;
@@ -438,6 +439,12 @@ public class CrashAssistantGUI {
                 JMenuItem corruptedJarFinderItem = makeMenuItem.apply("gui.menu.analysis.corrupted_jar_finder", "gui.menu.analysis.corrupted_jar_finder.desc");
                 corruptedJarFinderItem.addActionListener(e -> CorruptedJarFinderGUI.showDialog(frame));
                 analysisMenu.add(corruptedJarFinderItem);
+            }
+
+            if (!disabledByConfigTools.contains("CorruptedConfigFinderGUI")) {
+                JMenuItem corruptedConfigFinderItem = makeMenuItem.apply("gui.menu.analysis.corrupted_config_finder", "gui.menu.analysis.corrupted_config_finder.desc");
+                corruptedConfigFinderItem.addActionListener(e -> CorruptedConfigFinderGUI.showDialog(frame));
+                analysisMenu.add(corruptedConfigFinderItem);
             }
         }
 

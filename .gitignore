@@ -27,6 +27,7 @@ runs
 /config/
 /logs/
 /mods/
+/saves/
 /mod_data/
 /crash-reports/
 win_event*.txt

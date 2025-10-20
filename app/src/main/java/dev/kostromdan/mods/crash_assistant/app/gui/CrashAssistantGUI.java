@@ -423,6 +423,13 @@ public class CrashAssistantGUI {
                 analysisMenu.add(mcreatorDetectorItem);
             }
 
+            // Mods loaded by Sinytra Connector analysis tool, not finished yet, will be in the next update.
+//            if (!disabledByConfigTools.contains("SinytraConnectorModsAnalysisGUI")) {
+//                JMenuItem sinytraConnectorItem = makeMenuItem.apply("gui.menu.analysis.sinytra_connector_mods", "gui.analysis.sinytra_connector_mods.header");
+//                sinytraConnectorItem.addActionListener(e -> SinytraConnectorModsAnalysisGUI.showSinytraConnectorModsDialog(frame));
+//                analysisMenu.add(sinytraConnectorItem);
+//            }
+
             if (!disabledByConfigTools.contains("PackageFinderGUI")) {
                 JMenuItem packageFinderItem = makeMenuItem.apply("gui.menu.analysis.package_class_finder", "gui.analysis.package_finder.header");
                 packageFinderItem.addActionListener(e -> PackageFinderGUI.showPackageFinderDialog(frame));

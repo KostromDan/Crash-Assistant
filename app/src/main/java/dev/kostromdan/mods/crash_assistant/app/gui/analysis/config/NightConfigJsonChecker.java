@@ -6,7 +6,8 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -14,7 +15,7 @@ import java.util.Set;
  */
 public final class NightConfigJsonChecker implements ConfigChecker {
 
-    private static final Set<String> EXTENSIONS = Collections.unmodifiableSet(Set.of("json", "json5"));
+    private static final Set<String> EXTENSIONS = new LinkedHashSet<>(Arrays.asList("json", "json5"));
 
     @Override
     public Set<String> supportedExtensions() {

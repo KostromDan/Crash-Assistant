@@ -18,11 +18,11 @@ import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class CorruptedConfigFinderGUI extends AnalysisGUIBase {
 
@@ -79,8 +80,8 @@ public class CorruptedConfigFinderGUI extends AnalysisGUIBase {
     }
 
     private static final Path WORKSPACE_ROOT = Paths.get("").toAbsolutePath().normalize();
-    private static final Set<String> TOML_EXTENSIONS = Set.of("toml");
-    private static final Set<String> JSON_EXTENSIONS = Set.of("json", "json5");
+    private static final Set<String> TOML_EXTENSIONS = new LinkedHashSet<>(Arrays.asList("toml"));
+    private static final Set<String> JSON_EXTENSIONS = new LinkedHashSet<>(Arrays.asList("json", "json5"));
     private static final Set<String> SUPPORTED_EXTENSIONS = ConfigCheckerRegistry.getSupportedExtensions();
 
     private final Map<String, Path> configsForRemoval = new LinkedHashMap<>();
@@ -338,10 +339,10 @@ public class CorruptedConfigFinderGUI extends AnalysisGUIBase {
         if (!Files.isDirectory(root)) {
             return;
         }
-        try (var stream = Files.walk(root, FileVisitOption.FOLLOW_LINKS)) {
-            stream.filter(Files::isRegularFile)
+        try (Stream<Path> stream = Files.walk(root)) {
+            stream.filter(p -> Files.isRegularFile(p))
                     .filter(path -> SUPPORTED_EXTENSIONS.contains(getExtension(path)))
-                    .forEach(out::add);
+                    .forEach(p -> out.add(p));
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to enumerate configs under {}", root, e);
         }
@@ -351,10 +352,10 @@ public class CorruptedConfigFinderGUI extends AnalysisGUIBase {
         if (!Files.isDirectory(savesRoot)) {
             return;
         }
-        try (var worlds = Files.list(savesRoot)) {
-            worlds.filter(Files::isDirectory)
+        try (Stream<Path> worlds = Files.list(savesRoot)) {
+            worlds.filter(p -> Files.isDirectory(p))
                     .map(world -> world.resolve("serverconfig"))
-                    .filter(Files::isDirectory)
+                    .filter(p -> Files.isDirectory(p))
                     .forEach(serverConfigDir -> collectFiles(serverConfigDir, out));
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to enumerate saves for CorruptedConfigFinder", e);

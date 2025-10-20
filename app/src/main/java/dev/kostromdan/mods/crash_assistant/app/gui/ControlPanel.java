@@ -578,7 +578,7 @@ public class ControlPanel {
     }
 
 
-    public class UploadAllButton extends JButton {
+    public static class UploadAllButton extends JButton {
         static String uploadAllText = LanguageProvider.get("gui.upload_all_button");
         static String copyAllText = LanguageProvider.get("gui.upload_all_finished_button");
 

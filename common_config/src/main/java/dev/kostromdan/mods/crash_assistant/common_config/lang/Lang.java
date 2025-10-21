@@ -11,6 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,6 +21,28 @@ import java.util.regex.Pattern;
 public class Lang {
     public HashMap<String, String> lang;
     public static FileConfig BCCConfig;
+
+    /**
+     * Registered transformations keyed by tag name (e.g. "TOLOWER" for &lt;TOLOWER&gt;...&lt;/TOLOWER&gt;).
+     * Order is preserved to give deterministic behavior if multiple different tags appear.
+     */
+    private static final Map<String, Function<String, String>> TEXT_TRANSFORMS = new LinkedHashMap<>();
+
+    /**
+     * Register a new text transformation that applies to the content inside &lt;TAG&gt;...&lt;/TAG&gt;.
+     * The tag markers themselves are removed from the final output.
+     *
+     * @param tagName     The tag name without angle brackets (e.g., "TOLOWER").
+     * @param transformer A function that transforms the inner text.
+     */
+    public static void registerTextTransform(String tagName, Function<String, String> transformer) {
+        if (tagName == null || tagName.isEmpty() || transformer == null) return;
+        TEXT_TRANSFORMS.put(tagName, transformer);
+    }
+
+    static {
+        registerTextTransform("TOLOWER", s -> s.toLowerCase(Locale.ROOT));
+    }
 
     public Lang(HashMap<String, String> lang) {
         this.lang = lang;
@@ -41,8 +66,10 @@ public class Lang {
         }
         value = applyPlaceHolder("$CONFIG.", value, CrashAssistantConfig::get, placeHoldersSurroundedWithHref);
         value = applyPlaceHolder("$LANG.", value, (key) -> LanguageProvider.get(key, placeHoldersSurroundedWithHref), placeHoldersSurroundedWithHref);
+        value = applyPlaceHolder("$MSG_LANG.", value, LanguageProvider::getMsgLang, placeHoldersSurroundedWithHref);
         value = applyPlaceHolder("$BCC.", value, Lang::getBCCValue, placeHoldersSurroundedWithHref);
         value = applyPlaceHolder("$LINK.", value, LinksProvider::getLinkByKey, placeHoldersSurroundedWithHref);
+        value = applyTextTransforms(value);
         return value;
     }
 
@@ -104,5 +131,104 @@ public class Lang {
             return "<" + key + " not found in BCC config>";
         }
         return value;
+    }
+
+    /**
+     * Applies all registered text transforms to the input string. A transform is triggered by
+     * an opening tag &lt;TAG&gt; and the corresponding closing tag &lt;/TAG&gt;. If the closing tag
+     * is missing, the transform applies from the end of the opening tag to the end of the string.
+     *
+     * Only tags that are explicitly registered via {@link #registerTextTransform(String, Function)} are recognized.
+     * Regular HTML tags (e.g., &lt;a&gt;, &lt;b&gt;) are ignored unless registered, preventing conflicts.
+     *
+     * The tag markers themselves are removed from the output; only the transformed inner text remains.
+     */
+    private static String applyTextTransforms(String input) {
+        if (input == null || input.isEmpty() || TEXT_TRANSFORMS.isEmpty()) return input;
+
+        StringBuilder sb = new StringBuilder(input);
+
+        // Continue scanning until no more registered tags are found
+        while (true) {
+            // Find the earliest occurrence of any registered opening tag
+            TagHit next = findNextOpeningTag(sb, 0);
+            if (next == null) break;
+
+            String openMarker = next.openMarker;
+            String closeMarker = next.closeMarker;
+
+            int openStart = next.openIndex;
+            int contentStart = openStart + openMarker.length();
+
+            // Look for the matching closing tag AFTER the opening tag
+            int closeStart = indexOf(sb, closeMarker, contentStart);
+
+            int contentEnd;
+            int removeEnd; // end index to remove (closing tag included if present)
+            if (closeStart >= 0) {
+                contentEnd = closeStart;
+                removeEnd = closeStart + closeMarker.length();
+            } else {
+                // No closing tag -> transform until end of string
+                contentEnd = sb.length();
+                removeEnd = sb.length();
+            }
+
+            // Extract, transform, and replace (removing the markers)
+            String inner = sb.substring(contentStart, contentEnd);
+            Function<String, String> fn = TEXT_TRANSFORMS.get(next.tagName);
+            String transformed = (fn != null) ? fn.apply(inner) : inner;
+
+            // Replace: [openStart, contentStart) + [contentStart, contentEnd) + [contentEnd, removeEnd)
+            // becomes just transformed
+            sb.replace(openStart, removeEnd, transformed);
+            // Loop again to catch further tags (including ones created or exposed by replacement)
+        }
+
+        return sb.toString();
+    }
+
+    private static class TagHit {
+        final String tagName;
+        final String openMarker;
+        final String closeMarker;
+        final int openIndex;
+
+        TagHit(String tagName, String openMarker, String closeMarker, int openIndex) {
+            this.tagName = tagName;
+            this.openMarker = openMarker;
+            this.closeMarker = closeMarker;
+            this.openIndex = openIndex;
+        }
+    }
+
+    /**
+     * Finds the earliest opening tag occurrence among all registered tags starting from {@code fromIndex}.
+     */
+    private static TagHit findNextOpeningTag(CharSequence text, int fromIndex) {
+        int bestIndex = -1;
+        TagHit best = null;
+
+        for (String tagName : TEXT_TRANSFORMS.keySet()) {
+            String open = "<" + tagName + ">";
+            String close = "</" + tagName + ">";
+            int at = indexOf(text, open, fromIndex);
+            if (at >= 0 && (bestIndex == -1 || at < bestIndex)) {
+                bestIndex = at;
+                best = new TagHit(tagName, open, close, at);
+            }
+        }
+        return best;
+    }
+
+    /**
+     * Safe indexOf for CharSequence.
+     */
+    private static int indexOf(CharSequence cs, String needle, int fromIndex) {
+        if (cs instanceof StringBuilder) {
+            return ((StringBuilder) cs).indexOf(needle, fromIndex);
+        }
+        String hay = cs.toString();
+        return hay.indexOf(needle, fromIndex);
     }
 }

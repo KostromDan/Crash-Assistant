@@ -17,6 +17,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class IntelChipBugWarning {
 
@@ -136,23 +138,56 @@ public class IntelChipBugWarning {
 
     public static void parseMicrocodeVersion() {
         try {
-            // Get the raw binary data in one line.
-            byte[] buffer = Advapi32Util.registryGetBinaryValue(
+            byte[] cur = Advapi32Util.registryGetBinaryValue(
                     WinReg.HKEY_LOCAL_MACHINE,
                     "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
                     "Update Revision"
             );
 
-            // Convert the byte array into a number (long).
-            microcodeVersion = ByteBuffer.wrap(buffer)
-                    .order(ByteOrder.LITTLE_ENDIAN)
-                    .getInt() & 0xFFFFFFFFL;
+            if (cur == null || cur.length < 4) {
+                throw new IllegalStateException("Update Revision missing/too short");
+            }
 
-            // Format the number as a hex string.
+            CrashAssistantApp.LOGGER.info("Update Revision bytes: {}", IntStream.range(0, cur.length).mapToObj(i -> String.format("%02X", cur[i] & 0xFF)).collect(Collectors.joining(" ")));
+
+            ByteBuffer bb = ByteBuffer.wrap(cur).order(ByteOrder.LITTLE_ENDIAN);
+            long d0 = (bb.getInt(0) & 0xFFFFFFFFL);                          // first  DWORD
+            long d1 = (cur.length >= 8) ? (bb.getInt(4) & 0xFFFFFFFFL) : 0L; // second DWORD
+
+            long rev = (d0 != 0) ? d0 : d1;
+
+
+            // Fallback: try BIOS-provided "Previous Update Revision"
+            if (rev == 0) {
+                byte[] prev = Advapi32Util.registryGetBinaryValue(
+                        WinReg.HKEY_LOCAL_MACHINE,
+                        "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+                        "Previous Update Revision"
+                );
+                if (prev != null && prev.length >= 4) {
+                    CrashAssistantApp.LOGGER.info("Previous Update Revision bytes: {}", IntStream.range(0, prev.length).mapToObj(i -> String.format("%02X", prev[i] & 0xFF)).collect(Collectors.joining(" ")));
+
+                    ByteBuffer pb = ByteBuffer.wrap(prev).order(ByteOrder.LITTLE_ENDIAN);
+                    long p0 = (pb.getInt(0) & 0xFFFFFFFFL);
+                    long p1 = (prev.length >= 8) ? (pb.getInt(4) & 0xFFFFFFFFL) : 0L;
+                    rev = (p0 != 0) ? p0 : p1;
+                }
+            }
+
+            if (rev == 0) {
+                // Treat as unknown instead of misleading "0x0"
+                microcodeVersion = -1L;
+                microcodeVertionString = "UNKNOWN";
+                CrashAssistantApp.LOGGER.warn("Microcode revision unreadable (both DWORDs zero).");
+                return;
+            }
+
+            microcodeVersion = rev;
             microcodeVertionString = String.format("0x%X", microcodeVersion);
             CrashAssistantApp.LOGGER.info("Microcode version: " + microcodeVertionString);
 
         } catch (Exception e) {
+            microcodeVersion = -1L;
             microcodeVertionString = "ERROR - FAILED TO GET MICROCODE";
             CrashAssistantApp.LOGGER.error("Error getting microcode version: ", e);
         }

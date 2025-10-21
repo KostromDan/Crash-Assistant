@@ -12,6 +12,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.ApiProvider;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.Problem;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.UploadLogResponse;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 
 import javax.imageio.ImageIO;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -273,7 +275,7 @@ public class FilePanel {
                         lastError = e;
                         CrashAssistantApp.LOGGER.info("Failed to upload file \"" + log.getPath() + "\": ", e);
                         uploadButton.setText(LanguageProvider.get("gui.error"));
-                        CrashAssistantGUI.highlightButton(uploadButton, new Color(255, 100, 100), 3000);
+                        CrashAssistantGUI.highlightButton(uploadButton, new Color(255, 100, 100), 2800);
                         if (fromButton) {
                             String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e;
                             if (e instanceof DeclinedException) {
@@ -300,18 +302,34 @@ public class FilePanel {
                     }
                 }
             }
-            String linkToCopy = log.getLinkToUploadedFirstLines();
+            String toCopy = null;
             if (fromButton) {
                 if (log.getLinkToUploadedLastLines() != null) {
-                    linkToCopy = showLogPartSelectionDialog(LanguageProvider.get("gui.split_log_dialog_action_copy"));
+                    AtomicReference<String> result = new AtomicReference<>();
+                    try {
+                        SwingUtilities.invokeAndWait(() -> {
+                            result.set(showLogPartSelectionDialog(LanguageProvider.get("gui.split_log_dialog_action_copy")));
+                        });
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    toCopy = result.get();
+                } else if (log.getLinkToUploadedFirstLines() != null) {
+                    toCopy = CrashAssistantConfig.get("copied_links.single_link", true);
+                    toCopy = toCopy.replace("$LINK$", log.getLinkToUploadedFirstLines());
                 }
-                if (linkToCopy != null) ClipboardUtils.copy(linkToCopy);
+                if (toCopy != null) {
+                    toCopy = toCopy.replace("$FILE_NAME$", log.getFileName());
+                    toCopy = toCopy.replace("$LOG_NAME$", log.getParentName());
+                    toCopy = toCopy.replace("$TOO_BIG_REASONS$", getTooBigReasons(true));
+                    ClipboardUtils.copy(toCopy);
+                }
 
                 transformCopyLinkButton();
 
-                if (linkToCopy != null) {
+                if (toCopy != null) {
                     uploadButton.setText(LanguageProvider.get("gui.copied"));
-                    CrashAssistantGUI.highlightButton(uploadButton, new Color(100, 255, 100), 3000);
+                    CrashAssistantGUI.highlightButton(uploadButton, new Color(100, 255, 100), 2800);
                     uploadButton.setEnabled(false);
                 }
             }
@@ -324,7 +342,7 @@ public class FilePanel {
                             uploadButton.setEnabled(true);
                         }
                     },
-                    fromButton && linkToCopy != null ? 3000 : 0
+                    fromButton && log.getLinkToUploadedFirstLines() != null ? 3000 : 0
             );
         }).start();
     }
@@ -363,7 +381,8 @@ public class FilePanel {
                 LanguageProvider.get("gui.split_log_dialog_tail")
         };
         JOptionPane optionPane;
-        if (action.equals(LanguageProvider.get("gui.split_log_dialog_action_copy"))) {
+        boolean forCopy = action.equals(LanguageProvider.get("gui.split_log_dialog_action_copy"));
+        if (forCopy) {
             optionPane = new JOptionPane(
                     logSelectionPane,
                     JOptionPane.QUESTION_MESSAGE,
@@ -400,11 +419,28 @@ public class FilePanel {
         if (selectedValue == null) {
 
         } else if (selectedValue.equals(options[0])) {
-            selectedValue = getMessageWithBothLinks(true);
+            String toCopy = CrashAssistantConfig.get("copied_links.both_links_split", true);
+            toCopy = toCopy.replace("$LINK_FIRST_LINES$", this.log.getLinkToUploadedFirstLines());
+            toCopy = toCopy.replace("$LINK_LAST_LINES$", this.log.getLinkToUploadedLastLines());
+            selectedValue = toCopy;
         } else if (selectedValue.equals(options[1])) {
-            selectedValue = log.getLinkToUploadedFirstLines();
+            if (!forCopy) {
+                selectedValue = log.getLinkToUploadedFirstLines();
+            } else {
+                String toCopy = CrashAssistantConfig.get("copied_links.single_link_split", true);
+                toCopy = toCopy.replace("$LINK$", this.log.getLinkToUploadedFirstLines());
+                toCopy = toCopy.replace("$HEAD_OR_TAIL$", LanguageProvider.getMsgLang("gui.split_log_dialog_head").toLowerCase(Locale.ROOT));
+                selectedValue = toCopy;
+            }
         } else if (selectedValue.equals(options[2])) {
-            selectedValue = log.getLinkToUploadedLastLines();
+            if (!forCopy) {
+                selectedValue = log.getLinkToUploadedLastLines();
+            } else {
+                String toCopy = CrashAssistantConfig.get("copied_links.single_link_split", true);
+                toCopy = toCopy.replace("$LINK$", this.log.getLinkToUploadedLastLines());
+                toCopy = toCopy.replace("$HEAD_OR_TAIL$", LanguageProvider.getMsgLang("gui.split_log_dialog_tail").toLowerCase(Locale.ROOT));
+                selectedValue = toCopy;
+            }
         }
         FileListPanel.currentLogSelectionDialog = null;
         return (String) selectedValue;

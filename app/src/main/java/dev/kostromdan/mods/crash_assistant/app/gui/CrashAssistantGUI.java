@@ -63,8 +63,6 @@ public class CrashAssistantGUI {
         }
     }
 
-    private static Integer heightWithoutScrollPane = null;
-
 
     /**
      * Helper method to load the image from the specified path.
@@ -119,6 +117,94 @@ public class CrashAssistantGUI {
         return new ImageIcon(resizedImage);
     }
 
+    /**
+     * Returns true if the provided path looks like a GIF file.
+     */
+    private static boolean isGifPath(String path) {
+        if (path == null) return false;
+        String lower = path.trim().toLowerCase(Locale.ROOT);
+        return lower.endsWith(".gif");
+    }
+
+    /**
+     * Loads an animated GIF as an ImageIcon so the animation is preserved.
+     * Avoids ImageIO for GIFs (which decodes only the first frame).
+     */
+    private static ImageIcon loadAnimatedGifIcon(String path) {
+        if (path == null || path.trim().isEmpty()) {
+            return null;
+        }
+        Path logoPath = Paths.get(path);
+        if (!Files.exists(logoPath) || !Files.isRegularFile(logoPath)) {
+            CrashAssistantApp.LOGGER.error("Modpack logo not found or is not a file: {}", logoPath.toAbsolutePath());
+            return null;
+        }
+        try {
+            // ImageIcon preserves GIF animation frames.
+            return new ImageIcon(logoPath.toAbsolutePath().toString());
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Failed to load animated GIF modpack logo from path: {}", logoPath.toAbsolutePath(), e);
+            return null;
+        }
+    }
+
+    /**
+     * An Icon that draws the underlying (potentially animated) Image scaled to fit within
+     * the given maxWidth and maxHeight while maintaining aspect ratio.
+     * Because we draw with the component as the ImageObserver, animated GIFs keep animating.
+     */
+    private static final class ScaledImageIcon extends ImageIcon {
+        private final int maxWidth;
+        private final int maxHeight;
+
+        ScaledImageIcon(ImageIcon delegate, int maxWidth, int maxHeight) {
+            super(delegate.getImage());
+            this.maxWidth = Math.max(1, maxWidth);
+            this.maxHeight = Math.max(1, maxHeight);
+        }
+
+        private Dimension getScaledSize() {
+            int w = super.getIconWidth();
+            int h = super.getIconHeight();
+            if (w <= 0 || h <= 0) {
+                // Fallback before dimensions are known; use the provided max bounds.
+                return new Dimension(maxWidth, maxHeight);
+            }
+            double ratio = Math.min((double) maxWidth / w, (double) maxHeight / h);
+            int newW = Math.max(1, (int) Math.round(w * ratio));
+            int newH = Math.max(1, (int) Math.round(h * ratio));
+            return new Dimension(newW, newH);
+        }
+
+        @Override
+        public int getIconWidth() {
+            return getScaledSize().width;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return getScaledSize().height;
+        }
+
+        @Override
+        public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
+            Image image = getImage();
+            if (image == null) return;
+
+            Dimension d = getScaledSize();
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // Use the component as ImageObserver so GIF frames trigger repaints (animation).
+                g2.drawImage(image, x, y, d.width, d.height, c);
+            } finally {
+                g2.dispose();
+            }
+        }
+    }
+
 
     public CrashAssistantGUI() {
         LanguageProvider.updateLang();
@@ -141,7 +227,12 @@ public class CrashAssistantGUI {
         String logoPath = CrashAssistantConfig.get("gui_customisation.modpack_logo_path");
         boolean largeLogoMode = CrashAssistantConfig.getBoolean("gui_customisation.modpack_logo_large_mode");
         int modpackLogoSize = CrashAssistantConfig.getInteger("gui_customisation.modpack_logo_size");
-        BufferedImage logoImage = loadModpackLogo(logoPath);
+
+        // GIF support: choose the correct loader based on extension
+        final boolean isGif = isGifPath(logoPath);
+        BufferedImage logoImage = isGif ? null : loadModpackLogo(logoPath);             // static images (PNG/JPG/etc.)
+        ImageIcon animatedLogoIcon = isGif ? loadAnimatedGifIcon(logoPath) : null;      // animated GIFs
+
         boolean showScreenshotNotice = CrashAssistantConfig.getBoolean("gui_customisation.show_dont_send_screenshot_of_gui_notice");
 
         // --- Component Creation ---
@@ -184,7 +275,7 @@ public class CrashAssistantGUI {
         JLabel modpackLogoLabel = new JLabel();
 
         // --- Layout Logic ---
-        if (logoImage == null) {
+        if (logoImage == null && animatedLogoIcon == null) {
             // Case 1: No Logo
             JPanel contentPanel = new JPanel();
             contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
@@ -209,7 +300,17 @@ public class CrashAssistantGUI {
 
                 // Determine height for the logo to match the text block
                 int textHeight = leftColumn.getPreferredSize().height;
-                modpackLogoLabel.setIcon(resizeLogo(logoImage, modpackLogoSize != -1 ? modpackLogoSize : 150, modpackLogoSize != -1 ? modpackLogoSize : textHeight));
+
+                int maxW = (modpackLogoSize != -1) ? modpackLogoSize : 150;
+                int maxH = (modpackLogoSize != -1) ? modpackLogoSize : textHeight;
+
+                if (animatedLogoIcon != null) {
+                    // GIF support: scale while preserving animation
+                    modpackLogoLabel.setIcon(new ScaledImageIcon(animatedLogoIcon, maxW, maxH));
+                } else {
+                    // Static image path (existing behavior)
+                    modpackLogoLabel.setIcon(resizeLogo(logoImage, maxW, maxH));
+                }
 
                 JPanel logoWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
                 logoWrapper.setOpaque(false);
@@ -227,7 +328,17 @@ public class CrashAssistantGUI {
                 topRowPanel.add(mainTextPanel, BorderLayout.CENTER);
 
                 int textHeight = mainTextPanel.getPreferredSize().height;
-                modpackLogoLabel.setIcon(resizeLogo(logoImage, modpackLogoSize != -1 ? modpackLogoSize : 150, modpackLogoSize != -1 ? modpackLogoSize : textHeight - 3));
+                int maxW = (modpackLogoSize != -1) ? modpackLogoSize : 150;
+                int maxH = (modpackLogoSize != -1) ? modpackLogoSize : (textHeight - 3);
+
+                if (animatedLogoIcon != null) {
+                    // GIF support: scale while preserving animation
+                    modpackLogoLabel.setIcon(new ScaledImageIcon(animatedLogoIcon, maxW, maxH));
+                } else {
+                    // Static image path (existing behavior)
+                    modpackLogoLabel.setIcon(resizeLogo(logoImage, maxW, maxH));
+                }
+
                 JPanel logoWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
                 logoWrapper.setOpaque(false);
                 logoWrapper.add(modpackLogoLabel);
@@ -255,7 +366,6 @@ public class CrashAssistantGUI {
             }
         }
 
-
         frame.add(labelPanel, BorderLayout.NORTH);
 
         fileListPanel = new FileListPanel();
@@ -263,8 +373,6 @@ public class CrashAssistantGUI {
 
         controlPanel = new ControlPanel(fileListPanel);
         frame.add(controlPanel.getPanel(), BorderLayout.SOUTH);
-
-        heightWithoutScrollPane = frame.getPreferredSize().height;
 
         for (Log log : LogsList.getLogs()) {
             fileListPanel.addLog(log);
@@ -297,7 +405,6 @@ public class CrashAssistantGUI {
         CrashAssistantApp.GUIStartTime = Instant.now().toEpochMilli() - CrashAssistantApp.GUIStartTime;
         CrashAssistantApp.GUIInitialisationFinished = true;
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
-
 
         controlPanel.updateModListInfo();
         showCrashAssistantDuplicatedWarning();

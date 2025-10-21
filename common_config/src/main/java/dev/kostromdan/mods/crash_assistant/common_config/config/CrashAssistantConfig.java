@@ -161,6 +161,21 @@ public class CrashAssistantConfig {
                         "Can be needed to be disabled if issues are reported to something not supporting ANSI codeblocks, like GitHub.",
                 true);
 
+        config.setComment("copied_links", "Settings of links copied by Upload and copy link buttons");
+        addOption("copied_links.single_link",
+                "With this option, you can customize how single links from individual upload buttons are copied, there\n" +
+                        "log of small size was uploaded to a single link.\n" +
+                        "For example, leave just $LINK$ to copy just link.",
+                "$LOG_NAME$$FILE_NAME$: $LINK$");
+        addOption("copied_links.single_link_split",
+                "With this option, you can customize how links from individual upload buttons are copied, there\n" +
+                        "log was split to the 2 parts (head and tail, due to too large size for single upload), but user only decided to copy only one of them (not message with both).",
+                "$LOG_NAME$$FILE_NAME$($HEAD_OR_TAIL$): $LINK$ $TOO_BIG_REASONS$");
+        addOption("copied_links.both_links_split",
+                "With this option, you can customize how links from individual upload buttons are copied, there\n" +
+                        "log was split to the 2 parts (head and tail, due to too large size for single upload), but user decided to copy message with both.",
+                "$LOG_NAME$[$FILE_NAME$ <TOLOWER>$MSG_LANG.gui.split_log_dialog_head$</TOLOWER>](<$LINK_FIRST_LINES$>) / [<TOLOWER>$MSG_LANG.gui.split_log_dialog_tail$</TOLOWER>](<$LINK_LAST_LINES$>) $TOO_BIG_REASONS$");
+
         config.setComment("modpack_modlist", "Settings of modlist feature.\n" +
                 "Adds in generated msg block about which mods modpack user added/removed/updated.\n" +
                 "Also you can see diff by running '/crash_assistant modlist diff' command.");

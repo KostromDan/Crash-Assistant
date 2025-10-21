@@ -1,3 +1,14 @@
+1.10.14:
+
+- Added GIF support for modpack logos.
+- Added customization options for copied text of individual upload buttons.
+    - By default, a copied link now includes the log filename.
+- Fixed Intel microcode warning didn't display a microcode version correctly due to
+  differences in byte order on some systems.
+- Fixed the race condition during logs uploading added two versions ago.
+- Fixed `ConnectorIncompatibleFabricMods` log analysis added a couple of versions ago didn't work.
+- Many fixes and improvements.
+
 1.10.13:
 
 - Reword translatable strings. Thanks Miroma (`its-miroma`) for making PR.

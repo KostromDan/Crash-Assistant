@@ -40,6 +40,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -49,7 +50,7 @@ public class CrashAssistantGUI {
     public static FileListPanel fileListPanel;
     private static ControlPanel controlPanel;
     private static JPanel labelPanel;
-    private static final Map<JComponent, OriginalState> highlightedComponents = new HashMap<>();
+    private static final Map<JComponent, OriginalState> highlightedComponents = new ConcurrentHashMap<>();
 
     private static class OriginalState {
         final Color originalBackground;

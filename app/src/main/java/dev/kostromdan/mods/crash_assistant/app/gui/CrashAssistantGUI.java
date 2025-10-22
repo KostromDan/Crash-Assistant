@@ -617,6 +617,7 @@ public class CrashAssistantGUI {
     }
 
     public static void resize() {
+        frame.pack();
         frame.setSize(frame.getPreferredSize().width + 17, Math.min(frame.getPreferredSize().height, 700));
         frame.setMinimumSize(new Dimension(frame.getSize().width, frame.getSize().height));
         frame.repaint();

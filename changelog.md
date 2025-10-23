@@ -1,3 +1,10 @@
+1.10.15:
+
+- Switch from PowerShell to native JNA-based Windows Event Log querying in `TerminatedProcessesFinder`. This was done
+  because PowerShell can start slowly on some rare systems.
+- Fixed invalid gui size hiding some logs initially (before resizing after a couple of seconds) if
+  `modpack_modlist.enabled` config option was disabled.
+
 1.10.14:
 
 - Added GIF support for modpack logos.

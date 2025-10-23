@@ -430,7 +430,7 @@ public class TerminatedProcessesFinder {
                 detail.add("  - Thread ID: " + d.tidDec);
             }
             if (d.startTime != null) {
-                detail.add("  - Start Time (FILETIME ticks): " + d.startTime.decTicks + (d.startTime.human != null ? " [" + d.startTime.human + "]" : "") + " [" + d.startTime.raw + "]");
+                detail.add("  - Start Time: " + (d.startTime.human != null ? d.startTime.human : "") + " [" + d.startTime.raw + "]");
             }
             if (d.exception != null) {
                 detail.add("  - Exception Code: " + d.exception.dec + " [" + d.exception.hex + "]");

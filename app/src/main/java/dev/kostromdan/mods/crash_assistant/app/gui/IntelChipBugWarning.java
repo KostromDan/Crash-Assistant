@@ -9,6 +9,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import javax.swing.*;
 import java.awt.*;
@@ -138,6 +139,7 @@ public class IntelChipBugWarning {
 
     public static void parseMicrocodeVersion() {
         try {
+            if (!PlatformHelp.isWindows()) return;
             byte[] cur = Advapi32Util.registryGetBinaryValue(
                     WinReg.HKEY_LOCAL_MACHINE,
                     "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
@@ -168,7 +170,7 @@ public class IntelChipBugWarning {
             microcodeVertionString = String.format("0x%X", microcodeVersion);
             CrashAssistantApp.LOGGER.info("Microcode version: " + microcodeVertionString);
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             microcodeVersion = -1L;
             microcodeVertionString = "ERROR - FAILED TO GET MICROCODE";
             CrashAssistantApp.LOGGER.error("Error getting microcode version: ", e);

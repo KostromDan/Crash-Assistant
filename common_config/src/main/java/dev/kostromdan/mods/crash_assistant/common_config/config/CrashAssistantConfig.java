@@ -25,6 +25,9 @@ public class CrashAssistantConfig {
     private static final HashSet<String> usedOptions = new HashSet<>();
     private static long lastConfigUpdate;
 
+    private static final LinkedHashSet<String> canonicalSectionOrder = new LinkedHashSet<>();
+    private static final Map<String, LinkedHashSet<String>> canonicalKeysPerSection = new LinkedHashMap<>();
+
     static {
         executeWithLock(() -> {
             config = CommentedFileConfig.builder(CONFIG_PATH, TomlFormat.instance())
@@ -36,6 +39,10 @@ public class CrashAssistantConfig {
 
     private static void setupDefaultValues() {
         usedOptions.clear();
+
+        canonicalSectionOrder.clear();
+        canonicalKeysPerSection.clear();
+
         config.setComment("general", "General settings of Crash Assistant mod.");
         if (Objects.equals(config.get("general.help_link"), "https://discord.gg/moddedmc")) {
             config.remove("general.help_link");
@@ -311,7 +318,6 @@ public class CrashAssistantConfig {
                 "Enable feature.",
                 true);
 
-
         HashSet<String> toRemove = new HashSet<>();
         config.valueMap().forEach((key, value) -> {
             if (value instanceof AbstractCommentedConfig) {
@@ -335,6 +341,20 @@ public class CrashAssistantConfig {
     private static <T> void addOption(String path, String comment, T defaultValue) {
         usedOptions.add(path);
         usedOptions.add(path.split("\\.")[0]);
+
+        // Record canonical order (section + immediate child key)
+        String[] parts = path.split("\\.", 2);
+        String section = parts[0];
+        canonicalSectionOrder.add(section);
+        if (parts.length > 1) {
+            String sub = parts[1];
+            int dot = sub.indexOf('.');
+            if (dot >= 0) sub = sub.substring(0, dot);
+            canonicalKeysPerSection
+                    .computeIfAbsent(section, s -> new LinkedHashSet<>())
+                    .add(sub);
+        }
+
         config.setComment(path, comment);
         if (!config.contains(path)) {
             config.set(path, defaultValue);
@@ -373,7 +393,6 @@ public class CrashAssistantConfig {
     public static Path getConfigPath() {
         return CONFIG_PATH;
     }
-
 
     public static void executeWithLock(Runnable body) {
         Exception ex = null;
@@ -429,8 +448,16 @@ public class CrashAssistantConfig {
             }
             int old_values_hash = config.valueMap().hashCode();
             long old_comments_hash = getCommentsHash();
-            setupDefaultValues();
-            if (config.valueMap().hashCode() != old_values_hash || getCommentsHash() != old_comments_hash) {
+            long old_order_hash = getOrderHash();
+
+            setupDefaultValues(); // fills canonical order and adds/removes keys
+
+            // Detect misalignment and restore canonical order if needed
+            if (!isCanonicalOrderAligned()) {
+                enforceCanonicalOrder();
+            }
+
+            if (config.valueMap().hashCode() != old_values_hash || getCommentsHash() != old_comments_hash || getOrderHash() != old_order_hash) {
                 save();
             }
             lastConfigUpdate = CONFIG_PATH.toFile().lastModified();
@@ -447,6 +474,94 @@ public class CrashAssistantConfig {
             }
         }
         return hash;
+    }
+
+    private static long getOrderHash() {
+        List<String> tokens = new ArrayList<>();
+        for (Map.Entry<String, Object> e : config.valueMap().entrySet()) {
+            String top = e.getKey();
+            tokens.add("#" + top);
+            Object v = e.getValue();
+            if (v instanceof AbstractCommentedConfig) {
+                AbstractCommentedConfig sec = (AbstractCommentedConfig) v;
+                for (String k : sec.valueMap().keySet()) {
+                    tokens.add(top + "." + k);
+                }
+            }
+        }
+        return tokens.hashCode();
+    }
+
+    private static boolean isCanonicalOrderAligned() {
+        // Root sections: compare current order filtered to canonical vs canonical filtered to present
+        List<String> currentRoot = new ArrayList<>();
+        for (Map.Entry<String, Object> e : config.valueMap().entrySet()) {
+            if (e.getValue() instanceof AbstractCommentedConfig) {
+                currentRoot.add(e.getKey());
+            }
+        }
+        List<String> currentRootCanonOnly = new ArrayList<>();
+        for (String s : currentRoot) if (canonicalSectionOrder.contains(s)) currentRootCanonOnly.add(s);
+
+        List<String> canonicalRootPresent = new ArrayList<>();
+        for (String s : canonicalSectionOrder) if (currentRoot.contains(s)) canonicalRootPresent.add(s);
+
+        if (!currentRootCanonOnly.equals(canonicalRootPresent)) return false;
+
+        // Per-section keys
+        for (String section : canonicalRootPresent) {
+            Object v = config.get(section);
+            if (!(v instanceof AbstractCommentedConfig)) continue;
+            AbstractCommentedConfig sec = (AbstractCommentedConfig) v;
+
+            List<String> now = new ArrayList<>(sec.valueMap().keySet());
+            LinkedHashSet<String> canonSet = canonicalKeysPerSection.getOrDefault(section, new LinkedHashSet<>());
+
+            List<String> nowCanonOnly = new ArrayList<>();
+            for (String k : now) if (canonSet.contains(k)) nowCanonOnly.add(k);
+
+            List<String> canonPresent = new ArrayList<>();
+            for (String k : canonSet) if (now.contains(k)) canonPresent.add(k);
+
+            if (!nowCanonOnly.equals(canonPresent)) return false;
+        }
+        return true;
+    }
+
+    private static void enforceCanonicalOrder() {
+        // Reorder root sections to canonical (present-only)
+        List<String> desiredRoot = new ArrayList<>();
+        for (String s : canonicalSectionOrder) {
+            if (config.valueMap().containsKey(s)) desiredRoot.add(s);
+        }
+        reorderMap(config.valueMap(), desiredRoot);
+
+        // Reorder each section's keys to canonical (present-only)
+        for (String section : desiredRoot) {
+            Object v = config.get(section);
+            if (!(v instanceof AbstractCommentedConfig)) continue;
+            AbstractCommentedConfig sec = (AbstractCommentedConfig) v;
+
+            LinkedHashSet<String> canon = canonicalKeysPerSection.getOrDefault(section, new LinkedHashSet<>());
+            List<String> desiredKeys = new ArrayList<>();
+            for (String k : canon) if (sec.valueMap().containsKey(k)) desiredKeys.add(k);
+            reorderMap(sec.valueMap(), desiredKeys);
+        }
+    }
+
+    private static void reorderMap(Map<String, Object> map, List<String> desiredOrder) {
+        // Rebuild map in the desired order; append any leftovers at the end (shouldn't be any after cleanup)
+        LinkedHashMap<String, Object> old = new LinkedHashMap<>(map);
+        map.clear();
+        for (String k : desiredOrder) {
+            if (old.containsKey(k)) {
+                map.put(k, old.remove(k));
+            }
+        }
+        // append leftovers if any (safety)
+        for (Map.Entry<String, Object> e : old.entrySet()) {
+            map.put(e.getKey(), e.getValue());
+        }
     }
 
     public static void save() {

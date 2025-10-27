@@ -294,9 +294,10 @@ public class CrashAssistantConfig {
                         "- If you have some long text in the discord description, you will love the small one.\n" +
                         "- If the text is short, you will love the large one.",
                 false);
-        addOption("gui_customisation.modpack_logo_size",
-                "Hardcode modpack logo size. Default is -1, which means it's calculated automatically.\n" +
-                        "By default, this should not needed. But if you have heavily customized GUI, you may want to decrease its size, so this option could be needed in such case. ",
+        addOption("gui_customisation.limit_modpack_logo_height",
+                "Limit modpack logo height. Default is -1, which means it's calculated automatically.\n" +
+                        "By default, this should not be needed. But if you have heavily customized GUI or using\n" +
+                        "a rectangle logo instead of square, you may want to decrease its size, so this option could be needed in such case. ",
                 -1);
 
         config.setComment("compatibility", "Checks crash_assistant compatibility with other incompatible mods.\n" +

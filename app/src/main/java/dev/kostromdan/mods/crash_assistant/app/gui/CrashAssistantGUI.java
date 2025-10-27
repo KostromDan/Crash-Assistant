@@ -226,7 +226,7 @@ public class CrashAssistantGUI {
         // --- Configuration reading ---
         String logoPath = CrashAssistantConfig.get("gui_customisation.modpack_logo_path");
         boolean largeLogoMode = CrashAssistantConfig.getBoolean("gui_customisation.modpack_logo_large_mode");
-        int modpackLogoSize = CrashAssistantConfig.getInteger("gui_customisation.modpack_logo_size");
+        int modpackLogoHeightLimit = CrashAssistantConfig.getInteger("gui_customisation.limit_modpack_logo_height");
 
         // GIF support: choose the correct loader based on extension
         final boolean isGif = isGifPath(logoPath);
@@ -301,26 +301,27 @@ public class CrashAssistantGUI {
                 // Determine height for the logo to match the text block
                 int textHeight = leftColumn.getPreferredSize().height;
 
-                int maxW = (modpackLogoSize != -1) ? modpackLogoSize : 150;
-                int maxH = (modpackLogoSize != -1) ? modpackLogoSize : textHeight;
+                int maxW = 500;
+                int maxH = (modpackLogoHeightLimit != -1) ? Math.min(modpackLogoHeightLimit, textHeight) : textHeight;
 
                 if (animatedLogoIcon != null) {
-                    // GIF support: scale while preserving animation
                     modpackLogoLabel.setIcon(new ScaledImageIcon(animatedLogoIcon, maxW, maxH));
                 } else {
-                    // Static image path (existing behavior)
                     modpackLogoLabel.setIcon(resizeLogo(logoImage, maxW, maxH));
                 }
 
-                JPanel logoWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-                logoWrapper.setOpaque(false);
-                logoWrapper.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0)); // Add padding
-                logoWrapper.add(modpackLogoLabel);
+                modpackLogoLabel.setVerticalAlignment(SwingConstants.CENTER);
+                modpackLogoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-                JPanel logoContainer = new JPanel(new BorderLayout());
-                logoContainer.setOpaque(false);
-                logoContainer.add(logoWrapper, BorderLayout.NORTH);
-                labelPanel.add(logoContainer, BorderLayout.EAST);
+                JPanel logoWrapper = new JPanel();
+                logoWrapper.setLayout(new BoxLayout(logoWrapper, BoxLayout.Y_AXIS));
+                logoWrapper.setOpaque(false);
+                logoWrapper.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+                logoWrapper.add(Box.createVerticalGlue());
+                logoWrapper.add(modpackLogoLabel);
+                logoWrapper.add(Box.createVerticalGlue());
+
+                labelPanel.add(logoWrapper, BorderLayout.EAST);
 
             } else {
                 // Case 3: Small Logo Mode
@@ -328,23 +329,23 @@ public class CrashAssistantGUI {
                 topRowPanel.add(mainTextPanel, BorderLayout.CENTER);
 
                 int textHeight = mainTextPanel.getPreferredSize().height;
-                int maxW = (modpackLogoSize != -1) ? modpackLogoSize : 150;
-                int maxH = (modpackLogoSize != -1) ? modpackLogoSize : (textHeight - 3);
+                int maxW = 500;
+                int maxH = (modpackLogoHeightLimit != -1) ? Math.min(modpackLogoHeightLimit, textHeight - 3) : (textHeight - 3);
 
                 if (animatedLogoIcon != null) {
-                    // GIF support: scale while preserving animation
                     modpackLogoLabel.setIcon(new ScaledImageIcon(animatedLogoIcon, maxW, maxH));
                 } else {
-                    // Static image path (existing behavior)
                     modpackLogoLabel.setIcon(resizeLogo(logoImage, maxW, maxH));
                 }
 
-                JPanel logoWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+                JPanel logoWrapper = new JPanel(new GridBagLayout());
                 logoWrapper.setOpaque(false);
-                logoWrapper.add(modpackLogoLabel);
+                GridBagConstraints logoGbc = new GridBagConstraints();
+                logoGbc.anchor = GridBagConstraints.CENTER;
+                logoWrapper.add(modpackLogoLabel, logoGbc);
                 JPanel logoContainer = new JPanel(new BorderLayout());
                 logoContainer.setOpaque(false);
-                logoContainer.add(logoWrapper, BorderLayout.NORTH);
+                logoContainer.add(logoWrapper, BorderLayout.CENTER);
                 topRowPanel.add(logoContainer, BorderLayout.EAST);
 
                 JPanel contentPanel = new JPanel(new GridBagLayout());
@@ -359,7 +360,7 @@ public class CrashAssistantGUI {
 
                 if (showScreenshotNotice) {
                     gbc.gridy = 1;
-                    gbc.insets = new Insets(1, 0, 0, 0); // Reduced top padding from 3 to 1
+                    gbc.insets = new Insets(1, 0, 0, 0);
                     contentPanel.add(screenshotNoticePane, gbc);
                 }
                 labelPanel.add(contentPanel, BorderLayout.CENTER);

@@ -1,3 +1,16 @@
+1.10.16:
+
+- Now the modpack logo is displayed at the center, not on top. Added an option to return it to the top.
+    - If the modpack logo was square, anyway it consumed all available height, and this didn't matter.
+      This is applicable only for non-square logos.
+- Now config is restoring its canonical order for newly added keys.
+- Added a "Too Many Changes" warning for modpacks, disabled by default.
+  Allows configuring how many changes modpack creator allows
+  and displaying warning if the end user modified modpack, too heavily.
+- Fixed non-square but rectangle modpack logos were not sized correctly.
+- Fixed resize() function is working a little bit incorrectly when the modpack logo is configured.
+- Fixed the error in the log on Linux systems in an Intel corrupted processor checker.
+
 1.10.15:
 
 - Switch from PowerShell to native JNA-based Windows Event Log querying in `TerminatedProcessesFinder`. This was done

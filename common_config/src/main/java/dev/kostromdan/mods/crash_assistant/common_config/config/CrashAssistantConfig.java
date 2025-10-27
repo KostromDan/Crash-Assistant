@@ -299,6 +299,11 @@ public class CrashAssistantConfig {
                         "By default, this should not be needed. But if you have heavily customized GUI or using\n" +
                         "a rectangle logo instead of square, you may want to decrease its size, so this option could be needed in such case. ",
                 -1);
+        addOption("gui_customisation.modpack_logo_aligned_center",
+                "This option would be needed only if you limited modpack logo height.\n" +
+                        "Otherwise, the logo will consume all available horizontal space.\n" +
+                        "If true, the logo will be centered. If false, it will be aligned to the top. ",
+                true);
 
         config.setComment("compatibility", "Checks crash_assistant compatibility with other incompatible mods.\n" +
                 "Highly unrecommended to disable!");

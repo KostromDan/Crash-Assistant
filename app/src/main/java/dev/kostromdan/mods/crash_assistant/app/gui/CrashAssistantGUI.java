@@ -321,7 +321,11 @@ public class CrashAssistantGUI {
                 logoWrapper.add(modpackLogoLabel);
                 logoWrapper.add(Box.createVerticalGlue());
 
-                labelPanel.add(logoWrapper, BorderLayout.EAST);
+                JPanel logoContainer = new JPanel(new BorderLayout());
+                logoContainer.setOpaque(false);
+                logoContainer.add(logoWrapper, CrashAssistantConfig.getBoolean("gui_customisation.modpack_logo_aligned_center") ? BorderLayout.CENTER : BorderLayout.NORTH);
+
+                labelPanel.add(logoContainer, BorderLayout.EAST);
 
             } else {
                 // Case 3: Small Logo Mode
@@ -345,7 +349,9 @@ public class CrashAssistantGUI {
                 logoWrapper.add(modpackLogoLabel, logoGbc);
                 JPanel logoContainer = new JPanel(new BorderLayout());
                 logoContainer.setOpaque(false);
-                logoContainer.add(logoWrapper, BorderLayout.CENTER);
+                boolean centerAligned = CrashAssistantConfig.getBoolean("gui_customisation.modpack_logo_aligned_center");
+                logoContainer.add(logoWrapper, centerAligned ? BorderLayout.CENTER : BorderLayout.NORTH);
+                logoContainer.setBorder(BorderFactory.createEmptyBorder(centerAligned ? 0 : 1, 0, 0, 0));
                 topRowPanel.add(logoContainer, BorderLayout.EAST);
 
                 JPanel contentPanel = new JPanel(new GridBagLayout());

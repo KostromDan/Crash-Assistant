@@ -765,7 +765,6 @@ public class CrashAssistantGUI {
     public static void showTooManyChangesWarning() {
         synchronized (KnownCrashReasonMessage.class) {
             try {
-                // Respect local user choice: don't show again
                 try {
                     if (Objects.equals(dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig.get("too_many_changes.dont_show_again"), true)) {
                         return;
@@ -774,7 +773,7 @@ public class CrashAssistantGUI {
 
                 int allowedChanges = CrashAssistantConfig.getInteger("too_many_changes_warning.count");
                 if (allowedChanges <= 0) return;
-//                if (ModListDiff.isModpackCreator()) return;
+                if (ModListDiff.isModpackCreator()) return;
                 int totalChanges = ModListDiff.getDiff(true).getTotalChanges();
                 if (totalChanges <= allowedChanges) return;
                 String message;

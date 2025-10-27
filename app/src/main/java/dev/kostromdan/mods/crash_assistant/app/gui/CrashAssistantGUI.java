@@ -765,6 +765,13 @@ public class CrashAssistantGUI {
     public static void showTooManyChangesWarning() {
         synchronized (KnownCrashReasonMessage.class) {
             try {
+                // Respect local user choice: don't show again
+                try {
+                    if (Objects.equals(dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig.get("too_many_changes.dont_show_again"), true)) {
+                        return;
+                    }
+                } catch (Throwable ignored) {}
+
                 int allowedChanges = CrashAssistantConfig.getInteger("too_many_changes_warning.count");
                 if (allowedChanges <= 0) return;
 //                if (ModListDiff.isModpackCreator()) return;
@@ -781,16 +788,40 @@ public class CrashAssistantGUI {
                 ControlPanel.stopMovingToTop = true;
                 String finalMessage = message;
                 SwingUtilities.invokeAndWait(() -> {
-                    JOptionPane optionPane = new JOptionPane(
-                            CrashAssistantGUI.getEditorPane(finalMessage, false),
-                            JOptionPane.WARNING_MESSAGE,
-                            JOptionPane.DEFAULT_OPTION
+                    JDialog dialog = new JDialog((Frame) null, LanguageProvider.get("gui.too_many_changes_title"), true);
+                    dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+                    JEditorPane textPane = CrashAssistantGUI.getEditorPane(finalMessage, false);
+                    JPanel textPanel = new JPanel(new BorderLayout());
+                    textPanel.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+                            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+                    ));
+                    textPanel.add(textPane, BorderLayout.CENTER);
+
+                    JCheckBox dontShowAgainCheck = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+                    dontShowAgainCheck.addActionListener(e ->
+                            dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig.set("too_many_changes.dont_show_again", dontShowAgainCheck.isSelected())
                     );
-                    JDialog dialog = optionPane.createDialog(
-                            frame,
-                            LanguageProvider.get("gui.too_many_changes_title")
-                    );
+
+                    JButton okButton = new JButton("OK");
+                    okButton.addActionListener(e -> dialog.dispose());
+
+                    JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+                    bottomPanel.add(dontShowAgainCheck);
+                    bottomPanel.add(okButton);
+
+                    JPanel mainPanel = new JPanel(new BorderLayout(10, 5));
+                    mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+                    mainPanel.add(textPanel, BorderLayout.CENTER);
+                    mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+                    dialog.setContentPane(mainPanel);
+                    dialog.pack();
+                    dialog.setLocationRelativeTo(null);
+                    CrashAssistantApp.LOGGER.info("Showing too many changes warning");
                     dialog.setVisible(true);
+                    CrashAssistantApp.LOGGER.info("Too many changes warning dialog closed");
                 });
             } catch (Exception e) {
                 CrashAssistantApp.LOGGER.error("Error while showing too many changes warning: ", e);

@@ -262,7 +262,7 @@ public class CrashAssistantGUI {
 
         // --- Panel Construction ---
         labelPanel = new JPanel(new BorderLayout()); // Main container for the top section
-        labelPanel.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
+        labelPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 3, 5));
 
         JPanel mainTextPanel = new JPanel();
         mainTextPanel.setLayout(new BoxLayout(mainTextPanel, BoxLayout.Y_AXIS));
@@ -316,7 +316,7 @@ public class CrashAssistantGUI {
                 JPanel logoWrapper = new JPanel();
                 logoWrapper.setLayout(new BoxLayout(logoWrapper, BoxLayout.Y_AXIS));
                 logoWrapper.setOpaque(false);
-                logoWrapper.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+                logoWrapper.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 0));
                 logoWrapper.add(Box.createVerticalGlue());
                 logoWrapper.add(modpackLogoLabel);
                 logoWrapper.add(Box.createVerticalGlue());
@@ -360,7 +360,7 @@ public class CrashAssistantGUI {
 
                 if (showScreenshotNotice) {
                     gbc.gridy = 1;
-                    gbc.insets = new Insets(1, 0, 0, 0);
+                    gbc.insets = new Insets(2, 0, 0, 0);
                     contentPanel.add(screenshotNoticePane, gbc);
                 }
                 labelPanel.add(contentPanel, BorderLayout.CENTER);

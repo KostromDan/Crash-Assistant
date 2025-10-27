@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 public class CrashAssistantGUI {
     private static JFrame frame = null;
-    public static FileListPanel fileListPanel;
+    public static FileListPanel fileListPanel = null;
     private static ControlPanel controlPanel;
     private static JPanel labelPanel;
     private static final Map<JComponent, OriginalState> highlightedComponents = new ConcurrentHashMap<>();
@@ -624,6 +624,7 @@ public class CrashAssistantGUI {
     }
 
     public static void resize() {
+        if (frame == null || fileListPanel == null) return;
         int old = fileListPanel.getScrollPane().getVerticalScrollBarPolicy();
         fileListPanel.getScrollPane().setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         frame.pack();

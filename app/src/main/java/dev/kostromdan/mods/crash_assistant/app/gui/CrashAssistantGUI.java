@@ -19,6 +19,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 
@@ -417,6 +418,7 @@ public class CrashAssistantGUI {
         showCrashAssistantDuplicatedWarning();
         showIncompatibleModsWarning();
         IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
+        showTooManyChangesWarning();
         IntelChipBugWarning.showIfAffected(false);
         showEarlyIntegratedGPUWarning();
         new Thread(() -> {
@@ -756,6 +758,42 @@ public class CrashAssistantGUI {
                 });
             } catch (Exception e) {
                 CrashAssistantApp.LOGGER.error("Error while showing crash assistant duplicated warning: ", e);
+            }
+        }
+    }
+
+    public static void showTooManyChangesWarning() {
+        synchronized (KnownCrashReasonMessage.class) {
+            try {
+                int allowedChanges = CrashAssistantConfig.getInteger("too_many_changes_warning.count");
+                if (allowedChanges <= 0) return;
+//                if (ModListDiff.isModpackCreator()) return;
+                int totalChanges = ModListDiff.getDiff(true).getTotalChanges();
+                if (totalChanges <= allowedChanges) return;
+                String message;
+                if (CrashAssistantConfig.get("too_many_changes_warning.formulation_type").equals("DROP_SUPPORT")) {
+                    message = LanguageProvider.get("gui.too_many_changes_warning_drop_support");
+                } else {
+                    message = LanguageProvider.get("gui.too_many_changes_warning_notice");
+                }
+                message = message.replace("$MODIFICATIONS_COUNT$", "<strong style='color: red;'>" + totalChanges + "</strong>");
+
+                ControlPanel.stopMovingToTop = true;
+                String finalMessage = message;
+                SwingUtilities.invokeAndWait(() -> {
+                    JOptionPane optionPane = new JOptionPane(
+                            CrashAssistantGUI.getEditorPane(finalMessage, false),
+                            JOptionPane.WARNING_MESSAGE,
+                            JOptionPane.DEFAULT_OPTION
+                    );
+                    JDialog dialog = optionPane.createDialog(
+                            frame,
+                            LanguageProvider.get("gui.too_many_changes_title")
+                    );
+                    dialog.setVisible(true);
+                });
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.error("Error while showing too many changes warning: ", e);
             }
         }
     }

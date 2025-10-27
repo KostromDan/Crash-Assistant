@@ -215,6 +215,22 @@ public class CrashAssistantConfig {
                 "If enabled, will add generated modlist.txt, with names of all mods / modids / mixin configs / jarjar mods info to logs.",
                 true);
 
+        config.setComment("too_many_changes_warning",
+                "Settings of too many changes warning feature.\n" +
+                        "Notifies end users of the modpack and saying they made too many changes to the modpack.\n" +
+                        "Not displayed to the modpack creators.");
+        addOption("too_many_changes_warning.count",
+                "Set to the positive integer to enable feature. Set to negative integer to disable.\n" +
+                        "How many changes end user should make for warning to be displayed.",
+                -1);
+        addOption("too_many_changes_warning.formulation_type",
+                "With this option, you can select the formulation of this warning, currently supported:\n" +
+                        "   - NOTIFY: Just saying to the end user that what they made many changes and adding random mods or clicking\n" +
+                        "the \"Update All\" button is not a good idea without proper testing. It is expected to crash.\n" +
+                        "   - DROP_SUPPORT: Saying what you are not providing support for that amount of changes, suggesting the end user to\n" +
+                        "re-install modpack or they are on their own with that amount of changes.",
+                "NOTIFY");
+
         config.setComment("analysis", "Settings of analysis feature.\n" +
                 "Analysing logs for most common reasons of crashes and displaying recommendations with fixes.");
         addOption("analysis.enabled",

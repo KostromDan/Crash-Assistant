@@ -77,6 +77,10 @@ public class ModListDiff {
         return updatedMods;
     }
 
+    public int getTotalChanges() {
+        return addedMods.size() + removedMods.size() + updatedMods.size();
+    }
+
     public static synchronized ModListDiff getDiff(boolean useCache) {
         return new ModListDiff(ModListUtils.getSavedModList(), ModListUtils.getCurrentModList(useCache));
     }

@@ -617,9 +617,12 @@ public class CrashAssistantGUI {
     }
 
     public static void resize() {
+        int old = fileListPanel.getScrollPane().getHorizontalScrollBarPolicy();
+        fileListPanel.getScrollPane().setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         frame.pack();
-        frame.setSize(frame.getPreferredSize().width + 17, Math.min(frame.getPreferredSize().height, 700));
+        frame.setSize(frame.getPreferredSize().width, Math.min(frame.getPreferredSize().height, 700));
         frame.setMinimumSize(new Dimension(frame.getSize().width, frame.getSize().height));
+        fileListPanel.getScrollPane().setHorizontalScrollBarPolicy(old);
         frame.repaint();
     }
 

@@ -1,3 +1,7 @@
+1.10.17:
+
+- Fix a typo in the "Too Many Changes" warning text.
+
 1.10.16:
 
 - Now the modpack logo is displayed at the center, not on top. Added an option to return it to the top.

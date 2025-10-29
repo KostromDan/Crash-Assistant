@@ -45,7 +45,7 @@ public class Create6Addons extends KnownCrashReason {
         if (VersionUtils.isLower(PlatformHelp.minecraftVersion, "1.20")) {
             return false;
         }
-        if (CrashAssistantApp.gameLaunchedSuccessfully) {
+        if (CrashAssistantApp.gameLaunchedSuccessfully && log.getType() != LogType.CRASH_REPORT) {
             return false;
         }
         List<Mod> createMods = ModListUtils.getCurrentModList(true).stream()

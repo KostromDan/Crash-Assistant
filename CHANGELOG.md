@@ -1,6 +1,6 @@
 1.10.17:
 
-- Fix a typo in the "Too Many Changes" warning text.
+- Fixed a typo in the "Too Many Changes" warning text.
 
 1.10.16:
 

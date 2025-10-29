@@ -1,3 +1,9 @@
+1.10.18:
+
+- New `CorruptedModJar` log analysis. Detects if a crash is caused by a corrupted mod archive.
+- Fixed `ServerConfigCorrupted` log analysis was not triggered sometimes.
+- Fixed `Create6Addons` log analysis was not triggered rarely.
+
 1.10.17:
 
 - Fixed a typo in the "Too Many Changes" warning text.

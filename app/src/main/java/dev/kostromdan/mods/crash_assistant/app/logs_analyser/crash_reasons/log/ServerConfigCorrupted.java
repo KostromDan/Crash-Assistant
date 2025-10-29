@@ -29,7 +29,7 @@ public class ServerConfigCorrupted extends KnownCrashReason {
                 String config = line.split(": Failed loading config file ")[1].split(" of type SERVER for modid ")[0];
 
                 for (int j = i + 1; j < lines.size(); j++) {
-                    if (lines.get(j).contains("Caused by: com.electronwill.nightconfig.core.io.ParsingException: Not enough data available")) {
+                    if (lines.get(j).contains("Caused by: com.electronwill.nightconfig.core.io.ParsingException: ")) {
                         message=message.replace("$MOD_ID$", modId).replace("$CONFIG_FILE$", config);
                         return true;
                     }

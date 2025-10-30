@@ -34,6 +34,7 @@ public class MissingUnsupportedDependencies extends KnownCrashReason {
             if (line.contains("Missing or unsupported mandatory dependencies:") ||
                     line.contains("Conflicts between mods:") ||
                     line.contains("Unsupported installed optional dependencies:") ||
+                    line.contains("Error during pre-loading phase: Some of your mods are incompatible with the game or each other!") ||
                     line.contains("Incompatibilities between mods:")
             ) {
                 if (!line.contains("]: ")) continue;
@@ -67,6 +68,8 @@ public class MissingUnsupportedDependencies extends KnownCrashReason {
         if (line.isEmpty()) {
             return false;
         }
+        if (line.trim().equals("More details:")) return true;
+        if (line.trim().equals("A potential solution has been determined, this may resolve your problem:")) return true;
         char firstChar = line.charAt(0);
         if (firstChar != ' ' && firstChar != '\t') {
             return false;

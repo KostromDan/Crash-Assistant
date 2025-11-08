@@ -1,3 +1,9 @@
+1.10.19:
+
+- Added support of a new format of MissingUnsupportedDependencies.
+- Fixed `ModuleFind` and `ModuleResolution` log analysis rarely cannot find the issue.
+- Fixed race condition during logs uploading.
+
 1.10.18:
 
 - New `CorruptedModJar` log analysis. Detects if a crash is caused by a corrupted mod archive.

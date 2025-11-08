@@ -306,7 +306,8 @@ public class ControlPanel {
         new Thread(() -> {
             if (generatedMsg == null) {
                 uploadAllButton.setText(LanguageProvider.get("gui.uploading"));
-                for (FilePanel panel : fileListPanel.filePanelList) {
+                List<FilePanel> panelsSnapshot = new ArrayList<>(fileListPanel.filePanelList);
+                for (FilePanel panel : panelsSnapshot) {
                     while (!panel.isUploadButtonEnabled() && (panel.getLastError() != null || panel.isWaiting())) {
                         if (panel.isWaiting()) {
                             panel.setWaiting(false);
@@ -323,11 +324,11 @@ public class ControlPanel {
                 }
                 outerLoop:
                 while (true) {
-                    if (fileListPanel.filePanelList.isEmpty()) {
+                    if (panelsSnapshot.isEmpty()) {
                         break;
                     }
                     int successCounter = 0;
-                    for (FilePanel filePanel : fileListPanel.filePanelList) {
+                    for (FilePanel filePanel : panelsSnapshot) {
                         Log log = filePanel.getLog();
                         if (filePanel.getLastError() != null &&
                                 !(filePanel.getLastError() instanceof UploadException && filePanel.getLastError().getMessage().startsWith("Crash Assistant log"))) {
@@ -359,7 +360,7 @@ public class ControlPanel {
                         if (log.getLinkToUploadedFirstLines() != null) {
                             successCounter++;
                         }
-                        if (successCounter == fileListPanel.filePanelList.size()) {
+                        if (successCounter == panelsSnapshot.size()) {
                             break outerLoop;
                         }
                         try {
@@ -404,7 +405,8 @@ public class ControlPanel {
         }
         boolean kubeJSPosted = false;
         List<Log> kubeJSPanelList = new ArrayList<>();
-        for (FilePanel panel : fileListPanel.filePanelList) {
+        List<FilePanel> panelsSnapshotForMsg = new ArrayList<>(fileListPanel.filePanelList);
+        for (FilePanel panel : panelsSnapshotForMsg) {
             Log log = panel.getLog();
             if (!log.getName().startsWith("KubeJS: ")) {
                 continue;
@@ -416,7 +418,7 @@ public class ControlPanel {
             kubeJSPanelList.add(log);
         }
         List<String> logs = new ArrayList<>();
-        for (FilePanel panel : fileListPanel.filePanelList) {
+        for (FilePanel panel : panelsSnapshotForMsg) {
             Log log = panel.getLog();
             if (log.getName().startsWith("KubeJS: ")) {
                 if (kubeJSPosted) continue;

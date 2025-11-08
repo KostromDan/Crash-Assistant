@@ -119,7 +119,7 @@ public class ControlPanel {
                                         uploadButtonsActivated = true;
                                     }
                                     SwingUtilities.invokeLater(() -> {
-                                        for (FilePanel panel : fileListPanel.filePanelList) {
+                                        for (FilePanel panel : fileListPanel.getFilePanelList()) {
                                             if (panel.isWaiting()) {
                                                 panel.setUploadButtonEnabled(true);
                                                 panel.setWaiting(false);
@@ -306,8 +306,7 @@ public class ControlPanel {
         new Thread(() -> {
             if (generatedMsg == null) {
                 uploadAllButton.setText(LanguageProvider.get("gui.uploading"));
-                List<FilePanel> panelsSnapshot = new ArrayList<>(fileListPanel.filePanelList);
-                for (FilePanel panel : panelsSnapshot) {
+                for (FilePanel panel : fileListPanel.getFilePanelList()) {
                     while (!panel.isUploadButtonEnabled() && (panel.getLastError() != null || panel.isWaiting())) {
                         if (panel.isWaiting()) {
                             panel.setWaiting(false);
@@ -324,11 +323,11 @@ public class ControlPanel {
                 }
                 outerLoop:
                 while (true) {
-                    if (panelsSnapshot.isEmpty()) {
+                    if (fileListPanel.getFilePanelList().isEmpty()) {
                         break;
                     }
                     int successCounter = 0;
-                    for (FilePanel filePanel : panelsSnapshot) {
+                    for (FilePanel filePanel : fileListPanel.getFilePanelList()) {
                         Log log = filePanel.getLog();
                         if (filePanel.getLastError() != null &&
                                 !(filePanel.getLastError() instanceof UploadException && filePanel.getLastError().getMessage().startsWith("Crash Assistant log"))) {
@@ -360,7 +359,7 @@ public class ControlPanel {
                         if (log.getLinkToUploadedFirstLines() != null) {
                             successCounter++;
                         }
-                        if (successCounter == panelsSnapshot.size()) {
+                        if (successCounter == fileListPanel.getFilePanelList().size()) {
                             break outerLoop;
                         }
                         try {
@@ -405,8 +404,7 @@ public class ControlPanel {
         }
         boolean kubeJSPosted = false;
         List<Log> kubeJSPanelList = new ArrayList<>();
-        List<FilePanel> panelsSnapshotForMsg = new ArrayList<>(fileListPanel.filePanelList);
-        for (FilePanel panel : panelsSnapshotForMsg) {
+        for (FilePanel panel : fileListPanel.getFilePanelList()) {
             Log log = panel.getLog();
             if (!log.getName().startsWith("KubeJS: ")) {
                 continue;
@@ -418,7 +416,7 @@ public class ControlPanel {
             kubeJSPanelList.add(log);
         }
         List<String> logs = new ArrayList<>();
-        for (FilePanel panel : panelsSnapshotForMsg) {
+        for (FilePanel panel : fileListPanel.getFilePanelList()) {
             Log log = panel.getLog();
             if (log.getName().startsWith("KubeJS: ")) {
                 if (kubeJSPosted) continue;

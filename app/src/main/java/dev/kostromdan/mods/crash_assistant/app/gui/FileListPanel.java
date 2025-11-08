@@ -6,11 +6,13 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class FileListPanel {
-    public final LinkedHashSet<FilePanel> filePanelList = new LinkedHashSet<>();
+    public final Set<FilePanel> filePanelList = Collections.synchronizedSet(new LinkedHashSet<>());
     public final List<File> fileListPanelFilesDragAndDrop = new ArrayList<>();
     public static JDialog currentLogSelectionDialog = null;
     private final JPanel fileListPanel;
@@ -31,6 +33,12 @@ public class FileListPanel {
 
     public JPanel getFileListPanel() {
         return fileListPanel;
+    }
+
+    public Set<FilePanel> getFilePanelList(){
+        synchronized (filePanelList) {
+            return new LinkedHashSet<>(filePanelList);
+        }
     }
 
     public void addLog(Log log) {

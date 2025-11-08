@@ -1183,7 +1183,7 @@ public class CrashAssistantGUI {
 
     public static void addMissingLogs() {
         for (Log log : LogsList.getLogs()) {
-            if (fileListPanel.filePanelList.stream().noneMatch(x -> Objects.equals(x.getLog(), log))) {
+            if (fileListPanel.getFilePanelList().stream().noneMatch(x -> Objects.equals(x.getLog(), log))) {
                 fileListPanel.addLog(log);
             }
         }

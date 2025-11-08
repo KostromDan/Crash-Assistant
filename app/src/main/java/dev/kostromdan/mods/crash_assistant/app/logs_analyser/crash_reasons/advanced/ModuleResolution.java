@@ -9,12 +9,16 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 public class ModuleResolution extends KnownCrashReason {
     public ModuleResolution() {
         super(
-                LogType.LAUNCHER_LOG,
+                new HashSet<LogType>() {{
+                    add(LogType.LOG);
+                    add(LogType.LAUNCHER_LOG);
+                }},
                 LanguageProvider.get("warnings.module_resolution")
         );
     }

@@ -223,8 +223,7 @@ public class FilePanel {
                     String oldText = uploadButton.getText();
 
                     if (!fromButton && log.getType() == LogType.CRASH_ASSISTANT) {
-                        List<FilePanel> snapshotPanels = new ArrayList<>(CrashAssistantGUI.fileListPanel.filePanelList);
-                        List<FilePanel> logsCodexSupports = snapshotPanels.stream()
+                        List<FilePanel> logsCodexSupports = CrashAssistantGUI.fileListPanel.getFilePanelList().stream()
                                 .filter(x -> LogAnalyser.CodexSupportedLogTypes.contains(x.getLog().getType()))
                                 .collect(Collectors.toList());
                         while (!logsCodexSupports.isEmpty()) {

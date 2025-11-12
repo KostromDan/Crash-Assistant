@@ -21,7 +21,7 @@ public class LauncherLogReader extends LogReader {
     }
 
     private void cutLauncherLog() {
-        if (Objects.equals(log.getName(), "stdout_stderr_streams.log")) {
+        if (Objects.equals(log.getName(), "stderr_stream.log")) {
             return;
         }
         allLinesListCached = Collections.singletonList("");

@@ -95,9 +95,9 @@ public class CrashAssistantConfig {
                         "HIGHLY UNRECOMMENDED to disable! Contains many useful info.",
                 false);
         addOption("general.generate_own_launcher_log",
-                "Generates \"logs/stdout_stderr_streams.log\" with stdout and stderr streams.\n" +
+                "Generates \"logs/stderr_stream.log\" with stderr stream.\n" +
                         "Since many launchers are not saving this info, which is extremely helpful for debugging some crashes.\n" +
-                        "As only where crash reason is present. Keeps original streams untouched, just logs them to a file.",
+                        "As only where crash reason is present. Keeps original stream untouched, just logs it to a file.",
                 true);
         addOption("general.logs_priority_overrides",
                 "Here you can change priority for logs.\n" +

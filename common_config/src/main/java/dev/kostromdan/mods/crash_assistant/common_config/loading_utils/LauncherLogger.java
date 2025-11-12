@@ -17,10 +17,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * - The file receives entries prefixed only on the FIRST line of a multi-line write:
  * "[HH:mm:ss] [STDOUT]: " or "[HH:mm:ss] [STDERR]: ".
  * Subsequent lines in the same write are NOT prefixed.
+ * If a write begins in the middle of an existing line (continued from a previous write),
+ * that completed line is NOT prefixed; the first line that actually starts in this write gets the prefix.
  * - Console output remains unmodified (no prefixes, same bytes/charset as before).
  * - Writes to the file are synchronized per line to avoid mid-line interleaving
  * between stdout and stderr.
  * - A shutdown hook flushes any trailing partial line and closes the file.
+ * <p>
+ * Also provides a best-effort {@link #restore()} to revert System streams and close file resources.
  */
 public final class LauncherLogger {
 
@@ -30,7 +34,7 @@ public final class LauncherLogger {
     // Shared lock for atomic line writes across both prefixed streams.
     private static final Object FILE_LINE_LOCK = new Object();
 
-    // Install guard and handles needed for clean shutdown.
+    // Install guard and handles needed for clean shutdown / restore.
     private static final AtomicBoolean INSTALLED = new AtomicBoolean(false);
     private static BufferedOutputStream FILE_OUT;
     private static LinePrefixingOutputStream FILE_SIDE_OUT;
@@ -39,10 +43,15 @@ public final class LauncherLogger {
     private static PrintStream ORIGINAL_ERR;
     private static PrintStream INSTALLED_OUT;
     private static PrintStream INSTALLED_ERR;
+    private static Thread SHUTDOWN_HOOK;
 
     // Timestamp for prefixes: [HH:mm:ss]
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+    /**
+     * Installs a tee that writes console bytes unchanged to the console AND to a
+     * prefixed file stream. Idempotent.
+     */
     public static void redirectToFile() {
         if (!INSTALLED.compareAndSet(false, true)) {
             // Already installed; no-op
@@ -50,6 +59,7 @@ public final class LauncherLogger {
         }
 
         BufferedOutputStream bufferedFile = null;
+        boolean systemStreamsSwapped = false;
 
         try {
             // Capture original console streams up-front.
@@ -81,7 +91,8 @@ public final class LauncherLogger {
                 bufferedFile.flush();
             }
 
-            // File-side prefixed streams. Prefix appears only on the FIRST line per write call.
+            // File-side prefixed streams. Prefix appears only on the FIRST line per write call
+            // that actually STARTS within that write (and is sticky even if the line ends later).
             FILE_SIDE_OUT = new LinePrefixingOutputStream(bufferedFile, "STDOUT", FILE_LINE_LOCK, consoleCs);
             FILE_SIDE_ERR = new LinePrefixingOutputStream(bufferedFile, "STDERR", FILE_LINE_LOCK, consoleCs);
 
@@ -100,6 +111,7 @@ public final class LauncherLogger {
 
             System.setOut(INSTALLED_OUT);
             System.setErr(INSTALLED_ERR);
+            systemStreamsSwapped = true;
 
             INSTALLED_OUT.flush();
             INSTALLED_ERR.flush();
@@ -107,31 +119,136 @@ public final class LauncherLogger {
             FILE_OUT = bufferedFile;
 
             // Ensure trailing partial lines get written and the file is closed on JVM shutdown.
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                try {
-                    if (FILE_SIDE_OUT != null) FILE_SIDE_OUT.close();
-                } catch (IOException ignored) {
+            SHUTDOWN_HOOK = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (FILE_SIDE_OUT != null) FILE_SIDE_OUT.close();
+                    } catch (IOException ignored) {
+                    }
+                    try {
+                        if (FILE_SIDE_ERR != null) FILE_SIDE_ERR.close();
+                    } catch (IOException ignored) {
+                    }
+                    try {
+                        if (FILE_OUT != null) FILE_OUT.close();
+                    } catch (IOException ignored) {
+                    }
                 }
-                try {
-                    if (FILE_SIDE_ERR != null) FILE_SIDE_ERR.close();
-                } catch (IOException ignored) {
-                }
-                try {
-                    if (FILE_OUT != null) FILE_OUT.close();
-                } catch (IOException ignored) {
-                }
-            }));
+            }, "LauncherLogger-ShutdownHook");
+            try {
+                Runtime.getRuntime().addShutdownHook(SHUTDOWN_HOOK);
+            } catch (Throwable ignored) {
+                // If adding the hook fails, continue; resources still close on restore().
+            }
 
         } catch (Exception e) {
-            // If anything goes wrong during install, report via the original stderr to avoid recursion.
+            // If anything goes wrong during install, roll back to originals and close opened resources.
+            try {
+                if (systemStreamsSwapped) {
+                    System.setOut(ORIGINAL_OUT);
+                    System.setErr(ORIGINAL_ERR);
+                }
+            } catch (Throwable ignored) {
+            }
+
+            // Close any partially-created streams.
+            try {
+                if (FILE_SIDE_OUT != null) FILE_SIDE_OUT.close();
+            } catch (IOException ignored) {
+            }
+            try {
+                if (FILE_SIDE_ERR != null) FILE_SIDE_ERR.close();
+            } catch (IOException ignored) {
+            }
+            try {
+                if (bufferedFile != null) bufferedFile.close();
+            } catch (IOException ignored) {
+            }
+
+            // Attempt to remove any hook we might have added.
+            if (SHUTDOWN_HOOK != null) {
+                try {
+                    Runtime.getRuntime().removeShutdownHook(SHUTDOWN_HOOK);
+                } catch (Throwable ignored) {
+                }
+            }
+
+            // Null out all handles to leave a clean state.
+            FILE_OUT = null;
+            FILE_SIDE_OUT = null;
+            FILE_SIDE_ERR = null;
+            INSTALLED_OUT = null;
+            INSTALLED_ERR = null;
+            SHUTDOWN_HOOK = null;
+
             try {
                 if (ORIGINAL_ERR != null) e.printStackTrace(ORIGINAL_ERR);
                 else e.printStackTrace();
-            } catch (Throwable t) {
-                e.printStackTrace();
             } finally {
                 INSTALLED.set(false);
             }
+        }
+    }
+
+    /**
+     * Best-effort revert: restore original System.out/err and close file-side streams.
+     * Safe to call multiple times.
+     */
+    public static void restore() {
+        if (!INSTALLED.compareAndSet(true, false)) {
+            return; // not installed or already restored
+        }
+
+        // Swap back first so subsequent prints go to the real console.
+        try {
+            if (ORIGINAL_OUT != null) System.setOut(ORIGINAL_OUT);
+            if (ORIGINAL_ERR != null) System.setErr(ORIGINAL_ERR);
+        } catch (Throwable ignored) {
+        }
+
+        // Close installed print streams (tee) — NonClosingOutputStream only flushes console.
+        try {
+            if (INSTALLED_OUT != null) INSTALLED_OUT.close();
+        } catch (Throwable ignored) {
+        }
+        try {
+            if (INSTALLED_ERR != null) INSTALLED_ERR.close();
+        } catch (Throwable ignored) {
+        }
+        INSTALLED_OUT = null;
+        INSTALLED_ERR = null;
+
+        // Close file-side streams (flushes any trailing partial line).
+        try {
+            if (FILE_SIDE_OUT != null) FILE_SIDE_OUT.close();
+        } catch (IOException ignored) {
+        }
+        try {
+            if (FILE_SIDE_ERR != null) FILE_SIDE_ERR.close();
+        } catch (IOException ignored) {
+        }
+        FILE_SIDE_OUT = null;
+        FILE_SIDE_ERR = null;
+
+        // Close the underlying buffered file.
+        try {
+            if (FILE_OUT != null) {
+                FILE_OUT.flush();
+                FILE_OUT.close();
+            }
+        } catch (IOException ignored) {
+        } finally {
+            FILE_OUT = null;
+        }
+
+        // Remove shutdown hook if we added one.
+        if (SHUTDOWN_HOOK != null) {
+            try {
+                Runtime.getRuntime().removeShutdownHook(SHUTDOWN_HOOK);
+            } catch (Throwable ignored) {
+            }
+            SHUTDOWN_HOOK = null;
         }
     }
 
@@ -146,6 +263,9 @@ public final class LauncherLogger {
     /**
      * Attempt to discover the charset actually used by the console PrintStream so
      * forwarded bytes are identical to the original behavior.
+     * - JDK ≥10: private PrintStream#charset() (reflective).
+     * - JDKs that expose sun.stdout.encoding or native.encoding.
+     * - Fallback: Charset.defaultCharset().
      */
     private static Charset detectConsoleCharset(PrintStream ps) {
         // JDK ≥ 10: PrintStream has a private 'charset()' method.
@@ -156,12 +276,21 @@ public final class LauncherLogger {
             if (cs instanceof Charset) return (Charset) cs;
         } catch (Throwable ignore) {
         }
+
         // Some JVMs expose system properties:
         try {
             String prop = System.getProperty("sun.stdout.encoding");
             if (prop != null && !prop.isEmpty()) return Charset.forName(prop);
         } catch (Throwable ignore) {
         }
+
+        // JDK 18+ (JEP 400). Harmless on Java 8 where it will be null.
+        try {
+            String nativeEnc = System.getProperty("native.encoding");
+            if (nativeEnc != null && !nativeEnc.isEmpty()) return Charset.forName(nativeEnc);
+        } catch (Throwable ignore) {
+        }
+
         // Best effort fallback.
         return Charset.defaultCharset();
     }
@@ -271,9 +400,14 @@ public final class LauncherLogger {
     }
 
     /**
-     * Adds a timestamped, labeled prefix ONLY to the FIRST line produced by a single write(...) call.
-     * Subsequent lines from the same write are emitted without a prefix.
-     * CR, LF, and CRLF are handled; on close, a trailing partial line is flushed (with a prefix).
+     * Adds a timestamped, labeled prefix ONLY to the FIRST line produced by a single write(...) call,
+     * where "first line" means the first line that actually starts within that write call.
+     * Prefix reservation is sticky across write(...) calls: if a line starts in one call and ends in a later call,
+     * that line still receives the prefix. CR, LF, and CRLF are handled; on close, a trailing partial line is flushed.
+     * <p>
+     * Concurrency:
+     * - Per-stream internal state (buffer, CR tracking, pending prefix) is guarded by stateLock.
+     * - Cross-stream interleaving is avoided by FILE_LINE_LOCK inside emitLine(...).
      */
     private static final class LinePrefixingOutputStream extends OutputStream {
         private final OutputStream delegate;   // shared BufferedOutputStream
@@ -282,7 +416,17 @@ public final class LauncherLogger {
         private final Charset charset;         // same as console charset
 
         private final ByteArrayOutputStream lineBuffer = new ByteArrayOutputStream(4096);
+
+        // Tracks whether the previous byte was '\r' (to detect CRLF vs lone CR).
         private boolean sawCR = false;
+
+        // Sticky flag: if true, the currently-accumulating line should be prefixed when emitted,
+        // even if the line ends in a later write(...) call.
+        private boolean pendingPrefixForCurrentLine = false;
+
+        // Guards internal mutable state against concurrent write/close calls on this stream.
+        private final Object stateLock = new Object();
+
         private boolean closed = false;
 
         LinePrefixingOutputStream(OutputStream delegate, String label, Object lineLock, Charset charset) {
@@ -294,51 +438,61 @@ public final class LauncherLogger {
 
         @Override
         public void write(int b) throws IOException {
-            // route through array path; per-byte writes are rare from PrintStream
-            byte[] one = {(byte) b};
-            write(one, 0, 1);
+            write(new byte[]{(byte) b}, 0, 1);
         }
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            ensureOpen();
+            synchronized (stateLock) {
+                ensureOpen();
 
-            boolean prefixForNextLineInThisCall = true; // only first emitted line gets a prefix
-
-            int i = off;
-            int end = off + len;
-            while (i < end) {
-                int ch = b[i] & 0xFF;
-                i++;
-
-                if (sawCR) {
-                    if (ch == '\n') {
-                        emitLine(/*fromCRorCRLF*/true, /*prefixThisLine*/prefixForNextLineInThisCall);
-                        prefixForNextLineInThisCall = false;
-                        sawCR = false;
-                        continue;
-                    } else {
-                        emitLine(/*fromCRorCRLF*/true, /*prefixThisLine*/prefixForNextLineInThisCall); // lone CR
-                        prefixForNextLineInThisCall = false;
-                        sawCR = false;
-                        // fall through to process current ch
-                    }
+                // NEW: If this call begins while a line is already in progress,
+                // do NOT prefix that carried-over line per the contract.
+                if (lineBuffer.size() > 0 && pendingPrefixForCurrentLine) {
+                    pendingPrefixForCurrentLine = false;
                 }
 
-                if (ch == '\r') {
-                    sawCR = true;
-                } else if (ch == '\n') {
-                    emitLine(/*fromCRorCRLF*/false, /*prefixThisLine*/prefixForNextLineInThisCall);
-                    prefixForNextLineInThisCall = false;
-                } else {
-                    lineBuffer.write(ch);
+                boolean consumedThisCallPrefixReservation = false;
+                int i = off, end = off + len;
+
+                while (i < end) {
+                    int ch = b[i++] & 0xFF;
+
+                    if (sawCR) {
+                        if (ch == '\n') {
+                            // Finish previous line (CRLF)
+                            emitLine(true, consumePendingPrefix()); // will now be false after the NEW block above
+                            sawCR = false;
+                            continue;
+                        } else {
+                            // Lone CR ended the previous line
+                            emitLine(true, consumePendingPrefix());
+                            sawCR = false;
+                            // fall through with current ch
+                        }
+                    }
+
+                    if (ch == '\r') {
+                        sawCR = true;
+                    } else if (ch == '\n') {
+                        emitLine(false, consumePendingPrefix());
+                    } else {
+                        if (lineBuffer.size() == 0) {
+                            // Start of a NEW logical line; reserve once-per-call prefix
+                            if (!consumedThisCallPrefixReservation && !pendingPrefixForCurrentLine) {
+                                pendingPrefixForCurrentLine = true;
+                                consumedThisCallPrefixReservation = true;
+                            }
+                        }
+                        lineBuffer.write(ch);
+                    }
                 }
             }
         }
 
         @Override
         public void flush() throws IOException {
-            // Coherent with writes; do not emit partial line here.
+            // Do not emit partial line here; just flush the underlying stream coherently.
             synchronized (lineLock) {
                 delegate.flush();
             }
@@ -346,20 +500,27 @@ public final class LauncherLogger {
 
         @Override
         public void close() throws IOException {
-            if (closed) return;
-            closed = true;
+            synchronized (stateLock) {
+                if (closed) return;
+                closed = true;
 
-            // Flush a trailing partial line (prefix it).
-            if (sawCR) {
-                emitLine(true, true);
-                sawCR = false;
-            } else if (lineBuffer.size() > 0) {
-                emitLine(false, true);
+                // Flush a trailing partial line (prefix depends on whether a reservation exists).
+                if (sawCR) {
+                    emitLine(true, consumePendingPrefix());
+                    sawCR = false;
+                } else if (lineBuffer.size() > 0) {
+                    emitLine(false, consumePendingPrefix());
+                }
             }
-
             synchronized (lineLock) {
                 delegate.flush();
             }
+        }
+
+        private boolean consumePendingPrefix() {
+            boolean p = pendingPrefixForCurrentLine;
+            pendingPrefixForCurrentLine = false;
+            return p;
         }
 
         private void emitLine(boolean fromCRorCRLF, boolean prefixThisLine) throws IOException {
@@ -369,15 +530,19 @@ public final class LauncherLogger {
                     String prefix = "[" + ts + "] [" + label + "]: ";
                     delegate.write(prefix.getBytes(charset));
                 }
-                lineBuffer.writeTo(delegate);
-                if (fromCRorCRLF) {
-                    delegate.write('\r');
-                    delegate.write('\n');
-                } else {
-                    delegate.write('\n');
+                try {
+                    lineBuffer.writeTo(delegate);
+                    if (fromCRorCRLF) {
+                        delegate.write('\r');
+                        delegate.write('\n');
+                    } else {
+                        delegate.write('\n');
+                    }
+                } finally {
+                    // Always reset buffer to keep internal state consistent even if delegate.write throws.
+                    lineBuffer.reset();
                 }
             }
-            lineBuffer.reset();
         }
 
         private void ensureOpen() throws IOException {

@@ -237,12 +237,11 @@ public class CrashAssistantApp {
             LogsList.addIfExistsAndModified(new Log(LogType.DISCONNECT_CLIENT, path));
         }
 
-        Log stdout = new Log(LogType.LAUNCHER_LOG, Paths.get("logs", "stdout_stderr_streams.log"));
-        stdout.getReader().readLogFileSafe();
-        if (!stdout.getReader().getLastLine().equals("[CrashAssistantLauncherLogger]: This is intentional to avoid impacting performance.")) {
-            LogsList.addIfExistsAndModified(stdout);
-        }
 
+        Log stderrLog = new Log(LogType.LAUNCHER_LOG, Paths.get("logs", "stderr_stream.log"));
+        if (Files.isRegularFile(stderrLog.getPath()) && stderrLog.getFile().length() >= 380) {
+            LogsList.addIfExistsAndModified(stderrLog);
+        }
 
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("logs", "launcher_log.txt")));

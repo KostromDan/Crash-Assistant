@@ -37,6 +37,8 @@ public class JarInJarHelper {
         }
         isClient = true;
         try {
+            if (CrashAssistantConfig.getBoolean("general.generate_own_launcher_log")) LauncherLogger.redirectToFile();
+
             Path originalModJarPath = Paths.get(LibrariesJarLocator.getOurModJarPath()).toAbsolutePath();
             LOGGER.info("Launching CrashAssistantApp ({})", originalModJarPath.getFileName().toString());
 

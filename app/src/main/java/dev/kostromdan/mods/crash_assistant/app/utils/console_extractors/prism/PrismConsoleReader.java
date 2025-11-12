@@ -19,20 +19,21 @@ import java.util.*;
  *    To obtain an exact copy of what Prism shows in its console pane, we read
  *    Prism's process memory directly and reconstruct the Qt LogModel ring buffer.
  *
- * High‑level algorithm
+ * High‑level algorithm (updated)
  *  1) Find the Prism process (PrismLauncher.exe / prismlauncher.exe) via Toolhelp32.
  *  2) Enforce architecture compatibility (require 64‑bit JVM; reject WOW64 targets).
  *  3) Enumerate readable, committed, private memory regions (VirtualQueryEx).
- *  4) Scan those regions for stable UTF‑16 anchors Prism prints in the console:
- *         "Minecraft folder is:", "Java Arguments:"
- *  5) For each anchor, infer plausible QString layouts:
- *     - Treat the anchor’s char16_t* as the QString data pointer.
- *     - Derive matching QString d‑pointer candidates by testing Δ ∈ {8..96}.
- *     - For validated d‑pointers, find in‑RAM owners and probe entry layouts with
- *       pointer offsets {0,8,16,24} and strides {16,24,32,40}.
- *  6) For each viable layout, expand a contiguous block **allowing empty lines**.
- *  7) Try exact ring reconstruction by searching {max,first,num} near owners of
- *     the array base pointer. If not found, return the contiguous block (RAM‑only).
+ *  4) **Initial anchor**: scan only for
+ *         "Launching CrashAssistantApp (CrashAssistant-fabric-1.19-1.21.4-1.10.19.jar)"
+ *  5) For each anchor, infer plausible QString layouts, then find owners and probe
+ *     entry layouts with pointer offsets {0,8,16,24} and strides {16,24,32,40}.
+ *  6) For each viable layout, try exact ring reconstruction; if that fails, try a
+ *     contiguous linear block **allowing empty lines**.
+ *  7) **Validation (new)**: return the **first** candidate whose reconstructed text
+ *     contains **all** required markers:
+ *     "Java Arguments:", "Launching CrashAssistantApp (CrashAssistant-fabric-1.19-1.21.4-1.10.19.jar)",
+ *     "Prism Launcher version:", "Minecraft folder is:", "Java path is:", "Libraries:",
+ *     "Minecraft process ID:".
  *
  * Notes
  *  - No disk fallbacks (no latest.log), no external commands.
@@ -41,7 +42,8 @@ import java.util.*;
  *
  * Public API
  *  - String PrismConsoleReader.getPrismConsoleText()
- *    Returns the console text or null if the model cannot be reliably located.
+ *    Returns the console text or null if the model cannot be reliably located
+ *    or if no candidate passes strict validation.
  */
 public final class PrismConsoleReader {
 
@@ -83,9 +85,29 @@ public final class PrismConsoleReader {
             PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY
     ));
 
-    // Anchors Prism always prints
-    private static final String[] PRISM_EXE_NAMES = { "PrismLauncher.exe", "prismlauncher.exe" };
-    private static final String[] LOG_ANCHORS     = { "Minecraft folder is:", "Java Arguments:" };
+    // Executable names (case-insensitive)
+    private static final String[] PRISM_EXE_NAMES = { "prismlauncher.exe" };
+
+    // ---- Anchors & Validation (updated) ----
+
+    /** Primary anchor to seed candidates (as required). */
+    private static final String PRIMARY_ANCHOR =
+            "Launching CrashAssistantApp (CrashAssistant-fabric-1.19-1.21.4-1.10.19.jar)";
+
+    /** All markers that MUST be present in the final reconstruction. */
+    private static final String[] REQUIRED_MARKERS = new String[] {
+            "Java Arguments:",
+            "Launching CrashAssistantApp (CrashAssistant-fabric-1.19-1.21.4-1.10.19.jar)",
+            "Prism Launcher version:",
+            "Minecraft folder is:",
+            "Java path is:",
+            "Libraries:",
+            "Minecraft process ID:"
+    };
+
+    // (legacy anchors retained but unused; kept for reference)
+    @SuppressWarnings("unused")
+    private static final String[] LEGACY_LOG_ANCHORS = { "Minecraft folder is:", "Java Arguments:" };
 
     // Scan budgets
     private static final long GLOBAL_READ_BUDGET = 512L * 1024 * 1024; // 512 MB
@@ -124,13 +146,19 @@ public final class PrismConsoleReader {
                 return null;
             }
 
+            // Enumerate regions once and reuse for pointer searches.
             List<MemoryRegion> regions = iterateReadablePrivateRegions(hProcess);
             log("Readable private regions: %d", Integer.valueOf(regions.size()));
 
-            List<AnchorHit> anchors = findAnchorUtf16Buffers(hProcess, regions, LOG_ANCHORS);
-            log("Anchors found: %d", Integer.valueOf(anchors.size()));
-            if (anchors.isEmpty()) return null;
+            // --- NEW: initial candidates by the required primary anchor only ---
+            List<AnchorHit> anchors = findAnchorUtf16Buffers(hProcess, regions, new String[]{ PRIMARY_ANCHOR });
+            log("Anchors found (primary): %d", Integer.valueOf(anchors.size()));
+            if (anchors.isEmpty()) {
+                log("Primary anchor not found; giving up.");
+                return null;
+            }
 
+            // Iterate over candidates; return the first that passes strict validation.
             for (int ai = 0; ai < anchors.size(); ai++) {
                 AnchorHit a = anchors.get(ai);
                 log("  Anchor \"%s\" @ 0x%016X", a.anchorText, Long.valueOf(a.charDataVA));
@@ -144,7 +172,8 @@ public final class PrismConsoleReader {
                     int delta = (int)(qd.charDataVA - qd.dPointer);
                     log("    QString d=0x%016X Δ=%d", Long.valueOf(qd.dPointer), Integer.valueOf(delta));
 
-                    List<Long> owners = findPointerOccurrences(hProcess, qd.dPointer, Native.POINTER_SIZE, 1024);
+                    // Reuse enumerated regions to find owners efficiently
+                    List<Long> owners = findPointerOccurrences(hProcess, regions, qd.dPointer, Native.POINTER_SIZE, 1024);
                     log("      Owners referencing d-pointer: %d", Integer.valueOf(owners.size()));
                     if (owners.isEmpty()) continue;
 
@@ -188,25 +217,34 @@ public final class PrismConsoleReader {
                             Integer.valueOf(best.span), Integer.valueOf(best.ptrOffset));
 
                     // Try exact ring reconstruction first
-                    String exact = tryReconstructRingExactly(hProcess, best);
+                    String exact = tryReconstructRingExactly(hProcess, regions, best);
                     if (exact != null && exact.length() > 0) {
-                        log("      Exact ring reconstruction succeeded.");
-                        return exact;
+                        if (containsAllRequiredMarkers(exact)) {
+                            log("      Exact ring reconstruction succeeded and validated.");
+                            return exact;
+                        } else {
+                            log("      Exact ring reconstruction failed validation; missing required markers.");
+                        }
+                    } else {
+                        log("      Exact ring reconstruction unavailable or empty; will try linear block.");
                     }
 
                     // Fallback to RAM-only linear reconstruction (tolerant to empty lines)
-                    log("      Ring reconstruction unavailable or empty; trying linear block reconstruction...");
                     String block = reconstructLinearBlock(hProcess, best);
                     if (block != null && block.length() > 0) {
-                        log("      Using linear block reconstruction (ring indices not found).");
-                        return block;
+                        if (containsAllRequiredMarkers(block)) {
+                            log("      Using linear block reconstruction; validation passed.");
+                            return block;
+                        } else {
+                            log("      Linear block reconstruction failed validation; missing required markers.");
+                        }
                     } else {
                         log("      Contiguous block reconstruction failed.");
                     }
                 }
             }
 
-            log("All anchors/candidates exhausted; giving up.");
+            log("All anchors/candidates exhausted; no candidate passed strict validation.");
             return null;
         } finally {
             K32.INSTANCE.CloseHandle(hProcess);
@@ -216,7 +254,22 @@ public final class PrismConsoleReader {
     // Optional local test
     public static void main(String[] args) {
         String s = getPrismConsoleText();
-        log(s == null ? "<null>" : s);
+        log(s == null ? "<null>" : s.trim());
+    }
+
+    // ---- Validation helpers (NEW) ----
+
+    private static boolean containsAllRequiredMarkers(String text) {
+        if (text == null || text.length() == 0) return false;
+        for (int i = 0; i < REQUIRED_MARKERS.length; i++) {
+            String m = REQUIRED_MARKERS[i];
+            if (m == null || m.length() == 0) continue;
+            if (text.indexOf(m) < 0) {
+                log("        Missing marker: \"%s\"", m);
+                return false;
+            }
+        }
+        return true;
     }
 
     // ---- Process discovery ----
@@ -345,8 +398,8 @@ public final class PrismConsoleReader {
     }
 
     // ---- Pointer search ----
-
-    private static List<Long> findPointerOccurrences(HANDLE h, long value, int alignment, int maxResults) {
+    // Overload that reuses pre-enumerated regions for efficiency.
+    private static List<Long> findPointerOccurrences(HANDLE h, List<MemoryRegion> regions, long value, int alignment, int maxResults) {
         List<Long> out = new ArrayList<Long>();
         long budget = GLOBAL_READ_BUDGET / 2;
 
@@ -354,7 +407,6 @@ public final class PrismConsoleReader {
         byte[] pat = new byte[ps];
         for (int i = 0; i < ps; i++) pat[i] = (byte) ((value >> (8 * i)) & 0xFF);
 
-        List<MemoryRegion> regions = iterateReadablePrivateRegions(h);
         for (int rgi = 0; rgi < regions.size(); rgi++) {
             if (budget <= 0) break;
             MemoryRegion r = regions.get(rgi);
@@ -384,6 +436,11 @@ public final class PrismConsoleReader {
             }
         }
         return out;
+    }
+    // Legacy wrapper (kept for completeness; not used in the main flow)
+    @SuppressWarnings("unused")
+    private static List<Long> findPointerOccurrences(HANDLE h, long value, int alignment, int maxResults) {
+        return findPointerOccurrences(h, iterateReadablePrivateRegions(h), value, alignment, maxResults);
     }
 
     // ---- Entry block recognition & reconstruction ----
@@ -453,7 +510,7 @@ public final class PrismConsoleReader {
         int ctrl = 0;
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
-            if (c < 0x09 && c != '\r' && c != '\n' && c != '\t') ctrl++;
+            if (c < 0x09 && (c != '\r' && c != '\n' && c != '\t')) ctrl++;
         }
         return ctrl < 4;
     }
@@ -469,8 +526,9 @@ public final class PrismConsoleReader {
         return ok;
     }
 
-    private static String tryReconstructRingExactly(HANDLE h, EntryArrayCandidate cand) {
-        List<Long> owners = findPointerOccurrences(h, cand.baseVA, Native.POINTER_SIZE, 512);
+    // Overload that reuses pre-enumerated regions
+    private static String tryReconstructRingExactly(HANDLE h, List<MemoryRegion> regions, EntryArrayCandidate cand) {
+        List<Long> owners = findPointerOccurrences(h, regions, cand.baseVA, Native.POINTER_SIZE, 512);
         if (owners.isEmpty()) {
             log("    No owners of array base pointer (0x%016X).", Long.valueOf(cand.baseVA));
             return null;
@@ -513,6 +571,11 @@ public final class PrismConsoleReader {
             }
         }
         return null;
+    }
+    // Legacy wrapper (unused in main flow)
+    @SuppressWarnings("unused")
+    private static String tryReconstructRingExactly(HANDLE h, EntryArrayCandidate cand) {
+        return tryReconstructRingExactly(h, iterateReadablePrivateRegions(h), cand);
     }
 
     private static String reconstructByRing(HANDLE h, long base, int stride, int ptrOff,

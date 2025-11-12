@@ -1,3 +1,9 @@
+1.10.20:
+
+- Now Crash Assistant generates `stderr_stream.log` with stderr output of the Minecraft process. Some launchers are not
+  saving this info, while often only it contains the reason of the crash.
+- Added config option to disable `stderr_stream.log` generation.
+
 1.10.19:
 
 - Added support of a new format of MissingUnsupportedDependencies.

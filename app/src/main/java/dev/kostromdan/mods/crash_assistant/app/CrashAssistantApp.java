@@ -237,6 +237,13 @@ public class CrashAssistantApp {
             LogsList.addIfExistsAndModified(new Log(LogType.DISCONNECT_CLIENT, path));
         }
 
+        Log stdout = new Log(LogType.LAUNCHER_LOG, Paths.get("logs", "stdout_stderr_streams.log"));
+        stdout.getReader().readLogFileSafe();
+        if (!stdout.getReader().getLastLine().equals("[CrashAssistantLauncherLogger]: This is intentional to avoid impacting performance.")) {
+            LogsList.addIfExistsAndModified(stdout);
+        }
+
+
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("logs", "launcher_log.txt")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "CurseForge: launcher_log.txt", Paths.get("../../Install", "launcher_log.txt")));

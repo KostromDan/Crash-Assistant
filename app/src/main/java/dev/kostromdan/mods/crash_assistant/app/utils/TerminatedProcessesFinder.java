@@ -80,7 +80,8 @@ public class TerminatedProcessesFinder {
                             WEVT = (Wevtapi) Native.loadLibrary("wevtapi", Wevtapi.class);
                         }
                     } catch (Throwable t) {
-                        throw new UnsatisfiedLinkError("Failed to load wevtapi via JNA: " + t);
+                        CrashAssistantApp.LOGGER.error("Failed to load wevtapi via JNA: ", t);
+                        throw new RuntimeException(t);
                     }
                 }
             }

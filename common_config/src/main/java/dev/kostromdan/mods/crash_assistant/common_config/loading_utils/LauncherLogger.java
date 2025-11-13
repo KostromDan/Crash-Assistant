@@ -166,9 +166,9 @@ public final class LauncherLogger {
      * The header is flushed before the tee is attached.
      */
     private static void writeFileHeader(BufferedOutputStream out, Charset cs) throws IOException {
-        // Example format: "12.11.2025 22:21 +03:00" (ASCII-safe)
+        // Example format: "12.11.2025 22:21:15:749 +03:00" (ASCII-safe)
         final String ls = System.lineSeparator();
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm XXX", java.util.Locale.ROOT);
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss.SSS XXX", java.util.Locale.ROOT);
         df.setTimeZone(TimeZone.getDefault());
         String dateTime = df.format(new Date());
 
@@ -224,7 +224,7 @@ public final class LauncherLogger {
      * Additionally:
      * - Detects '\n' and flushes both sides immediately (line-buffered effect).
      * - Injects a per-line prefix into the FILE side only:
-     * "[HH:mm:ss] [STDERR]: "
+     * "[HH:mm:ss.SSS] [STDERR]: "
      * The very first stderr write also receives the prefix in the file.
      */
     private static final class TeeOutputStream extends OutputStream {
@@ -235,7 +235,7 @@ public final class LauncherLogger {
 
         // Timestamp utilities (no allocation per line beyond small strings)
         private final SimpleDateFormat timeFmt =
-                new SimpleDateFormat("HH:mm:ss", java.util.Locale.ROOT);
+                new SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.ROOT);
         private final Date tsReuse = new Date();
 
         TeeOutputStream(OutputStream left, OutputStream right, Charset cs) {

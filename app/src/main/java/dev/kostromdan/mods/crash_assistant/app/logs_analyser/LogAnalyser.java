@@ -157,6 +157,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new nglMultiDrawElementsBaseVertex());
         registerKnownCrashReason(new Nvoglv64());
 
+        registerKnownCrashReason(new AzureLibAddons());
         registerKnownCrashReason(new CorruptedModJar());
         registerKnownCrashReason(new Create6Addons());
         registerKnownCrashReason(new CtovWithoutLithostitched());

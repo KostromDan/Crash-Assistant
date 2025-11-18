@@ -11,6 +11,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.LatestLogLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -95,6 +96,13 @@ public class JarInJarHelper {
             argsList.add(Base64.getEncoder().encodeToString(ProcessHelper.getProcessorName().getBytes(StandardCharsets.UTF_8)));
             if (PlatformHelp.modLoadedWithConnector) {
                 argsList.add("-modLoadedWithConnector");
+            }
+            if (tempDir.toAbsolutePath().toString().contains("lunarclient")) {
+                Path latestLog = LatestLogLocator.findLatestLogPath();
+                if (latestLog != null) {
+                    argsList.add("-customLatestLogPath");
+                    argsList.add(latestLog.toString());
+                }
             }
 
             Path argsFile = Paths.get("local", "crash_assistant", currentProcessData + "_args.info");

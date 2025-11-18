@@ -353,5 +353,6 @@
   "warnings_common.line": "riga",
   "warnings_common.memory_args": "Argomenti di memoria attuali: $CURRENT_MEMORY_ARGS$",
   "warnings_common.repository": "repository",
-  "warnings_common.so_vm_options": "Nota: assicurati di aggiungere \"<strong>-XX:+UnlockExperimentalVMOptions</strong>\" all'inizio e gli argomenti di percorso alla fine della sezione degli argomenti Java."
+  "warnings_common.so_vm_options": "Nota: assicurati di aggiungere \"<strong>-XX:+UnlockExperimentalVMOptions</strong>\" all'inizio e gli argomenti di percorso alla fine della sezione degli argomenti Java.",
+  "warnings.mcda_mcdw_vs_clumps": "Abbiamo rilevato un errore in <strong>$LOG_FILENAME$</strong> relativo alla compatibilità delle mod MC Dungeons (Weapons e/o Armors) con Clumps.\n\nQuesto problema si verifica perché le mod di MC Dungeons richiedono la versione Fabric di Clumps, mentre stai usando la versione Forge.\n\nPer risolvere questo problema, hai alcune opzioni:\n\n1) Rimuovere Clumps.\n\n2) Rimuovere le mod di MC Dungeons.\n\n3) Usare la versione Fabric di Clumps tramite Sinytra Connector. Tuttavia, ciò potrebbe causare ulteriori problemi di compatibilità con altre mod."
 }

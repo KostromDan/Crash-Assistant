@@ -353,5 +353,6 @@
   "warnings_common.line": "行",
   "warnings_common.memory_args": "当前内存参数：$CURRENT_MEMORY_ARGS$",
   "warnings_common.repository": "仓库",
-  "warnings_common.so_vm_options": "注意：确保在Java参数部分的顶部添加\"<strong>-XX:+UnlockExperimentalVMOptions</strong>\"，并在底部添加路径参数。"
+  "warnings_common.so_vm_options": "注意：确保在Java参数部分的顶部添加\"<strong>-XX:+UnlockExperimentalVMOptions</strong>\"，并在底部添加路径参数。",
+  "warnings.mcda_mcdw_vs_clumps": "我们在 <strong>$LOG_FILENAME$</strong> 中检测到一个与 MC Dungeons（Weapons 和/或 Armors）模组与 Clumps 兼容性相关的错误。\n\n出现该问题的原因是：MC Dungeons 模组需要 Clumps 的 Fabric 版本，而你正在使用 Forge 版本。\n\n要解决此问题，你有以下几种选择：\n\n1）移除 Clumps。\n\n2）移除 MC Dungeons 模组。\n\n3）通过 Sinytra Connector 使用 Clumps 的 Fabric 版本。但这可能会导致与其他模组出现额外的兼容性问题。"
 }

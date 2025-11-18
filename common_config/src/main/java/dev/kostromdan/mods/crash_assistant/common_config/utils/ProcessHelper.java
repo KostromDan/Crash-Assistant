@@ -175,7 +175,7 @@ public class ProcessHelper {
             }
         } catch (Throwable e) {
             String errorMessage = e.getMessage();
-            if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for .* library: JNA temporary directory .* does not exist.*")) {
+            if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for /com/sun/jna/.*\\.dll library: .*")) {
                 JarInJarHelper.LOGGER.error(errorMessage + "\n   \n" +
                         "   Most likely you have permission issues in your file system.\n" +
                         "   OSHI failed init because it failed to create its tmp files for natives.\n" +

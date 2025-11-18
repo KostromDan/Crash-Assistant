@@ -168,7 +168,7 @@ public final class LauncherLogger {
     private static void writeFileHeader(BufferedOutputStream out, Charset cs) throws IOException {
         // Example format: "12.11.2025 22:21:15:749 +03:00" (ASCII-safe)
         final String ls = System.lineSeparator();
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss.SSS XXX", java.util.Locale.ROOT);
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss:SSS XXX", java.util.Locale.ROOT);
         df.setTimeZone(TimeZone.getDefault());
         String dateTime = df.format(new Date());
 
@@ -235,7 +235,7 @@ public final class LauncherLogger {
 
         // Timestamp utilities (no allocation per line beyond small strings)
         private final SimpleDateFormat timeFmt =
-                new SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.ROOT);
+                new SimpleDateFormat("HH:mm:ss:SSS", java.util.Locale.ROOT);
         private final Date tsReuse = new Date();
 
         TeeOutputStream(OutputStream left, OutputStream right, Charset cs) {

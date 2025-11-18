@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class CrashAssistantApp {
     public static final Logger LOGGER = LogManager.getLogger(CrashAssistantApp.class);
@@ -239,8 +240,18 @@ public class CrashAssistantApp {
 
 
         Log stderrLog = new Log(LogType.LAUNCHER_LOG, Paths.get("logs", "stderr_stream.log"));
-        if (Files.isRegularFile(stderrLog.getPath()) && stderrLog.getFile().length() >= 380) {
-            LogsList.addIfExistsAndModified(stderrLog);
+        long logSizeBytes = stderrLog.getFile().length();
+        if (Files.isRegularFile(stderrLog.getPath()) && logSizeBytes >= 400) {
+            boolean add = true;
+            if (logSizeBytes < 1048576) {
+                stderrLog.getReader().readLogFileSafe();
+                String logContents = stderrLog.getReader().getAllLinesString();
+                if (logContents != null && !logContents.isEmpty()) {
+                    add = Pattern.compile("^.*\\bat\\s+\\S+", Pattern.MULTILINE)
+                            .matcher(logContents).find();
+                }
+            }
+            if (add) LogsList.addIfExistsAndModified(stderrLog);
         }
 
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt")));

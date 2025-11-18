@@ -224,7 +224,7 @@ public final class LauncherLogger {
      * Additionally:
      * - Detects '\n' and flushes both sides immediately (line-buffered effect).
      * - Injects a per-line prefix into the FILE side only:
-     * "[HH:mm:ss.SSS] [STDERR]: "
+     * "[HH:mm:ss:SSS] [STDERR]: "
      * The very first stderr write also receives the prefix in the file.
      */
     private static final class TeeOutputStream extends OutputStream {

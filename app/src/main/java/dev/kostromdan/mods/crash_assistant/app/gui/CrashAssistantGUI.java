@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CorruptedConfigFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CorruptedJarFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.PackageFinderGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.AzureLibDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.EpicFightDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDependenciesAnalysisGUI;
@@ -531,6 +532,12 @@ public class CrashAssistantGUI {
             if (!disabledByConfigTools.contains("EpicFightDependenciesAnalysisGUI")) {
                 JMenuItem epicFightAnalysisItem = makeMenuItem.apply("gui.menu.analysis.epic_fight_addons_compatibility", "gui.menu.analysis.epic_fight_addons_compatibility.desc");
                 epicFightAnalysisItem.addActionListener(e -> EpicFightDependenciesAnalysisGUI.showEpicFightAnalysisDialog(frame));
+                analysisMenu.add(epicFightAnalysisItem);
+            }
+
+            if (!disabledByConfigTools.contains("AzureLibDependenciesAnalysisGUI")) {
+                JMenuItem epicFightAnalysisItem = makeMenuItem.apply("gui.menu.analysis.azure_lib_addons_compatibility", "gui.menu.analysis.azure_lib_addons_compatibility.desc");
+                epicFightAnalysisItem.addActionListener(e -> AzureLibDependenciesAnalysisGUI.showAzureLibAnalysisDialog(frame));
                 analysisMenu.add(epicFightAnalysisItem);
             }
 

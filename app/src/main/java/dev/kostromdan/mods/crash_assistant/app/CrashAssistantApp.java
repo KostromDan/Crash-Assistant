@@ -50,6 +50,7 @@ public class CrashAssistantApp {
     public static boolean closeFunctionFailed = false;
     public static boolean emergencySaveFired = false;
     public static long terminatedProcessesLocationEndTime = 0;
+    public static String customLatestLogPath = null;
 
 
     public static void main(String[] args) {
@@ -91,6 +92,9 @@ public class CrashAssistantApp {
             } else if ("-childProcessesPIDs".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.childProcessesPIDs = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
                 LOGGER.info("childProcessesPIDs: {}", PlatformHelp.childProcessesPIDs);
+            } else if ("-customLatestLogPath".equals(args[i]) && i + 1 < args.length) {
+                customLatestLogPath = args[i + 1];
+                LOGGER.info("customLatestLogPath: {}", customLatestLogPath);
             }
         }
         LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
@@ -218,7 +222,7 @@ public class CrashAssistantApp {
 
         new Thread(LanguageProvider::updateLang).start(); // Init lang async.
 
-        LogsList.addIfExistsAndModified(new Log(LogType.LOG, Paths.get("logs", "latest.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LOG, customLatestLogPath == null ? Paths.get("logs", "latest.log") : Paths.get(customLatestLogPath)));
         LogsList.addIfExistsAndModified(new Log(LogType.DEBUG_LOG, Paths.get("logs", "debug.log")));
 
         locateAndAddHsErr();
@@ -288,7 +292,7 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../logs", "PollyMC-0.log")));
 
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "Feather: latest.log", Paths.get("feather/logs", "latest.log")));
-        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "Lunar: ichor-boot.log", Paths.get("logs", "ichor-boot.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "Lunar: ichor-boot.log", customLatestLogPath == null ? Paths.get("logs", "ichor-boot.log") : Paths.get(customLatestLogPath).getParent().resolve("ichor-boot.log")));
         if (FileUtils.folderNLevelsUpperNameContains(2, "technic")) {
             FileUtils.getModifiedFiles(Paths.get("../../logs"), ".log").forEach(path -> {
                 LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, path));

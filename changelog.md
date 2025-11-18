@@ -1,3 +1,23 @@
+1.10.21:
+
+- Added Brazillian Portuguese localization. Thanks `paodelonga` for making PR.
+- Enhanced `LauncherLogger` to include millisecond precision in timestamps.
+- Now `stderr_stream.log` is displayed to the user only if it includes stack traces. Previously, it may include just a
+  couple of useless warning messages that make no sense.
+- Added new log analysis `JnaPermissionIssue`. Detects if JNA was not allowed to create temporary folder.
+- Added new log analysis `AzureLibAddons`. Detects if mods which depend on AzureLib need a different version of it.
+    - Suggests analysis to find incompatible mods or find all mods which require AzureLib.
+- Added new analysis GUI tool which will find mods that depend on AzureLib but require different versions of it.
+- Added new log analysis `MedievalOriginsVsForgeOrigins`. Notifies that Medieval Origins requires Fabric version of
+  Origins since some version instead of Forge version.
+- Added new log analysis `McdaMcdwVsClumps`. Notifies that MC Dungeons mods require Fabric version of Clumps on Forge.
+- Fixed detection of failure to create JNA temporary folder. Was working incorrectly when the error message was
+  localized to different languages.
+- Fixed JNA platform library path being located incorrectly on some MC versions (1.19.2, 1.18.2), which caused error
+  spam while locating terminated processes (win_event log). Also some other features worked incorrectly on these
+  versions.
+- Fixed `CorruptedModJar` analysis sometimes can be actually `CurseForgeCorrupted` issue.
+
 1.10.20:
 
 - Now Crash Assistant generates `stderr_stream.log` with stderr output of the Minecraft process. Some launchers are not

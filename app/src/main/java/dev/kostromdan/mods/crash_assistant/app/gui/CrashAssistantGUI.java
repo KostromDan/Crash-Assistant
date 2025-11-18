@@ -665,7 +665,7 @@ public class CrashAssistantGUI {
                         KnownCrashReason.shownKnownCrashReasons.add(crashReason);
                         CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
                                 crashReason.getClass().getSimpleName(),
-                                crashReasonMessage.isCodexMessage() ? crashReasonMessage.getMessage() : crashReasonMessage.getMessage().split("\n")[0] + "...");
+                                "\n" + crashReasonMessage.getMessage() + "\n");
                         crashReasonMessage.setShownWarn(true);
 
                         JEditorPane messagePane = CrashAssistantGUI.getEditorPane(crashReasonMessage.getMessage(), crashReasonMessage.isCodexMessage());

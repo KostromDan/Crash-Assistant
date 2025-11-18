@@ -173,6 +173,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new KubeJSDataPack());
         registerKnownCrashReason(new LanguageProviderMismatch());
         registerKnownCrashReason(new LegacyTooManyIds());
+        registerKnownCrashReason(new MedievalOriginsVsForgeOrigins());
         registerKnownCrashReason(new MissingEmbeddiumForOculus());
         registerKnownCrashReason(new MissingIndium());
         registerKnownCrashReason(new MissingUnsupportedDependencies());

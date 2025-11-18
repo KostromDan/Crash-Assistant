@@ -5,10 +5,12 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CorruptedJarFinderGU
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
+import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -46,7 +48,16 @@ public class CorruptedModJar extends KnownCrashReason {
                 if (lineToSearch.contains("File ") && lineToSearch.contains(" is not a jar file")) found = true;
                 if (lineToSearch.contains("Failed to create secure jar for")) found = true;
             }
-            if (found) return true;
+            if (found) {
+                String allLines = log.getReader().getAllLinesString();
+                if (FileUtils.isCurseForgeEnv() && allLines.contains("net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator.lambda$scanMods")) {
+                    message = LanguageProvider.get("warnings.curseforge_corrupted", new HashMap<String, String>() {{
+                        put("$LINK.ATL$", "ATLauncher");
+                    }});
+                    autoFixButtons.clear();
+                }
+                return true;
+            }
         }
         return false;
     }

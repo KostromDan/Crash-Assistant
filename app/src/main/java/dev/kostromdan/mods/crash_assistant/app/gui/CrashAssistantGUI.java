@@ -12,6 +12,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDe
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorGUI;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
+import dev.kostromdan.mods.crash_assistant.app.utils.HtmlToMarkdown;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
@@ -665,7 +666,7 @@ public class CrashAssistantGUI {
                         KnownCrashReason.shownKnownCrashReasons.add(crashReason);
                         CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
                                 crashReason.getClass().getSimpleName(),
-                                "\n" + crashReasonMessage.getMessage() + "\n");
+                                "\n \n" + HtmlToMarkdown.convert(crashReasonMessage.getMessage()) + "\n \n");
                         crashReasonMessage.setShownWarn(true);
 
                         JEditorPane messagePane = CrashAssistantGUI.getEditorPane(crashReasonMessage.getMessage(), crashReasonMessage.isCodexMessage());
@@ -776,7 +777,8 @@ public class CrashAssistantGUI {
                     if (Objects.equals(dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig.get("too_many_changes.dont_show_again"), true)) {
                         return;
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {
+                }
 
                 int allowedChanges = CrashAssistantConfig.getInteger("too_many_changes_warning.count");
                 if (allowedChanges <= 0) return;

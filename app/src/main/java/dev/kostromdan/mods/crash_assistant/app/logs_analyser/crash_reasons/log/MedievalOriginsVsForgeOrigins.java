@@ -7,10 +7,15 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
+import java.util.HashSet;
+
 public class MedievalOriginsVsForgeOrigins extends KnownCrashReason {
     public MedievalOriginsVsForgeOrigins() {
         super(
-                LogType.LAUNCHER_LOG,
+                new HashSet<LogType>() {{
+                    add(LogType.LOG);
+                    add(LogType.LAUNCHER_LOG);
+                }},
                 LanguageProvider.get("warnings.medieval_origins"),
                 "Caused by: java\\.lang\\.ClassCastException: class net\\.minecraft\\.world\\.item\\.ItemStack cannot be cast to class io\\.github\\.apace100\\.apoli\\.access\\.EntityLinkedItemStack \\(net\\.minecraft\\.world\\.item\\.ItemStack is in module"
         );

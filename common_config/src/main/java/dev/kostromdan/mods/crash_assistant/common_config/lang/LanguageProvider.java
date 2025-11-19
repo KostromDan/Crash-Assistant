@@ -107,6 +107,7 @@ public class LanguageProvider {
             langFilesInJarNames.add("crash_assistant_localization/zh_cn.json");
             langFilesInJarNames.add("crash_assistant_localization/es_es.json");
             langFilesInJarNames.add("crash_assistant_localization/it_it.json");
+            langFilesInJarNames.add("crash_assistant_localization/pt_br.json");
             langFilesInJarNames.add("crash_assistant_localization/README.md");
 
             HashMap<String, HashMap<String, String>> jarLangFiles = new HashMap<>();

@@ -330,7 +330,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
     private HashSet<String> getCurrentTargetClasses(Mod targetMod) {
         HashSet<String> currentTargetClasses = new HashSet<>();
         try {
-            Path jarPath = Paths.get("mods", targetMod.getJarName());
+            Path jarPath = ModListUtils.MODS_FOLDER.resolve(targetMod.getJarName());
             JarEntriesScanner.scanJar(jarPath, true, (containerName, entries) -> {
                 for (Map.Entry<String, Boolean> e : entries.entrySet()) {
                     String name = e.getKey();
@@ -511,7 +511,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         JdepsScanResult result = new JdepsScanResult();
         Process process = null;
         try {
-            Path mainJarPath = Paths.get("mods", mod.getJarName()).toAbsolutePath();
+            Path mainJarPath = ModListUtils.MODS_FOLDER.resolve(mod.getJarName()).toAbsolutePath();
             java.util.List<TargetInfo> targets = buildTargetInfosFromMod(mainJarPath, mod);
             outer:
             for (TargetInfo target : targets) {

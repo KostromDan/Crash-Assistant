@@ -22,6 +22,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarH
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 
@@ -473,7 +474,7 @@ public class CrashAssistantGUI {
         JMenuItem openModsFolderItem = new JMenuItem(LanguageProvider.get("gui.menu.file.open_mods_folder"));
         openModsFolderItem.addActionListener(e -> {
             try {
-                File modsFolder = new File("mods");
+                File modsFolder = ModListUtils.MODS_FOLDER.toFile();
                 Desktop.getDesktop().open(modsFolder);
             } catch (IOException ex) {
                 CrashAssistantApp.LOGGER.error("Error opening mods folder", ex);
@@ -920,7 +921,7 @@ public class CrashAssistantGUI {
                             boolean allDeleted = true;
                             for (Mod mod : detectedMods) {
                                 String jarName = mod.getJarName();
-                                File modsDir = new File("mods");
+                                File modsDir = ModListUtils.MODS_FOLDER.toFile();
                                 File modFile = new File(modsDir, jarName);
 
                                 if (modFile.exists()) {
@@ -996,7 +997,7 @@ public class CrashAssistantGUI {
                         try {
                             dialog.setAlwaysOnTop(false);
                             String jarName = Boot.crashAssistantModJarName;
-                            File modsDir = new File("mods");
+                            File modsDir = ModListUtils.MODS_FOLDER.toFile();
                             File modFile = new File(modsDir, jarName);
 
                             if (!modFile.exists()) {

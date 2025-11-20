@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -11,7 +12,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -141,7 +141,7 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
     }
 
     private static List<Path> discoverArchives() {
-        Path modsFolder = Paths.get("mods");
+        Path modsFolder = ModListUtils.MODS_FOLDER;
         if (!Files.isDirectory(modsFolder)) {
             return Collections.emptyList();
         }
@@ -168,7 +168,7 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
     }
 
     private static String toModsRelative(Path jarPath) {
-        Path modsFolder = Paths.get("mods").toAbsolutePath().normalize();
+        Path modsFolder = ModListUtils.MODS_FOLDER.toAbsolutePath().normalize();
         Path normalized = jarPath.toAbsolutePath().normalize();
         if (normalized.startsWith(modsFolder)) {
             Path relative = modsFolder.relativize(normalized);

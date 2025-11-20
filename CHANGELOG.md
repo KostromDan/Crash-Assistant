@@ -1,16 +1,18 @@
 1.10.22:
 
-- Now Crash Assistant Log has full analysis message displayed to the user formatted with Markdown. So now people in
+- Now Crash Assistant log has full analysis message displayed to the user formatted with Markdown. So now people in
   support channels can just copy it from the crash assistant log and paste it into Discord in cases where users ignored
   analysis messages. Previously, it was truncated with just the first line.
-- Fixed logs were not added to the list of logs on Lunar Client because they were located in different
-  folders.
+- Fixed logs were not added to the list of logs on Lunar Client
+  because they were located in different folders.
 - Fixed the text of the upload button in Brazillian Portuguese may be truncated.
-- Fixed, I forgot to add Brazillian Portuguese to localization list, so localization added in the previous update didn't
-  work.
+- Fixed, I forgot to add Brazillian Portuguese to localization list,
+  so localization added in the previous update didn't work.
 - Fixed `MedievalOriginsVsForgeOrigins` analysis not triggered some times.
 - Added some logging related to the new `stderr_stream.log`.
 - Fixed AnimatedBorder worked a little incorrectly with Windows display scaling(not 100%).
+- Marked versions 1.7.10 - 1.15.2 as release instead of beta,
+  as I have not seen issues for a long time on these versions.
 
 1.10.21:
 

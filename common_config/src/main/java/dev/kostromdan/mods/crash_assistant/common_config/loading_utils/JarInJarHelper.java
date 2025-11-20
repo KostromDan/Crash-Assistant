@@ -8,6 +8,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsC
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
@@ -160,7 +161,7 @@ public class JarInJarHelper {
 
     public static List<Path> getModJarPathsContainingPart(String part) {
         try {
-            return Files.list(Paths.get("mods"))
+            return Files.list(ModListUtils.MODS_FOLDER)
                     .filter(path -> Files.isRegularFile(path) &&
                             path.getFileName().toString().toLowerCase().contains(part.toLowerCase()) &&
                             path.getFileName().toString().endsWith(".jar"))

@@ -10,7 +10,6 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -66,7 +65,7 @@ public class PackageFinderGUI extends AnalysisGUIBase {
 
                 List<String> foundPaths;
                 try {
-                    Path jarPath = Paths.get("mods", mod.getJarName());
+                    Path jarPath = ModListUtils.MODS_FOLDER.resolve(mod.getJarName());
                     // Use the flexible search mode for classes or packages
                     foundPaths = ModuleFinder.findJarsContainingEntries(Collections.singletonList(searchTerm), jarPath, ModuleFinder.SearchMode.CLASS_OR_PACKAGE);
                 } catch (Exception e) {

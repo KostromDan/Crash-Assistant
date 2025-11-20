@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -783,7 +784,7 @@ public class FilesRemover extends JDialog {
             JButton openConfigs = new JButton("Open Configs (CONFIG mode)");
 
             openMods.addActionListener(e -> {
-                Path mods = Paths.get("mods");
+                Path mods = ModListUtils.MODS_FOLDER;
                 List<Path> files = listFilesNonRecursive(mods);
                 if (files.isEmpty()) {
                     JOptionPane.showMessageDialog(launcher,

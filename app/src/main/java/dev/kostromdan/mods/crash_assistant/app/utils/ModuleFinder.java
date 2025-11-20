@@ -2,11 +2,11 @@ package dev.kostromdan.mods.crash_assistant.app.utils;
 
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -60,7 +60,7 @@ public class ModuleFinder {
 
 
     public static List<String> findJarsInFolderAsync(List<String> packagePrefixes, LinkedHashSet<Mod> mods, SearchMode mode) {
-        Path modsFolderPath = Paths.get("mods");
+        Path modsFolderPath = ModListUtils.MODS_FOLDER;
         ExecutorService executor = Executors.newWorkStealingPool();
 
         Map<String, Path> jarMap = new HashMap<>();

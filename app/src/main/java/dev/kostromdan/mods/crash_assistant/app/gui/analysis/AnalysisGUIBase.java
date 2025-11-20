@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.app.gui.FilesRemover;
 import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -157,7 +157,7 @@ public abstract class AnalysisGUIBase {
         synchronized (detectedModJarsForRemoval) {
             for (String jar : detectedModJarsForRemoval) {
                 if (jar == null) continue;
-                map.put(jar, Paths.get("mods", jar));
+                map.put(jar, ModListUtils.MODS_FOLDER.resolve(jar));
             }
         }
         return map;

@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Paths;
 import java.util.List;
 
 public class IncompatibleModsWarning {
@@ -51,7 +51,7 @@ public class IncompatibleModsWarning {
                                 options,
                                 options[3]
                         );
-                        File file = Paths.get("mods", problematicMod.getCurrentMod().getJarName()).toFile();
+                        File file = ModListUtils.MODS_FOLDER.resolve(problematicMod.getCurrentMod().getJarName()).toFile();
                         if (choice == 0) { // Remove mod
                             try {
                                 Files.delete(file.toPath());

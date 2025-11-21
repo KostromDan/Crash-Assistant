@@ -187,6 +187,9 @@ public class CrashAssistantConfig {
                 "With this option, you can customize how links from individual upload buttons are copied, there\n" +
                         "log was split to the 2 parts (head and tail, due to too large size for single upload), but user decided to copy message with both.",
                 "$LOG_NAME$[$FILE_NAME$ <TOLOWER>$MSG_LANG.gui.split_log_dialog_head$</TOLOWER>](<$LINK_FIRST_LINES$>) / [<TOLOWER>$MSG_LANG.gui.split_log_dialog_tail$</TOLOWER>](<$LINK_LAST_LINES$>) $TOO_BIG_REASONS$");
+        addOption("copied_links.skip_split_dialog",
+                "If enabled, disables the head/tail selection dialog for split logs on individual uploads and always copies message with both links.",
+                false);
 
         config.setComment("modpack_modlist", "Settings of modlist feature.\n" +
                 "Adds in generated msg block about which mods modpack user added/removed/updated.\n" +

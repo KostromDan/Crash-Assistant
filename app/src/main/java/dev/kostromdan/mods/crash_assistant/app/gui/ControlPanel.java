@@ -44,19 +44,28 @@ public class ControlPanel {
     private final FileListPanel fileListPanel;
     public final UploadAllButton uploadAllButton;
     public final JButton requestHelpButton;
+    private JButton showLogsToggleButton;
+    private final boolean enableSimpleModeButton;
+    private final Runnable simpleModeAction;
+    private final boolean modListInitiallyVisible;
+    private JPanel modListContainer;
     private String generatedMsg = null;
     private JLabel modListLabel;
     private JButton showModListButton;
 
-    public ControlPanel(FileListPanel fileListPanel) {
+    public ControlPanel(FileListPanel fileListPanel, boolean enableSimpleModeButton, Runnable simpleModeAction) {
         this.fileListPanel = fileListPanel;
+        this.enableSimpleModeButton = enableSimpleModeButton;
+        this.simpleModeAction = simpleModeAction;
 
         panel = new JPanel(new BorderLayout());
 
         JPanel labelButtonPanel = new JPanel();
         labelButtonPanel.setLayout(new BoxLayout(labelButtonPanel, BoxLayout.X_AXIS));
 
-        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
+        boolean modListEnabled = CrashAssistantConfig.getBoolean("modpack_modlist.enabled");
+        modListInitiallyVisible = modListEnabled;
+        if (modListEnabled) {
             modListLabel = new JLabel(LanguageProvider.get("gui.modlist_loading"));
             // Add a bit of left padding to the detected mods text for better spacing
             modListLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
@@ -75,7 +84,8 @@ public class ControlPanel {
             labelButtonPanel.add(Box.createHorizontalGlue());
             labelButtonPanel.setBorder(BorderFactory.createTitledBorder(ModListDiff.getFirstString(false, false, null)));
 
-            panel.add(labelButtonPanel, BorderLayout.NORTH);
+            modListContainer = labelButtonPanel;
+            panel.add(modListContainer, BorderLayout.NORTH);
         }
 
         JPanel bottomPanel = new JPanel(new GridBagLayout());
@@ -148,6 +158,17 @@ public class ControlPanel {
         gbc.gridy = 1;
         gbc.insets = new Insets(5, 0, 0, 0);
         bottomPanel.add(requestHelpButton, gbc);
+
+        if (enableSimpleModeButton && simpleModeAction != null) {
+            showLogsToggleButton = new JButton(LanguageProvider.get("gui.simple_mode.button"));
+            customizeButton(showLogsToggleButton, "simple_mode");
+            showLogsToggleButton.addActionListener(e -> simpleModeAction.run());
+            showLogsToggleButton.setToolTipText(LanguageProvider.get("gui.simple_mode.button"));
+            showLogsToggleButton.setVisible(enableSimpleModeButton);
+            gbc.gridy = 2;
+            gbc.insets = new Insets(5, 0, 0, 0);
+            bottomPanel.add(showLogsToggleButton, gbc);
+        }
 
         panel.add(bottomPanel, BorderLayout.SOUTH);
     }
@@ -223,6 +244,24 @@ public class ControlPanel {
 
     public JPanel getPanel() {
         return panel;
+    }
+
+    public void setSimpleModeButtonVisible(boolean visible) {
+        if (showLogsToggleButton == null) return;
+        showLogsToggleButton.setVisible(visible);
+        panel.revalidate();
+        panel.repaint();
+    }
+
+    public void setModListSectionVisible(boolean visible) {
+        if (modListContainer == null) return;
+        modListContainer.setVisible(visible);
+        panel.revalidate();
+        panel.repaint();
+    }
+
+    public boolean wasModListInitiallyVisible() {
+        return modListInitiallyVisible;
     }
 
     public void requestHelp() {

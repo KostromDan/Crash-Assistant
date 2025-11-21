@@ -1,3 +1,9 @@
+1.10.23:
+
+- Added option to skip split dialog (for large logs split into two parts) and automatically copy both links.
+- Added "Simple Mode" feature that hides logs behind a button (disabled by default).
+- Small fixes related to the new `stderr_stream.log` and legacy versions.
+
 1.10.22:
 
 - Now Crash Assistant log has full analysis message displayed to the user formatted with Markdown. So now people in

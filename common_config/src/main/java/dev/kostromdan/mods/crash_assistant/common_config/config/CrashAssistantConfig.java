@@ -115,6 +115,18 @@ public class CrashAssistantConfig {
             config.set("general.blacklisted_logs", blacklistedLogs);
         }
 
+        config.setComment("simple_mode", "A simplified GUI that hides the logs list until the user opts into Expert Mode.");
+        addOption("simple_mode.enabled",
+                "If enabled, the GUI starts in simple mode with logs hidden and a single \"Show Logs (Expert Mode)\" button.\n" +
+                        "Disabled by default.",
+                false);
+        addOption("simple_mode.prevent_for_modpack_creators",
+                "If true, modpack creators always see the Expert Mode with logs visible, even if simple mode is enabled.",
+                true);
+        addOption("simple_mode.hide_modlist_section",
+                "If true, hides the mod list changes section while simple mode is active.",
+                false);
+
         config.setComment("text", "Here you can change text of lang placeHolders.\n" +
                 "Also you can change any text in lang files.\n" +
                 "You don't need to modify jar. You can change it in config/crash_assistant/lang. For more info read README.md file located where.");
@@ -298,6 +310,9 @@ public class CrashAssistantConfig {
         addOption("gui_customisation.request_help_button_font_size",
                 "Same as upload_all_button_font_size, but for Request Help button.",
                 16);
+        addOption("gui_customisation.simple_mode_button_font_size",
+                "Same as upload_all_button_font_size, but for the Simple Mode toggle button.",
+                16);
         addOption("gui_customisation.upload_all_button_foreground_color",
                 "You can change Upload All Button color to request user attention.\n" +
                         "format is \"R_G_B\", range is 0-255, for example \"255_0_0\" is red color. Use \"default\" to use default swing color.\n" +
@@ -306,6 +321,9 @@ public class CrashAssistantConfig {
         addOption("gui_customisation.request_help_button_foreground_color",
                 "Same as upload_all_button_foreground_color, but for Request Help button.\n" +
                         "Default for this button is \"0_0_178\" (dark blue color).",
+                "0_0_178");
+        addOption("gui_customisation.simple_mode_button_foreground_color",
+                "Same as upload_all_button_foreground_color, but for the Simple Mode toggle button.",
                 "0_0_178");
         addOption("gui_customisation.auto_fix_button_font_size",
                 "Same as upload_all_button_font_size, but for Auto-Fix button (in integrated GPU warning).",

@@ -305,15 +305,20 @@ public class FilePanel {
             String toCopy = null;
             if (fromButton) {
                 if (log.getLinkToUploadedLastLines() != null) {
-                    AtomicReference<String> result = new AtomicReference<>();
-                    try {
-                        SwingUtilities.invokeAndWait(() -> {
-                            result.set(showLogPartSelectionDialog(LanguageProvider.get("gui.split_log_dialog_action_copy")));
-                        });
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                    boolean skipSplitDialog = CrashAssistantConfig.getBoolean("copied_links.skip_split_dialog");
+                    if (skipSplitDialog) {
+                        toCopy = getSplitLogCopyMessageWithBothLinks();
+                    } else {
+                        AtomicReference<String> result = new AtomicReference<>();
+                        try {
+                            SwingUtilities.invokeAndWait(() -> {
+                                result.set(showLogPartSelectionDialog(LanguageProvider.get("gui.split_log_dialog_action_copy")));
+                            });
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        toCopy = result.get();
                     }
-                    toCopy = result.get();
                 } else if (log.getLinkToUploadedFirstLines() != null) {
                     toCopy = CrashAssistantConfig.get("copied_links.single_link", true);
                     toCopy = toCopy.replace("$LINK$", log.getLinkToUploadedFirstLines());
@@ -419,10 +424,7 @@ public class FilePanel {
         if (selectedValue == null) {
 
         } else if (selectedValue.equals(options[0])) {
-            String toCopy = CrashAssistantConfig.get("copied_links.both_links_split", true);
-            toCopy = toCopy.replace("$LINK_FIRST_LINES$", this.log.getLinkToUploadedFirstLines());
-            toCopy = toCopy.replace("$LINK_LAST_LINES$", this.log.getLinkToUploadedLastLines());
-            selectedValue = toCopy;
+            selectedValue = getSplitLogCopyMessageWithBothLinks();
         } else if (selectedValue.equals(options[1])) {
             if (!forCopy) {
                 selectedValue = log.getLinkToUploadedFirstLines();
@@ -444,6 +446,13 @@ public class FilePanel {
         }
         FileListPanel.currentLogSelectionDialog = null;
         return (String) selectedValue;
+    }
+
+    private String getSplitLogCopyMessageWithBothLinks() {
+        String toCopy = CrashAssistantConfig.get("copied_links.both_links_split", true);
+        toCopy = toCopy.replace("$LINK_FIRST_LINES$", this.log.getLinkToUploadedFirstLines());
+        toCopy = toCopy.replace("$LINK_LAST_LINES$", this.log.getLinkToUploadedLastLines());
+        return toCopy;
     }
 
     public boolean isWaiting() {

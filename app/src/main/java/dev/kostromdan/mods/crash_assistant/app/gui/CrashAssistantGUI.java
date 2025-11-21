@@ -16,6 +16,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.HtmlToMarkdown;
 import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
@@ -54,6 +55,9 @@ public class CrashAssistantGUI {
     public static FileListPanel fileListPanel = null;
     private static ControlPanel controlPanel;
     private static JPanel labelPanel;
+    private static JScrollPane fileListScrollPane;
+    private static boolean simpleModeActive;
+    private static boolean hideModListInSimpleMode;
     private static final Map<JComponent, OriginalState> highlightedComponents = new ConcurrentHashMap<>();
 
     private static class OriginalState {
@@ -379,11 +383,20 @@ public class CrashAssistantGUI {
 
         frame.add(labelPanel, BorderLayout.NORTH);
 
-        fileListPanel = new FileListPanel();
-        frame.add(fileListPanel.getScrollPane(), BorderLayout.CENTER);
+        boolean preventForModpackCreators = CrashAssistantConfig.getBoolean("simple_mode.prevent_for_modpack_creators");
+        boolean isModpackCreator = ModListDiff.isModpackCreator();
+        boolean simpleModeAllowed = CrashAssistantConfig.getBoolean("simple_mode.enabled") && !(preventForModpackCreators && isModpackCreator);
+        boolean alwaysShowLogs = isAlwaysShowLogsEnabled();
+        hideModListInSimpleMode = CrashAssistantConfig.getBoolean("simple_mode.hide_modlist_section");
 
-        controlPanel = new ControlPanel(fileListPanel);
+        fileListPanel = new FileListPanel();
+        fileListScrollPane = fileListPanel.getScrollPane();
+        frame.add(fileListScrollPane, BorderLayout.CENTER);
+
+        simpleModeActive = simpleModeAllowed && !alwaysShowLogs;
+        controlPanel = new ControlPanel(fileListPanel, simpleModeActive, CrashAssistantGUI::handleShowLogsButtonClick);
         frame.add(controlPanel.getPanel(), BorderLayout.SOUTH);
+        updateSimpleModeVisibility();
 
         for (Log log : LogsList.getLogs()) {
             fileListPanel.addLog(log);
@@ -599,6 +612,76 @@ public class CrashAssistantGUI {
         menuBar.add(privacyMenu);
         frame.setJMenuBar(menuBar);
     }
+
+    private static boolean isAlwaysShowLogsEnabled() {
+        return Objects.equals(CrashAssistantLocalConfig.get("gui.simple_mode.always_show_logs"), true);
+    }
+
+    private static boolean isSkipPromptEnabled() {
+        return Objects.equals(CrashAssistantLocalConfig.get("gui.simple_mode.skip_prompt"), true);
+    }
+
+    private static void updateSimpleModeVisibility() {
+        if (fileListScrollPane == null) return;
+        fileListScrollPane.setVisible(!simpleModeActive);
+        if (controlPanel != null) {
+            controlPanel.setSimpleModeButtonVisible(simpleModeActive);
+            boolean showModList = controlPanel.wasModListInitiallyVisible() && (!simpleModeActive || !hideModListInSimpleMode);
+            controlPanel.setModListSectionVisible(showModList);
+        }
+        resize();
+    }
+
+    private static void showLogsAndDisableSimpleMode() {
+        simpleModeActive = false;
+        updateSimpleModeVisibility();
+    }
+
+    private static void handleShowLogsButtonClick() {
+        if (!simpleModeActive) {
+            return;
+        }
+
+        showLogsAndDisableSimpleMode();
+
+        if (isSkipPromptEnabled()) {
+            return;
+        }
+
+        JCheckBox dontAskAgain = new JCheckBox(LanguageProvider.get("gui.simple_mode.prompt_dont_ask"));
+        JPanel messagePanel = new JPanel(new BorderLayout(0, 8));
+        JLabel messageLabel = new JLabel("<html>" + LanguageProvider.get("gui.simple_mode.prompt_question") + "</html>");
+        messagePanel.add(messageLabel, BorderLayout.CENTER);
+        messagePanel.add(dontAskAgain, BorderLayout.SOUTH);
+
+        Object[] options = new Object[]{
+                LanguageProvider.get("gui.simple_mode.prompt_yes"),
+                LanguageProvider.get("gui.simple_mode.prompt_no")
+        };
+        int choice = JOptionPane.showOptionDialog(
+                frame,
+                messagePanel,
+                LanguageProvider.get("gui.simple_mode.prompt_title"),
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+
+        boolean treatedAsNo = choice == JOptionPane.NO_OPTION || choice == JOptionPane.CLOSED_OPTION;
+        boolean treatAsYes = choice == JOptionPane.YES_OPTION;
+
+        if (treatAsYes) {
+            CrashAssistantLocalConfig.set("gui.simple_mode.skip_prompt", true);
+            CrashAssistantLocalConfig.set("gui.simple_mode.always_show_logs", true);
+        } else if (dontAskAgain.isSelected()) {
+            CrashAssistantLocalConfig.set("gui.simple_mode.skip_prompt", true);
+        }
+
+        showLogsAndDisableSimpleMode();
+    }
+
 
     private static void showLogsPrivacyInfo() {
         String privacyInfo = Lang.applyPlaceHolders("<h2>$LANG.gui.privacy.crash_assistant_privacy_policy.version_text$ $LANG.gui.privacy.crash_assistant_privacy_policy.version$</h2>$LANG.gui.privacy.crash_assistant_privacy_policy.crash_assistant$ $LANG.gui.privacy.crash_assistant_privacy_policy.mclogs$ $LANG.gui.privacy.crash_assistant_privacy_policy.gnomebot$ $LANG.gui.privacy.crash_assistant_privacy_policy.validity$ $LANG.gui.privacy.crash_assistant_privacy_policy.reset$ $LANG.gui.privacy.crash_assistant_privacy_policy.volume$",

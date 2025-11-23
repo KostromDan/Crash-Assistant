@@ -98,7 +98,8 @@ public class JarInJarHelper {
             if (PlatformHelp.modLoadedWithConnector) {
                 argsList.add("-modLoadedWithConnector");
             }
-            if (tempDir.toAbsolutePath().toString().contains("lunarclient")) {
+            if (tempDir.toAbsolutePath().toString().contains(Paths.get("lunarclient", "offline", "multiver").toString()) &&
+                    ClassExistenceChecker.classExists("com.moonsworth.lunar.ichor.api.IchorAPI")) {
                 Path latestLog = LatestLogLocator.findLatestLogPath();
                 if (latestLog != null) {
                     argsList.add("-customLatestLogPath");

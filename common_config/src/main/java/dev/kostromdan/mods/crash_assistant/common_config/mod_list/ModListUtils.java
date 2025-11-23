@@ -17,7 +17,7 @@ import java.util.concurrent.Future;
 
 public class ModListUtils {
     public static final Logger LOGGER = LogManager.getLogger();
-    public static final Path MODS_FOLDER = Paths.get("mods");
+    public static Path MODS_FOLDER = Paths.get("mods");
     private static final Path RESOURCEPACKS_FOLDER = Paths.get("resourcepacks");
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
     public static String currentUsername = "";

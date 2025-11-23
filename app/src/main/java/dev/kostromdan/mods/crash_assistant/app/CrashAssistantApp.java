@@ -13,6 +13,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
@@ -221,6 +222,11 @@ public class CrashAssistantApp {
         GUIStartTime = Instant.now().toEpochMilli();
 
         new Thread(LanguageProvider::updateLang).start(); // Init lang async.
+
+        if (customLatestLogPath != null) {
+            ModListUtils.MODS_FOLDER = Paths.get(customLatestLogPath).getParent().getParent().resolve("mods").resolve("fabric-" + PlatformHelp.minecraftVersion);
+            LOGGER.info("ModListUtils.MODS_FOLDER: {}", ModListUtils.MODS_FOLDER);
+        }
 
         LogsList.addIfExistsAndModified(new Log(LogType.LOG, customLatestLogPath == null ? Paths.get("logs", "latest.log") : Paths.get(customLatestLogPath)));
         LogsList.addIfExistsAndModified(new Log(LogType.DEBUG_LOG, Paths.get("logs", "debug.log")));

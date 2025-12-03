@@ -18,6 +18,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -320,23 +321,7 @@ public class ControlPanel {
 
     private void showModList() {
         stopMovingToTop = true;
-        JTextPane textPane = new JTextPane();
-        textPane.setEditable(false);
-        textPane.setContentType("text/html");
-        ModListDiff modListDiff = ModListDiff.getDiff(true);
-        textPane.setText(modListDiff.generateDiffMsg(false).toHtml());
-        textPane.setCaretPosition(0);
-
-        JScrollPane scrollPane = new JScrollPane(textPane);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setPreferredSize(new Dimension(Math.min(scrollPane.getPreferredSize().width + 15, 700), 300));
-
-        JOptionPane.showMessageDialog(
-                null,
-                scrollPane,
-                LanguageProvider.get("gui.modlist_diff_dialog_name"),
-                JOptionPane.INFORMATION_MESSAGE
-        );
+        ModListDiffDialog.showDialog(dialog);
     }
 
     private void uploadAllFiles() {

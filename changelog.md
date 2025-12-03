@@ -1,3 +1,24 @@
+1.10.24:
+
+- Redesigned "Mod List Difference" feature. Transformed from a simple text list into a fully interactive tool.
+    - **Interactive Tables**: Now displays changes in organized sections (Added, Updated, Removed).
+    - **Platform Integration**: Added CurseForge and Modrinth support.
+        - Identifies local files using hashing.
+        - Displays clickable icons linking directly to mod project pages.
+    - **New Actions**:
+        - **Revert Update**: Automatically downloads and restores the specific version defined in the modpack / latest
+          successful launch.
+        - **Restore**: Downloads and restores missing mods.
+        - **Manage**: Buttons to Disable, Enable, Remove, or Show mods in Explorer.
+    - **Smart Downloads**:
+        - Supports automatic downloading via API.
+        - **Manual Download Fallback**: If a mod prevents third-party downloads, a new dialog appears supporting
+          **Drag & Drop** (download in browser -> drop in tool -> auto-install).
+    - Asynchronous operations for hashing and network requests to prevent GUI freezing.
+    - Added localization for the new interface (en, de, es, it, pt, ru, zh).
+- Prevented workaround with spaces and calculating the width of the upload button automatically.
+- Fixed the mods folder location on lunar client.
+
 1.10.23:
 
 - Added option to skip split dialog (for large logs split into two parts) and automatically copy both links.

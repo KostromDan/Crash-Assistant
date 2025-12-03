@@ -257,7 +257,7 @@
   "gui.upload_all_button_warning_title": "提示",
   "gui.upload_all_comment": "上传全部...",
   "gui.upload_all_finished_button": "复制一条包含日志链接和模组列表变更的消息（联系支持时推荐）",
-  "gui.upload_and_copy_link_button": "   上传并复制链接   ",
+  "gui.upload_and_copy_link_button": "上传并复制链接",
   "gui.uploading": "上传中...",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "新增模组：",

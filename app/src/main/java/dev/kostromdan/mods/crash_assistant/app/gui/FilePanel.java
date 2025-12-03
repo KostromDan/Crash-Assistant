@@ -42,6 +42,7 @@ public class FilePanel {
     private boolean waiting = true;
     private static final Set<FilePanel> awaitingPrivacyPolicyDialogs = Collections.synchronizedSet(new HashSet<>());
     private final Log log;
+    private final int fullButtonWidth;
 
     public FilePanel(Log log) {
         this.log = log;
@@ -61,14 +62,19 @@ public class FilePanel {
         openButton = createButton(LanguageProvider.get("gui.open_button"), e -> openFile());
         showButton = createButton(LanguageProvider.get("gui.show_in_explorer_button"), e -> showInExplorer());
 
+        browserButton = createButtonWithIcon("assets/internet.png", e -> openInBrowser());
+        browserButton.setVisible(false);
+        browserButton.setToolTipText(LanguageProvider.get("gui.browser_button_tooltip"));
+
         uploadButton = createButton(LanguageProvider.get("gui.upload_and_copy_link_button"), e -> uploadFile());
         synchronized (ControlPanel.class) {
             uploadButton.setEnabled(ControlPanel.uploadButtonsActivated);
         }
 
-        browserButton = createButtonWithIcon("assets/internet.png", e -> openInBrowser());
-        browserButton.setVisible(false);
-        browserButton.setToolTipText(LanguageProvider.get("gui.browser_button_tooltip"));
+        fullButtonWidth = calculateMaxButtonWidth();
+        Dimension dim = new Dimension(fullButtonWidth, uploadButton.getPreferredSize().height);
+        uploadButton.setPreferredSize(dim);
+        uploadButton.setMinimumSize(dim);
 
 
         buttonPanel.add(spacerPanel);
@@ -81,6 +87,49 @@ public class FilePanel {
 
         panel.setMinimumSize(new Dimension(0, panel.getPreferredSize().height));
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height));
+    }
+
+    private int calculateMaxButtonWidth() {
+        List<String> singleStateTexts = Arrays.asList(
+                LanguageProvider.get("gui.upload_and_copy_link_button"),
+                LanguageProvider.get("gui.uploading"),
+                LanguageProvider.get("gui.delayed"),
+                LanguageProvider.get("gui.preprocessing"),
+                LanguageProvider.get("gui.error")
+        );
+
+        List<String> copyStateTexts = Arrays.asList(
+                LanguageProvider.get("gui.copied"),
+                LanguageProvider.get("gui.copy_link_button")
+        );
+
+        int max = 0;
+        JButton dummy = new JButton();
+        dummy.setBorder(uploadButton.getBorder());
+        dummy.setMargin(uploadButton.getMargin());
+        dummy.setFont(uploadButton.getFont());
+        
+        // Measure texts that appear alone (without browser button)
+        for (String s : singleStateTexts) {
+            if (s != null) {
+                dummy.setText(s);
+                max = Math.max(max, dummy.getPreferredSize().width);
+            }
+        }
+
+        // Measure texts that appear with the browser button
+        // Total width = Button Width + Gap (5) + Browser Button Width
+        int browserButtonWidth = browserButton.getPreferredSize().width;
+        for (String s : copyStateTexts) {
+            if (s != null) {
+                dummy.setText(s);
+                int totalRequired = dummy.getPreferredSize().width + 5 + browserButtonWidth;
+                max = Math.max(max, totalRequired);
+            }
+        }
+
+        // Add small safety padding
+        return max + 4;
     }
 
     public JButton createButton(String text, ActionListener actionListener) {
@@ -355,8 +404,8 @@ public class FilePanel {
     private void transformCopyLinkButton() {
         String oldText = uploadButton.getText();
         browserButton.setVisible(true);
-        uploadButton.setText(LanguageProvider.get("gui.upload_and_copy_link_button"));
-        uploadButton.setPreferredSize(new Dimension(uploadButton.getMinimumSize().width - browserButton.getMinimumSize().width - 5, uploadButton.getMinimumSize().height));
+        int newWidth = fullButtonWidth - browserButton.getPreferredSize().width - 5;
+        uploadButton.setPreferredSize(new Dimension(newWidth, uploadButton.getPreferredSize().height));
         uploadButton.setText(oldText);
     }
 

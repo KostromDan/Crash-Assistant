@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 public class ModDataParser {
     public static final List<String> inJarPaths = PlatformHelp.getOrderedInJarPaths();
-    private static final Path CACHE_FOLDER = Paths.get("local", "crash_assistant", "mod_data_cache_v2");
+    private static final Path CACHE_FOLDER = Paths.get("local", "crash_assistant", "mod_data_cache_v3");
     private static final Gson GSON = new Gson();
 
     static {
@@ -43,9 +43,7 @@ public class ModDataParser {
      * @return The path to the corresponding cache file.
      */
     private static Path getCacheFilePath(Path jarPath) {
-        String jarName = jarPath.getFileName().toString();
-        String baseName = jarName.endsWith(".jar") ? jarName.substring(0, jarName.length() - 4) : jarName;
-        return CACHE_FOLDER.resolve(baseName + ".mod_data.json");
+        return CACHE_FOLDER.resolve(jarPath.getFileName().toString() + ".mod_data.json");
     }
 
     /**
@@ -77,8 +75,6 @@ public class ModDataParser {
      * @param mod     The Mod object to save.
      */
     public static void saveModToCache(Path jarPath, Mod mod) {
-        if (mod.getModId() == null || mod.getVersion() == null) return;
-
         Path cacheFilePath = getCacheFilePath(jarPath);
         try (RandomAccessFile raf = new RandomAccessFile(cacheFilePath.toFile(), "rw");
              FileChannel ch = raf.getChannel();
@@ -101,18 +97,38 @@ public class ModDataParser {
         Mod cached = getModFromCache(jarPath);
         if (cached != null) return cached;
 
+        ModFingerprinter.IdentificationResult fingerprints = fingerprintJar(jarPath);
+
         try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-            Mod mod = parseJarFile(jarFile, jarPath.getFileName().toString(), null);
+            Mod mod = parseJarFile(jarFile, jarPath.getFileName().toString(), null, fingerprints);
             saveModToCache(jarPath, mod);
             return mod;
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed to parse " + jarPath.getFileName() + ": ", e);
             return new Mod(jarPath.getFileName().toString(), null, null, null,
-                    new HashSet<>(), new ArrayList<>(), null);
+                    new HashSet<>(), new ArrayList<>(), null,
+                    getCurseForgeHash(fingerprints, null), getModrinthHash(fingerprints, null));
         }
     }
 
-    private static Mod parseJarFile(JarFile jarFile, String currentJarName, String jarJarPath) {
+    private static ModFingerprinter.IdentificationResult fingerprintJar(Path jarPath) {
+        try {
+            return ModFingerprinter.identify(jarPath);
+        } catch (Exception e) {
+            JarInJarHelper.LOGGER.warn("Failed to fingerprint " + jarPath.getFileName() + ": ", e);
+            return null;
+        }
+    }
+
+    private static Long getCurseForgeHash(ModFingerprinter.IdentificationResult fingerprints, String jarJarPath) {
+        return jarJarPath == null && fingerprints != null ? fingerprints.getCurseForgeHash() : null;
+    }
+
+    private static String getModrinthHash(ModFingerprinter.IdentificationResult fingerprints, String jarJarPath) {
+        return jarJarPath == null && fingerprints != null ? fingerprints.getModrinthHash() : null;
+    }
+
+    private static Mod parseJarFile(JarFile jarFile, String currentJarName, String jarJarPath, ModFingerprinter.IdentificationResult fingerprints) {
         Boolean isMCreator = null;
         boolean hasEssentialLoader = false;
 
@@ -165,15 +181,20 @@ public class ModDataParser {
                 return manifest;
             };
 
+            if (descriptorBytes.isEmpty()) {
+                JarInJarHelper.LOGGER.warn("No descriptors found in " + currentJarName);
+            }
+
             return parseDescriptorsAndBuildMod(descriptorBytes, manifestProvider, currentJarName,
-                    jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods);
+                    jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods, fingerprints);
 
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed while processing " + currentJarName, e);
         }
 
         return new Mod(currentJarName, null, null,
-                isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
+                isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
+                getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
     }
 
     // Overloaded method for parsing from JarInputStream (for nested jars)
@@ -224,7 +245,7 @@ public class ModDataParser {
         ManifestProvider manifestProvider = () -> jis.getManifest();
 
         return parseDescriptorsAndBuildMod(descriptorBytes, manifestProvider, currentJarName,
-                jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods);
+                jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods, null);
     }
 
     // Functional interface for lazy byte loading
@@ -263,7 +284,7 @@ public class ModDataParser {
         }
     }
 
-    private static Mod parseDescriptorsAndBuildMod(Map<String, byte[]> descriptorBytes, ManifestProvider manifestProvider, String currentJarName, String jarJarPath, Boolean isMCreator, boolean hasEssentialLoader, HashSet<String> mixinConfigs, List<Mod> jarInJarMods) {
+    private static Mod parseDescriptorsAndBuildMod(Map<String, byte[]> descriptorBytes, ManifestProvider manifestProvider, String currentJarName, String jarJarPath, Boolean isMCreator, boolean hasEssentialLoader, HashSet<String> mixinConfigs, List<Mod> jarInJarMods, ModFingerprinter.IdentificationResult fingerprints) {
         for (String descriptorPath : inJarPaths) {
             byte[] bytes = descriptorBytes.get(descriptorPath);
             if (bytes == null) continue;
@@ -289,7 +310,8 @@ public class ModDataParser {
                 }
 
                 return new Mod(currentJarName, modInfo.modId, modInfo.version,
-                        isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
+                        isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
+                        getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
             } catch (Exception e) {
                 JarInJarHelper.LOGGER.warn("Error parsing " + descriptorPath + " of " +
                         currentJarName + ": ", e);
@@ -299,12 +321,14 @@ public class ModDataParser {
         // Special-case Essential
         if (currentJarName.toLowerCase().contains("essential") && hasEssentialLoader) {
             return new Mod(currentJarName, "essential-container", null,
-                    isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
+                    isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
+                    getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
         }
 
         // Nothing found
         return new Mod(currentJarName, null, null,
-                isMCreator, mixinConfigs, jarInJarMods, jarJarPath);
+                isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
+                getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
     }
 
     private static class ParsedModInfo {
@@ -428,7 +452,7 @@ public class ModDataParser {
                     }
                 } else if (root.isJsonObject()) {
                     JsonObject rootObject = root.getAsJsonObject();
-                    if (rootObject.has("modList")){
+                    if (rootObject.has("modList")) {
                         JsonArray arr = rootObject.getAsJsonArray("modList");
                         if (arr.size() > 0 && arr.get(0).isJsonObject()) {
                             obj = arr.get(0).getAsJsonObject();

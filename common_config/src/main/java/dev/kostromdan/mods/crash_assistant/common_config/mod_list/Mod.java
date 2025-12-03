@@ -19,6 +19,8 @@ public class Mod {
     private final HashSet<String> mixinConfigs;
     private final List<Mod> jarJarMods;
     private final String pathFromJarJar;
+    private final Long curseForgeHash;
+    private final String modrinthHash;
 
     public static final Type TYPE = new TypeToken<LinkedHashSet<Mod>>() {
     }.getType();
@@ -28,6 +30,10 @@ public class Mod {
             .create();
 
     public Mod(String jarName, String modId, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar) {
+        this(jarName, modId, version, isMCreator, mixinConfigs, jarJarMods, pathFromJarJar, null, null);
+    }
+
+    public Mod(String jarName, String modId, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar, Long curseForgeHash, String modrinthHash) {
         this.jarName = jarName;
         this.modId = modId;
         this.version = version;
@@ -35,6 +41,8 @@ public class Mod {
         this.mixinConfigs = mixinConfigs;
         this.jarJarMods = jarJarMods;
         this.pathFromJarJar = pathFromJarJar;
+        this.curseForgeHash = curseForgeHash;
+        this.modrinthHash = modrinthHash;
     }
 
     public String getJarName() {
@@ -63,6 +71,14 @@ public class Mod {
 
     public String getPathFromJarJar() {
         return pathFromJarJar;
+    }
+
+    public Long getCurseForgeHash() {
+        return curseForgeHash;
+    }
+
+    public String getModrinthHash() {
+        return modrinthHash;
     }
 
     /**
@@ -180,6 +196,8 @@ public class Mod {
                 "fileName='" + jarName + '\'' +
                 ", modId='" + modId + '\'' +
                 ", version='" + version + '\'' +
+                ", curseForgeHash='" + curseForgeHash + '\'' +
+                ", modrinthHash='" + modrinthHash + '\'' +
                 ", isMCreator='" + isMCreator + '\'' +
                 ", mixinConfigs='" + mixinConfigs + '\'' +
                 ", jarJarMods='" + jarJarMods + '\'' +
@@ -250,8 +268,15 @@ public class Mod {
             // Extract basic properties
             String modId = modObj.has("modId") ? modObj.get("modId").getAsString() : null;
             String version = modObj.has("version") ? modObj.get("version").getAsString() : null;
+            Long curseForgeHash = null;
+            if (modObj.has("curseForgeHash") && !modObj.get("curseForgeHash").isJsonNull()) {
+                curseForgeHash = modObj.get("curseForgeHash").getAsLong();
+            }
+            String modrinthHash = modObj.has("modrinthHash") && !modObj.get("modrinthHash").isJsonNull()
+                    ? modObj.get("modrinthHash").getAsString()
+                    : null;
 
-            return new Mod(jarName, modId, version, null, new HashSet<>(), new ArrayList<>(), null);
+            return new Mod(jarName, modId, version, null, new HashSet<>(), new ArrayList<>(), null, curseForgeHash, modrinthHash);
         }
 
         @Override
@@ -284,6 +309,12 @@ public class Mod {
             }
             if (mod.getVersion() != null) {
                 modObj.addProperty("version", mod.getVersion());
+            }
+            if (mod.getCurseForgeHash() != null) {
+                modObj.addProperty("curseForgeHash", mod.getCurseForgeHash());
+            }
+            if (mod.getModrinthHash() != null) {
+                modObj.addProperty("modrinthHash", mod.getModrinthHash());
             }
             return modObj;
         }

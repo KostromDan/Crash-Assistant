@@ -257,7 +257,7 @@
   "gui.upload_all_button_warning_title": "Informação",
   "gui.upload_all_comment": "Enviar todos...",
   "gui.upload_all_finished_button": "Copiar uma mensagem com links para os logs e as alterações na lista de mods (recomendado para contato com suporte)",
-  "gui.upload_and_copy_link_button": " Enviar e copiar link ",
+  "gui.upload_and_copy_link_button": "Enviar e copiar link",
   "gui.uploading": "Enviando...",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "Mods adicionados:",

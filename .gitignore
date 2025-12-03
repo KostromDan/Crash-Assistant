@@ -27,6 +27,7 @@ runs
 /config/
 /logs/
 /mods/
+/mods - copy/
 /saves/
 /mod_data/
 /crash-reports/

@@ -1,8 +1,8 @@
 package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -56,7 +56,7 @@ public class ModFingerprinter {
      * @throws IOException If the file cannot be read.
      */
     public static IdentificationResult identify(Path path) throws IOException {
-        // 1. Setup SHA-1 Digest
+        // 1. Pass 1: Compute SHA-1 and count normalized length
         MessageDigest sha1Digest;
         try {
             sha1Digest = MessageDigest.getInstance("SHA-1");
@@ -64,36 +64,23 @@ public class ModFingerprinter {
             throw new RuntimeException("SHA-1 algorithm not found in JVM", e);
         }
 
-        // 2. Setup buffer for CurseForge normalization
-        // We must read the file into memory for Murmur2 because the algorithm 
-        // requires the full length of the valid data for the tail calculation.
-        // Mod files are generally small enough for this to be safe.
-        ByteArrayOutputStream normalizedBuffer = new ByteArrayOutputStream();
-
-        // 3. Read file in one pass
-        try (BufferedInputStream stream = new BufferedInputStream(Files.newInputStream(path))) {
-            byte[] ioBuffer = new byte[8192];
+        int normalizedLength = 0;
+        try (InputStream stream = new BufferedInputStream(Files.newInputStream(path))) {
+            byte[] buffer = new byte[8192];
             int read;
-
-            while ((read = stream.read(ioBuffer)) != -1) {
-                // Feed raw bytes to SHA-1
-                sha1Digest.update(ioBuffer, 0, read);
-
-                // Filter bytes for Murmur2 (CurseForge Normalization)
+            while ((read = stream.read(buffer)) != -1) {
+                sha1Digest.update(buffer, 0, read);
                 for (int i = 0; i < read; i++) {
-                    byte b = ioBuffer[i];
-                    if (!isWhitespace(b)) {
-                        normalizedBuffer.write(b);
+                    if (!isWhitespace(buffer[i])) {
+                        normalizedLength++;
                     }
                 }
             }
         }
-
-        // 4. Finalize Calculations
         String sha1Hex = bytesToHex(sha1Digest.digest());
 
-        byte[] normalizedData = normalizedBuffer.toByteArray();
-        long murmurValue = computeMurmur2(normalizedData, normalizedData.length);
+        // 2. Pass 2: Compute Murmur2 using normalizedLength
+        long murmurValue = computeMurmur2Streamed(path, normalizedLength);
 
         return new IdentificationResult(murmurValue, sha1Hex);
     }
@@ -122,13 +109,14 @@ public class ModFingerprinter {
     }
 
     /**
-     * A custom, independent implementation of the MurmurHash2 algorithm 
-     * compatible with the 32-bit unsigned verification.
-     * * @param data The byte array to hash.
-     * @param length The length of the data.
+     * A stream-based implementation of the MurmurHash2 algorithm.
+     * Reads the file again, filtering whitespace, to compute the hash.
+     * 
+     * @param path The file path to read.
+     * @param length The total length of non-whitespace bytes (determined in pass 1).
      * @return The hash value as a long (to ensure unsigned 32-bit range is covered).
      */
-    private static long computeMurmur2(byte[] data, int length) {
+    private static long computeMurmur2Streamed(Path path, int length) throws IOException {
         final int m = 0x5bd1e995;
         final int r = 24;
         // The seed must be 1 for compatibility
@@ -137,34 +125,55 @@ public class ModFingerprinter {
         // Initialize the hash to a 'random' value
         int h = seed ^ length;
 
-        int length4 = length / 4;
+        try (InputStream stream = new BufferedInputStream(Files.newInputStream(path))) {
+            byte[] buffer = new byte[8192]; // File read buffer
+            int read;
+            
+            // We need to form 4-byte chunks from filtered data
+            byte[] chunkBuffer = new byte[4];
+            int chunkIndex = 0;
 
-        for (int i = 0; i < length4; i++) {
-            int i4 = i * 4;
-            // Combine 4 bytes into a 32-bit integer (Little Endian)
-            int k = (data[i4] & 0xff) |
-                    ((data[i4 + 1] & 0xff) << 8) |
-                    ((data[i4 + 2] & 0xff) << 16) |
-                    ((data[i4 + 3] & 0xff) << 24);
+            while ((read = stream.read(buffer)) != -1) {
+                for (int i = 0; i < read; i++) {
+                    byte b = buffer[i];
+                    if (isWhitespace(b)) continue;
 
-            k *= m;
-            k ^= k >>> r;
-            k *= m;
+                    chunkBuffer[chunkIndex++] = b;
 
-            h *= m;
-            h ^= k;
-        }
+                    if (chunkIndex == 4) {
+                        // Process 4-byte chunk
+                        // Combine 4 bytes into a 32-bit integer (Little Endian)
+                        int k = (chunkBuffer[0] & 0xff) |
+                                ((chunkBuffer[1] & 0xff) << 8) |
+                                ((chunkBuffer[2] & 0xff) << 16) |
+                                ((chunkBuffer[3] & 0xff) << 24);
 
-        // Handle the remaining bytes
-        int offset = length4 * 4;
-        switch (length % 4) {
-            case 3:
-                h ^= (data[offset + 2] & 0xff) << 16;
-            case 2:
-                h ^= (data[offset + 1] & 0xff) << 8;
-            case 1:
-                h ^= (data[offset] & 0xff);
-                h *= m;
+                        k *= m;
+                        k ^= k >>> r;
+                        k *= m;
+
+                        h *= m;
+                        h ^= k;
+
+                        chunkIndex = 0;
+                    }
+                }
+            }
+
+            // Handle the remaining bytes
+            // chunkIndex is now the number of bytes remaining (0, 1, 2, or 3)
+            // matching length % 4
+            if (chunkIndex > 0) {
+                 switch (chunkIndex) {
+                    case 3:
+                        h ^= (chunkBuffer[2] & 0xff) << 16;
+                    case 2:
+                        h ^= (chunkBuffer[1] & 0xff) << 8;
+                    case 1:
+                        h ^= (chunkBuffer[0] & 0xff);
+                        h *= m;
+                }
+            }
         }
 
         // Final avalanche

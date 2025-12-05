@@ -1,3 +1,10 @@
+1.10.25:
+
+- Fixed OutOfMemory errors in crash assistant process introduced in previous update due to
+  hashing computing read entire mods files into memory.
+    - Now it uses a memory-efficient streaming approach to calculate hashes, ensuring constant memory usage
+      regardless of file size.
+
 1.10.24:
 
 - Redesigned "Mod List Difference" feature. Transformed from a simple text list into a fully interactive tool.

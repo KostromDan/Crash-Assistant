@@ -1,3 +1,9 @@
+1.10.26:
+
+- Marked 1.21.11 as compatible.
+- Added Malay translation. Thanks `NuruddinPlays` for making PR!
+- Small fixes.
+
 1.10.25:
 
 - Fixed OutOfMemory errors in crash assistant process introduced in previous update due to

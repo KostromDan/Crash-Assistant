@@ -16,6 +16,8 @@ import java.security.NoSuchAlgorithmException;
  */
 public class ModFingerprinter {
 
+    private static final int BUFFER_SIZE = 64 * 1024;
+
     /**
      * A container class to hold the pair of calculated hashes.
      */
@@ -58,8 +60,8 @@ public class ModFingerprinter {
     public static IdentificationResult identify(Path path) throws IOException {
         // 1. Pass 1: Count normalized length ONLY (Lightweight)
         int normalizedLength = 0;
-        try (InputStream stream = new BufferedInputStream(Files.newInputStream(path))) {
-            byte[] buffer = new byte[8192];
+        try (InputStream stream = new BufferedInputStream(Files.newInputStream(path), BUFFER_SIZE)) {
+            byte[] buffer = new byte[BUFFER_SIZE];
             int read;
             while ((read = stream.read(buffer)) != -1) {
                 for (int i = 0; i < read; i++) {
@@ -85,7 +87,7 @@ public class ModFingerprinter {
     }
 
     /**
-     * Checks if a byte represents a whitespace character according to the 
+     * Checks if a byte represents a whitespace character according to the
      * normalization rules (9, 10, 13, 32).
      */
     private static boolean isWhitespace(byte b) {
@@ -110,9 +112,9 @@ public class ModFingerprinter {
     /**
      * A stream-based implementation of the MurmurHash2 algorithm.
      * Reads the file again to compute the MurmurHash AND updates the SHA-1 digest.
-     * 
-     * @param path The file path to read.
-     * @param length The total length of non-whitespace bytes (determined in pass 1).
+     * * @param path The file path to read.
+     *
+     * @param length     The total length of non-whitespace bytes (determined in pass 1).
      * @param sha1Digest The SHA-1 digest to update with raw bytes.
      * @return The hash value as a long (to ensure unsigned 32-bit range is covered).
      */
@@ -125,10 +127,10 @@ public class ModFingerprinter {
         // Initialize the hash to a 'random' value
         int h = seed ^ length;
 
-        try (InputStream stream = new BufferedInputStream(Files.newInputStream(path))) {
-            byte[] buffer = new byte[8192]; // File read buffer
+        try (InputStream stream = new BufferedInputStream(Files.newInputStream(path), BUFFER_SIZE)) {
+            byte[] buffer = new byte[BUFFER_SIZE]; // File read buffer
             int read;
-            
+
             // We need to form 4-byte chunks from filtered data
             byte[] chunkBuffer = new byte[4];
             int chunkIndex = 0;
@@ -168,7 +170,7 @@ public class ModFingerprinter {
             // chunkIndex is now the number of bytes remaining (0, 1, 2, or 3)
             // matching length % 4
             if (chunkIndex > 0) {
-                 switch (chunkIndex) {
+                switch (chunkIndex) {
                     case 3:
                         h ^= (chunkBuffer[2] & 0xff) << 16;
                     case 2:

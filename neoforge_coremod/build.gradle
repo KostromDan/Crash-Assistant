@@ -13,7 +13,7 @@ configurations {
 }
 
 base {
-    archivesName = "CrashAssistant-neoforge-1.21.9-1.21.10"
+    archivesName = "CrashAssistant-neoforge-1.21.9-1.21.11"
 }
 
 dependencies {
@@ -100,7 +100,8 @@ unifiedPublishing {
     project {
         gameVersions = [
                 "1.21.9",
-                "1.21.10"
+                "1.21.10",
+                "1.21.11"
         ]
         gameLoaders = ["neoforge"]
 

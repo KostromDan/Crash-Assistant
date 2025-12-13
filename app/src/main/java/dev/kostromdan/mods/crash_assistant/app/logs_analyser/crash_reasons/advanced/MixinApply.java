@@ -7,6 +7,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.ModuleFinder;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
@@ -35,7 +36,8 @@ public class MixinApply extends KnownCrashReason {
     @Override
     public boolean matches(Log latestLog) {
         String startWarn = "";
-        if (!PlatformHelp.isLinkDefault()) {
+        boolean bypassModpackCheck = CrashAssistantConfig.getBlacklistedAnalysis().contains("BYPASS_MODPACK_CHECK_FOR_MIXIN_APPLY");
+        if (!PlatformHelp.isLinkDefault() && !bypassModpackCheck) {
             if (ModListDiff.isModpackCreator()) {
                 startWarn = "<strong>You are seeing this analysis only because you are creator of this modpack. Won't be displayed to the end users.</strong>\n\n";
             } else {

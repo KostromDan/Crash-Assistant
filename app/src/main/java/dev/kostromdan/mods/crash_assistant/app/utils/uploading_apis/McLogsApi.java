@@ -1,9 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis;
 
 import com.google.gson.*;
-import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -15,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Implementation of the UploadingApi interface for mclo.gs
@@ -56,14 +57,24 @@ public class McLogsApi implements UploadingApi {
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("User-Agent", userAgent);
                 connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                // Indicate that the content is GZIP compressed
+                connection.setRequestProperty("Content-Encoding", "gzip");
                 connection.setDoOutput(true);
 
                 // Prepare the request body
                 String content = "content=" + URLEncoder.encode(finalText, StandardCharsets.UTF_8.name());
                 byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
-                int totalBytes = contentBytes.length;
 
-                // Tell the server how much we will send
+                // Compress the content using GZIP
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
+                    gzipOutputStream.write(contentBytes);
+                }
+                byte[] compressedBytes = byteArrayOutputStream.toByteArray();
+
+                int totalBytes = compressedBytes.length;
+
+                // Tell the server how much we will send (compressed size)
                 connection.setRequestProperty("Content-Length", String.valueOf(totalBytes));
 
                 // --- real progress reporting ------------------------------------------------
@@ -88,7 +99,8 @@ public class McLogsApi implements UploadingApi {
 
                     while (bytesWritten < totalBytes) {
                         int len = Math.min(chunkSize, totalBytes - bytesWritten);
-                        os.write(contentBytes, bytesWritten, len);
+                        // Write the compressed bytes
+                        os.write(compressedBytes, bytesWritten, len);
                         bytesWritten += len;
 
                         int percent = (int) ((bytesWritten * 100L) / totalBytes);

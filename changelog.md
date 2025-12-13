@@ -1,3 +1,8 @@
+1.10.27:
+
+- Added GZIP compression for McLogs API uploads to reduce payload size and upload times by up to 100x.
+- Small fixes.
+
 1.10.26:
 
 - Marked 1.21.11 as compatible.

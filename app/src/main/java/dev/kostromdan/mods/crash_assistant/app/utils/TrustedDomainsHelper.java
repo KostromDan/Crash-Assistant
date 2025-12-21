@@ -28,6 +28,8 @@ public class TrustedDomainsHelper {
         add("gnomebot.dev");
         add("mclo.gs");
         add("download.fo");
+        add("t.me");
+        add("cryprojects.ru");
 
         // Add domains from LinksProvider
         addAll(getDomainsFromLinksProvider());

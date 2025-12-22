@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.modlist;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModFingerprinter;
 
@@ -13,6 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -134,7 +136,7 @@ public class ManualDownloadDialog extends JDialog {
     private void openPage(ActionEvent e) {
         try {
             if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(java.net.URI.create(downloadPageUrl));
+                LinksHelper.browse(URI.create(downloadPageUrl));
             }
         } catch (Exception ex) {
             CrashAssistantApp.LOGGER.error("Failed to open download page {}", downloadPageUrl, ex);

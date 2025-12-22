@@ -7,10 +7,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParsingResult;
-import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
-import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
-import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
-import dev.kostromdan.mods.crash_assistant.app.utils.TrustedDomainsHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.ApiProvider;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.UploadLogResponse;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
@@ -278,7 +275,7 @@ public class ControlPanel {
         URI uri = new URI(link);
         if (isInsideTrustedDomainsWarning) return;
         if (TrustedDomainsHelper.isTrustedTopDomain(uri)) {
-            Desktop.getDesktop().browse(new URI(link));
+            LinksHelper.browse(new URI(link));
             return;
         }
         String creatorWarning = "";
@@ -301,7 +298,7 @@ public class ControlPanel {
             if (e.getEventType() == javax.swing.event.HyperlinkEvent.EventType.ACTIVATED) {
                 try {
                     URI clickedUri = e.getURL().toURI();
-                    Desktop.getDesktop().browse(clickedUri);
+                    LinksHelper.browse(clickedUri);
                     if (clickedUri.toString().equals(link)) {
                         warningDialog.dispose();
                     }
@@ -315,7 +312,7 @@ public class ControlPanel {
         Object result = optionPane.getValue();
         isInsideTrustedDomainsWarning = false;
         if (result == null || !result.equals(JOptionPane.YES_OPTION)) return;
-        Desktop.getDesktop().browse(new URI(link));
+        LinksHelper.browse(new URI(link));
     }
 
 

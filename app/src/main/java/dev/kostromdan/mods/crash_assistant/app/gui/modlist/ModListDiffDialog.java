@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel;
 import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
+import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
 import dev.kostromdan.mods.crash_assistant.app.utils.mods_downloader.ModPlatformLookupService;
 import dev.kostromdan.mods.crash_assistant.app.utils.mods_downloader.api.CurseForge;
 import dev.kostromdan.mods.crash_assistant.app.utils.mods_downloader.api.Modrinth;
@@ -1723,7 +1724,7 @@ public class ModListDiffDialog extends JFrame {
                 url = "https://www.curseforge.com/minecraft/mc-mods/" + match.modId;
             }
             if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(new URI(url));
+                LinksHelper.browse(new URI(url));
             }
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to open CurseForge project", e);
@@ -1736,7 +1737,7 @@ public class ModListDiffDialog extends JFrame {
         if (info == null || info.projectUrl == null) return;
         try {
             if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(new URI(info.projectUrl));
+                LinksHelper.browse(new URI(info.projectUrl));
             }
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to open Modrinth project", e);

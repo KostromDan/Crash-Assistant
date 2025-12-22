@@ -9,6 +9,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalyser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
+import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.ApiProvider;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.Problem;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.UploadLogResponse;
@@ -212,7 +213,7 @@ public class FilePanel {
             return;
         }
         try {
-            Desktop.getDesktop().browse(new URL(linkToCopy).toURI());
+            LinksHelper.browse(new URL(linkToCopy).toURI());
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to open in link browser: ", e);
         }

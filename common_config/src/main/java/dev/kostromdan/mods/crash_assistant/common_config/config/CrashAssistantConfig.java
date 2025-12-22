@@ -263,7 +263,7 @@ public class CrashAssistantConfig {
                 new ArrayList<>());
 
         config.setComment("analysis_tools", "Settings of analysis tools feature.\n" +
-                "Here you can enable disable showing some analysis tools fot end user.");
+                "Here you can enable or disable showing some analysis tools for end user.");
         addOption("analysis_tools.enabled",
                 "Enable feature.",
                 true);

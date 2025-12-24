@@ -1,3 +1,9 @@
+1.10.28:
+
+- Added new domains to trusted.
+- Fixed opening links on linux sometimes didn't work.
+- Small fixes.
+
 1.10.27:
 
 - Added GZIP compression for McLogs API uploads to reduce payload size and upload times by up to 100x.

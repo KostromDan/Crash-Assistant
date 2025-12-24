@@ -17,7 +17,7 @@ public class LinksHelper {
 
             Desktop.getDesktop().browse(uri);
         } catch (Exception e) {
-            CrashAssistantApp.LOGGER.error("Failed to open link: ", e);
+            CrashAssistantApp.LOGGER.error("Failed to open link '{}': ", uri.toString(), e);
         }
     }
 

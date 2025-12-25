@@ -35,7 +35,7 @@ public class ResourceLocationException extends KnownCrashReason {
                 message = message.replace("$LINE_FROM_LOG$", line);
                 return true;
             }
-            prevLineIsFailureMessage = line.contains("Failure message: ");
+            prevLineIsFailureMessage = line.contains("Failure message: ") || line.contains("encountered an error while dispatching");
         }
         return false;
     }

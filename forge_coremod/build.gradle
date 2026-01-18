@@ -78,7 +78,7 @@ unifiedPublishing {
 
         displayName = tasks.remapJar.archiveFile.get().asFile.name
         version = mod_version
-        changelog = file('../changelog.md').text.split(/\d+\.\d+(\.\w+)?\:/)[1].trim()
+        changelog = file('../changelog.md').text.split(/\n?(\d+\.)?\d+\.\d+\.[\w|\s]*:?\n\n/)[1]
         releaseType = release_type
 
         mainPublication tasks.remapJar

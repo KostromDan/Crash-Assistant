@@ -1,3 +1,15 @@
+1.10.29:
+
+- Fixed `ResourceLocationException` analysis sometimes doesn't work.
+- Fixed bracket symbols in path of modpack on MinecraftForge 1.21.1+ causing Crash Assistant not starting issue.
+  However, updating forge is also needed since same issue was on side of modloader.
+- Limited concurrent log uploads in `McLogsApi` to prevent 429 error in case of very many logs.
+- Now `.crash_assistant_tmp` folder is removed on exit from app.
+- Separated `LogType.STDERR_STREAM` from `LogType.LAUNCHER_LOG`.
+- Add logging for successful uploads of log and modlist links. Now if user was confused and only shared just the Crash
+  Assistant log, we can still have links to others.
+- 
+
 1.10.28:
 
 - Added new domains to trusted.

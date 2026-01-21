@@ -583,7 +583,9 @@ public class ControlPanel {
         response.setClient(ApiProvider.getMcLogsClient());
 
         if (response.isSuccess()) {
-            return CrashAssistantGUI.transformLink(response.getUrl());
+            String finalLink = CrashAssistantGUI.transformLink(response.getUrl());
+            CrashAssistantApp.LOGGER.info("Modlist diff uploaded successfully: " + finalLink);
+            return finalLink;
         } else {
             throw new UploadException("An error occurred when uploading modlist diff: " + response.getError());
         }

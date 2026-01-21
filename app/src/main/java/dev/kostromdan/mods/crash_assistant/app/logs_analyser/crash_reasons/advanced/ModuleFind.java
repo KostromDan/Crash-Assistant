@@ -17,7 +17,7 @@ public class ModuleFind extends KnownCrashReason {
         super(
                 new HashSet<LogType>() {{
                     add(LogType.LOG);
-                    add(LogType.LAUNCHER_LOG);
+                    add(LogType.STDERR_STREAM);
                 }},
                 LanguageProvider.get("warnings.module_find")
         );

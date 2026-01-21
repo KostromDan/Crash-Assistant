@@ -9,6 +9,7 @@
 - Add logging for successful uploads of log and modlist links. Now if user was confused and only shared just the Crash
   Assistant log, we can still have links to others.
 - Added some other logging.
+- Renamed `Untrusted Link Domain` to `Link Opening Confirmation` to make it less confusing for users.
 
 1.10.28:
 

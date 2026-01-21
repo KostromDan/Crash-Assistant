@@ -20,7 +20,7 @@ public class CorruptedModJar extends KnownCrashReason {
                 new HashSet<LogType>() {{
                     add(LogType.LOG);
                     add(LogType.CRASH_REPORT);
-                    add(LogType.LAUNCHER_LOG);
+                    add(LogType.STDERR_STREAM);
                 }},
                 LanguageProvider.get("warnings.corrupted_mod_jar")
         );

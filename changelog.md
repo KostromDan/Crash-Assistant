@@ -8,7 +8,7 @@
 - Separated `LogType.STDERR_STREAM` from `LogType.LAUNCHER_LOG`.
 - Add logging for successful uploads of log and modlist links. Now if user was confused and only shared just the Crash
   Assistant log, we can still have links to others.
-- 
+- Added some other logging.
 
 1.10.28:
 

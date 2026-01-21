@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -327,6 +328,21 @@ public class ControlPanel {
         new Thread(() -> {
             if (generatedMsg == null) {
                 uploadAllButton.setText(LanguageProvider.get("gui.uploading"));
+
+                CompletableFuture<String> modlistDiffFuture = null;
+                if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
+                    ModListDiff modListDiff = ModListDiff.getDiff(true);
+                    ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
+                    String modlistDiffText = diffStringBuilder.toText();
+                    String modListDiffAnsi = diffStringBuilder.toAnsi();
+                    int lineCount = modlistDiffText.length() - modlistDiffText.replace("\n", "").length();
+
+                    if (shouldUploadModListDiff(0, modListDiffAnsi.length(), lineCount)) {
+                        modlistDiffFuture = uploadModlistDiff(modlistDiffText);
+                    }
+                }
+                final CompletableFuture<String> finalModlistDiffFuture = modlistDiffFuture;
+
                 for (FilePanel panel : fileListPanel.getFilePanelList()) {
                     while (!panel.isUploadButtonEnabled() && (panel.getLastError() != null || panel.isWaiting())) {
                         if (panel.isWaiting()) {
@@ -391,7 +407,7 @@ public class ControlPanel {
 
                     }
                 }
-                generateMsg();
+                generateMsg(finalModlistDiffFuture);
             }
 
             String warningMsg = CrashAssistantConfig.get("generated_message.warning_after_upload_all_button_press", true);
@@ -417,7 +433,7 @@ public class ControlPanel {
         }).start();
     }
 
-    public void generateMsg() {
+    public void generateMsg(CompletableFuture<String> modlistDiffFuture) {
         StringBuilder sb = new StringBuilder();
         sb.append(CrashAssistantGUI.getTitleCrashedText(true)).append(LanguageProvider.getMsgLang("msg.crashed").replace("$UPLOAD_TO$", CrashAssistantGUI.getUploadToLink())).append("\n");
         if (!CrashAssistantConfig.get("generated_message.text_under_crashed").toString().isEmpty()) {
@@ -524,13 +540,16 @@ public class ControlPanel {
             sb.append("\n");
             ModListDiff modListDiff = ModListDiff.getDiff(true);
             ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
-            String modlistDIff = diffStringBuilder.toText();
+            String modlistDiffText = diffStringBuilder.toText();
             String modListDiffAnsi = diffStringBuilder.toAnsi();
-            int lineCount = modlistDIff.length() - modlistDIff.replace("\n", "").length();
-            if (sb.length() + modListDiffAnsi.length() >= 1650 || lineCount > 15 ||
-                    (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.FORGE && lineCount > 3)) {
+            int lineCount = modlistDiffText.length() - modlistDiffText.replace("\n", "").length();
+
+            if (modlistDiffFuture != null || shouldUploadModListDiff(sb.length(), modListDiffAnsi.length(), lineCount)) {
                 try {
-                    String link = uploadModlistDiff(modlistDIff);
+                    if (modlistDiffFuture == null) {
+                        modlistDiffFuture = uploadModlistDiff(modlistDiffText);
+                    }
+                    String link = modlistDiffFuture.get();
                     sb.append(ModListDiff.getFilePrefix());
                     sb.append(ModListDiff.getFirstString(true, true, link));
                     sb.append("\n```");
@@ -557,10 +576,16 @@ public class ControlPanel {
             }
         }
         generatedMsg = sb.toString();
+        CrashAssistantApp.LOGGER.info("Generated message successfully:\n\n\n" + generatedMsg + "\n\n\n");
     }
 
     public static String formatSingleLogMessage(Log log) {
         return log.getParentName() + "[" + log.getFileName() + "](<" + log.getLinkToUploadedFirstLines() + ">)";
+    }
+
+    private static boolean shouldUploadModListDiff(int currentMsgLength, int diffLength, int lineCount) {
+        return currentMsgLength + diffLength >= 1650 || lineCount > 15 ||
+                (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.FORGE && lineCount > 3);
     }
 
     public static void showUploadAllButtonWarning(String warningMsg) {
@@ -578,17 +603,18 @@ public class ControlPanel {
         dialog.setVisible(true);
     }
 
-    public static String uploadModlistDiff(String diff) throws ExecutionException, InterruptedException, UploadException {
-        UploadLogResponse response = ApiProvider.getMcLogsClient().uploadLog(diff).get();
-        response.setClient(ApiProvider.getMcLogsClient());
+    public static CompletableFuture<String> uploadModlistDiff(String diff) {
+        return ApiProvider.getMcLogsClient().uploadLog(diff).thenApply(response -> {
+            response.setClient(ApiProvider.getMcLogsClient());
 
-        if (response.isSuccess()) {
-            String finalLink = CrashAssistantGUI.transformLink(response.getUrl());
-            CrashAssistantApp.LOGGER.info("Modlist diff uploaded successfully: " + finalLink);
-            return finalLink;
-        } else {
-            throw new UploadException("An error occurred when uploading modlist diff: " + response.getError());
-        }
+            if (response.isSuccess()) {
+                String finalLink = CrashAssistantGUI.transformLink(response.getUrl());
+                CrashAssistantApp.LOGGER.info("Modlist diff uploaded successfully: " + finalLink);
+                return finalLink;
+            } else {
+                throw new UploadException("An error occurred when uploading modlist diff: " + response.getError());
+            }
+        });
     }
 
     public static String getCurrentMemoryArgsString() {

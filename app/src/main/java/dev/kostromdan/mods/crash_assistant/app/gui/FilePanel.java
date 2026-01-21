@@ -247,6 +247,11 @@ public class FilePanel {
         }
         uploadButton.setEnabled(false);
         new Thread(() -> {
+            if(!fromButton && log.getType() == LogType.CRASH_ASSISTANT && log.getLinkToUploadedFirstLines() != null){
+                untransformCopyLinkButton();
+                log.setLinkToUploadedFirstLines(null);
+                log.setLinkToUploadedLastLines(null);
+            }
             if (log.getLinkToUploadedFirstLines() == null) {
                 lastError = null;
                 uploadButton.setPreferredSize(new Dimension(uploadButton.getMinimumSize().width, 25));
@@ -273,15 +278,15 @@ public class FilePanel {
                     String oldText = uploadButton.getText();
 
                     if (!fromButton && log.getType() == LogType.CRASH_ASSISTANT) {
-                        List<FilePanel> logsCodexSupports = CrashAssistantGUI.fileListPanel.getFilePanelList().stream()
-                                .filter(x -> LogAnalyser.CodexSupportedLogTypes.contains(x.getLog().getType()))
+                        List<FilePanel> allLogsList = CrashAssistantGUI.fileListPanel.getFilePanelList().stream()
+                                .filter(x -> x.getLog().getType() != LogType.CRASH_ASSISTANT)
                                 .collect(Collectors.toList());
-                        while (!logsCodexSupports.isEmpty()) {
+                        while (!allLogsList.isEmpty()) {
                             uploadButton.setText(LanguageProvider.get("gui.delayed"));
                             Thread.sleep(100);
-                            if (logsCodexSupports.stream().anyMatch(x -> x.getLastError() != null))
-                                throw new UploadException("Crash Assistant log must be uploaded after logs, Codex supports. But encountered error while uploading one of them.");
-                            if (logsCodexSupports.stream().allMatch(x -> x.getLog().getLinkToUploadedFirstLines() != null))
+                            if (allLogsList.stream().anyMatch(x -> x.getLastError() != null))
+                                throw new UploadException("Crash Assistant log must be uploaded after all another logs. But encountered error while uploading one of them.");
+                            if (allLogsList.stream().allMatch(x -> x.getLog().getLinkToUploadedFirstLines() != null))
                                 break;
                         }
                     }
@@ -411,6 +416,10 @@ public class FilePanel {
         int newWidth = fullButtonWidth - browserButton.getPreferredSize().width - 5;
         uploadButton.setPreferredSize(new Dimension(newWidth, uploadButton.getPreferredSize().height));
         uploadButton.setText(oldText);
+    }
+
+    private void untransformCopyLinkButton() {
+        browserButton.setVisible(false);
     }
 
     public String getTooBigReasons(boolean forMsg) {

@@ -141,6 +141,7 @@ public class LibrariesJarLocator {
             str = url.getFile();
             len += 2;
             str = str.substring(0, str.length() - len);
+            str = str.replace("[", "%5B").replace("]", "%5D");
         } else if ("union".equalsIgnoreCase(url.getProtocol())) {
             str = url.getFile();
             str = "file://" + str.substring(0, str.lastIndexOf(".jar") + 4);

@@ -10,6 +10,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateD
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.EpicFightDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.HtmlToMarkdown;
@@ -26,6 +27,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
+import org.apache.commons.io.FileUtils;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -221,6 +223,11 @@ public class CrashAssistantGUI {
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 CrashAssistantApp.LOGGER.info("Crash Assistant closed.");
+                try {
+                    FileUtils.deleteDirectory(ModListDiffDialog.tmpDownloadsFolder.toFile());
+                } catch (Throwable ex) {
+                    CrashAssistantApp.LOGGER.error("Failed to delete temporary downloads folder.", ex);
+                }
                 System.exit(0);
             }
         });

@@ -297,7 +297,9 @@ public class FilePanel {
                         UploadLogResponse responseLastLines = completableResponseLastLines.get();
                         responseLastLines.setClient(ApiProvider.getMcLogsClient());
                         if (responseLastLines.isSuccess()) {
-                            log.setLinkToUploadedLastLines(CrashAssistantGUI.transformLink(responseLastLines.getUrl()));
+                            String finalLink = CrashAssistantGUI.transformLink(responseLastLines.getUrl());
+                            CrashAssistantApp.LOGGER.info("{} last lines uploaded successfully: {}", log.getName(), finalLink);
+                            log.setLinkToUploadedLastLines(finalLink);
                         } else {
                             throw new UploadException("An error occurred when uploading file: " + responseLastLines.getError());
                         }
@@ -307,16 +309,17 @@ public class FilePanel {
 
 
                     if (responseFirstLines.isSuccess()) {
-                        String link = CrashAssistantGUI.transformLink(responseFirstLines.getUrl());
+                        String finalLink = CrashAssistantGUI.transformLink(responseFirstLines.getUrl());
+                        CrashAssistantApp.LOGGER.info("{} first lines uploaded successfully: {}", log.getName(), finalLink);
                         if (LogAnalyser.CodexSupportedLogTypes.contains(log.getType())) {
                             synchronized (KnownCrashReasonMessage.class) {
                                 for (Problem problem : responseFirstLines.getInsights().get().getProblems()) {
-                                    KnownCrashReasonMessage.addCodexMessage(log, problem, link);
+                                    KnownCrashReasonMessage.addCodexMessage(log, problem, finalLink);
                                 }
                                 CrashAssistantGUI.showKnownCrashReasonsWarnings();
                             }
                         }
-                        log.setLinkToUploadedFirstLines(link);
+                        log.setLinkToUploadedFirstLines(finalLink);
                     } else {
                         throw new UploadException("An error occurred when uploading file: " + responseFirstLines.getError());
                     }

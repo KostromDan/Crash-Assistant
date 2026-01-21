@@ -109,7 +109,7 @@ public class FilePanel {
         dummy.setBorder(uploadButton.getBorder());
         dummy.setMargin(uploadButton.getMargin());
         dummy.setFont(uploadButton.getFont());
-        
+
         // Measure texts that appear alone (without browser button)
         for (String s : singleStateTexts) {
             if (s != null) {
@@ -310,7 +310,7 @@ public class FilePanel {
 
                     if (responseFirstLines.isSuccess()) {
                         String finalLink = CrashAssistantGUI.transformLink(responseFirstLines.getUrl());
-                        CrashAssistantApp.LOGGER.info("{} first lines uploaded successfully: {}", log.getName(), finalLink);
+                        CrashAssistantApp.LOGGER.info("{} " + (lastLines != null ? "first lines " : "") + "uploaded successfully: {}", log.getName(), finalLink);
                         if (LogAnalyser.CodexSupportedLogTypes.contains(log.getType())) {
                             synchronized (KnownCrashReasonMessage.class) {
                                 for (Problem problem : responseFirstLines.getInsights().get().getProblems()) {

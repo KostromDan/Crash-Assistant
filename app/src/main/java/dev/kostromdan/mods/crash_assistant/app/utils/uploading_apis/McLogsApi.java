@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,10 +23,12 @@ import java.util.zip.GZIPOutputStream;
  */
 public class McLogsApi implements UploadingApi {
     private static final String API_BASE_URL = "https://api.mclo.gs/1/";
+    private static final int MAX_CONCURRENT_UPLOADS = 5;
     private static final String USER_AGENT = "CrashAssistant";
     private static final Gson GSON = new Gson();
 
     private final String userAgent;
+    private final Semaphore uploadSemaphore = new Semaphore(MAX_CONCURRENT_UPLOADS);
 
     /**
      * Creates a new McLogsApi with the default user agent
@@ -47,6 +50,12 @@ public class McLogsApi implements UploadingApi {
     public CompletableFuture<UploadLogResponse> uploadLog(String text, Consumer<Integer> onProgressChanged) {
         final String finalText = text.isEmpty() ? "Log is empty." : McLogsAntiVersionCensorer.apply(text);
         return CompletableFuture.supplyAsync(() -> {
+            try {
+                uploadSemaphore.acquire();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return new UploadLogResponse("Upload interrupted during waiting for upload stage.");
+            }
             try {
                 // Call onProgressChanged with initial progress
                 if (onProgressChanged != null) onProgressChanged.accept(0);
@@ -144,6 +153,8 @@ public class McLogsApi implements UploadingApi {
                 }
             } catch (Exception e) {
                 return new UploadLogResponse("Error while uploading log to mclo.gs:\n" + ErrorUtils.getErrorMessageAndStackTrace(e));
+            } finally {
+                uploadSemaphore.release();
             }
         });
     }

@@ -11,7 +11,7 @@ import java.util.List;
 public class FerriteCoreNeighborTable extends KnownCrashReason {
     public FerriteCoreNeighborTable() {
         super(
-                LogType.LAUNCHER_LOG,
+                LogType.STDERR_STREAM,
                 LanguageProvider.get("warnings.ferritecore_neighbor_table")
         );
     }

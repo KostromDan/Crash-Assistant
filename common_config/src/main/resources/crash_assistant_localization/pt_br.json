@@ -294,7 +294,7 @@
   "gui.too_many_changes_warning_drop_support": "Você fez muitas alterações no modpack!\nProvavelmente, este problema é causado por suas modificações.\nClicar no botão \"Atualizar Tudo\" no launcher também provavelmente quebrará as coisas.\n\nSe você não modificou o modpack, provavelmente ele está corrompido devido a uma atualização incorreta, e você deve reinstalá-lo.\n\nNão forneceremos suporte para esse número de alterações ($MODIFICATIONS_COUNT$).\nPor favor, reverta todas as suas alterações, ou você está por conta própria!",
   "gui.too_many_changes_warning_notice": "Aviso: Você fez um grande número de alterações no modpack ($MODIFICATIONS_COUNT$).\nAdicionar mods aleatórios em um pack já equilibrado deve causar problemas e crashes.\nClicar no botão \"Atualizar Tudo\" no launcher também provavelmente quebrará as coisas.\nPor favor, adicione novos mods em pequenos lotes e teste tudo com cuidado.\nAntes de pedir suporte, tente reverter ou reduzir suas alterações.\nSe o problema ainda acontecer com menos ou nenhuma alteração, sinta-se à vontade para pedir ajuda.\n\nSe você não modificou o modpack, provavelmente ele está corrompido devido a uma atualização incorreta, e você deve reinstalá-lo.",
   "gui.untrusted_domain_question": "Deseja abrir este link?",
-  "gui.untrusted_domain_title": "Domínio de Link Não Confiável",
+  "gui.untrusted_domain_title": "Confirmação de Abertura de Link",
   "gui.upload_all_button": "Enviar todos os logs e copiar uma mensagem com links para os logs e as alterações na lista de mods (recomendado para contato com suporte)",
   "gui.upload_all_button_delayed": "Localizando processos terminados... Por favor, aguarde $SECONDS$ segundos.",
   "gui.upload_all_button_warning_title": "Informação",

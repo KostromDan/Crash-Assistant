@@ -47,7 +47,7 @@ public class MixinApply extends KnownCrashReason {
         }
         List<Log> logs = new ArrayList<>();
         for (Log log : LogsList.getLogs()) {
-            if (log.getType() == LogType.LAUNCHER_LOG) {
+            if (log.getType() == LogType.STDERR_STREAM) {
                 logs.add(log);
             }
         }

@@ -17,7 +17,7 @@ public class Log {
         this.name = name;
         this.path = path;
         this.type = type;
-        this.reader = type == LogType.LAUNCHER_LOG ? new LauncherLogReader(this) : new LogReader(this);
+        this.reader = new LogReader(this);
     }
 
     public Log(LogType type, Path path) {

@@ -48,6 +48,7 @@ public class ModListDiffDialog extends JFrame {
     private final JPanel progressButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
     private final JButton cancelCurrentButton = new JButton(LanguageProvider.get("gui.modlist_diff.cancel_current"));
     private final JButton cancelAllButton = new JButton(LanguageProvider.get("gui.modlist_diff.cancel_all"));
+    public static final Path tmpDownloadsFolder = ModListUtils.MODS_FOLDER.resolve(".crash_assistant_tmp");
 
     // Cancellation State Flags
     private volatile boolean cancelCurrentRequested = false;
@@ -1147,18 +1148,17 @@ public class ModListDiffDialog extends JFrame {
             resetProgress();
             return false;
         }
-        Path stagingDir = ModListUtils.MODS_FOLDER.resolve(".crash_assistant_tmp");
         List<DownloadResult> downloads = new ArrayList<DownloadResult>();
         Set<Path> keepFinalPaths = new HashSet<Path>();
         try {
-            Files.createDirectories(stagingDir);
+            Files.createDirectories(tmpDownloadsFolder);
             for (DiffEntry.ModInstance saved : entry.savedMods) {
                 if (isCancelRequestedFor(entry)) {
                     consumeSingleCancel(); // RESET THE FLAG!
                     cleanupDownloads(downloads);
                     return false;
                 }
-                DownloadResult result = downloadSavedFile(entry, saved, stagingDir);
+                DownloadResult result = downloadSavedFile(entry, saved, tmpDownloadsFolder);
                 if (result == null) {
                     consumeSingleCancel(); // RESET THE FLAG!
                     cleanupDownloads(downloads);
@@ -1210,13 +1210,12 @@ public class ModListDiffDialog extends JFrame {
             resetProgress();
             return false;
         }
-        Path stagingDir = ModListUtils.MODS_FOLDER.resolve(".crash_assistant_tmp");
         List<DownloadResult> downloads = new ArrayList<DownloadResult>();
         Set<Path> keepFinalPaths = new HashSet<Path>();
         try {
-            Files.createDirectories(stagingDir);
+            Files.createDirectories(tmpDownloadsFolder);
             for (DiffEntry.ModInstance saved : entry.savedMods) {
-                DownloadResult result = downloadSavedFile(entry, saved, stagingDir);
+                DownloadResult result = downloadSavedFile(entry, saved, tmpDownloadsFolder);
                 if (result == null) {
                     consumeSingleCancel(); // RESET THE FLAG!
                     cleanupDownloads(downloads);

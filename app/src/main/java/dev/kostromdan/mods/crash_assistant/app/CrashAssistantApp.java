@@ -249,7 +249,7 @@ public class CrashAssistantApp {
         }
 
 
-        Log stderrLog = new Log(LogType.LAUNCHER_LOG, Paths.get("logs", "stderr_stream.log"));
+        Log stderrLog = new Log(LogType.STDERR_STREAM, Paths.get("logs", "stderr_stream.log"));
         long logSizeBytes = stderrLog.getFile().length();
         LOGGER.info("stderr_stream.log size: {} bytes", logSizeBytes);
         if (Files.isRegularFile(stderrLog.getPath()) && logSizeBytes >= 400) {

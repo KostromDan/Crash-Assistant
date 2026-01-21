@@ -14,7 +14,7 @@ public class MedievalOriginsVsForgeOrigins extends KnownCrashReason {
         super(
                 new HashSet<LogType>() {{
                     add(LogType.LOG);
-                    add(LogType.LAUNCHER_LOG);
+                    add(LogType.STDERR_STREAM);
                 }},
                 LanguageProvider.get("warnings.medieval_origins"),
                 "Caused by: java\\.lang\\.ClassCastException: class net\\.minecraft\\.world\\.item\\.ItemStack cannot be cast to class io\\.github\\.apace100\\.apoli\\.access\\.EntityLinkedItemStack \\(net\\.minecraft\\.world\\.item\\.ItemStack is in module"

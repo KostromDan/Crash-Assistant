@@ -7,6 +7,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.codex
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.hs_err.*;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.*;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.PhysX_64;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.WasClosedByWindows;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 
@@ -192,6 +193,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new Version1_21());
         registerKnownCrashReason(new WaterMediaVLCMissing());
 
+        registerKnownCrashReason(new PhysX_64());
         registerKnownCrashReason(new WasClosedByWindows());
 
 

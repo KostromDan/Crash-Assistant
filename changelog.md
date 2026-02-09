@@ -15,6 +15,7 @@
 - Renamed `Untrusted Link Domain` to `Link Opening Confirmation` to make it less confusing for users.
 - Simplified and shortened Upload All button text.
 - Added new analysis `SimpleCloudsShaders`, detects conflict between simple clouds, distant horizons and shaders.
+- Added new analysis `IrlandaCoreBackDoor`, warns about creative mode backdoor for author in mod.
 
 1.10.28:
 

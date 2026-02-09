@@ -294,11 +294,11 @@ public class FilePanel {
                     uploadButton.setText(LanguageProvider.get("gui.preprocessing"));
                     log.getReader().readLogFile(true);
                     uploadButton.setText(oldText);
-                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = ApiProvider.getMcLogsClient().uploadLog(log.getReader().getFirstLinesString());
+                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = ApiProvider.getMcLogsClient().uploadLog(log.getName(), log.getReader().getFirstLinesString());
 
                     String lastLines = log.getReader().getLastLinesString();
                     if (lastLines != null) {
-                        CompletableFuture<UploadLogResponse> completableResponseLastLines = ApiProvider.getMcLogsClient().uploadLog(lastLines);
+                        CompletableFuture<UploadLogResponse> completableResponseLastLines = ApiProvider.getMcLogsClient().uploadLog(log.getName() + " (Last Lines)", lastLines);
                         UploadLogResponse responseLastLines = completableResponseLastLines.get();
                         if (responseLastLines.isSuccess()) {
                             String finalLink = CrashAssistantGUI.transformLink(responseLastLines.getUrl());

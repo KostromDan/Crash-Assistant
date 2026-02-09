@@ -169,6 +169,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new FerriteCoreNeighborTable());
         registerKnownCrashReason(new GeckoLibOculusCompat());
         registerKnownCrashReason(new GroovyModLoaderIPv6());
+        registerKnownCrashReason(new IrlandaCoreBackDoor());
         registerKnownCrashReason(new JnaPermissionIssue());
         registerKnownCrashReason(new KubeJSDataPack());
         registerKnownCrashReason(new LanguageProviderMismatch());

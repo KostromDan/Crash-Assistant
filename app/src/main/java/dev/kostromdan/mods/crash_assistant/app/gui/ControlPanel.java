@@ -604,7 +604,7 @@ public class ControlPanel {
     }
 
     public static CompletableFuture<String> uploadModlistDiff(String diff) {
-        return ApiProvider.getMcLogsClient().uploadLog(diff).thenApply(response -> {
+        return ApiProvider.getMcLogsClient().uploadLog("ModList Diff", diff).thenApply(response -> {
 
             if (response.isSuccess()) {
                 String finalLink = CrashAssistantGUI.transformLink(response.getUrl());

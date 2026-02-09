@@ -13,6 +13,8 @@
   Assistant log, we can still have links to others.
 - Added some other logging.
 - Renamed `Untrusted Link Domain` to `Link Opening Confirmation` to make it less confusing for users.
+- Simplified and shortened Upload All button text.
+- Added new analysis `SimpleCloudsShaders`, detects conflict between simple clouds, distant horizons and shaders.
 
 1.10.28:
 

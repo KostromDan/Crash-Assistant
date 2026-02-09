@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis;
 
 import com.google.gson.*;
+import dev.kostromdan.mods.crash_assistant.app.utils.UploadedLogsManager;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -44,7 +45,7 @@ public class McLogsApi implements UploadingApi {
     }
 
     @Override
-    public CompletableFuture<UploadLogResponse> uploadLog(String text, Consumer<Integer> onProgressChanged) {
+    public CompletableFuture<UploadLogResponse> uploadLog(String logName, String text, Consumer<Integer> onProgressChanged) {
         final String finalText = text.isEmpty() ? "Log is empty." : McLogsAntiVersionCensorer.apply(text);
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -139,6 +140,11 @@ public class McLogsApi implements UploadingApi {
                         String id = jsonResponse.get("id").getAsString();
                         String responseUrl = jsonResponse.get("url").getAsString();
                         String rawUrl = jsonResponse.get("raw").getAsString();
+                        String token = jsonResponse.has("token") ? jsonResponse.get("token").getAsString() : null;
+
+                        if (token != null) {
+                            UploadedLogsManager.saveLog(logName, responseUrl, token);
+                        }
 
                         LogAnalysisResponse analysisResponse;
                         if (jsonResponse.has("content") && jsonResponse.getAsJsonObject("content").has("insights")) {
@@ -200,7 +206,43 @@ public class McLogsApi implements UploadingApi {
     }
 
     @Override
-    public CompletableFuture<UploadLogResponse> uploadLog(String text) {
-        return uploadLog(text, null);
+    public CompletableFuture<UploadLogResponse> uploadLog(String logName, String text) {
+        return uploadLog(logName, text, null);
+    }
+
+    @Override
+    public CompletableFuture<LogDeletionResponse> deleteLog(String logId, String token) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                URL url = new URL(API_BASE_URL + "log/" + logId);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("DELETE");
+                connection.setRequestProperty("User-Agent", userAgent);
+                connection.setRequestProperty("Authorization", "Bearer " + token);
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    return new LogDeletionResponse(DeletionResult.SUCCESS, null);
+                } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                    return new LogDeletionResponse(DeletionResult.NOT_FOUND, "Log not found (404). It might have been already deleted.");
+                } else {
+                    StringBuilder errorMsg = new StringBuilder();
+                    try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            errorMsg.append(line);
+                        }
+                    } catch (Exception ignored) {
+                    }
+                    String message = "HTTP Error: " + responseCode;
+                    if (errorMsg.length() > 0) {
+                        message += "\nServer message: " + errorMsg.toString();
+                    }
+                    return new LogDeletionResponse(DeletionResult.ERROR, message);
+                }
+            } catch (Exception e) {
+                return new LogDeletionResponse(DeletionResult.ERROR, "Exception: " + e.getMessage());
+            }
+        });
     }
 }

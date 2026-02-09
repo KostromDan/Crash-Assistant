@@ -190,6 +190,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new UnsupportedClassVersion());
         registerKnownCrashReason(new UsedByAnotherProcess());
         registerKnownCrashReason(new Version1_21());
+        registerKnownCrashReason(new WaterMediaVLCMissing());
 
         registerKnownCrashReason(new WasClosedByWindows());
 

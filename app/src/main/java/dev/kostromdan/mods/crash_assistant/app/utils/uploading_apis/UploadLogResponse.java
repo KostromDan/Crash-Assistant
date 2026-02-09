@@ -1,7 +1,5 @@
 package dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis;
 
-import java.util.concurrent.CompletableFuture;
-
 /**
  * Represents a response from uploading a log
  */
@@ -11,7 +9,7 @@ public class UploadLogResponse {
     private String rawUrl;
     private String error;
     private String id;
-    private UploadingApi client;
+    private LogAnalysisResponse analysisResponse;
 
     /**
      * Creates a new successful UploadLogResponse
@@ -19,12 +17,14 @@ public class UploadLogResponse {
      * @param url The URL of the uploaded log
      * @param rawUrl The URL of the raw log content
      * @param id The ID of the uploaded log
+     * @param analysisResponse The analysis response from the log service
      */
-    public UploadLogResponse(String url, String rawUrl, String id) {
+    public UploadLogResponse(String url, String rawUrl, String id, LogAnalysisResponse analysisResponse) {
         this.success = true;
         this.url = url;
         this.rawUrl = rawUrl;
         this.id = id;
+        this.analysisResponse = analysisResponse;
     }
 
     /**
@@ -83,23 +83,11 @@ public class UploadLogResponse {
     }
 
     /**
-     * Sets the client that was used to upload the log
-     * 
-     * @param client The client
-     */
-    public void setClient(UploadingApi client) {
-        this.client = client;
-    }
-
-    /**
      * Gets the insights for the uploaded log
      * 
-     * @return A CompletableFuture that will complete with the insights
+     * @return The insights analysis response
      */
-    public CompletableFuture<LogAnalysisResponse> getInsights() {
-        if (client == null) {
-            throw new IllegalStateException("Client not set");
-        }
-        return client.getProblemsAnalysis(url);
+    public LogAnalysisResponse getInsights() {
+        return analysisResponse;
     }
 }

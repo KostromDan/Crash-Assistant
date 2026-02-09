@@ -16,6 +16,7 @@
 - Simplified and shortened Upload All button text.
 - Added new analysis `SimpleCloudsShaders`, detects conflict between simple clouds, distant horizons and shaders.
 - Added new analysis `IrlandaCoreBackDoor`, warns about creative mode backdoor for author in mod.
+- Added new analysis `WaterMediaVLCMissing`, detects crash caused by missing VLC libs.
 
 1.10.28:
 

@@ -2,6 +2,7 @@
 
 - Now crash assistant supports mclo.gs logs deletion feature.
   You can see/remove previously uploaded logs from mclo.gs servers from our gui.
+- Updated privacy policy with feature description.
 - Fixed `ResourceLocationException` analysis sometimes doesn't work.
 - Fixed bracket symbols in path of modpack on MinecraftForge 1.21.1+ causing Crash Assistant not starting issue.
   However, updating forge is also needed since same issue was on side of modloader.

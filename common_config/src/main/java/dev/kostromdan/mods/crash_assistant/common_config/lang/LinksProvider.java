@@ -52,7 +52,8 @@ public enum LinksProvider {
     RADIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/radium-reforged"),
     CONNECTOR(() -> "https://www.curseforge.com/minecraft/mc-mods/sinytra-connector"),
     INDIUM(() -> "https://www.curseforge.com/minecraft/mc-mods/indium"),
-    FEATURE_RECYCLER(() -> "https://www.curseforge.com/minecraft/mc-mods/feature-recycler");
+    FEATURE_RECYCLER(() -> "https://www.curseforge.com/minecraft/mc-mods/feature-recycler"),
+    MIXIN_EXTRAS_NEO(() -> "https://www.curseforge.com/minecraft/mc-mods/mixin-extras-neoforge-on-forge-fix");
 
 
     private final Supplier<String> linkSupplier;

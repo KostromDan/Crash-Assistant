@@ -17,6 +17,8 @@
 - Added new analysis `SimpleCloudsShaders`, detects conflict between simple clouds, distant horizons and shaders.
 - Added new analysis `IrlandaCoreBackDoor`, warns about creative mode backdoor for author in mod.
 - Added new analysis `WaterMediaVLCMissing`, detects crash caused by missing VLC libs.
+- Now `ModuleResolution` analysis also detects `mixinextras.neoforge` on forge issue and recommends
+  mod created to fix issue (Mixin Extras NeoForge on Forge Fix).
 
 1.10.28:
 

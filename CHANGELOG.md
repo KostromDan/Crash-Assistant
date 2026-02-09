@@ -15,6 +15,7 @@
 - Renamed `Untrusted Link Domain` to `Link Opening Confirmation` to make it less confusing for users.
 - Simplified and shortened Upload All button text.
 - Added new analysis `SimpleCloudsShaders`, detects conflict between simple clouds, distant horizons and shaders.
+- Added new analysis `PhysX_64`, detects if crash is caused by physics mod.
 - Added new analysis `IrlandaCoreBackDoor`, warns about creative mode backdoor for author in mod.
 - Added new analysis `WaterMediaVLCMissing`, detects crash caused by missing VLC libs.
 - Now `ModuleResolution` analysis also detects `mixinextras.neoforge` on forge issue and recommends

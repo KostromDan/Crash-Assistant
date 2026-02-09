@@ -647,6 +647,8 @@ public class ControlPanel {
         }
 
         private static String splitIntoTwoLines(String text) {
+            if (true) return text; // now we use short formulation as an experiment, so this not needed.
+
             int length = text.length();
             // Bias the midpoint about 10% toward the right
             int biasedMid = (int) (length * 0.50);

@@ -185,6 +185,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new ResourceLocationException());
         registerKnownCrashReason(new Rubidium());
         registerKnownCrashReason(new ServerConfigCorrupted());
+        registerKnownCrashReason(new SimpleCloudsShaders());
         registerKnownCrashReason(new UnsupportedClassVersion());
         registerKnownCrashReason(new UsedByAnotherProcess());
         registerKnownCrashReason(new Version1_21());

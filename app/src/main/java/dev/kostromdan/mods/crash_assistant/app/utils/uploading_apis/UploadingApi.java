@@ -24,12 +24,4 @@ public interface UploadingApi {
      * @return A CompletableFuture that will complete with the response containing the URL of the uploaded log
      */
     CompletableFuture<UploadLogResponse> uploadLog(String text);
-    
-    /**
-     * Gets problem analysis for a log
-     * 
-     * @param logUrl The URL of the uploaded log
-     * @return A CompletableFuture that will complete with the response containing the problems found in the log
-     */
-    CompletableFuture<LogAnalysisResponse> getProblemsAnalysis(String logUrl);
 }

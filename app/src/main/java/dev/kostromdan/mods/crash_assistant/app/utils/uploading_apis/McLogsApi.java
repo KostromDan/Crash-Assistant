@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -25,7 +23,6 @@ public class McLogsApi implements UploadingApi {
     private static final String API_BASE_URL = "https://api.mclo.gs/1/";
     private static final int MAX_CONCURRENT_UPLOADS = 5;
     private static final String USER_AGENT = "CrashAssistant";
-    private static final Gson GSON = new Gson();
 
     private final String userAgent;
     private final Semaphore uploadSemaphore = new Semaphore(MAX_CONCURRENT_UPLOADS);
@@ -61,7 +58,7 @@ public class McLogsApi implements UploadingApi {
                 if (onProgressChanged != null) onProgressChanged.accept(0);
 
 
-                URL url = new URL(API_BASE_URL + "log");
+                URL url = new URL(API_BASE_URL + "log?insights=true");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("User-Agent", userAgent);
@@ -143,7 +140,50 @@ public class McLogsApi implements UploadingApi {
                         String responseUrl = jsonResponse.get("url").getAsString();
                         String rawUrl = jsonResponse.get("raw").getAsString();
 
-                        return new UploadLogResponse(responseUrl, rawUrl, id);
+                        LogAnalysisResponse analysisResponse;
+                        if (jsonResponse.has("content") && jsonResponse.getAsJsonObject("content").has("insights")) {
+                            JsonObject insights = jsonResponse.getAsJsonObject("content").getAsJsonObject("insights");
+                            if (insights.has("analysis") && insights.getAsJsonObject("analysis").has("problems")) {
+                                JsonArray problemsArray = insights.getAsJsonObject("analysis").getAsJsonArray("problems");
+                                List<Problem> problems = new ArrayList<>();
+
+                                for (JsonElement problemElement : problemsArray) {
+                                    JsonObject problemObject = problemElement.getAsJsonObject();
+                                    String problemMessage = problemObject.get("message").getAsString();
+
+                                    // Get the line number
+                                    int lineNumber = 0;
+                                    if (problemObject.has("entry") &&
+                                            problemObject.getAsJsonObject("entry").has("lines") &&
+                                            problemObject.getAsJsonObject("entry").getAsJsonArray("lines").size() > 0) {
+                                        lineNumber = problemObject.getAsJsonObject("entry")
+                                                .getAsJsonArray("lines")
+                                                .get(0)
+                                                .getAsJsonObject()
+                                                .get("number")
+                                                .getAsInt();
+                                    }
+
+                                    // Get the solutions
+                                    List<String> solutions = new ArrayList<>();
+                                    if (problemObject.has("solutions")) {
+                                        JsonArray solutionsArray = problemObject.getAsJsonArray("solutions");
+                                        for (JsonElement solutionElement : solutionsArray) {
+                                            solutions.add(solutionElement.getAsJsonObject().get("message").getAsString());
+                                        }
+                                    }
+
+                                    problems.add(new Problem(lineNumber, problemMessage, solutions));
+                                }
+                                analysisResponse = new LogAnalysisResponse(problems);
+                            } else {
+                                analysisResponse = new LogAnalysisResponse("No problems found in the log");
+                            }
+                        } else {
+                            analysisResponse = new LogAnalysisResponse("No problems found in the log");
+                        }
+
+                        return new UploadLogResponse(responseUrl, rawUrl, id, analysisResponse);
                     } else {
                         String error = jsonResponse.get("error").getAsString();
                         return new UploadLogResponse(error);
@@ -162,86 +202,5 @@ public class McLogsApi implements UploadingApi {
     @Override
     public CompletableFuture<UploadLogResponse> uploadLog(String text) {
         return uploadLog(text, null);
-    }
-
-    @Override
-    public CompletableFuture<LogAnalysisResponse> getProblemsAnalysis(String logUrl) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                // Extract the ID from the URL
-                Pattern pattern = Pattern.compile("https://mclo\\.gs/([A-Za-z0-9]+)");
-                Matcher matcher = pattern.matcher(logUrl);
-
-                if (!matcher.find()) {
-                    return new LogAnalysisResponse("Invalid log URL format");
-                }
-
-                String id = matcher.group(1);
-                URL url = new URL(API_BASE_URL + "insights/" + id);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setRequestProperty("User-Agent", userAgent);
-
-                int responseCode = connection.getResponseCode();
-
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    // Parse the response
-                    StringBuilder responseBody = new StringBuilder();
-                    try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            responseBody.append(line);
-                        }
-                    }
-                    JsonObject jsonResponse = JsonParser.parseString(responseBody.toString()).getAsJsonObject();
-
-                    if (jsonResponse.has("analysis") && jsonResponse.getAsJsonObject("analysis").has("problems")) {
-                        JsonArray problemsArray = jsonResponse.getAsJsonObject("analysis").getAsJsonArray("problems");
-                        List<Problem> problems = new ArrayList<>();
-
-                        for (JsonElement problemElement : problemsArray) {
-                            JsonObject problemObject = problemElement.getAsJsonObject();
-                            String problemMessage = problemObject.get("message").getAsString();
-
-                            // Get the line number
-                            int lineNumber = 0;
-                            if (problemObject.has("entry") &&
-                                    problemObject.getAsJsonObject("entry").has("lines") &&
-                                    problemObject.getAsJsonObject("entry").getAsJsonArray("lines").size() > 0) {
-                                lineNumber = problemObject.getAsJsonObject("entry")
-                                        .getAsJsonArray("lines")
-                                        .get(0)
-                                        .getAsJsonObject()
-                                        .get("number")
-                                        .getAsInt();
-                            }
-
-                            // Get the solutions
-                            List<String> solutions = new ArrayList<>();
-                            StringBuilder solutionBuilder = new StringBuilder();
-                            if (problemObject.has("solutions")) {
-                                JsonArray solutionsArray = problemObject.getAsJsonArray("solutions");
-                                for (JsonElement solutionElement : solutionsArray) {
-                                    if (solutionBuilder.length() > 0) {
-                                        solutionBuilder.append("\n");
-                                    }
-                                    solutions.add(solutionElement.getAsJsonObject().get("message").getAsString());
-                                }
-                            }
-
-                            problems.add(new Problem(lineNumber, problemMessage, solutions));
-                        }
-
-                        return new LogAnalysisResponse(problems);
-                    } else {
-                        return new LogAnalysisResponse("No problems found in the log");
-                    }
-                } else {
-                    return new LogAnalysisResponse("HTTP error: " + responseCode);
-                }
-            } catch (Exception e) {
-                return new LogAnalysisResponse("Error: " + e.getMessage());
-            }
-        });
     }
 }

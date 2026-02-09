@@ -606,6 +606,11 @@ public class CrashAssistantGUI {
         logsPrivacyItem.addActionListener(e -> showLogsPrivacyInfo());
         privacyMenu.add(logsPrivacyItem);
 
+        // Manage logs menu item
+        JMenuItem manageLogsItem = new JMenuItem(LanguageProvider.get("gui.menu.privacy.manage_logs"));
+        manageLogsItem.addActionListener(e -> new LogDeletionDialog(frame).setVisible(true));
+        privacyMenu.add(manageLogsItem);
+
         // Reset consent menu item
         JMenuItem resetConsentItem = new JMenuItem(LanguageProvider.get("gui.menu.privacy.reset_consent"));
         resetConsentItem.addActionListener(e -> PrivacyPolicyDialog.resetPrivacyConsent());

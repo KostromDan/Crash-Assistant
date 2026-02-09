@@ -300,7 +300,6 @@ public class FilePanel {
                     if (lastLines != null) {
                         CompletableFuture<UploadLogResponse> completableResponseLastLines = ApiProvider.getMcLogsClient().uploadLog(lastLines);
                         UploadLogResponse responseLastLines = completableResponseLastLines.get();
-                        responseLastLines.setClient(ApiProvider.getMcLogsClient());
                         if (responseLastLines.isSuccess()) {
                             String finalLink = CrashAssistantGUI.transformLink(responseLastLines.getUrl());
                             CrashAssistantApp.LOGGER.info("{} last lines uploaded successfully: {}", log.getName(), finalLink);
@@ -310,7 +309,6 @@ public class FilePanel {
                         }
                     }
                     UploadLogResponse responseFirstLines = completableResponseFirstLines.get();
-                    responseFirstLines.setClient(ApiProvider.getMcLogsClient());
 
 
                     if (responseFirstLines.isSuccess()) {
@@ -318,7 +316,7 @@ public class FilePanel {
                         CrashAssistantApp.LOGGER.info("{} " + (lastLines != null ? "first lines " : "") + "uploaded successfully: {}", log.getName(), finalLink);
                         if (LogAnalyser.CodexSupportedLogTypes.contains(log.getType())) {
                             synchronized (KnownCrashReasonMessage.class) {
-                                for (Problem problem : responseFirstLines.getInsights().get().getProblems()) {
+                                for (Problem problem : responseFirstLines.getInsights().getProblems()) {
                                     KnownCrashReasonMessage.addCodexMessage(log, problem, finalLink);
                                 }
                                 CrashAssistantGUI.showKnownCrashReasonsWarnings();

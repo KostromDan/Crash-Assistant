@@ -35,7 +35,7 @@ public class ResourceLocationException extends KnownCrashReason {
                 message = message.replace("$LINE_FROM_LOG$", line);
                 return true;
             }
-            prevLineIsFailureMessage = line.contains("Failure message: ") || line.contains("encountered an error while dispatching");
+            prevLineIsFailureMessage = line.contains("Failure message: ") || line.contains("encountered an error while dispatching") || line.contains("Failed to create mod instance");
         }
         return false;
     }

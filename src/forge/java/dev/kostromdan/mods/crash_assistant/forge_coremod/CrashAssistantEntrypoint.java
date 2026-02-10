@@ -1,7 +1,10 @@
 package dev.kostromdan.mods.crash_assistant.forge_coremod;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.ArgUtils;
+import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
@@ -21,6 +24,8 @@ public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
             .isClient() ? "client" : "server";
         PlatformHelp.platform = PlatformHelp.FORGE;
         PlatformHelp.minecraftVersion = Loader.MC_VERSION;
+
+        ArgUtils.setLaunchArgs(((java.util.Map<String, String>) Launch.blackboard.get("launchArgs")).entrySet().stream().flatMap(e -> Stream.of(e.getKey(), e.getValue())).toArray(String[]::new));
 
         LibrariesJarLocator.setupLoaderJarName(FMLLaunchHandler.class);
         JarInJarHelper.launchCrashAssistantApp(launchTarget);

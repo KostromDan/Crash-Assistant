@@ -37,7 +37,7 @@ public class PiracyWarning extends JDialog {
             CrashAssistantApp.LOGGER.info("Piracy Warning Don't show again checkbox switched: {}", dontShowAgainCheck.isSelected());
         });
 
-        JButton okButton = new JButton("OK (5)");
+        JButton okButton = new JButton("OK (10)");
         okButton.setEnabled(false);
         okButton.addActionListener(e -> dispose());
 
@@ -57,7 +57,7 @@ public class PiracyWarning extends JDialog {
         setAlwaysOnTop(true);
 
         Timer timer = new Timer(1000, null);
-        final int[] secondsLeft = {5};
+        final int[] secondsLeft = {10};
         timer.addActionListener(e -> {
             secondsLeft[0]--;
             if (secondsLeft[0] <= 0) {

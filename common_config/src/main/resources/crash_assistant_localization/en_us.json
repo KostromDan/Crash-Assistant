@@ -334,6 +334,8 @@
   "msg.modlist_first_launch": "First launch with Crash Assistant mod. No diff to compare.",
   "msg.modlist_unmodified": "Mod list was not modified.",
   "msg.over": "over",
+  "msg.piracy_notification": "unknown UUID",
+  "msg.piracy_notification_unclear": "check UUID",
   "msg.removed_mods": "Removed mods:",
   "msg.skip_launcher": "CurseForge: skip launcher",
   "msg.updated_mods": "Updated mods:",

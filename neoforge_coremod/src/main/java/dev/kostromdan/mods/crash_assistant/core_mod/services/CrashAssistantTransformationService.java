@@ -58,6 +58,8 @@ public class CrashAssistantTransformationService implements ITransformationServi
             argsField.setAccessible(true);
             String[] rawArgs = (String[]) argsField.get(argumentHandler);
 
+            ArgUtils.setLaunchArgs(rawArgs);
+
             if (rawArgs == null) {
                 LOGGER.warn("Could not find raw launch arguments via reflection; they were null.");
                 return;

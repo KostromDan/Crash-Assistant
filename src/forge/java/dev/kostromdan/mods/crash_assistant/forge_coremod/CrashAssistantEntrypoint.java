@@ -13,6 +13,8 @@ import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
 
     public CrashAssistantEntrypoint() {
+        if (JarInJarHelper.isLwjgl3ifyRelauncher()) return;
+
         if (Boolean.getBoolean("dev.kostromdan.mods.crash_assistant.startedFlag")) return;
         System.setProperty("dev.kostromdan.mods.crash_assistant.startedFlag", "true");
 

@@ -22,6 +22,7 @@
 - Added new analysis `ModernIntelDriverIssue`, detects crash caused by an Intel driver.
 - Now `ModuleResolution` analysis also detects `mixinextras.neoforge` on forge issue and recommends
   mod created to fix issue (Mixin Extras NeoForge on Forge Fix).
+- 1.7.10: fixed crash assistant starting on lwjgl3ify relaunch.
 
 1.10.28:
 

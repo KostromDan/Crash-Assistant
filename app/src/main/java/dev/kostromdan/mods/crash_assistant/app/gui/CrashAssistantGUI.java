@@ -449,12 +449,12 @@ public class CrashAssistantGUI {
         }).start();
     }
 
-    public static void setUpIcon(JFrame frame) {
+    public static void setUpIcon(Window window) {
         try {
             java.io.InputStream iconStream = JarInJarHelper.class.getResourceAsStream("/crash_assistant_ico.png");
             if (iconStream != null) {
                 BufferedImage iconImage = ImageIO.read(iconStream);
-                frame.setIconImage(iconImage);
+                window.setIconImage(iconImage);
                 iconStream.close();
             } else {
                 CrashAssistantApp.LOGGER.warn("Could not find crash_assistant_logo.png in jar root");
@@ -874,7 +874,7 @@ public class CrashAssistantGUI {
         UUIDCheckStatus result = UUIDUtils.waitAndGetStatus();
         if (result != UUIDCheckStatus.PIRACY_OR_OFFLINE) return;
 
-        PiracyWarning.showWarning();
+        PiracyWarning.showWarning(frame);
     }
 
     public static void showTooManyChangesWarning() {

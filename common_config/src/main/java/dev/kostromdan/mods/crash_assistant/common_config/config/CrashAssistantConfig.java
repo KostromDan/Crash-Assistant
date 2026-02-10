@@ -287,6 +287,12 @@ public class CrashAssistantConfig {
                 "Enable feature.",
                 true);
 
+        config.setComment("piracy", "Settings of notifying about piracy/offline mode.");
+        addOption("piracy.enabled",
+                "Enable feature.\n" +
+                        "Note: This option is ignored if general.help_link is CHANGE_ME (isLinkDefault()).",
+                false);
+
         addOption("greeting.shown_greeting",
                 "You don't need to touch this option.\n" +
                         "On first world join of modpack creator if set to false shows greeting, then self enables.",

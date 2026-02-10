@@ -71,6 +71,7 @@ public class CrashAssistantTransformationService implements ITransformationServi
             Field argsField = ArgumentHandler.class.getDeclaredField("args");
             argsField.setAccessible(true);
             String[] rawArgs = (String[]) argsField.get(argumentHandler);
+            ArgUtils.setLaunchArgs(rawArgs);
             if (rawArgs == null) return;
             for (int i = 0; i < rawArgs.length - 1; i++) {
                 if ("--launchTarget".equals(rawArgs[i])) earlyLaunchTarget = rawArgs[i + 1];

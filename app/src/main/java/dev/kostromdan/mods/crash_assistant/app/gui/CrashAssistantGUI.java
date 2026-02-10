@@ -866,9 +866,15 @@ public class CrashAssistantGUI {
     }
 
     private void showPiracyWarning() {
+        boolean shouldShow = (PlatformHelp.isLinkDefault()) || CrashAssistantConfig.getBoolean("piracy.enabled");
+        if (!shouldShow) return;
+        if (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.CLEANROOM) return;
+        if (Objects.equals(CrashAssistantLocalConfig.get("piracy.dont_show_again"), true)) return;
+
         UUIDCheckStatus result = UUIDUtils.waitAndGetStatus();
         if (result != UUIDCheckStatus.PIRACY_OR_OFFLINE) return;
 
+        PiracyWarning.showWarning();
     }
 
     public static void showTooManyChangesWarning() {

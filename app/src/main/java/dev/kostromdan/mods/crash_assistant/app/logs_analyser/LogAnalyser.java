@@ -155,6 +155,7 @@ public class LogAnalyser {
         registerKnownCrashReason(new LibOpenALDotSo());
         registerKnownCrashReason(new MacJDK());
         registerKnownCrashReason(new MacOSIncompatibleShaderDriverIssue());
+        registerKnownCrashReason(new ModernIntelDriverIssue());
         registerKnownCrashReason(new nglMultiDrawElementsBaseVertex());
         registerKnownCrashReason(new Nvoglv64());
 

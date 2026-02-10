@@ -157,6 +157,9 @@ public class CrashAssistantConfig {
         addOption("generated_message.intel_corrupted_notification",
                 "Adds line in log list about this Intel processor can be corrupted.",
                 true);
+        addOption("generated_message.piracy_notification",
+                "Adds line in log list about piracy/offline mode or if check failed.",
+                true);
         addOption("generated_message.generated_msg_lang",
                 "If the modpack is created for a non-English-speaking audience, сhange this to the language the modpack is designed for.\n" +
                         "This lang will be used only for generating message by \"Upload all...\" button." +
@@ -290,7 +293,8 @@ public class CrashAssistantConfig {
         config.setComment("piracy", "Settings of notifying about piracy/offline mode.");
         addOption("piracy.enabled",
                 "Enable feature.\n" +
-                        "Note: This option is ignored if general.help_link is CHANGE_ME (isLinkDefault()).",
+                        "Note: This option is ignored if general.help_link is default (CHANGE_ME).\n" +
+                        "Notifies if in your Discord piracy is not supported. Recommended to enable for modpacks.",
                 false);
 
         addOption("greeting.shown_greeting",

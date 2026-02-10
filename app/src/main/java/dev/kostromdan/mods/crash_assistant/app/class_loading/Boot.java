@@ -34,7 +34,7 @@ public class Boot {
     public static long parentStarted = -1;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
     public static List<String> APP_ARGS;
-    public static String MINECRAFT_LAUNCH_COMMAND = "--username, KostromDan, --version, 1.21.4, --gameDir, C:/Users/<USER>/AppData/Roaming/PrismLauncher/instances/1.21.4 fabric/minecraft, --assetsDir, C:/Users/<USER>/AppData/Roaming/PrismLauncher/assets, --assetIndex, 19, --uuid, 4cd8b0fbee36351c85d7953612d37792, --accessToken, ????????, --userType, offline, --versionType, Fabric, --width, 854, --height, 480";
+    public static String MINECRAFT_LAUNCH_COMMAND;
     public static String MINECRAFT_JVM_ARGS;
 
 

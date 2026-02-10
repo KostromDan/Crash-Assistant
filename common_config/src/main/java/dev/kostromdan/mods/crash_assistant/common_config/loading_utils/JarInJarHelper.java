@@ -85,9 +85,9 @@ public class JarInJarHelper {
             argsList.add("-childProcessesPIDs");
             argsList.add(Base64.getEncoder().encodeToString(PlatformHelp.childProcessesPIDs.getBytes(StandardCharsets.UTF_8)));
             argsList.add("-minecraftStartCommand");
-            argsList.add(Base64.getEncoder().encodeToString(getSafeCommand().getBytes(StandardCharsets.UTF_8)));
+            argsList.add(Base64.getEncoder().encodeToString(ArgUtils.getSafeLaunchArgs().getBytes(StandardCharsets.UTF_8)));
             argsList.add("-minecraftJvmArgs");
-            argsList.add(Base64.getEncoder().encodeToString(censor(String.join(", ", ManagementFactory.getRuntimeMXBean().getInputArguments())).getBytes(StandardCharsets.UTF_8)));
+            argsList.add(Base64.getEncoder().encodeToString(ArgUtils.getSafeJvmArgs().getBytes(StandardCharsets.UTF_8)));
             argsList.add("-crashAssistantModJarName");
             argsList.add(originalModJarPath.getFileName().toString());
             argsList.add("-classPath");
@@ -150,25 +150,7 @@ public class JarInJarHelper {
         }
     }
 
-    public static String getSafeCommand() {
-        String command = System.getProperty("sun.java.command");
-        if (command == null) return "null";
-        return censor(command);
-    }
 
-    public static String censor(String input) {
-        if (input == null) return null;
-
-        input = input.replaceAll("(--(accessToken|xuid)[\\s=:,]*)([^\\s,]+)", "$1????????");
-
-        String osUser = System.getProperty("user.name");
-        if (osUser != null) {
-            String regex = "(?<!--username[\\s=:])" + Pattern.quote(osUser);
-            input = input.replaceAll(regex, "<USER>");
-        }
-
-        return input;
-    }
 
     /**
      * Returns the total physical memory (RAM) in bytes, or -1 if the value

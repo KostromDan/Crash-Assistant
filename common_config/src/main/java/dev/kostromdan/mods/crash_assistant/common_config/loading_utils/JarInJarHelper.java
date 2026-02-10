@@ -223,6 +223,26 @@ public class JarInJarHelper {
         return false;
     }
 
+    public static boolean isLwjgl3ifyRelauncher() {
+        List<Mod> mods = getModsContainingPart("lwjgl3ify");
+        mods = mods.stream().filter(mod -> "lwjgl3ify".equals(mod.getModId())).collect(Collectors.toList());
+        if (mods.isEmpty()) return false;
+
+        try {
+            Class<?> launchClass = Class.forName("net.minecraft.launchwrapper.Launch");
+            java.lang.reflect.Field blackboardField = launchClass.getField("blackboard");
+            java.util.Map<?, ?> blackboard = (java.util.Map<?, ?>) blackboardField.get(null);
+
+            if (!Boolean.TRUE.equals(blackboard.get("lwjgl3ify:rfb-booted"))) {
+                LOGGER.warn("Detected lwjgl3ify-relauncher env. Crash Assistant will start after relaunching with lwjgl3ify.");
+                return true;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error while checking lwjgl3ify-relauncher env.", e);
+        }
+        return false;
+    }
+
     public static Optional<Long> getCleanroomRelauncherParentPid() {
         String pid = System.getProperty("cleanroom.relauncher.parent");
         if (pid == null) return Optional.empty();

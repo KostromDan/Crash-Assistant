@@ -482,10 +482,32 @@ public class ControlPanel {
         if (!LogsList.isLauncherLogExist() && FileUtils.isCurseForgeEnv()) {
             logs.add(LanguageProvider.getMsgLang("msg.skip_launcher"));
         }
+        intelCheck:
         try {
-            if (CrashAssistantConfig.getBoolean("generated_message.intel_corrupted_notification") && IntelCorruptedProcessorChecker.isAffectedProcessor()) {
+            if (CrashAssistantConfig.getBoolean("generated_message.intel_corrupted_notification")) {
+                if (!IntelCorruptedProcessorChecker.isAffectedProcessor()) break intelCheck;
                 String model = IntelCorruptedProcessorChecker.extractModel();
                 logs.add("[" + model + LanguageProvider.getMsgLang("msg.intel_corrupted_notification") + "](<" + LinksProvider.INTEL_CHIP_BUG_FAQ.getLink() + ">)");
+            }
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error while checking IntelCorruptedProcessor", e);
+        }
+        piracyCheck:
+        try {
+            if (CrashAssistantConfig.getBoolean("generated_message.piracy_notification")) {
+                UUIDCheckStatus result = UUIDUtils.waitAndGetStatus();
+                String message = null;
+                switch (result) {
+                    case LICENSED:
+                        break piracyCheck;
+                    case PIRACY_OR_OFFLINE:
+                        message = LanguageProvider.getMsgLang("msg.piracy_notification");
+                        break;
+                    default:
+                        message = LanguageProvider.getMsgLang("msg.piracy_notification_unclear");
+                        break;
+                }
+                logs.add("[" + message + "](<" + "https://mcuuid.net/?q=" + UUIDUtils.getUUID() + ">)");
             }
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while checking IntelCorruptedProcessor", e);

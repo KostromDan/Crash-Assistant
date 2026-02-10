@@ -36,4 +36,12 @@ public class ArgUtils {
 
         return input;
     }
+
+    public static void setLaunchArgs(String args) {
+        launchArgs = args;
+    }
+
+    public static void setLaunchArgs(String[] args) {
+        setLaunchArgs(String.join(", ", args));
+    }
 }

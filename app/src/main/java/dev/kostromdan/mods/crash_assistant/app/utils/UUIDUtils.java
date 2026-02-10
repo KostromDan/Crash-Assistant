@@ -1,15 +1,19 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
+import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class UUIDUtils {
-    public static UUIDCheckStatus status = UUIDCheckStatus.UNDEFINED;
+    public static volatile UUIDCheckStatus status = UUIDCheckStatus.UNDEFINED;
+    private static volatile long checkStartTime = 0;
+    private static final AtomicBoolean isStarted = new AtomicBoolean(false);
 
     public static String getUUID() {
         if (Boot.MINECRAFT_LAUNCH_COMMAND == null || Boot.MINECRAFT_LAUNCH_COMMAND.isEmpty()) {
@@ -22,6 +26,66 @@ public class UUIDUtils {
             return matcher.group(1);
         }
         return null;
+    }
+
+    public static void startCheck() {
+        if (isStarted.getAndSet(true)) {
+            return;
+        }
+
+        checkStartTime = System.currentTimeMillis();
+        status = UUIDCheckStatus.PROCESSING;
+
+        new Thread(() -> {
+            String uuid = getUUID();
+
+            if (uuid == null) {
+                status = UUIDCheckStatus.FAILED;
+                return;
+            }
+
+            for (int i = 0; i < 3; i++) {
+                if (System.currentTimeMillis() - checkStartTime > 6000) {
+                    break;
+                }
+
+                UUIDCheckStatus currentResult = verifyUUID(uuid);
+
+                if (currentResult == UUIDCheckStatus.LICENSED || currentResult == UUIDCheckStatus.PIRACY_OR_OFFLINE) {
+                    status = currentResult;
+                    CrashAssistantApp.LOGGER.info("UUID({}) verification result: {}", uuid, status);
+                    return;
+                }
+            }
+            status = UUIDCheckStatus.FAILED;
+        }).start();
+    }
+
+    public static UUIDCheckStatus waitAndGetStatus() {
+        if (!isStarted.get()) {
+            startCheck();
+        }
+
+        long totalTimeout = 6000;
+        long deadline = checkStartTime + totalTimeout;
+
+        while (status == UUIDCheckStatus.PROCESSING || status == UUIDCheckStatus.UNDEFINED) {
+            if (System.currentTimeMillis() >= deadline) {
+                break;
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        if (status == UUIDCheckStatus.PROCESSING || status == UUIDCheckStatus.UNDEFINED) {
+            return UUIDCheckStatus.FAILED;
+        }
+
+        return status;
     }
 
     public static UUIDCheckStatus verifyUUID(String uuid) {
@@ -42,8 +106,8 @@ public class UUIDUtils {
             URL url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + cleanUuid + "?unsigned=false");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
+            connection.setConnectTimeout(2000);
+            connection.setReadTimeout(2000);
 
             int responseCode = connection.getResponseCode();
 
@@ -55,7 +119,7 @@ public class UUIDUtils {
                 return UUIDCheckStatus.FAILED;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            CrashAssistantApp.LOGGER.error("Failed to verify UUID: ", e);
             return UUIDCheckStatus.FAILED;
         }
     }

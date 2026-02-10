@@ -107,8 +107,6 @@ public class CrashAssistantApp {
 
         LOGGER.info("Minecraft JVM args: {}", Boot.MINECRAFT_JVM_ARGS);
         LOGGER.info("Minecraft Launch Command: {}", Boot.MINECRAFT_LAUNCH_COMMAND);
-        LOGGER.info("UUID: {}", UUIDUtils.getUUID());
-        LOGGER.info("UUID Check: {}", UUIDUtils.verifyUUID(UUIDUtils.getUUID()));
 
 
         String currentProcessData = Objects.toString(Boot.parentPID) + "_" + Boot.parentStarted;
@@ -225,6 +223,8 @@ public class CrashAssistantApp {
 
     private static void onMinecraftFinished() {
         GUIStartTime = Instant.now().toEpochMilli();
+
+        UUIDUtils.startCheck();
 
         new Thread(LanguageProvider::updateLang).start(); // Init lang async.
 

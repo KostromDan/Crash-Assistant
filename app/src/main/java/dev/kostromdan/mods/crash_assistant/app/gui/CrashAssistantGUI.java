@@ -12,9 +12,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDe
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
-import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
-import dev.kostromdan.mods.crash_assistant.app.utils.HtmlToMarkdown;
-import dev.kostromdan.mods.crash_assistant.app.utils.TerminatedProcessesFinder;
+import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
@@ -447,6 +445,7 @@ public class CrashAssistantGUI {
         new Thread(() -> {
             LogAnalyser.analyseLogs();
             showKnownCrashReasonsWarnings();
+            showPiracyWarning();
         }).start();
     }
 
@@ -864,6 +863,12 @@ public class CrashAssistantGUI {
                 CrashAssistantApp.LOGGER.error("Error while showing crash assistant duplicated warning: ", e);
             }
         }
+    }
+
+    private void showPiracyWarning() {
+        UUIDCheckStatus result = UUIDUtils.waitAndGetStatus();
+        if (result != UUIDCheckStatus.PIRACY_OR_OFFLINE) return;
+
     }
 
     public static void showTooManyChangesWarning() {

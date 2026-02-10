@@ -12,6 +12,7 @@ public class ArgUtils {
     }
 
     public static String getLaunchArgsFallback() {
+        JarInJarHelper.LOGGER.warn("Failed to get launch args, falling back to sun.java.command");
         String command = System.getProperty("sun.java.command");
         if (command == null) return "null";
         return censor(command);

@@ -5,6 +5,7 @@ import cpw.mods.modlauncher.Launcher;
 import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.ITransformationService;
 import cpw.mods.modlauncher.api.ITransformer;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.ArgUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -56,6 +57,8 @@ public class CrashAssistantTransformationService implements ITransformationServi
             Field argsField = ArgumentHandler.class.getDeclaredField("args");
             argsField.setAccessible(true);
             String[] rawArgs = (String[]) argsField.get(argumentHandler);
+
+            ArgUtils.setLaunchArgs(rawArgs);
 
             if (rawArgs == null) {
                 LOGGER.warn("Could not find raw launch arguments via reflection; they were null.");

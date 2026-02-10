@@ -10,12 +10,12 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public class PiracyWarning extends JFrame {
+public class PiracyWarning extends JDialog {
 
     public static boolean isCurrentlyDisplayed = false;
 
-    public PiracyWarning() {
-        super(LanguageProvider.get("gui.piracy_warning"));
+    public PiracyWarning(Frame parent) {
+        super(parent, LanguageProvider.get("gui.piracy_warning"), true);
 
         String content = LanguageProvider.get("warnings.piracy")
                 .replace("$HELP_NAME$", PlatformHelp.getActualHelpName());
@@ -37,7 +37,7 @@ public class PiracyWarning extends JFrame {
             CrashAssistantApp.LOGGER.info("Piracy Warning Don't show again checkbox switched: {}", dontShowAgainCheck.isSelected());
         });
 
-        JButton okButton = new JButton("OK (10)");
+        JButton okButton = new JButton("OK (5)");
         okButton.setEnabled(false);
         okButton.addActionListener(e -> dispose());
 
@@ -52,12 +52,12 @@ public class PiracyWarning extends JFrame {
 
         setContentPane(mainPanel);
         pack();
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setAlwaysOnTop(true);
 
         Timer timer = new Timer(1000, null);
-        final int[] secondsLeft = {10};
+        final int[] secondsLeft = {5};
         timer.addActionListener(e -> {
             secondsLeft[0]--;
             if (secondsLeft[0] <= 0) {
@@ -71,14 +71,14 @@ public class PiracyWarning extends JFrame {
         timer.start();
     }
 
-    public static void showWarning() {
+    public static void showWarning(Frame parent) {
         isCurrentlyDisplayed = true;
         SwingUtilities.invokeLater(() -> {
             CrashAssistantApp.LOGGER.warn("Showing PiracyWarning.");
-            PiracyWarning frame = new PiracyWarning();
-            CrashAssistantGUI.setUpIcon(frame);
+            PiracyWarning dialog = new PiracyWarning(parent);
+            CrashAssistantGUI.setUpIcon(dialog);
 
-            frame.addWindowListener(new WindowAdapter() {
+            dialog.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosed(WindowEvent e) {
                     CrashAssistantApp.LOGGER.warn("Shown PiracyWarning.");
@@ -86,7 +86,7 @@ public class PiracyWarning extends JFrame {
                 }
             });
 
-            frame.setVisible(true);
+            dialog.setVisible(true);
         });
         awaitShown();
     }

@@ -105,6 +105,9 @@ public class CrashAssistantApp {
         LOGGER.info("Java path: {}", JavaBinaryLocator.getJavaBinary());
         LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
 
+        LOGGER.info("Minecraft JVM args: {}", Boot.MINECRAFT_JVM_ARGS);
+        LOGGER.info("Minecraft Launch Command: {}", Boot.MINECRAFT_LAUNCH_COMMAND);
+
 
         String currentProcessData = Objects.toString(Boot.parentPID) + "_" + Boot.parentStarted;
         Path localFolder = Paths.get("local", "crash_assistant");

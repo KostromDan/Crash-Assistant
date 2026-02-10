@@ -34,6 +34,8 @@ public class Boot {
     public static long parentStarted = -1;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
     public static List<String> APP_ARGS;
+    public static String MINECRAFT_LAUNCH_COMMAND;
+    public static String MINECRAFT_JVM_ARGS;
 
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -68,6 +70,10 @@ public class Boot {
                     classPath = effectiveArgs.get(i + 1);
                 } else if ("-serialisedGPUs".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
                     serialisedGPUs = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
+                } else if ("-minecraftStartCommand".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    MINECRAFT_LAUNCH_COMMAND = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
+                } else if ("-minecraftJvmArgs".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    MINECRAFT_JVM_ARGS = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
                 }else if ("-modLoadedWithConnector".equals(effectiveArgs.get(i))){
                     PlatformHelp.modLoadedWithConnector = true;
                 }

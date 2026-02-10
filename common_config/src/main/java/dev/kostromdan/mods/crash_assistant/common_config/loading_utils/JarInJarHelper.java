@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class JarInJarHelper {
@@ -83,6 +84,10 @@ public class JarInJarHelper {
             argsList.add(PlatformHelp.minecraftVersion);
             argsList.add("-childProcessesPIDs");
             argsList.add(Base64.getEncoder().encodeToString(PlatformHelp.childProcessesPIDs.getBytes(StandardCharsets.UTF_8)));
+            argsList.add("-minecraftStartCommand");
+            argsList.add(Base64.getEncoder().encodeToString(getSafeCommand().getBytes(StandardCharsets.UTF_8)));
+            argsList.add("-minecraftJvmArgs");
+            argsList.add(Base64.getEncoder().encodeToString(censor(String.join(", ", ManagementFactory.getRuntimeMXBean().getInputArguments())).getBytes(StandardCharsets.UTF_8)));
             argsList.add("-crashAssistantModJarName");
             argsList.add(originalModJarPath.getFileName().toString());
             argsList.add("-classPath");
@@ -143,6 +148,26 @@ public class JarInJarHelper {
         } catch (Throwable e) {
             LOGGER.error("Error while launching GUI: ", e);
         }
+    }
+
+    public static String getSafeCommand() {
+        String command = System.getProperty("sun.java.command");
+        if (command == null) return "null";
+        return censor(command);
+    }
+
+    public static String censor(String input) {
+        if (input == null) return null;
+
+        input = input.replaceAll("(--(accessToken|xuid)[\\s=:,]*)([^\\s,]+)", "$1????????");
+
+        String osUser = System.getProperty("user.name");
+        if (osUser != null) {
+            String regex = "(?<!--username[\\s=:])" + Pattern.quote(osUser);
+            input = input.replaceAll(regex, "<USER>");
+        }
+
+        return input;
     }
 
     /**

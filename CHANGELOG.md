@@ -19,6 +19,7 @@
 - Added new analysis `PhysX_64`, detects if crash is caused by physics mod.
 - Added new analysis `IrlandaCoreBackDoor`, warns about creative mode backdoor for author in mod.
 - Added new analysis `WaterMediaVLCMissing`, detects crash caused by missing VLC libs.
+- Added new analysis `ModernIntelDriverIssue`, detects crash caused by an Intel driver.
 - Now `ModuleResolution` analysis also detects `mixinextras.neoforge` on forge issue and recommends
   mod created to fix issue (Mixin Extras NeoForge on Forge Fix).
 

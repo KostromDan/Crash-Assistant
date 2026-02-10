@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.fabric.entrypoint;
 
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.ArgUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -168,6 +169,7 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
         @Override
         public void run() {
             String launchTarget = FabricLoader.getInstance().getEnvironmentType().toString();
+            ArgUtils.setLaunchArgs(FabricLoader.getInstance().getLaunchArguments(false));
             FabricLoader.getInstance().getModContainer("minecraft")
                     .ifPresent(container -> {
                         PlatformHelp.minecraftVersion = container.getMetadata().getVersion().getFriendlyString();

@@ -30,8 +30,9 @@ public class ArgUtils {
         input = input.replaceAll("(--(accessToken|xuid)[\\s=:,]*)([^\\s,]+)", "$1????????");
 
         String osUser = System.getProperty("user.name");
-        if (osUser != null) {
-            String regex = "(?<!--username[\\s=:])" + Pattern.quote(osUser);
+        if (osUser != null && osUser.length() > 2) {
+            String safeUser = Pattern.quote(osUser);
+            String regex = "(?<!username[\\s=:])(?<!username,\\s)" + safeUser;
             input = input.replaceAll(regex, "<USER>");
         }
 

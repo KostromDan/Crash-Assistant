@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.core_mod.services;
 
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.ArgUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -20,6 +21,7 @@ public class CrashAssistantEntrypoint implements GraphicsBootstrapper {
         try {
             PlatformHelp.platform = PlatformHelp.NEOFORGE;
             PlatformHelp.minecraftVersion = FMLLoader.getCurrent().getVersionInfo().mcVersion();
+            ArgUtils.setLaunchArgs(FMLLoader.getCurrent().getProgramArgs().getArguments());
             LibrariesJarLocator.setupLoaderJarName("neoforge-" + FMLLoader.getCurrent().getVersionInfo().neoForgeVersion());
             JarInJarHelper.launchCrashAssistantApp(FMLLoader.getCurrent().getDist().isClient() ? "client" : "server");
             JarInJarHelper.checkDuplicatedCrashAssistantMod(true);

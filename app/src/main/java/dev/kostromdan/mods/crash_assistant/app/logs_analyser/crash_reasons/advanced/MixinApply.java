@@ -9,9 +9,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList;
 import dev.kostromdan.mods.crash_assistant.app.utils.ModuleFinder;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import javax.swing.*;
@@ -35,15 +33,11 @@ public class MixinApply extends KnownCrashReason {
 
     @Override
     public boolean matches(Log latestLog) {
-        String startWarn = "";
-        boolean bypassModpackCheck = CrashAssistantConfig.getBlacklistedAnalysis().contains("BYPASS_MODPACK_CHECK_FOR_MIXIN_APPLY");
-        if (!PlatformHelp.isLinkDefault() && !bypassModpackCheck) {
-            if (ModListDiff.isModpackCreator()) {
-                startWarn = "<strong>You are seeing this analysis only because you are creator of this modpack. Won't be displayed to the end users.</strong>\n\n";
-            } else {
-                CrashAssistantApp.LOGGER.warn("Skipping MixinApply analysis due to it's in beta and game ran by the end user of this modpack.");
-                return false; // Temporally disable for modpacks. todo: revert after out from beta.
-            }
+        boolean shouldTriggerOnOriginalModpackMods = true;
+        if (!PlatformHelp.isLinkDefault() &&
+                !ModListDiff.isModpackCreator() &&
+                !CrashAssistantConfig.getBoolean("analysis.trigger_on_original_modpack_mods")) {
+            shouldTriggerOnOriginalModpackMods = false;
         }
         List<Log> logs = new ArrayList<>();
         for (Log log : LogsList.getLogs()) {
@@ -64,7 +58,6 @@ public class MixinApply extends KnownCrashReason {
                 if (result.isMissingClass()) {
                     message += LanguageProvider.get("warnings.mixin_apply_missing_class");
                     message = message.replace("$MISSING_CLASS$", "<strong style='color: red;'>" + result.getMissingClass() + "</strong>");
-                    message = startWarn + message;
 
                     autoFixButtons.put(LanguageProvider.get("warnings.mixin_apply_missing_class_auto_fix"), (dialog) -> {
                         new JdepsDependenciesAnalysisGUI((JFrame) dialog.getOwner(), result.getMissingClass()).start();
@@ -107,11 +100,23 @@ public class MixinApply extends KnownCrashReason {
                     message = message.replace("$MOD_2$", "<strong style='color: red;'>" + conflictingJarName + "</strong>");
                 }
 
-                message = startWarn + message;
+                if (!shouldTriggerOnOriginalModpackMods) {
+                    if (isOriginalModpackMod(jarName) || isOriginalModpackMod(conflictingJarName)) {
+                        CrashAssistantApp.LOGGER.warn("Skipping crash reason due to crash caused by mod which was in original modpack:\n" + message);
+                        return false;
+                    }
+                }
+
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean isOriginalModpackMod(String jarName) {
+        if (jarName == null) return false;
+        ModpackStatus status = ModpackStatusChecker.getStatusByFileName(jarName);
+        return status == ModpackStatus.UNCHANGED;
     }
 
     private static MixinParsingResult parseLatestMixinError(Log log, HashMap<String, String> configToJarMap) {

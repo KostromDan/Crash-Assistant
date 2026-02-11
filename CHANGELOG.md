@@ -34,6 +34,9 @@
     - Removed config parameter `BYPASS_MODPACK_CHECK_FOR_MIXIN_APPLY`, since it no longer needed.
 - Now `ModuleResolution` analysis also detects `mixinextras.neoforge` on forge issue and recommends
   mod created to fix issue (Mixin Extras NeoForge on Forge Fix).
+- Added `general.formulation_type` configuration option, allowing to choose between Discord and GitHub formulation
+  for the top-of-window text and help buttons. If set to `GITHUB`, terminology like "visit the GitHub" and "Report the
+  issue on GitHub" will be used instead of Discord-specific ones.
 - 1.7.10: fixed crash assistant starting on lwjgl3ify relaunch.
 
 1.10.28:

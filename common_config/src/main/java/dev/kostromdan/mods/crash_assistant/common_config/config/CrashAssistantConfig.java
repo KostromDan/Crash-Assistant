@@ -52,6 +52,12 @@ public class CrashAssistantConfig {
                         "If equals CHANGE_ME, will open Forge/NeoForge/Fabric/Quilt discord link. Names of communities/channels also will be used not from config, but according to this link.\n" +
                         "Must start with 'https://' or 'www.'",
                 "CHANGE_ME");
+        addOption("general.formulation_type",
+                "With this option, you can select the formulation of the GUI (e.g., in the help buttons, title).\n" +
+                        "Currently supported:\n" +
+                        "   - DISCORD: Uses terminology like 'join the Discord' and 'post in #channel'.\n" +
+                        "   - GITHUB: Uses terminology like 'visit the GitHub' and 'post into a new issue'.",
+                "DISCORD");
         addOption("general.upload_to",
                 "Anyways log will be uploaded to mclo.gs, but with this option you can wrap link to gnomebot.dev for better formatting.\n" +
                         "If help_link equals 'CHANGE_ME', this value will be ignored and gnomebot.dev used.\n" +
@@ -135,10 +141,13 @@ public class CrashAssistantConfig {
         }
         addOption("text.support_name",
                 "$CONFIG.text.support_name$ in lang files will be replaced with this value.\n" +
-                        "For example this placeHolder used in: \"Request help in the $CONFIG.text.support_name$\"",
+                        "For example this placeHolder used in: \"Request help in the $CONFIG.text.support_name$\"\n" +
+                        "Recommended values: \"Modpack-X Discord\", \"Modpack-X GitHub repository\", etc.",
                 "example Discord");
         addOption("text.support_place",
-                "$CONFIG.text.support_place$ in lang files will be replaced with this value.",
+                "$CONFIG.text.support_place$ in lang files will be replaced with this value.\n" +
+                        "Recommended values: \"#support channel\".\n" +
+                        "In case of formulation type `GITHUB` won't be used.",
                 "#example channel");
         addOption("text.modpack_name",
                 "$CONFIG.text.modpack_name$ in lang files will be replaced with this value.\n" +
@@ -303,7 +312,7 @@ public class CrashAssistantConfig {
         addOption("piracy.enabled",
                 "Enable feature.\n" +
                         "Note: This option is ignored if general.help_link is default (CHANGE_ME).\n" +
-                        "Notifies if in your Discord piracy is not supported. Recommended to enable for modpacks.",
+                        "Notifies if in your community (Discord/GitHub) piracy is not supported. Recommended to enable for modpacks.",
                 false);
         addOption("piracy.delay",
                 "Delay in seconds for the OK button when piracy warning is shown.\n" +
@@ -363,7 +372,7 @@ public class CrashAssistantConfig {
                 "If true, the logo will be larger, Replacing a some of `don't send screenshot` notice.\n" +
                         "If false, it will be smaller and logo will be end right where the `don't send screenshot` notice starts.\n" +
                         "You should try both, but most likely:\n" +
-                        "- If you have some long text in the discord description, you will love the small one.\n" +
+                        "- If you have some long text in the discord/github name, you will love the small one.\n" +
                         "- If the text is short, you will love the large one.",
                 false);
         addOption("gui_customisation.limit_modpack_logo_height",

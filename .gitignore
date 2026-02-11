@@ -26,7 +26,13 @@ local
 /config/
 /logs/
 /mods/
+/mods - copy/
+/saves/
+/mod_data/
 /crash-reports/
 win_event*.txt
+launcher_log.txt
 hs_err_pid-1.log
 /.architectury-transformer/*
+git_porter_config.json
+git_porter.py

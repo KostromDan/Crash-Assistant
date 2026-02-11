@@ -150,7 +150,9 @@ public class ControlPanel {
         gbc.insets = new Insets(3, 0, 0, 0);
         bottomPanel.add(uploadAllButton, gbc);
 
-        requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button"));
+        String formulationType = CrashAssistantConfig.get("general.formulation_type");
+        String suffix = formulationType.equalsIgnoreCase("GITHUB") ? ".github" : "";
+        requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button" + suffix));
         customizeButton(requestHelpButton, "request_help");
         requestHelpButton.addActionListener(e -> requestHelp());
         requestHelpButton.setToolTipText(PlatformHelp.getActualHelpLink());

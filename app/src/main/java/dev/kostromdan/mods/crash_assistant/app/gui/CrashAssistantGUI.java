@@ -259,11 +259,14 @@ public class CrashAssistantGUI {
             put("$LANG.gui.upload_all_comment$", null);
         }};
 
-        String firstLinesOfComment = PlatformHelp.isLinkDefault() ?
-                LanguageProvider.get("gui.comment_under_title_cant_resolve", hrefOptions) :
-                LanguageProvider.get("gui.comment_under_title_pls_report", hrefOptions);
+        String formulationType = CrashAssistantConfig.get("general.formulation_type");
+        String suffix = formulationType.equalsIgnoreCase("GITHUB") ? ".github" : "";
 
-        String commentText = "<div style='margin-left: 5px;'>" + firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title", hrefOptions) + "</div>";
+        String firstLinesOfComment = PlatformHelp.isLinkDefault() ?
+                LanguageProvider.get("gui.comment_under_title_cant_resolve" + suffix, hrefOptions) :
+                LanguageProvider.get("gui.comment_under_title_pls_report" + suffix, hrefOptions);
+
+        String commentText = "<div style='margin-left: 5px;'>" + firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title" + suffix, hrefOptions) + "</div>";
         JEditorPane commentPane = getEditorPaneNoMargins(commentText, false);
 
         String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");

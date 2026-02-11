@@ -3,6 +3,12 @@
 - Now crash assistant supports mclo.gs logs deletion feature.
   You can see/remove previously uploaded logs from mclo.gs servers from our gui.
 - Updated privacy policy with feature description.
+- New Piracy warning. Checks if user is using piracy version of the game or offline mod and warns them that they won't
+  receive support in Discords where it's not allowed. Modpacks need to enable this feature manually `piracy.enabled`.
+  This is enabled by default only for individual downloads.
+- Now generated message will also have notification about piracy.
+- And now, Crash Assistant log will have JVM args of the game and launcher args of the game.
+  Confidential info is censored.
 - Fixed `ResourceLocationException` analysis sometimes doesn't work.
 - Fixed bracket symbols in path of modpack on MinecraftForge 1.21.1+ causing Crash Assistant not starting issue.
   However, updating forge is also needed since same issue was on side of modloader.

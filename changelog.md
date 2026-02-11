@@ -6,8 +6,10 @@
 - New Piracy warning. Checks if user is using piracy version of the game or offline mod and warns them that they won't
   receive support in Discords where it's not allowed. Modpacks need to enable this feature manually `piracy.enabled`.
   This is enabled by default only for individual downloads.
-- Now generated message will also have notification about piracy.
-- And now, Crash Assistant log will have JVM args of the game and launcher args of the game.
+- Now generated message will also have notification about piracy (configurable).
+- Added a delay to the OK button for the first time analysis messages are shown. The default is 10 seconds, as users who
+  ignore the analysis typically decide not to read it and close the window within the first 10 seconds.
+- Crash Assistant log will have JVM args of the game and launcher args of the game.
   Confidential info is censored.
 - Fixed `ResourceLocationException` analysis sometimes doesn't work.
 - Fixed bracket symbols in path of modpack on MinecraftForge 1.21.1+ causing Crash Assistant not starting issue.

@@ -768,6 +768,11 @@ public class CrashAssistantGUI {
 
                         LinkedHashMap<String, Consumer<JDialog>> autoFixButtons = crashReason.getAutoFixButtons();
 
+                        JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
+                        String reasonClassName = crashReason.getClass().getSimpleName();
+                        String configKey = "shown_reasons." + reasonClassName;
+                        boolean alreadyShown = Objects.equals(CrashAssistantLocalConfig.get(configKey), true);
+
                         JDialog dialog;
                         if (!autoFixButtons.isEmpty()) {
                             JPanel autoFixPanel = new JPanel(new GridBagLayout());
@@ -800,7 +805,10 @@ public class CrashAssistantGUI {
                             JOptionPane optionPane = new JOptionPane(
                                     mainPanel,
                                     JOptionPane.WARNING_MESSAGE,
-                                    JOptionPane.DEFAULT_OPTION
+                                    JOptionPane.DEFAULT_OPTION,
+                                    null,
+                                    new Object[]{okButton},
+                                    okButton
                             );
 
                             dialog = optionPane.createDialog(
@@ -819,13 +827,41 @@ public class CrashAssistantGUI {
                             JOptionPane optionPane = new JOptionPane(
                                     messagePane,
                                     JOptionPane.WARNING_MESSAGE,
-                                    JOptionPane.DEFAULT_OPTION
+                                    JOptionPane.DEFAULT_OPTION,
+                                    null,
+                                    new Object[]{okButton},
+                                    okButton
                             );
                             dialog = optionPane.createDialog(
                                     frame,
                                     crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyzer") : LanguageProvider.get("gui.logs_analyzer")
                             );
                         }
+
+                        okButton.addActionListener(e -> dialog.dispose());
+
+                        if (!alreadyShown) {
+                            int delay = CrashAssistantConfig.getInteger("analysis.first_show_delay");
+                            if (delay > 0) {
+                                okButton.setEnabled(false);
+                                final int[] secondsLeft = {delay};
+                                okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
+                                javax.swing.Timer timer = new javax.swing.Timer(1000, null);
+                                timer.addActionListener(e -> {
+                                    secondsLeft[0]--;
+                                    if (secondsLeft[0] <= 0) {
+                                        okButton.setText(LanguageProvider.get("gui.ok"));
+                                        okButton.setEnabled(true);
+                                        timer.stop();
+                                    } else {
+                                        okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
+                                    }
+                                });
+                                timer.start();
+                            }
+                            CrashAssistantLocalConfig.set(configKey, true);
+                        }
+
                         long showStartTime = System.currentTimeMillis();
                         dialog.setVisible(true);
                         CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {} (Seen warning for {}s)", crashReason.getClass().getSimpleName(), (System.currentTimeMillis() - showStartTime) / 1000.0);

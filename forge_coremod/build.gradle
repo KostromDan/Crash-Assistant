@@ -139,7 +139,8 @@ unifiedPublishing {
 
         displayName = tasks.jar.archiveFile.get().asFile.name
         version = project.version
-        changelog = file('../changelog.md').text
+        file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
+                "\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
         releaseType = release_type
 
         mainPublication tasks.jar

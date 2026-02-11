@@ -1,11 +1,16 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,17 +20,25 @@ public class UUIDUtils {
     private static volatile long checkStartTime = 0;
     private static final AtomicBoolean isStarted = new AtomicBoolean(false);
 
-    public static String getUUID() {
+    public static String getParam(String paramName) {
         if (Boot.MINECRAFT_LAUNCH_COMMAND == null || Boot.MINECRAFT_LAUNCH_COMMAND.isEmpty()) {
             return null;
         }
 
-        Pattern UUID_PATTERN = Pattern.compile("--uuid[\\s=:,]+([^\\s,]+)");
-        Matcher matcher = UUID_PATTERN.matcher(Boot.MINECRAFT_LAUNCH_COMMAND);
+        Pattern ARG_PATTERN = Pattern.compile("--" + paramName + "[\\s=:,]+([^\\s,]+)");
+        Matcher matcher = ARG_PATTERN.matcher(Boot.MINECRAFT_LAUNCH_COMMAND);
         if (matcher.find()) {
             return matcher.group(1);
         }
         return null;
+    }
+
+    public static String getUUID() {
+        return getParam("uuid");
+    }
+
+    public static String getUsername() {
+        return getParam("username");
     }
 
     public static void startCheck() {
@@ -112,6 +125,28 @@ public class UUIDUtils {
             int responseCode = connection.getResponseCode();
 
             if (responseCode == 200) {
+                try {
+                    StringBuilder responseBuilder = new StringBuilder();
+                    try (BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            responseBuilder.append(line);
+                        }
+                    }
+                    JsonObject json = JsonParser.parseString(responseBuilder.toString()).getAsJsonObject();
+                    if (json.has("name")) {
+                        String serverName = json.get("name").getAsString();
+                        String actualName = getUsername();
+                        if (actualName != null && !actualName.equalsIgnoreCase(serverName)) {
+                            CrashAssistantApp.LOGGER.warn("UUID mismatch! mojang: {}, local: {}; assuming offline mode.", serverName, actualName);
+                            return UUIDCheckStatus.PIRACY_OR_OFFLINE;
+                        }
+                    }
+                } catch (Exception e) {
+                    CrashAssistantApp.LOGGER.error("JSON parsing failed, defaulting to LICENSED", e);
+                }
+
                 return UUIDCheckStatus.LICENSED;
             } else if (responseCode == 204 || responseCode == 404) {
                 return UUIDCheckStatus.PIRACY_OR_OFFLINE;

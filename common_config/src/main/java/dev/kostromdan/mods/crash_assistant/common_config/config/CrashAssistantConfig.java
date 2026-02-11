@@ -259,6 +259,10 @@ public class CrashAssistantConfig {
         addOption("analysis.enabled",
                 "Enable feature.",
                 true);
+        addOption("analysis.trigger_on_original_modpack_mods",
+                "By default if CA work in modpack mode and ran by the end user it won't display analysis if it blames mod which was part of original modpack.\n" +
+                        "And will blame only mods which were added/updated by end users. By enabling this option you can bypass this and it will blame any mods.",
+                false);
         addOption("analysis.first_show_delay",
                 "Delay in seconds for the OK button when a crash reason is shown for the first time.\n" +
                         "Helps to ensure the user reads the recommendation.\n" +

@@ -259,6 +259,11 @@ public class CrashAssistantConfig {
         addOption("analysis.enabled",
                 "Enable feature.",
                 true);
+        addOption("analysis.first_show_delay",
+                "Delay in seconds for the OK button when a crash reason is shown for the first time.\n" +
+                        "Helps to ensure the user reads the recommendation.\n" +
+                        "Set to 0 or -1 to disable the delay.",
+                10);
         addOption("analysis.blacklisted_reasons",
                 "Here you can disable some Analysis by class names.\n" +
                         "List of them can be found here: dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons\n" +
@@ -296,6 +301,10 @@ public class CrashAssistantConfig {
                         "Note: This option is ignored if general.help_link is default (CHANGE_ME).\n" +
                         "Notifies if in your Discord piracy is not supported. Recommended to enable for modpacks.",
                 false);
+        addOption("piracy.delay",
+                "Delay in seconds for the OK button when piracy warning is shown.\n" +
+                        "Set to 0 or -1 to disable the delay.",
+                10);
 
         addOption("greeting.shown_greeting",
                 "You don't need to touch this option.\n" +

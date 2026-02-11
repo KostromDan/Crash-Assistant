@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -9,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Objects;
 
 public class PiracyWarning extends JDialog {
 
@@ -37,8 +39,7 @@ public class PiracyWarning extends JDialog {
             CrashAssistantApp.LOGGER.info("Piracy Warning Don't show again checkbox switched: {}", dontShowAgainCheck.isSelected());
         });
 
-        JButton okButton = new JButton("OK (10)");
-        okButton.setEnabled(false);
+        JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
         okButton.addActionListener(e -> dispose());
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
@@ -56,19 +57,28 @@ public class PiracyWarning extends JDialog {
         setLocationRelativeTo(null);
         setAlwaysOnTop(true);
 
-        Timer timer = new Timer(1000, null);
-        final int[] secondsLeft = {10};
-        timer.addActionListener(e -> {
-            secondsLeft[0]--;
-            if (secondsLeft[0] <= 0) {
-                okButton.setText("OK");
-                okButton.setEnabled(true);
-                timer.stop();
-            } else {
-                okButton.setText("OK (" + secondsLeft[0] + ")");
-            }
-        });
-        timer.start();
+        int delay = CrashAssistantConfig.getInteger("piracy.delay");
+
+        if (delay > 0) {
+            okButton.setEnabled(false);
+            final int[] secondsLeft = {delay};
+            okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
+            Timer timer = new Timer(1000, null);
+            timer.addActionListener(e -> {
+                secondsLeft[0]--;
+                if (secondsLeft[0] <= 0) {
+                    okButton.setText(LanguageProvider.get("gui.ok"));
+                    okButton.setEnabled(true);
+                    timer.stop();
+                } else {
+                    okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
+                }
+            });
+            timer.start();
+        } else {
+            okButton.setText(LanguageProvider.get("gui.ok"));
+            okButton.setEnabled(true);
+        }
     }
 
     public static void showWarning(Frame parent) {

@@ -507,7 +507,12 @@ public class ControlPanel {
                         message = LanguageProvider.getMsgLang("msg.piracy_notification_unclear");
                         break;
                 }
-                logs.add("[" + message + "](<" + "https://mcuuid.net/?q=" + UUIDUtils.getUUID() + ">)");
+                String uuid = UUIDUtils.getUUID();
+                if (uuid != null) {
+                    logs.add("[" + message + "](<" + "https://mcuuid.net/?q=" + uuid + ">)");
+                } else {
+                    logs.add(message);
+                }
             }
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while checking IntelCorruptedProcessor", e);

@@ -186,7 +186,8 @@ unifiedPublishing {
 
         displayName = tasks.remapForgeJar.archiveFile.get().asFile.name
         version = rootProject.version
-        changelog = file('changelog.md').text
+        changelog = file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
+                "\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
         releaseType = release_type
 
         mainPublication tasks.remapForgeJar

@@ -19,6 +19,8 @@ import re
 # AND IT HAS SAVED A TON OF TIME, WHY NOT (I THINK THE COUNT IS IN THE HUNDREDS OF HOURS).
 # ==============================================================================================================
 
+os.chdir(Path(__file__).resolve().parent.parent)
+
 # --- Constants ---
 CONFIG_FILE = "git_porter_config.json"
 DESKTOP_PATH = Path.home() / "Desktop"

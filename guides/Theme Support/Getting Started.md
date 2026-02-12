@@ -4,7 +4,7 @@
 
 ### Where to Find Themes
 
-The best place to start is the official collection of community-contributed themes: 
+The best place to start is the official collection of community-contributed themes:
 **[FlatLaf IntelliJ Themes Repository](https://github.com/JFormDesigner/flatlaf/tree/main/flatlaf-intellij-themes)**
 
 **How to use this resource:**
@@ -66,6 +66,7 @@ you can modify it in our config at: `gui_customisation`
    ```toml
 	theme_file_name = "example.theme.json"
    ```
+    - In case you loved core theme bellow, just enter name instead of filename, for example: `FlatMacDarkLaf`
 
 ---
 

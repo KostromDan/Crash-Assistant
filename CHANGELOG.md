@@ -1,9 +1,11 @@
 1.10.31:
 
 - Added theme support. Look config `gui_customisation.theme_file_name` for instructions.
+  [Documentation and Examples](https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Theme%20Support/Getting%20Started.md)
 - Added in `LogDeletionDialog` ability to select logs, select all logs, and delete selected logs.
-- Minor grammar fixes in `warnings.piracy`.
+- Added ability to customize color of animated border and text inside it.
 - Now after upload all button enabling, it requests focus.
+- Minor grammar fixes in `warnings.piracy`.
 
 1.10.30:
 

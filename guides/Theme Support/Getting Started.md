@@ -119,18 +119,35 @@ you can modify it in our config at: `gui_customisation`
 
 <img width="638" height="546" alt="image" src="https://github.com/user-attachments/assets/7828b928-46e0-4aba-b558-83b04b221382" />
 
-
 `arc-theme-orange.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/arc-theme-orange.theme.json
 
 <img width="638" height="546" alt="image" src="https://github.com/user-attachments/assets/97f9b496-7f25-498e-bceb-1b1d522e5126" />
-
 
 `arc_theme_dark.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/arc_theme_dark.theme.json
 
 <img width="638" height="546" alt="image" src="https://github.com/user-attachments/assets/5601ad08-d218-45ec-8b79-12ed816536b9" />
 
-
 `arc_theme_dark_orange.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/arc_theme_dark_orange.theme.json
 
 <img width="638" height="546" alt="image" src="https://github.com/user-attachments/assets/f92ab5b1-1135-40e4-b982-4dc8390d5c47" />
 
+`Gradianto_dark_fuchsia.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/Gradianto_dark_fuchsia.theme.json
+
+<img width="644" height="566" alt="image" src="https://github.com/user-attachments/assets/b3a2805c-4114-4c44-bb82-46d17bd7e590" />
+
+`Gradianto_Nature_Green.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/Gradianto_Nature_Green.theme.json
+
+Here we chnaged color of upload all button to Amber:
+```toml
+	upload_all_button_foreground_color = "255_191_0"
+```
+
+<img width="644" height="566" alt="image" src="https://github.com/user-attachments/assets/18ec8981-f3e2-4a9e-ba6f-871ac0161b30" />
+
+`Gradianto_deep_ocean.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/Gradianto_deep_ocean.theme.json
+
+<img width="644" height="566" alt="image" src="https://github.com/user-attachments/assets/300afb2c-a5b5-43a8-99f7-6ac96ca9028d" />
+
+`Gradianto_midnight_blue.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/Gradianto_midnight_blue.theme.json
+
+<img width="644" height="566" alt="image" src="https://github.com/user-attachments/assets/f0374f4b-d438-499c-abb9-82ea7911a4a0" />

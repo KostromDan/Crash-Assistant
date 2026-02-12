@@ -16,7 +16,7 @@ unifiedPublishing {
 
         displayName = rootProject.tasks.remapFabricJar.archiveFile.get().asFile.name
         version = rootProject.version
-        changelog = file('changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
+        changelog = file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
                 "\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
         releaseType = release_type
 

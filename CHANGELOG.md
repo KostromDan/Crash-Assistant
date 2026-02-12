@@ -1,7 +1,9 @@
 1.10.31:
 
+- Added theme support. Look config `gui_customisation.theme_file_name` for instructions.
 - Added in `LogDeletionDialog` ability to select logs, select all logs, and delete selected logs.
 - Minor grammar fixes in `warnings.piracy`.
+- Now after upload all button enabling, it requests focus.
 
 1.10.30:
 

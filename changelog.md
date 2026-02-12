@@ -1,6 +1,7 @@
 1.10.31:
 
 - Added in `LogDeletionDialog` ability to select logs, select all logs, and delete selected logs.
+- Minor grammar fixes in `warnings.piracy`.
 
 1.10.30:
 

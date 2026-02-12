@@ -238,6 +238,11 @@ public class CrashAssistantConfig {
                         "Variables: $TEXT$, $LINK$",
                 "[$TEXT$](<$LINK$>)");
 
+        addOption("generated_message.modlist_header_pattern",
+                "Pattern for the header of the modlist diff block (containing the link).\n" +
+                        "Variables: $PART1$ (text before link), $PART2$ (text after link), $LINK$.",
+                "[$PART1$](<$LINK$>)$PART2$");
+
         config.setComment("copied_links", "Settings of links copied by Upload and copy link buttons");
         addOption("copied_links.single_link",
                 "With this option, you can customize how single links from individual upload buttons are copied, there\n" +

@@ -190,11 +190,7 @@ public class ModListDiff {
 
     public static String getFilePrefix() {
         if (filePrefix == null) {
-            if (CrashAssistantConfig.getBoolean("generated_message.h3_prefix")) {
-                filePrefix = "### ";
-            } else {
-                filePrefix = "";
-            }
+            filePrefix = CrashAssistantConfig.get("generated_message.prefix", false);
         }
         return filePrefix;
     }

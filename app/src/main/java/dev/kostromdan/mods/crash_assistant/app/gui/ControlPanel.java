@@ -111,6 +111,7 @@ public class ControlPanel {
                     if (Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
                         uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
                         uploadAllButton.setEnabled(true);
+                        uploadAllButton.requestFocusInWindow();
                         uploadAllButton.setPreferredSize(uploadAllButton.getPreferredSize());
                         CrashAssistantGUI.resize();
 
@@ -384,6 +385,7 @@ public class ControlPanel {
                                         public void run() {
                                             uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
                                             uploadAllButton.setEnabled(true);
+                                            uploadAllButton.requestFocusInWindow();
                                         }
                                     },
                                     3000
@@ -423,6 +425,7 @@ public class ControlPanel {
                         public void run() {
                             uploadAllButton.setText(LanguageProvider.get("gui.upload_all_finished_button"));
                             uploadAllButton.setEnabled(true);
+                            uploadAllButton.requestFocusInWindow();
                         }
                     },
                     buttonHighLightTime

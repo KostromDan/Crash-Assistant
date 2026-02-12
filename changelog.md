@@ -1,3 +1,7 @@
+1.10.31:
+
+- Added in `LogDeletionDialog` ability to select logs, select all logs, and delete selected logs.
+
 1.10.30:
 
 - Fixed formatting bug in message generator introduced in 1.10.29

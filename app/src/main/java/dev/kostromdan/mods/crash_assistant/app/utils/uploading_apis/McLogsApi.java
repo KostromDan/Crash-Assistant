@@ -58,6 +58,41 @@ public class McLogsApi implements UploadingApi {
                 // Call onProgressChanged with initial progress
                 if (onProgressChanged != null) onProgressChanged.accept(0);
 
+                // --- FAKE UPLOADING (For offline testing) ---
+//                if (true) {
+//                    try {
+//                        if (onProgressChanged != null) onProgressChanged.accept(0);
+//
+//                        // Simulate network latency
+//                        for (int i = 1; i <= 10; i++) {
+//                            Thread.sleep(100 + (int) (Math.random() * 200));
+//                            if (onProgressChanged != null) onProgressChanged.accept(i * 10);
+//                        }
+//
+//                        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+//                        StringBuilder sb = new StringBuilder();
+//                        java.util.Random rnd = new java.util.Random();
+//                        while (sb.length() < 7) {
+//                            sb.append(chars.charAt(rnd.nextInt(chars.length())));
+//                        }
+//                        String fakeId = sb.toString();
+//
+//                        String fakeUrl = "https://mclo.gs/" + fakeId;
+//                        String fakeRaw = "https://api.mclo.gs/1/raw/" + fakeId;
+//
+//                        UploadedLogsManager.saveLog(logName, fakeUrl, "fake-token-" + fakeId);
+//
+//                        LogAnalysisResponse fakeAnalysis = new LogAnalysisResponse("Offline simulation: No issues found.");
+//
+//                        return new UploadLogResponse(fakeUrl, fakeRaw, fakeId, fakeAnalysis);
+//                    } catch (InterruptedException e) {
+//                        Thread.currentThread().interrupt();
+//                        return new UploadLogResponse("Fake upload interrupted.");
+//                    } finally {
+//                        uploadSemaphore.release();
+//                    }
+//                }
+
 
                 URL url = new URL(API_BASE_URL + "log?insights=true");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();

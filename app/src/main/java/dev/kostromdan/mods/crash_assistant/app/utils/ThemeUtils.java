@@ -1,6 +1,8 @@
 package dev.kostromdan.mods.crash_assistant.app.utils;
 
-import com.formdev.flatlaf.IntelliJTheme;
+import com.formdev.flatlaf.*;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 
@@ -16,18 +18,47 @@ public class ThemeUtils {
         if (applied) return;
         applied = true;
 
-        String fileName = CrashAssistantConfig.get("gui_customisation.theme_file_name");
-        Path themePath = Paths.get("config", "crash_assistant", fileName);
+        String themeIdentifier = CrashAssistantConfig.get("gui_customisation.theme_file_name");
 
+        if (tryLoadStandardTheme(themeIdentifier)) {
+            return;
+        }
+
+        Path themePath = Paths.get("config", "crash_assistant", themeIdentifier);
         if (!Files.isRegularFile(themePath)) {
-            CrashAssistantApp.LOGGER.warn("Theme file \"{}\" does not exist in the \"local/crash_assistant\" directory, themes will be disabled.", fileName);
+            CrashAssistantApp.LOGGER.warn("Theme \"{}\" is neither a valid class nor a file in \"config/crash_assistant\". Standard Swing L&F will be used.", themeIdentifier);
             return;
         }
 
         try (InputStream is = Files.newInputStream(themePath)) {
             IntelliJTheme.setup(is);
         } catch (Exception e) {
-            CrashAssistantApp.LOGGER.error("Failed to load custom theme: " + fileName, e);
+            CrashAssistantApp.LOGGER.error("Failed to load custom JSON theme: " + themeIdentifier, e);
+        }
+    }
+
+    private static boolean tryLoadStandardTheme(String themeName) {
+        if (themeName == null) return false;
+        try {
+            switch (themeName.toLowerCase()) {
+                case "flatlightlaf":
+                    return FlatLightLaf.setup();
+                case "flatdarklaf":
+                    return FlatDarkLaf.setup();
+                case "flatintellijlaf":
+                    return FlatIntelliJLaf.setup();
+                case "flatdarculalaf":
+                    return FlatDarculaLaf.setup();
+                case "flatmaclightlaf":
+                    return FlatMacLightLaf.setup();
+                case "flatmacdarklaf":
+                    return FlatMacDarkLaf.setup();
+                default:
+                    return false;
+            }
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error setting up core theme: " + themeName, e);
+            return false;
         }
     }
 }

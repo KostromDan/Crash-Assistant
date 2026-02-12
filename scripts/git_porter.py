@@ -311,6 +311,9 @@ class GitPortingApp:
                 if clean_name.startswith('remotes/'):
                     parts = clean_name.split('/')
                     if len(parts) > 2:
+                        remote_name = parts[1]
+                        if remote_name != 'origin':
+                            continue
                         clean_name = '/'.join(parts[2:])
                     else:
                         continue

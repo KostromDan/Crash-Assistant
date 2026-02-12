@@ -1,3 +1,7 @@
+1.10.30:
+
+- Fixed formatting bug in message generator introduced in 1.10.29
+
 1.10.29:
 
 - Now crash assistant supports mclo.gs logs deletion feature.

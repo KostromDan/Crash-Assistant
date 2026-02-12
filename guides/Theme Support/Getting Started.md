@@ -71,7 +71,10 @@ can!
 * **Logs:** If the theme doesn't appear, check your logs. Crash Assistant will print a warning if the file is missing or
   formatted incorrectly.
 
+---
+
 ### Examples
+
 #### Core Themes
 
 `FlatLightLaf`
@@ -97,3 +100,34 @@ can!
 `FlatMacDarkLaf`
 
 <img width="646" height="566" alt="image" src="https://github.com/user-attachments/assets/0a30745c-cfcb-4fcb-849e-e81faadb023d" />
+
+
+#### Some themes from `FlatLaf IntelliJ Themes Repository`
+
+`Cobalt_2.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/Cobalt_2.theme.json
+
+<img width="644" height="566" alt="image" src="https://github.com/user-attachments/assets/12f941f4-c5c3-4211-80db-0f40b433ecf1" />
+
+`DarkPurple.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/DarkPurple.theme.json
+
+<img width="644" height="566" alt="image" src="https://github.com/user-attachments/assets/34e7b8f7-b3ff-4e6a-aa89-6f34e55c537e" />
+
+`arc-theme.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/arc-theme.theme.json
+
+<img width="638" height="546" alt="image" src="https://github.com/user-attachments/assets/7828b928-46e0-4aba-b558-83b04b221382" />
+
+
+`arc-theme-orange.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/arc-theme-orange.theme.json
+
+<img width="638" height="546" alt="image" src="https://github.com/user-attachments/assets/97f9b496-7f25-498e-bceb-1b1d522e5126" />
+
+
+`arc_theme_dark.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/arc_theme_dark.theme.json
+
+<img width="638" height="546" alt="image" src="https://github.com/user-attachments/assets/5601ad08-d218-45ec-8b79-12ed816536b9" />
+
+
+`arc_theme_dark_orange.theme.json` : https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-intellij-themes/src/main/resources/com/formdev/flatlaf/intellijthemes/themes/arc_theme_dark_orange.theme.json
+
+<img width="638" height="546" alt="image" src="https://github.com/user-attachments/assets/f92ab5b1-1135-40e4-b982-4dc8390d5c47" />
+

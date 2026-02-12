@@ -6,6 +6,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
 import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.ThemeUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -30,6 +31,7 @@ public class IntelChipBugWarning {
 
     public static void showIfAffected(boolean debug) {
         synchronized (KnownCrashReasonMessage.class) {
+            ThemeUtils.ensureThemesApplied();
             if (!CrashAssistantConfig.getBoolean("intel_corrupted.enabled")) return;
             if (!IntelCorruptedProcessorChecker.isAffectedProcessor() && !debug) return;
 

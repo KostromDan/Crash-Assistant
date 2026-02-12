@@ -57,35 +57,42 @@ public class ModListDiffStringBuilder {
     }
 
     public String toAnsi(boolean withoutFirstString) {
-        StringBuilder result = new StringBuilder();
-        if (!withoutFirstString) {
-            result.append(ModListDiff.getFilePrefix());
-            result.append(ModListDiff.getFirstString(true, false, null));
-            result.append("\n");
-        }
-        result.append("```");
+        return toAnsi(withoutFirstString, CrashAssistantConfig.get("generated_message.ansi_block_pattern", false));
+    }
+
+    public String toAnsi(boolean withoutFirstString, String pattern) {
+        String prefix = withoutFirstString ? "" : ModListDiff.getFilePrefix();
+        String header = withoutFirstString ? "" : ModListDiff.getFirstString(true, false, null);
+        return toFormattedString(pattern, prefix, header, !withoutFirstString);
+    }
+
+    public String toFormattedString(String pattern, String prefix, String header, boolean skipFirstInSb) {
+        StringBuilder contentBuilder = new StringBuilder();
 
         boolean color_message = CrashAssistantConfig.getBoolean("generated_message.color_message");
-        if (color_message) result.append("ansi");
-        result.append("\n");
-        boolean first = !withoutFirstString;
+        boolean first = skipFirstInSb;
         for (ColoredString cs : sb) {
             if (first) {
                 first = false;
                 continue;
             }
             if (!cs.getColor().isEmpty() && color_message) {
-                result.append(Enum.valueOf(AnsiColor.class, cs.getColor().toUpperCase()).getColorPrefix());
-                result.append(cs.getText());
-                result.append(AnsiColor.postfix);
+                contentBuilder.append(Enum.valueOf(AnsiColor.class, cs.getColor().toUpperCase()).getColorPrefix());
+                contentBuilder.append(cs.getText());
+                contentBuilder.append(AnsiColor.postfix);
             } else {
-                result.append(cs.getText());
+                contentBuilder.append(cs.getText());
             }
             if (cs.isEndsWithNewLine()) {
-                result.append("\n");
+                contentBuilder.append("\n");
             }
         }
-        return result.toString().trim() + "\n```";
+        String content = contentBuilder.toString().trim();
+
+        return pattern
+                .replace("$PREFIX$", prefix)
+                .replace("$HEADER$", header)
+                .replace("$CONTENT$", content);
     }
 
     public static class ColoredString {

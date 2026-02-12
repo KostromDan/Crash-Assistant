@@ -417,6 +417,16 @@ public class CrashAssistantConfig {
                 "Same as upload_all_button_foreground_color, but for Auto-Fix button (in integrated GPU warning).\n" +
                         "Default for this button is \"0_178_0\" (dark green color).",
                 "0_178_0");
+        addOption("gui_customisation.screenshot_of_gui_notice_animated_border_color",
+                "Color of the animated border for the screenshot notice.\n" +
+                        "format is \"R_G_B\", range is 0-255, for example \"255_0_0\" is red color.\n" +
+                        "Default for this is \"255_0_0\" (red color).",
+                "255_0_0");
+        addOption("gui_customisation.screenshot_of_gui_notice_text_color",
+                "Color of the text for the screenshot notice (inside the animated border).\n" +
+                        "format is \"R_G_B\", range is 0-255, for example \"255_0_0\" is red color.\n" +
+                        "Default for this is \"255_0_0\" (red color).",
+                "255_0_0");
         addOption("gui_customisation.modpack_logo_path",
                 "Path to a modpack logo to display in the top of the GUI.\n" +
                         "Path is relative to the Minecraft instance folder. Leave empty to disable.",

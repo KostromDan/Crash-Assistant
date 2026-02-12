@@ -372,10 +372,11 @@ public class CrashAssistantConfig {
 
         config.setComment("gui_customisation", "You can customise GUI with this options.");
         addOption("gui_customisation.theme_file_name",
-                "Name of a FlatLaf IntelliJ Themes file in config/crash_assistant folder\n" +
-                        "If file doesn't exist, themes won't be applied.\n" +
+                "Name of a FlatLaf IntelliJ Themes file in config/crash_assistant folder or core theme name.\n" +
+                        "If file doesn't exist and no core theme matches, themes will be disabled and Standard Swing look and feel used.\n" +
+                        "Supported core themes: 'FlatLightLaf', 'FlatDarkLaf', 'FlatIntelliJLaf', 'FlatDarculaLaf', 'FlatMacLightLaf', 'FlatMacDarkLaf'.\n" +
                         "Supports any IntelliJ Theme file with '.theme.json' extension.\n" +
-                        "Look out our guide about theme support: ",
+                        "Look out our guide about theme support: https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Theme%20Support/Getting%20Started.md",
                 "example.theme.json");
         addOption("gui_customisation.disable_upload_all_button",
                 "Will hide Upload All Button from GUI.",

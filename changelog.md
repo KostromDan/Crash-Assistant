@@ -37,6 +37,13 @@
 - Added `general.formulation_type` configuration option, allowing to choose between Discord and GitHub formulation
   for the top-of-window text and help buttons. If set to `GITHUB`, terminology like "visit the GitHub" and "Report the
   issue on GitHub" will be used instead of Discord-specific ones.
+- Generated Message Customisation:
+    - Implemented full control over the "Upload All" message structure: users can now rearrange or modify message
+      elements (Header, Logs, Analysis, etc.) using config patterns.
+    - Added formatting patterns: customizable templates for individual log lines, split logs, link notifications, and
+      ANSI blocks. Now you can disable markdown formatting.
+    - Replaced restrictive options: `h3_prefix` and `one_line_logs` booleans are replaced with flexible string
+      templates (`prefix`, `logs_separator`) to allow any formatting style.
 - 1.7.10: fixed crash assistant starting on lwjgl3ify relaunch.
 
 1.10.28:

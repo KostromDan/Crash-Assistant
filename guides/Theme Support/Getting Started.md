@@ -73,22 +73,27 @@ can!
 
 ### Examples
 #### Core Themes
-FlatLightLaf
+
+`FlatLightLaf`
+
 <img width="635" height="526" alt="image" src="https://github.com/user-attachments/assets/7cb0d76e-ceb8-4a50-8c21-2f44f6a538a9" />
 
-FlatDarkLaf
+`FlatDarkLaf`
+
 <img width="635" height="526" alt="image" src="https://github.com/user-attachments/assets/0013bf83-32b0-4a55-8cdb-811dfa4d3c60" />
 
-FlatIntelliJLaf
+`FlatIntelliJLaf`
+
 <img width="644" height="566" alt="image" src="https://github.com/user-attachments/assets/3b2ed334-f84d-4090-bc85-982f0984cde7" />
 
+`FlatDarculaLaf`
 
-FlatDarculaLaf
 <img width="644" height="566" alt="image" src="https://github.com/user-attachments/assets/f8428653-79d2-4aa7-8519-4bc8565d058b" />
 
+`FlatMacLightLaf`
 
-FlatMacLightLaf
 <img width="646" height="566" alt="image" src="https://github.com/user-attachments/assets/7ee8261c-b5ee-419f-9141-fdf4e22ef5f9" />
 
-FlatMacDarkLaf
+`FlatMacDarkLaf`
+
 <img width="646" height="566" alt="image" src="https://github.com/user-attachments/assets/0a30745c-cfcb-4fcb-849e-e81faadb023d" />

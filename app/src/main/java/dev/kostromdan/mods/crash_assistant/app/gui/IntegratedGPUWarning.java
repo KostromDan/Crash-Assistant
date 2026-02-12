@@ -5,6 +5,7 @@ import com.sun.jna.platform.win32.Win32Exception;
 import com.sun.jna.platform.win32.WinError;
 import com.sun.jna.platform.win32.WinReg;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.utils.ThemeUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -152,6 +153,7 @@ public class IntegratedGPUWarning extends JFrame {
     }
 
     public static void show(String integratedGPU, List<String> dedicatedGPUs) {
+        ThemeUtils.ensureThemesApplied();
         isCurrentlyDisplayed = true;
         SwingUtilities.invokeLater(() -> {
             CrashAssistantApp.LOGGER.warn("Showing IntegratedGPUWarning.");

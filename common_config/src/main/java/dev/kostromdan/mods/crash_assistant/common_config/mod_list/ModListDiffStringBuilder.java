@@ -87,7 +87,17 @@ public class ModListDiffStringBuilder {
                 contentBuilder.append("\n");
             }
         }
-        String content = contentBuilder.toString().trim();
+
+        String content = contentBuilder.toString();
+        int start = 0;
+        while (start < content.length() && Character.isWhitespace(content.charAt(start))) {
+            start++;
+        }
+        int end = content.length();
+        while (end > start && Character.isWhitespace(content.charAt(end - 1))) {
+            end--;
+        }
+        content = content.substring(start, end);
 
         return pattern
                 .replace("$PREFIX$", prefix)

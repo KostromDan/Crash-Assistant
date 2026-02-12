@@ -145,11 +145,11 @@ public class JarInJarHelper {
             ChildProcessLogger.captureOutput(crashAssistantAppProcess);
             ProblematicModsConfig.crashIfProblematicMod();
             JarInJarHelper.checkForIncompatibleMods(true);
+            crashIfConfigured();
         } catch (Throwable e) {
             LOGGER.error("Error while launching GUI: ", e);
         }
     }
-
 
 
     /**
@@ -289,6 +289,13 @@ public class JarInJarHelper {
             return Optional.of(incompatibleMod);
         }
         return Optional.empty();
+    }
+
+    public static void crashIfConfigured() {
+        if (CrashAssistantConfig.getBoolean("debug.crash_after_init")) {
+            JarInJarHelper.LOGGER.error("Game crashed due to 'debug.crash_after_init' config option enabled in {}", CrashAssistantConfig.getConfigPath());
+            System.exit(-1);
+        }
     }
 
     public static Path extractJarInJar(String embeddedName, String outputName) throws IOException {

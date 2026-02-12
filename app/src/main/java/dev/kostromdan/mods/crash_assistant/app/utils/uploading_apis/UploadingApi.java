@@ -35,4 +35,11 @@ public interface UploadingApi {
      * @return A CompletableFuture that will complete with the result of the deletion
      */
     CompletableFuture<LogDeletionResponse> deleteLog(String logId, String token);
+    /**
+     * Deletes multiple logs from the service
+     *
+     * @param logs The list of logs to delete
+     * @return A CompletableFuture that will complete with the result of the bulk deletion
+     */
+    CompletableFuture<BulkLogDeletionResponse> bulkDeleteLogs(java.util.List<dev.kostromdan.mods.crash_assistant.app.utils.UploadedLog> logs);
 }

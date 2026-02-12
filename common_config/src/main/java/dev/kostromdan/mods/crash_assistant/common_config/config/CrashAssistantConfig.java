@@ -455,6 +455,11 @@ public class CrashAssistantConfig {
                 "Enable feature.",
                 true);
 
+        config.setComment("debug", "Options to help debug the Crash Assistant.");
+        addOption("debug.crash_after_init",
+                "Debug option to crash immediately after Crash Assistant launched its process to conveniently debug it, configure it without need to manually crash.",
+                false);
+
         HashSet<String> toRemove = new HashSet<>();
         config.valueMap().forEach((key, value) -> {
             if (value instanceof AbstractCommentedConfig) {

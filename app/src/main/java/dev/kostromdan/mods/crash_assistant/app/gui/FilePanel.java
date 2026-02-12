@@ -74,6 +74,12 @@ public class FilePanel {
 
         fullButtonWidth = calculateMaxButtonWidth();
         Dimension dim = new Dimension(fullButtonWidth, uploadButton.getPreferredSize().height);
+        
+        // Ensure browser button has same height as upload button to prevent resizing
+        Dimension browserDim = new Dimension(browserButton.getPreferredSize().width, dim.height);
+        browserButton.setPreferredSize(browserDim);
+        browserButton.setMinimumSize(browserDim);
+        
         uploadButton.setPreferredSize(dim);
         uploadButton.setMinimumSize(dim);
 
@@ -254,7 +260,7 @@ public class FilePanel {
             }
             if (log.getLinkToUploadedFirstLines() == null) {
                 lastError = null;
-                uploadButton.setPreferredSize(new Dimension(uploadButton.getMinimumSize().width, 25));
+
                 uploadButton.setText(LanguageProvider.get("gui.uploading"));
 
                 try {

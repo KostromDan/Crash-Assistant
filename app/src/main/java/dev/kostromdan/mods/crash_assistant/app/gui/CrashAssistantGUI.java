@@ -215,6 +215,7 @@ public class CrashAssistantGUI {
 
 
     public CrashAssistantGUI() {
+        ThemeUtils.ensureThemesApplied();
         LanguageProvider.updateLang();
         frame = new JFrame(LanguageProvider.get("gui.window_name"));
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);

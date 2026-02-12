@@ -55,6 +55,9 @@ can!
 * Modify the HEX codes of corresponding elements.
 * Save the file and restart the application to see your changes.
 
+I case of default color of some button (e.g. Upload All) doesn't fit theme,
+you can modify it in our config at: `gui_customisation`
+
 #### 4. Installation Steps
 
 1. **Copy the file:** Place your `.theme.json` file into: `config/crash_assistant/`
@@ -100,7 +103,6 @@ can!
 `FlatMacDarkLaf`
 
 <img width="646" height="566" alt="image" src="https://github.com/user-attachments/assets/0a30745c-cfcb-4fcb-849e-e81faadb023d" />
-
 
 #### Some themes from `FlatLaf IntelliJ Themes Repository`
 

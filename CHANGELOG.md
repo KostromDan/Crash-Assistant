@@ -7,7 +7,7 @@
 - Now crash assistant supports mclo.gs logs deletion feature.
   You can see/remove previously uploaded logs from mclo.gs servers from our gui.
 - Updated privacy policy with feature description.
-- New Piracy warning. Checks if user is using piracy version of the game or offline mod and warns them that they won't
+- New Piracy warning. Checks if user is using piracy version of the game or offline mode and warns them that they won't
   receive support in Discords where it's not allowed. Modpacks need to enable this feature manually `piracy.enabled`.
   This is enabled by default only for individual downloads.
 - Now generated message will also have notification about piracy (configurable).
@@ -33,8 +33,8 @@
 - Added new analysis `WaterMediaVLCMissing`, detects crash caused by missing VLC libs.
 - Added new analysis `ModernIntelDriverIssue`, detects crash caused by an Intel driver.
 - Enabled mixin apply analysis for modpack end users.
-    - By default, we will trigger only on the mods added by end users of the modpack. You can configure it so analysis
-      will display anyways and will trigger also on mods which were originally in the modpack.
+    - By default, it will trigger only on the mods added/updated by end users of the modpack. You can configure it so
+      analysis will display anyways and will trigger also on mods which were originally in the modpack.
     - Removed config parameter `BYPASS_MODPACK_CHECK_FOR_MIXIN_APPLY`, since it no longer needed.
 - Now `ModuleResolution` analysis also detects `mixinextras.neoforge` on forge issue and recommends
   mod created to fix issue (Mixin Extras NeoForge on Forge Fix).

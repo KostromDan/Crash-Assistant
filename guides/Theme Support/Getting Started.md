@@ -5,7 +5,7 @@
 ### Where to Find Themes
 
 The best place to start is the official collection of community-contributed themes: *
-*[FlatLaf IntelliJ Themes Repository](https://github.com/JFormDesigner/flatlaf/tree/main/flatlaf-intellij-themes)**
+**[FlatLaf IntelliJ Themes Repository](https://github.com/JFormDesigner/flatlaf/tree/main/flatlaf-intellij-themes)**
 
 **How to use this resource:**
 

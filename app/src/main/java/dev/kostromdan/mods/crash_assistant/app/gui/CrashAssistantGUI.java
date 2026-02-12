@@ -271,10 +271,13 @@ public class CrashAssistantGUI {
         JEditorPane commentPane = getEditorPaneNoMargins(commentText, false);
 
         String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
-        String screenshotHtml = "<span style='color:red;'><b>" + screenshotNoticeText + "</b></span>";
+        Color textColor = ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.screenshot_of_gui_notice_text_color"), Color.RED);
+        String hexColor = String.format("#%02x%02x%02x", textColor.getRed(), textColor.getGreen(), textColor.getBlue());
+        String screenshotHtml = "<span style='color:" + hexColor + ";'><b>" + screenshotNoticeText + "</b></span>";
         JEditorPane screenshotNoticePane = getEditorPaneNoMargins(screenshotHtml, false);
         if (showScreenshotNotice && CrashAssistantConfig.getBoolean("gui_customisation.screenshot_of_gui_notice_animated_border")) {
-            screenshotNoticePane.setBorder(new AnimatedBorder(screenshotNoticePane, Color.RED, false));
+            Color borderColor = ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.screenshot_of_gui_notice_animated_border_color"), Color.RED);
+            screenshotNoticePane.setBorder(new AnimatedBorder(screenshotNoticePane, borderColor, false));
         }
 
         // --- Panel Construction ---

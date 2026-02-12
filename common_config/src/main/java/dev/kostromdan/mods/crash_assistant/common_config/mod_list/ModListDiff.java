@@ -99,21 +99,22 @@ public class ModListDiff {
 
     public static String getFirstString(boolean forMsg, boolean isMd, String link) {
         Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
-        StringBuilder sb = new StringBuilder();
-        String secondPart;
-        if (isMd) sb.append("[");
+        String part1;
+        String part2;
         if (ModListDiff.isModpackCreator()) {
-            sb.append(langFunc.apply("msg.modlist_changes_latest_launch_1"));
-            secondPart = langFunc.apply("msg.modlist_changes_latest_launch_2");
+            part1 = langFunc.apply("msg.modlist_changes_latest_launch_1");
+            part2 = langFunc.apply("msg.modlist_changes_latest_launch_2");
         } else {
-            sb.append(langFunc.apply("msg.modlist_changes_modpack_1"));
-            secondPart = langFunc.apply("msg.modlist_changes_modpack_2");
+            part1 = langFunc.apply("msg.modlist_changes_modpack_1");
+            part2 = langFunc.apply("msg.modlist_changes_modpack_2");
         }
-        if (isMd) {
-            sb.append("]").append("(<").append(link).append(">)");
+        if (isMd && link != null) {
+            return CrashAssistantConfig.get("generated_message.modlist_header_pattern", false)
+                    .replace("$PART1$", part1)
+                    .replace("$PART2$", part2)
+                    .replace("$LINK$", link);
         }
-        sb.append(secondPart);
-        return sb.toString();
+        return part1 + part2;
     }
 
     public ModListDiffStringBuilder generateDiffMsg(boolean forMsg) {

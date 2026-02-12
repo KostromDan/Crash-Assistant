@@ -6,7 +6,8 @@
 - Added ability to customize color of animated border and text inside it.
 - Now after upload all button enabling, it requests focus.
 - Minor grammar fixes in `warnings.piracy`.
-- Added debug option `debug.crash_after_init` to crash immediately after Crash Assistant launched its process to conveniently debug it, configure it without need to manually crash.
+- Added debug option `debug.crash_after_init` to crash immediately after Crash Assistant launched its process to
+  conveniently debug it, configure it without need to manually crash.
 
 1.10.30:
 

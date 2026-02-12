@@ -1,7 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis;
 
 import com.google.gson.*;
+import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.utils.UploadedLogsManager;
+import dev.kostromdan.mods.crash_assistant.app.utils.UploadedLog;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -280,4 +282,119 @@ public class McLogsApi implements UploadingApi {
             }
         });
     }
-}
+
+    @Override
+    public CompletableFuture<BulkLogDeletionResponse> bulkDeleteLogs(List<UploadedLog> logs) {
+        if (logs.isEmpty()) {
+            return CompletableFuture.completedFuture(new BulkLogDeletionResponse(true, new ArrayList<>(), null));
+        }
+
+        return CompletableFuture.supplyAsync(() -> {
+            CrashAssistantApp.LOGGER.info("Starting bulk deletion of {} logs", logs.size());
+            List<BulkDeletionResult> allResults = new ArrayList<>();
+            List<List<UploadedLog>> partitions = new ArrayList<>();
+            for (int i = 0; i < logs.size(); i += 256) {
+                partitions.add(logs.subList(i, Math.min(i + 256, logs.size())));
+            }
+
+            for (List<UploadedLog> chunk : partitions) {
+                try {
+                    CrashAssistantApp.LOGGER.debug("Sending bulk delete request for chunk of {} logs", chunk.size());
+                    URL url = new URL(API_BASE_URL + "bulk/log/delete");
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("POST");
+                    connection.setRequestProperty("User-Agent", userAgent);
+                    connection.setRequestProperty("Content-Type", "application/json");
+                    connection.setDoOutput(true);
+
+                    JsonArray jsonBody = new JsonArray();
+                    for (UploadedLog log : chunk) {
+                        JsonObject obj = new JsonObject();
+                        String id = log.getUrl().substring(log.getUrl().lastIndexOf('/') + 1);
+                        obj.addProperty("id", id);
+                        obj.addProperty("token", log.getDeleteToken());
+                        jsonBody.add(obj);
+                    }
+
+                    String content = jsonBody.toString();
+                    try (OutputStream os = connection.getOutputStream()) {
+                        os.write(content.getBytes(StandardCharsets.UTF_8));
+                        os.flush();
+                    }
+
+                    int responseCode = connection.getResponseCode();
+                    CrashAssistantApp.LOGGER.info("Bulk delete chunk response code: {}", responseCode);
+                    
+                    // 207 Multi-Status is success for bulk operations
+                    if (responseCode == 207 || responseCode == HttpURLConnection.HTTP_OK) {
+                        StringBuilder responseBody = new StringBuilder();
+                        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                responseBody.append(line);
+                            }
+                        }
+                        
+                        JsonObject jsonResponse = JsonParser.parseString(responseBody.toString()).getAsJsonObject();
+                        boolean overallSuccess = jsonResponse.get("success").getAsBoolean();
+                        CrashAssistantApp.LOGGER.info("Bulk delete chunk overall success: {}", overallSuccess);
+
+                        if (overallSuccess) {
+                            JsonArray results = jsonResponse.getAsJsonArray("results");
+                            for (JsonElement resultElem : results) {
+                                JsonObject resultObj = resultElem.getAsJsonObject();
+                                boolean success = resultObj.get("success").getAsBoolean();
+                                String logId = resultObj.get("id").getAsString();
+                                if (!success) {
+                                    CrashAssistantApp.LOGGER.warn("Failed to delete log {} in bulk request. Error: {}", logId, resultObj.has("error") ? resultObj.get("error").getAsString() : "unknown");
+                                }
+                                allResults.add(new BulkDeletionResult(
+                                    success,
+                                    logId,
+                                    resultObj.has("status") ? resultObj.get("status").getAsInt() : 0,
+                                    resultObj.has("error") ? resultObj.get("error").getAsString() : null
+                                ));
+                            }
+                        } else {
+                            String error = jsonResponse.has("error") ? jsonResponse.get("error").getAsString() : "Unknown error";
+                            CrashAssistantApp.LOGGER.error("API returned failure for the entire bulk delete chunk: {}", error);
+                            for (UploadedLog log : chunk) {
+                                String id = log.getUrl().substring(log.getUrl().lastIndexOf('/') + 1);
+                                allResults.add(new BulkDeletionResult(false, id, responseCode, error));
+                            }
+                        }
+
+                    } else {
+                        // HTTP Error
+                        StringBuilder errorMsg = new StringBuilder();
+                        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                errorMsg.append(line);
+                            }
+                        } catch (Exception ignored) {}
+                        
+                        String message = "HTTP Error: " + responseCode;
+                        if (errorMsg.length() > 0) {
+                            message += "\nServer message: " + errorMsg.toString();
+                        }
+                        CrashAssistantApp.LOGGER.error("Bulk delete HTTP error: {}", message);
+                        
+                        for (UploadedLog log : chunk) {
+                            String id = log.getUrl().substring(log.getUrl().lastIndexOf('/') + 1);
+                            allResults.add(new BulkDeletionResult(false, id, responseCode, message));
+                        }
+                    }
+
+                } catch (Exception e) {
+                    CrashAssistantApp.LOGGER.error("Exception during bulk deletion chunk", e);
+                    for (UploadedLog log : chunk) {
+                        String id = log.getUrl().substring(log.getUrl().lastIndexOf('/') + 1);
+                        allResults.add(new BulkDeletionResult(false, id, 0, "Exception: " + e.getMessage()));
+                    }
+                }
+            }
+            CrashAssistantApp.LOGGER.info("Bulk deletion completed. Processed {} total results.", allResults.size());
+            return new BulkLogDeletionResponse(true, allResults, null);
+        });
+    }}

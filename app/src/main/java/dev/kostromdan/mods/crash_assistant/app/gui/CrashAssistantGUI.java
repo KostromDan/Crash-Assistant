@@ -1265,7 +1265,7 @@ public class CrashAssistantGUI {
                     CrashAssistantApp.LOGGER.error("Unsupported hyperlink event: " + description);
                     return;
                 }
-                CrashAssistantGUI.highlightButton(componentToHighlight, new Color(100, 100, 255), 3000);
+                CrashAssistantGUI.highlightButton(componentToHighlight, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_attention_color"), new Color(100, 100, 255)), 3000);
             }
         };
     }

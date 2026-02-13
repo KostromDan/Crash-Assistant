@@ -4,6 +4,7 @@
   [Documentation and Examples](https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Theme%20Support/Getting%20Started.md)
 - Added in `LogDeletionDialog` ability to select logs, select all logs, and delete selected logs.
 - Added ability to customize color of animated border and text inside it.
+- Added ability to customize color of buttons blinking colors.
 - Now after upload all button enabling, it requests focus.
 - Minor grammar fixes in `warnings.piracy`.
 - Added debug option `debug.crash_after_init` to crash immediately after Crash Assistant launched its process to

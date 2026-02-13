@@ -337,7 +337,7 @@ public class FilePanel {
                         lastError = e;
                         CrashAssistantApp.LOGGER.info("Failed to upload file \"" + log.getPath() + "\": ", e);
                         uploadButton.setText(LanguageProvider.get("gui.error"));
-                        CrashAssistantGUI.highlightButton(uploadButton, new Color(255, 100, 100), 2800);
+                        CrashAssistantGUI.highlightButton(uploadButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_error_color"), new Color(255, 100, 100)), 2800);
                         if (fromButton) {
                             String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e;
                             if (e instanceof DeclinedException) {
@@ -396,7 +396,7 @@ public class FilePanel {
 
                 if (toCopy != null) {
                     uploadButton.setText(LanguageProvider.get("gui.copied"));
-                    CrashAssistantGUI.highlightButton(uploadButton, new Color(100, 255, 100), 2800);
+                    CrashAssistantGUI.highlightButton(uploadButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_success_color"), new Color(100, 255, 100)), 2800);
                     uploadButton.setEnabled(false);
                 }
             }

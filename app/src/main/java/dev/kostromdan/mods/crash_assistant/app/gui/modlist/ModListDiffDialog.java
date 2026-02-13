@@ -14,6 +14,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.UpdatedPair;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModFingerprinter;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -524,7 +525,7 @@ public class ModListDiffDialog extends JFrame {
         ClipboardUtils.copy(ModListDiff.getDiff(true).generateDiffMsg(true).toText());
         String originalText = LanguageProvider.get("gui.modlist_diff.copy_diff");
         button.setText(LanguageProvider.get("gui.copied"));
-        CrashAssistantGUI.highlightButton(button, new Color(100, 255, 100), 2600);
+        CrashAssistantGUI.highlightButton(button, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_success_color"), new Color(100, 255, 100)), 2600);
         button.setEnabled(false);
         new Timer("copy-diff-feedback", true).schedule(new TimerTask() {
             @Override

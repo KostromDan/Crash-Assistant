@@ -14,6 +14,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChe
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.LatestLogLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
+import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -294,7 +295,7 @@ public class JarInJarHelper {
     public static void crashIfConfigured() {
         if (CrashAssistantConfig.getBoolean("debug.crash_after_init")) {
             JarInJarHelper.LOGGER.error("Game crashed due to 'debug.crash_after_init' config option enabled in {}", CrashAssistantConfig.getConfigPath());
-            System.exit(-1);
+            ExitVMBypass.exit(-1);
         }
     }
 

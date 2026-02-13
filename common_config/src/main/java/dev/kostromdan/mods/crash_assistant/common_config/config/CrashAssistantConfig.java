@@ -427,6 +427,21 @@ public class CrashAssistantConfig {
                         "format is \"R_G_B\", range is 0-255, for example \"255_0_0\" is red color.\n" +
                         "Default for this is \"255_0_0\" (red color).",
                 "255_0_0");
+        addOption("gui_customisation.blinking_button_success_color",
+                "Color of the button blinking on success action (e.g. upload all finished).\n" +
+                        "format is \"R_G_B\", range is 0-255.\n" +
+                        "Default is \"100_255_100\" (light green).",
+                "100_255_100");
+        addOption("gui_customisation.blinking_button_attention_color",
+                "Color of the button blinking on attention request (e.g. click on link in description).\n" +
+                        "format is \"R_G_B\", range is 0-255.\n" +
+                        "Default is \"100_100_255\" (light blue).",
+                "100_100_255");
+        addOption("gui_customisation.blinking_button_error_color",
+                "Color of the button blinking on error (e.g. failed upload).\n" +
+                        "format is \"R_G_B\", range is 0-255.\n" +
+                        "Default is \"255_100_100\" (light red).",
+                "255_100_100");
         addOption("gui_customisation.modpack_logo_path",
                 "Path to a modpack logo to display in the top of the GUI.\n" +
                         "Path is relative to the Minecraft instance folder. Leave empty to disable.",

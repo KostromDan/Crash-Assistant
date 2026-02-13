@@ -377,7 +377,7 @@ public class ControlPanel {
                                     JOptionPane.ERROR_MESSAGE
                             );
                             uploadAllButton.setText(LanguageProvider.get("gui.error"));
-                            CrashAssistantGUI.highlightButton(uploadAllButton, new Color(255, 100, 100), 2600);
+                            CrashAssistantGUI.highlightButton(uploadAllButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_error_color"), new Color(255, 100, 100)), 2600);
 
                             new Timer().schedule(
                                     new TimerTask() {
@@ -418,7 +418,7 @@ public class ControlPanel {
                 ClipboardUtils.copy(generatedMsg);
             }
             uploadAllButton.setText(LanguageProvider.get("gui.copied"));
-            CrashAssistantGUI.highlightButton(uploadAllButton, new Color(100, 255, 100), buttonHighLightTime - 400);
+            CrashAssistantGUI.highlightButton(uploadAllButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_success_color"), new Color(100, 255, 100)), buttonHighLightTime - 400);
             new Timer().schedule(
                     new TimerTask() {
                         @Override

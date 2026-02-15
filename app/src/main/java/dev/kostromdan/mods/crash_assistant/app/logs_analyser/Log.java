@@ -14,7 +14,7 @@ public class Log {
     private String linkToUploadedLastLines = null;
     private boolean isAnalysed = false;
 
-
+    @NoJexl
     public Log(LogType type, String name, Path path) {
         this.name = name;
         this.path = path;
@@ -22,6 +22,7 @@ public class Log {
         this.reader = new LogReader(this);
     }
 
+    @NoJexl
     public Log(LogType type, Path path) {
         this(type, path.getFileName().toString(), path);
     }

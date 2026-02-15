@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import org.apache.commons.io.input.ReversedLinesFileReader;
+import org.apache.commons.jexl3.annotations.NoJexl;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -28,12 +29,14 @@ public class LogReader {
     boolean isLogProcessed = false;
     long sizeOnLastRead = -1;
 
+    @NoJexl
     public LogReader(Log log) {
         this.firstLines = new ArrayList<>(maxUploadLines);
         this.lastLines = null;
         this.log = log;
     }
 
+    @NoJexl
     public synchronized void readLogFile(boolean checkUpdated) throws IOException {
         if (isLogProcessed && (!checkUpdated || Files.size(log.getPath()) == sizeOnLastRead)) {
             return;
@@ -99,6 +102,7 @@ public class LogReader {
         }
     }
 
+    @NoJexl
     /**
      * Different versions of common-io having different implementations, so we have to deal with it.
      */
@@ -148,6 +152,7 @@ public class LogReader {
         }
     }
 
+    @NoJexl
     public synchronized void destroyAllLinesCache() {
         synchronized (this) {
             allLinesStringCached = null;

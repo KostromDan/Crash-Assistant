@@ -8,9 +8,8 @@ import org.apache.commons.jexl3.annotations.NoJexl;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class LogsList {
     private static final Set<Log> logs = Collections.synchronizedSet(new TreeSet<>(new LogComparator()));
@@ -21,6 +20,16 @@ public class LogsList {
 
     public static boolean isLauncherLogExist() {
         return logs.stream().anyMatch(log -> log.getType() == LogType.LAUNCHER_LOG);
+    }
+
+    public static List<Log> getLogs(List<LogType> types) {
+        return logs.stream()
+                .filter(log -> types.contains(log.getType()))
+                .collect(Collectors.toList());
+    }
+
+    public static List<Log> getLogs(LogType... types) {
+        return getLogs(Arrays.asList(types));
     }
 
     @NoJexl

@@ -148,7 +148,7 @@ public class LanguageProvider {
                     String key = entry.getKey();
                     String value = entry.getValue();
 
-                    if (!en_usFromFar.lang.containsKey(key)) {
+                    if (!en_usFromFar.lang.containsKey(key) && !key.startsWith("custom.")) {
                         keysToRemove.add(key);
                         continue;
                     }

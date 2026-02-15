@@ -9,6 +9,8 @@
 - Minor grammar fixes in `warnings.piracy`.
 - Added debug option `debug.crash_after_init` to crash immediately after Crash Assistant launched its process to
   conveniently debug it, configure it without need to manually crash.
+- Language provider now preserves localization keys starting with `custom.` in the localization overrides folder,
+  even if they do not exist in the mod's internal translation files. To add ability to create own language keys.
 
 1.10.30:
 

@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import org.apache.commons.jexl3.annotations.NoJexl;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,10 +23,12 @@ public class LogsList {
         return logs.stream().anyMatch(log -> log.getType() == LogType.LAUNCHER_LOG);
     }
 
+    @NoJexl
     public static void addIfExistsAndModified(Log log) {
         addIfExistsAndModified(log, true, true);
     }
 
+    @NoJexl
     public static void addIfExistsAndModified(Log log, boolean checkModified, boolean checkSize) {
         if (Files.exists(log.getPath()) && Files.isRegularFile(log.getPath())) {
             if (CrashAssistantConfig.getBlacklistedLogs().stream().anyMatch(

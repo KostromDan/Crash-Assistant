@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
+import org.apache.commons.jexl3.annotations.NoJexl;
+
 import java.io.File;
 import java.nio.file.Path;
 
@@ -56,6 +58,7 @@ public class Log {
         return linkToUploadedFirstLines;
     }
 
+    @NoJexl
     public void setLinkToUploadedFirstLines(String linkToUploadedFirstLines) {
         this.linkToUploadedFirstLines = linkToUploadedFirstLines;
     }
@@ -64,6 +67,7 @@ public class Log {
         return linkToUploadedLastLines;
     }
 
+    @NoJexl
     public void setLinkToUploadedLastLines(String linkToUploadedLastLines) {
         this.linkToUploadedLastLines = linkToUploadedLastLines;
     }
@@ -72,6 +76,7 @@ public class Log {
         return isAnalysed;
     }
 
+    @NoJexl
     public void setAnalysed(boolean analysed) {
         isAnalysed = analysed;
     }

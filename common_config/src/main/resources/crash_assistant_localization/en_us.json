@@ -337,6 +337,8 @@
   "msg.found_analysis_in": " in: ",
   "msg.found_potential_crash_reason": " with $COUNT$ log analysis result(s).",
   "msg.intel_corrupted_notification": " might be the reason for the crash",
+  "msg.scripted_analysis": "Custom Analysis",
+  "msg.scripted_analysis_results": "result(s)",
   "msg.k_lines": "k lines",
   "msg.mb": "MB",
   "msg.modlist_changes_latest_launch_1": "Mod list changes",

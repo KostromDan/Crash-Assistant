@@ -337,6 +337,8 @@
   "msg.found_analysis_in": "于：",
   "msg.found_potential_crash_reason": "，有 $COUNT$ 个日志分析结果。",
   "msg.intel_corrupted_notification": "可能是崩溃原因",
+  "msg.scripted_analysis": "自定义分析",
+  "msg.scripted_analysis_results": "结果",
   "msg.k_lines": "千行",
   "msg.mb": "MB",
   "msg.modlist_changes_latest_launch_1": "模组列表变动",

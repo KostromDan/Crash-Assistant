@@ -25,8 +25,7 @@ public class Permissions {
                                 "dev.kostromdan.mods.crash_assistant.app.scripts.sandbox_allowed.*",
                                 "dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.*",
                                 "dev.kostromdan.mods.crash_assistant.app.logs_analyser.*",
-                                "dev.kostromdan.mods.crash_assistant.app.logs_analyser { +Log {} +LogComparator {}" +
-                                        " +LogReader {} +LogType {} +LogsList {} +RegexChecker {} }",
+                                "dev.kostromdan.mods.crash_assistant.app.logs_analyser { +Log {} +LogComparator {} +LogReader {} +LogType {} +LogsList {} +RegexChecker {} }",
 
                                 "# Deny:",
 

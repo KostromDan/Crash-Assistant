@@ -337,6 +337,8 @@
   "msg.found_analysis_in": " в: ",
   "msg.found_potential_crash_reason": " с $COUNT$ результатом(ами) анализа логов.",
   "msg.intel_corrupted_notification": " может быть причиной краша",
+  "msg.scripted_analysis": "Кастомный анализ",
+  "msg.scripted_analysis_results": "результат(ов)",
   "msg.k_lines": " тыс. строк",
   "msg.mb": "МБ",
   "msg.modlist_changes_latest_launch_1": "Изменения списка модов",

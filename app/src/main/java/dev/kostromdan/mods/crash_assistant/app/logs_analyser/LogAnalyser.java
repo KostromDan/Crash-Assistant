@@ -9,6 +9,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.*
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.PhysX_64;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.WasClosedByWindows;
+import dev.kostromdan.mods.crash_assistant.app.scripts.ScriptManager;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ public class LogAnalyser {
         long startTime = System.currentTimeMillis();
         registerReasons();
         readLogsNeededForAnalysis();
+        ScriptManager.runAnalysisScripts();
         synchronized (KnownCrashReasonMessage.class) {
             ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
             HashSet<String> disabledCrashReasons = new HashSet<>(CrashAssistantConfig.getBlacklistedAnalysis());

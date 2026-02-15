@@ -17,7 +17,7 @@ public class KnownCrashReason {
 
     protected LinkedHashMap<String, Consumer<JDialog>> autoFixButtons = new LinkedHashMap<>();
 
-    protected KnownCrashReason(LogType logType, String message, List<String> patterns) {
+    public KnownCrashReason(LogType logType, String message, List<String> patterns) {
         this.logTypes = new HashSet<LogType>() {{
             add(logType);
         }};
@@ -25,13 +25,13 @@ public class KnownCrashReason {
         this.patterns = patterns;
     }
 
-    protected KnownCrashReason(HashSet<LogType> logTypes, String message, List<String> patterns) {
+    public KnownCrashReason(HashSet<LogType> logTypes, String message, List<String> patterns) {
         this.logTypes = logTypes;
         this.message = message;
         this.patterns = patterns;
     }
 
-    protected KnownCrashReason(LogType logType, String message, String... patterns) {
+    public KnownCrashReason(LogType logType, String message, String... patterns) {
         this.logTypes = new HashSet<LogType>() {{
             add(logType);
         }};
@@ -39,10 +39,14 @@ public class KnownCrashReason {
         this.patterns = Arrays.asList(patterns);
     }
 
-    protected KnownCrashReason(HashSet<LogType> logTypes, String message, String... patterns) {
+    public KnownCrashReason(HashSet<LogType> logTypes, String message, String... patterns) {
         this.logTypes = logTypes;
         this.message = message;
         this.patterns = Arrays.asList(patterns);
+    }
+
+    public String getReasonName() {
+        return getClass().getSimpleName();
     }
 
     HashSet<LogType> getLogTypes() {

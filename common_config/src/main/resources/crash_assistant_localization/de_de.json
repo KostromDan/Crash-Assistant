@@ -337,6 +337,8 @@
   "msg.found_analysis_in": " in: ",
   "msg.found_potential_crash_reason": " mit $COUNT$ Log-Analyse-Ergebnis(se).",
   "msg.intel_corrupted_notification": " kann die Absturzursache sein",
+  "msg.scripted_analysis": "Benutzerdefinierte Analyse",
+  "msg.scripted_analysis_results": "Ergebnis(se)",
   "msg.k_lines": "Tausend Zeilen",
   "msg.mb": "MB",
   "msg.modlist_changes_latest_launch_1": "Mod-Liste Änderungen",

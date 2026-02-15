@@ -337,6 +337,8 @@
   "msg.found_analysis_in": " en: ",
   "msg.found_potential_crash_reason": " con $COUNT$ resultado(s) del análisis de registros.",
   "msg.intel_corrupted_notification": " puede ser la causa del crasheo",
+  "msg.scripted_analysis": "Análisis personalizado",
+  "msg.scripted_analysis_results": "resultado(s)",
   "msg.k_lines": "k líneas",
   "msg.mb": "MB",
   "msg.modlist_changes_latest_launch_1": "Cambios en la lista de mods",

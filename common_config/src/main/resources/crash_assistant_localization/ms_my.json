@@ -337,6 +337,8 @@
   "msg.found_analysis_in": " di dalam: ",
   "msg.found_potential_crash_reason": " dengan $COUNT$ hasil analisis log.",
   "msg.intel_corrupted_notification": " mungkin menjadi sebab ranap permainan",
+  "msg.scripted_analysis": "Analisis Tersuai",
+  "msg.scripted_analysis_results": "keputusan",
   "msg.k_lines": " ribu baris",
   "msg.mb": "MB",
   "msg.modlist_changes_latest_launch_1": "Perubahan senarai mod",

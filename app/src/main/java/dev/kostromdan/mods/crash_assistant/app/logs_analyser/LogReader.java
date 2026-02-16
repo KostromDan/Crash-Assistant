@@ -102,10 +102,10 @@ public class LogReader {
         }
     }
 
-    @NoJexl
     /**
      * Different versions of common-io having different implementations, so we have to deal with it.
      */
+    @NoJexl
     @SuppressWarnings("deprecation")
     private ReversedLinesFileReader createReversedLinesFileReader() throws IOException {
         try {

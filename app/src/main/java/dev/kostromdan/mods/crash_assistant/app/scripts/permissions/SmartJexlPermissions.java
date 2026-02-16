@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.app.scripts;
+package dev.kostromdan.mods.crash_assistant.app.scripts.permissions;
 
 import org.apache.commons.jexl3.introspection.JexlPermissions;
 

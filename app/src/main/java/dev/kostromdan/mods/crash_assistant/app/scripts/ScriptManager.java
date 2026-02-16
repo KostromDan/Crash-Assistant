@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.scripts;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
+import dev.kostromdan.mods.crash_assistant.app.scripts.permissions.Permissions;
 import dev.kostromdan.mods.crash_assistant.app.scripts.sandbox_allowed.Analysis;
 import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.JexlEngine;

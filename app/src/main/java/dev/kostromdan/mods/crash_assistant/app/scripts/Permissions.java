@@ -35,9 +35,9 @@ public class Permissions {
         }
 
         loadClasses();
-
-        JexlPermissions baseDenyAll = JexlPermissions.parse("dev.kostromdan.mods.crash_assistant.app.scripts.sandbox_allowed.*");
-        JexlPermissions permissions = new JexlPermissions.ClassPermissions(baseDenyAll, WHITELISTED_CLASSES);
+        
+        // Use SmartJexlPermissions to handle Arrays and Primitives dynamically
+        JexlPermissions permissions = new SmartJexlPermissions(WHITELISTED_CLASSES);
 
         engine = new JexlBuilder()
                 .permissions(permissions)

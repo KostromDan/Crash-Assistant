@@ -17,9 +17,9 @@ public class SmartJexlPermissions implements JexlPermissions {
 
     @Override
     public boolean allow(Class<?> clazz) {
-        // Delegate null check to base implementation
-        if (clazz == null) {
-            return delegate.allow(clazz);
+        // As per JexlPermissions advice: overloads should call validate() early.
+        if (!delegate.validate(clazz)) {
+            return false;
         }
 
         // 1. Arrays: Standard JexlPermissions blocks arrays not in whitelist.
@@ -59,6 +59,31 @@ public class SmartJexlPermissions implements JexlPermissions {
     @Override
     public boolean allow(Constructor<?> ctor) {
         return delegate.allow(ctor);
+    }
+
+    @Override
+    public boolean validate(Class<?> clazz) {
+        return delegate.validate(clazz);
+    }
+
+    @Override
+    public boolean validate(Package pack) {
+        return delegate.validate(pack);
+    }
+
+    @Override
+    public boolean validate(Method method) {
+        return delegate.validate(method);
+    }
+
+    @Override
+    public boolean validate(Constructor<?> ctor) {
+        return delegate.validate(ctor);
+    }
+
+    @Override
+    public boolean validate(Field field) {
+        return delegate.validate(field);
     }
 
     @Override

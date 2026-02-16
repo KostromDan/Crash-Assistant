@@ -37,9 +37,6 @@ java.lang.EnumConstantNotPresentException
 java.lang.Error
 java.lang.Exception
 java.lang.ExceptionInInitializerError
-java.lang.FdLibm$Cbrt
-java.lang.FdLibm$Hypot
-java.lang.FdLibm$Pow
 java.lang.Float
 java.lang.FunctionalInterface
 java.lang.IllegalAccessError
@@ -77,7 +74,6 @@ java.lang.Readable
 java.lang.Record
 java.lang.ReflectiveOperationException
 java.lang.Runnable
-java.lang.Runtime$Version
 java.lang.RuntimeException
 java.lang.SafeVarargs
 java.lang.SecurityException

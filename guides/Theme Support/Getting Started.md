@@ -55,7 +55,7 @@ can!
 * Modify the HEX codes of corresponding elements.
 * Save the file and restart the application to see your changes.
 
-I case of default color of some button (e.g. Upload All) doesn't fit theme,
+In case of default color of some button (e.g. Upload All) doesn't fit theme,
 you can modify it in our config at: `gui_customisation`
 
 #### 4. Installation Steps

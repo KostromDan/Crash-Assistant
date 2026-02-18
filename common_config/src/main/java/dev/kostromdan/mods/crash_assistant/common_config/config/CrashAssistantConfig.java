@@ -5,6 +5,7 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.ParsingException;
 import com.electronwill.nightconfig.toml.TomlFormat;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
+import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -561,6 +562,7 @@ public class CrashAssistantConfig {
         return CONFIG_PATH;
     }
 
+    @NoJexl
     public static void executeWithLock(Runnable body) {
         Exception ex = null;
         try {
@@ -592,7 +594,7 @@ public class CrashAssistantConfig {
         }
     }
 
-    public static void update() {
+    private static void update() {
         executeWithLock(() -> {
             if (!CONFIG_PATH.toFile().exists() || CONFIG_PATH.toFile().lastModified() > lastConfigUpdate) {
                 load();
@@ -600,7 +602,7 @@ public class CrashAssistantConfig {
         });
     }
 
-    public static void load() {
+    private static void load() {
         executeWithLock(() -> {
             try {
                 config.load();
@@ -631,7 +633,7 @@ public class CrashAssistantConfig {
         });
     }
 
-    public static long getCommentsHash() {
+    private static long getCommentsHash() {
         long hash = 0;
         hash += config.commentMap().hashCode();
         for (Map.Entry<String, Object> entry : config.valueMap().entrySet()) {
@@ -731,7 +733,7 @@ public class CrashAssistantConfig {
         }
     }
 
-    public static void save() {
+    private static void save() {
         executeWithLock(() -> {
             config.save();
             lastConfigUpdate = CONFIG_PATH.toFile().lastModified();
@@ -767,6 +769,7 @@ public class CrashAssistantConfig {
         });
     }
 
+    @NoJexl
     public static void main(String[] args) { // Debug config.
     }
 }

@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -90,6 +91,7 @@ public class ModListUtils {
         return new LinkedHashSet<>();
     }
 
+    @NoJexl
     public static void saveCurrentModList() {
         try {
             try (FileWriter writer = new FileWriter(JSON_FILE.toFile())) {

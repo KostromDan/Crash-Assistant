@@ -106,7 +106,7 @@ public class Permissions {
     }
 
     public static void main(String[] args) throws Exception {
-        Path path = Paths.get("app/src/main/resources/jexl_allowed_classes.txt");
+        Path path = Paths.get("common_config/src/main/resources/jexl_allowed_classes.txt");
         List<String> classes = Files.readAllLines(path, StandardCharsets.UTF_8);
 
         classes.removeIf(line -> line.trim().isEmpty() || line.trim().startsWith("#"));

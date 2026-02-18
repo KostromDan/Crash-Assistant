@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.lang;
 
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,8 +16,11 @@ import java.util.function.Function;
 
 public class LanguageProvider {
     private static final Logger LOGGER = LogManager.getLogger();
+    @NoJexl
     public static Path OPTIONS_PATH = Paths.get("options.txt");
+    @NoJexl
     public static Path LANG_PATH = Paths.get("config", "crash_assistant", "crash_assistant_localization_overrides");
+    @NoJexl
     public static HashMap<String, Lang> languages = new HashMap<>();
     public static String currentLangName;
     public static String msgLangName;
@@ -27,6 +31,7 @@ public class LanguageProvider {
         unzipAndUpdateLangFiles();
     }
 
+    @NoJexl
     private static void migrateLangDirectory() {
         Path oldLangPath = Paths.get("config", "crash_assistant", "lang");
         if (Files.exists(oldLangPath) && Files.isDirectory(oldLangPath)) {
@@ -67,6 +72,7 @@ public class LanguageProvider {
         return languages.getOrDefault(currentLangName, languages.get("en_us")).get(key, placeHoldersSurroundedWithHref);
     }
 
+    @NoJexl
     public static void updateLang() {
         currentLangName = getCurrentLang();
     }
@@ -90,6 +96,7 @@ public class LanguageProvider {
         return CrashAssistantConfig.get("general.default_lang");
     }
 
+    @NoJexl
     @SuppressWarnings("unchecked")
     public static void unzipAndUpdateLangFiles() {
         CrashAssistantConfig.executeWithLock(() -> {
@@ -207,6 +214,7 @@ public class LanguageProvider {
         });
     }
 
+    @NoJexl
     public static HashSet<Path> getLangFilesInConfigPaths() {
         HashSet<Path> langFilesInConfigNames = new HashSet<>();
         if (!Files.exists(LANG_PATH)) {

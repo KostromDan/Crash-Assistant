@@ -15,6 +15,8 @@ dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser
 dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParsingResult
 dev.kostromdan.mods.crash_assistant.app.scripts.sandbox_allowed.Analysis
 dev.kostromdan.mods.crash_assistant.app.scripts.sandbox_allowed.Logger
+dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp.ComparableVersion
+dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp.VersionUtils
 java.io.BufferedReader
 java.io.ByteArrayInputStream
 java.io.ByteArrayOutputStream

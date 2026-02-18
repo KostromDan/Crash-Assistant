@@ -119,15 +119,17 @@ public class LogReader {
         }
     }
 
-
+    @NoJexl
     public String getFirstLinesString() {
         return String.join("\n", firstLines);
     }
 
+    @NoJexl
     public List<String> getFirstLinesList() {
         return firstLines;
     }
 
+    @NoJexl
     public String getLastLinesString() {
         return lastLines == null ? null : String.join("\n", lastLines);
     }
@@ -158,6 +160,34 @@ public class LogReader {
             allLinesStringCached = null;
             allLinesListCached = null;
         }
+    }
+
+    /**
+     * Returns the first n lines from the log file as a list of strings.
+     * If n is greater than the number of available lines, all lines are returned.
+     *
+     * @param n number of lines to return
+     * @return list of first n lines
+     */
+    public synchronized List<String> getFirstNLines(int n) {
+        List<String> allLines = getAllLinesList();
+        if (allLines.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        int endIndex = Math.min(allLines.size(), Math.max(0, n));
+        return new ArrayList<>(allLines.subList(0, endIndex));
+    }
+
+    /**
+     * Returns the first line from the log file.
+     * If the log file is empty, returns an empty string.
+     *
+     * @return the first line or empty string if file is empty
+     */
+    public synchronized String getFirstLine() {
+        List<String> firstLine = getFirstNLines(1);
+        return !firstLine.isEmpty() ? firstLine.get(0) : "";
     }
 
     /**

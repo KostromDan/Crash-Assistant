@@ -4,6 +4,8 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.scripts.permissions.Permissions;
 import dev.kostromdan.mods.crash_assistant.app.scripts.sandbox_allowed.Analysis;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.JexlScript;
@@ -25,6 +27,10 @@ public class ScriptManager {
     private static final Set<String> executedScripts = Collections.synchronizedSet(new HashSet<>());
 
     public static void runAnalysisScripts() {
+        if (!CrashAssistantConfig.getBoolean("scripts.enabled")) {
+            return;
+        }
+        JarInJarHelper.setupScripts();
         if (!Files.exists(SCRIPTS_DIR) || !Files.isDirectory(SCRIPTS_DIR)) {
             return;
         }
@@ -69,14 +75,21 @@ public class ScriptManager {
         CrashAssistantApp.LOGGER.info("Running script: " + scriptName);
         Analysis.setCurrentScriptName(scriptName);
         try {
-            String scriptContent = new String(Files.readAllBytes(path));
-            JexlScript script = engine.createScript(scriptContent);
-            script.execute(context);
-            executedScripts.add(scriptName);
-        } catch (IOException e) {
-            CrashAssistantApp.LOGGER.error("Failed to read script: " + path, e);
-        } catch (Exception e) {
-            CrashAssistantApp.LOGGER.error("Error executing script: " + path, e);
+            String scriptContent;
+            try {
+                scriptContent = new String(Files.readAllBytes(path));
+            } catch (IOException e) {
+                CrashAssistantApp.LOGGER.error("Failed to read script: " + path, e);
+                return;
+            }
+
+            try {
+                JexlScript script = engine.createScript(scriptContent);
+                script.execute(context);
+                executedScripts.add(scriptName);
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.error("Error executing script: " + path, e);
+            }
         } finally {
             Analysis.setCurrentScriptName(null);
         }

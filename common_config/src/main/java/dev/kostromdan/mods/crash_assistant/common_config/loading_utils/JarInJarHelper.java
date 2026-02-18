@@ -26,8 +26,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JarInJarHelper {
     public static Logger LOGGER = LogManager.getLogger("CrashAssistantJarInJarHelper");
@@ -145,9 +145,27 @@ public class JarInJarHelper {
             ChildProcessLogger.captureOutput(crashAssistantAppProcess);
             ProblematicModsConfig.crashIfProblematicMod();
             JarInJarHelper.checkForIncompatibleMods(true);
+            setupScripts();
             crashIfConfigured();
         } catch (Throwable e) {
             LOGGER.error("Error while launching GUI: ", e);
+        }
+    }
+
+    public static void setupScripts() {
+        if (CrashAssistantConfig.getBoolean("scripts.generate_scripts_folder_with_example")) {
+            Path scriptsDir = Paths.get("config", "crash_assistant", "scripts", "log_analysis");
+            try {
+                Files.createDirectories(scriptsDir);
+                try (Stream<Path> stream = Files.list(scriptsDir)) {
+                    if (!stream.findAny().isPresent()) {
+                        Path exampleScript = scriptsDir.resolve("example.jexl");
+                        unzipFromJar("/META-INF/scripts/example.jexl", exampleScript);
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.error("Failed to setup scripts directory", e);
+            }
         }
     }
 
@@ -491,7 +509,7 @@ public class JarInJarHelper {
 
     public static void writeJsonToFile(Map<String, String> json, Path path) {
         try {
-            try (FileWriter writer = new FileWriter(path.toFile())) {
+            try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
                 Gson GSON = new GsonBuilder().setPrettyPrinting().create();
                 GSON.toJson(json, writer);
             }

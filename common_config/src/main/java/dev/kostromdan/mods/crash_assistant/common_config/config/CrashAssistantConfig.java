@@ -370,6 +370,16 @@ public class CrashAssistantConfig {
                         "On first world join of modpack creator if set to false shows greeting, then self enables.",
                 false);
 
+        config.setComment("scripts", "Settings of scripting feature.\n" +
+                "Allows you to add custom scripts for log analysis.\n" +
+                "Scripts should be placed in config/crash_assistant/scripts/log_analysis folder.");
+        addOption("scripts.enabled",
+                "Enable feature.",
+                true);
+        addOption("scripts.generate_scripts_folder_with_example",
+                "By changing this value you can disable creating \"scripts\" folder and placing \"example.jexl\" file there.",
+                true);
+
         config.setComment("gui_customisation", "You can customise GUI with this options.");
         addOption("gui_customisation.theme_file_name",
                 "Name of a FlatLaf IntelliJ Themes file in config/crash_assistant folder or core theme name.\n" +

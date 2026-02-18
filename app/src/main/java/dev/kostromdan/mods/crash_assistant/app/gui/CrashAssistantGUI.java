@@ -925,7 +925,7 @@ public class CrashAssistantGUI {
         synchronized (KnownCrashReasonMessage.class) {
             try {
                 try {
-                    if (Objects.equals(dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig.get("too_many_changes.dont_show_again"), true)) {
+                    if (Objects.equals(CrashAssistantLocalConfig.get("too_many_changes.dont_show_again"), true)) {
                         return;
                     }
                 } catch (Throwable ignored) {

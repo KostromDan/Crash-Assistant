@@ -75,12 +75,16 @@ shadowJar {
 
     // Relocate Night Config packages
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
+    relocate 'org.apache.commons.jexl3', 'dev.kostromdan.mods.crash_assistant.commons.jexl3'
+    relocate 'org.apache.commons.logging', 'dev.kostromdan.mods.crash_assistant.commons.logging'
 
     dependencies {
         exclude(dependency('org.apache.logging.log4j:.*'))
         exclude(dependency('com.google.code.gson:.*'))
         exclude(dependency('commons-io:commons-io:2.15.1'))
         exclude(dependency('com.electronwill.night-config:.*'))
+        exclude(dependency('org.apache.commons:commons-jexl3:.*'))
+        exclude(dependency('commons-logging:commons-logging:.*'))
         exclude(dependency('net.java.dev.jna:.*'))
         exclude(dependency('org.lwjgl:.*'))
         exclude(project(':common_config'))

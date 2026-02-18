@@ -36,6 +36,7 @@ public class Boot {
     public static List<String> APP_ARGS;
     public static String MINECRAFT_LAUNCH_COMMAND;
     public static String MINECRAFT_JVM_ARGS;
+    public static String startupWarningsJson = null;
 
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -76,6 +77,8 @@ public class Boot {
                     MINECRAFT_JVM_ARGS = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
                 }else if ("-modLoadedWithConnector".equals(effectiveArgs.get(i))){
                     PlatformHelp.modLoadedWithConnector = true;
+                } else if ("-startupWarnings".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    startupWarningsJson = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
                 }
             }
 

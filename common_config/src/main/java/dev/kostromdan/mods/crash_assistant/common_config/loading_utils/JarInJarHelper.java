@@ -10,6 +10,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.StartupScriptManager;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.LatestLogLocator;
@@ -17,6 +18,8 @@ import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Startup;
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Type;
@@ -54,6 +57,9 @@ public class JarInJarHelper {
             Path tempAppJarPath = extractJarInJar("app.jar", currentProcessData + "_app.jar");
             Path tempModJarPath = tempDir.resolve(currentProcessData + "_mod.jar");
             Files.copy(originalModJarPath, tempModJarPath, StandardCopyOption.REPLACE_EXISTING);
+
+            setupScripts();
+            StartupScriptManager.runStartupSequence();
 
             String childProcess = ProcessHelper.getChildProcessesInfo();
             if (!childProcess.isEmpty()) {
@@ -103,6 +109,11 @@ public class JarInJarHelper {
             if (PlatformHelp.modLoadedWithConnector) {
                 argsList.add("-modLoadedWithConnector");
             }
+            List<ScriptWarning> startupWarnings = Startup.getCrashWarnings();
+            if (!startupWarnings.isEmpty()) {
+                argsList.add("-startupWarnings");
+                argsList.add(Base64.getEncoder().encodeToString(new GsonBuilder().create().toJson(startupWarnings).getBytes(StandardCharsets.UTF_8)));
+            }
             if (tempDir.toAbsolutePath().toString().contains(Paths.get("lunarclient", "offline", "multiver").toString()) &&
                     ClassExistenceChecker.classExists("com.moonsworth.lunar.ichor.api.IchorAPI")) {
                 Path latestLog = LatestLogLocator.findLatestLogPath();
@@ -145,7 +156,10 @@ public class JarInJarHelper {
             ChildProcessLogger.captureOutput(crashAssistantAppProcess);
             ProblematicModsConfig.crashIfProblematicMod();
             JarInJarHelper.checkForIncompatibleMods(true);
-            setupScripts();
+            if (Startup.isMarkedForCrash()) {
+                LOGGER.error("Game crash requested by startup scripts.");
+                System.exit(-1);
+            }
             crashIfConfigured();
         } catch (Throwable e) {
             LOGGER.error("Error while launching GUI: ", e);
@@ -160,11 +174,24 @@ public class JarInJarHelper {
                 try (Stream<Path> stream = Files.list(scriptsDir)) {
                     if (!stream.findAny().isPresent()) {
                         Path exampleScript = scriptsDir.resolve("example.jexl");
-                        unzipFromJar("/META-INF/scripts/example.jexl", exampleScript);
+                        unzipFromJar("/META-INF/scripts/log_analysis/example.jexl", exampleScript);
                     }
                 }
             } catch (IOException e) {
                 LOGGER.error("Failed to setup scripts directory", e);
+            }
+
+            Path startupScriptsDir = Paths.get("config", "crash_assistant", "scripts", "startup");
+            try {
+                Files.createDirectories(startupScriptsDir);
+                try (Stream<Path> stream = Files.list(startupScriptsDir)) {
+                    if (!stream.findAny().isPresent()) {
+                        Path exampleScript = startupScriptsDir.resolve("example_startup.jexl");
+                        unzipFromJar("/META-INF/scripts/startup/example.jexl", exampleScript);
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.error("Failed to setup startup scripts directory", e);
             }
         }
     }

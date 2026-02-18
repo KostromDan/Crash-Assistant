@@ -13,6 +13,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorG
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ScriptedAnalysis;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.ScriptWarningReason;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
@@ -779,6 +780,11 @@ public class CrashAssistantGUI {
                         JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
                         String reasonClassName = crashReason.getClass().getSimpleName();
                         String configKey = "shown_reasons." + reasonClassName;
+                        
+                        String dontShowAgainKey = crashReason.getDontShowAgainKey();
+                        if (dontShowAgainKey != null && Objects.equals(CrashAssistantLocalConfig.get(dontShowAgainKey), true)) {
+                            continue;
+                        }
                         boolean alreadyShown = Objects.equals(CrashAssistantLocalConfig.get(configKey), true);
 
                         JDialog dialog;
@@ -789,7 +795,7 @@ public class CrashAssistantGUI {
                             gbc.weightx = 1.0;
                             gbc.gridy = 0;
 
-                            // Create a list to hold buttons, so we can add listeners later
+                            
                             List<JButton> buttons = new ArrayList<>();
                             List<Consumer<JDialog>> actions = new ArrayList<>();
 
@@ -806,9 +812,18 @@ public class CrashAssistantGUI {
                                 actions.add(entry.getValue());
                             }
 
+                            JPanel southContainer = new JPanel(new BorderLayout());
+                            if (dontShowAgainKey != null) {
+                                JCheckBox dontShowBox = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+                                String finalDontShowAgainKey = dontShowAgainKey;
+                                dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
+                                southContainer.add(dontShowBox, BorderLayout.NORTH);
+                            }
+                            southContainer.add(autoFixPanel, BorderLayout.CENTER);
+
                             JPanel mainPanel = new JPanel(new BorderLayout(10, 5));
                             mainPanel.add(messagePane, BorderLayout.CENTER);
-                            mainPanel.add(autoFixPanel, BorderLayout.SOUTH);
+                            mainPanel.add(southContainer, BorderLayout.SOUTH);
 
                             JOptionPane optionPane = new JOptionPane(
                                     mainPanel,
@@ -824,7 +839,7 @@ public class CrashAssistantGUI {
                                     crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyzer") : LanguageProvider.get("gui.logs_analyzer")
                             );
 
-                            // Add listeners now that the dialog is created
+
                             for (int i = 0; i < buttons.size(); i++) {
                                 JButton button = buttons.get(i);
                                 Consumer<JDialog> action = actions.get(i);
@@ -832,8 +847,19 @@ public class CrashAssistantGUI {
                                 button.addActionListener(e -> action.accept(finalDialog));
                             }
                         } else {
+                            Object messageObject = messagePane;
+                            if (dontShowAgainKey != null) {
+                                JPanel panel = new JPanel(new BorderLayout(10, 5));
+                                panel.add(messagePane, BorderLayout.CENTER);
+                                JCheckBox dontShowBox = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+                                String finalDontShowAgainKey = dontShowAgainKey;
+                                dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
+                                panel.add(dontShowBox, BorderLayout.SOUTH);
+                                messageObject = panel;
+                            }
+
                             JOptionPane optionPane = new JOptionPane(
-                                    messagePane,
+                                    messageObject,
                                     JOptionPane.WARNING_MESSAGE,
                                     JOptionPane.DEFAULT_OPTION,
                                     null,
@@ -850,6 +876,11 @@ public class CrashAssistantGUI {
  
                         if (!alreadyShown && !(crashReason instanceof ScriptedAnalysis)) {
                             int delay = CrashAssistantConfig.getInteger("analysis.first_show_delay");
+                            if (crashReason.getOkDelay() > 0) delay = crashReason.getOkDelay();
+                            if (crashReason instanceof ScriptWarningReason) {
+                                int customDelay = ((ScriptWarningReason) crashReason).getOkDelay();
+                                if (customDelay > 0) delay = customDelay;
+                            }
                             if (delay > 0) {
                                 okButton.setEnabled(false);
                                 final int[] secondsLeft = {delay};

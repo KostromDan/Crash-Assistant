@@ -76,4 +76,12 @@ public class KnownCrashReason {
     public boolean matches(Log log) {
         return RegexChecker.logContainsOneOfPatterns(log, patterns);
     }
+    
+    public String getDontShowAgainKey() {
+        return null;
+    }
+    
+    public int getOkDelay() {
+        return 0;
+    }
 }

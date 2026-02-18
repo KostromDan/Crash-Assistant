@@ -9,8 +9,14 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.*
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.PhysX_64;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.win_event.WasClosedByWindows;
-import dev.kostromdan.mods.crash_assistant.app.scripts.ScriptManager;
+import dev.kostromdan.mods.crash_assistant.app.scripts.AnalysisScriptManager;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.ScriptWarningReason;
+import java.lang.reflect.Type;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -44,7 +50,7 @@ public class LogAnalyser {
         long startTime = System.currentTimeMillis();
         registerReasons();
         readLogsNeededForAnalysis();
-        ScriptManager.runAnalysisScripts();
+        AnalysisScriptManager.runAnalysisScripts();
         synchronized (KnownCrashReasonMessage.class) {
             ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
             HashSet<String> disabledCrashReasons = new HashSet<>(CrashAssistantConfig.getBlacklistedAnalysis());
@@ -201,6 +207,20 @@ public class LogAnalyser {
 
 
         registerCodexKnownCrashReason(new ErroringEntity());
+
+        if (Boot.startupWarningsJson != null) {
+            try {
+                Type listType = new TypeToken<List<ScriptWarning>>(){}.getType();
+                List<ScriptWarning> warnings = new Gson().fromJson(Boot.startupWarningsJson, listType);
+
+                for (ScriptWarning w : warnings) {
+                    KnownCrashReason reason = new ScriptWarningReason(null, w);
+                    KnownCrashReasonMessage.addCrashReasonMessage(new KnownCrashReasonMessage(null, reason));
+                }
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.error("Failed to process startup warnings:", e);
+            }
+        }
 
         reasonsRegistered = true;
     }

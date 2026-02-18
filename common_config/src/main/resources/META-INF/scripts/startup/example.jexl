@@ -1,0 +1,38 @@
+// This is an example script for Crash Assistant.
+// It detects if the crash was triggered manually by the user (F3 + C).
+
+// You can use the 'Analysis' object to add warnings.
+// If you want your custom warning to be localized, you can use the "config/crash_assistant/crash_assistant_localization_overrides" folder.
+// Your custom keys with the prefix 'custom.' will NOT be automatically cleared as unused.
+// Example: Analysis.addWarning(log, Analysis.lang("custom.manual_crash"));
+
+// Full documentation: https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Scripting%20Support/Getting%20Started.md
+
+// Request specific log types for analysis.
+var requested_logs = LogsList.getLogs(CRASH_REPORT);
+// You can request multiple log types: var requested_logs = LogsList.getLogs(LOG, CRASH_REPORT, HS_ERR, STDERR_STREAM)
+// Warning: if you want to analyze WIN_EVENT log type, due to they coming with delay, they are not available on first launch of script.
+// In such case you must allow your script to run on second time analysis calls (then log is added later): Analysis.markRunAlways()
+
+for (log : requested_logs) {
+    var log_text = log.getReader().getAllLinesString();
+    // If you want to get lines as List<String>, not a single String, you can by: log.getReader().getAllLinesList()
+    // If you want to get not entire log, but 100 last lines as List<String>, you can by: log.getReader().getLastNLines(100); or first lines: log.getReader().getFirstNLines(10)
+
+    // You can use standard Java regex classes since they are whitelisted and already imported.
+    // However, for convenience, you can use the 'RegexChecker' utility.
+    // It can check multiple patterns at once.
+    // RegexChecker.logContainsOneOfPatterns returns true if ANY of the patterns match.
+    // You can give this function any number of patterns
+    var pattern1 = "Description: Manually triggered debug crash";
+    var pattern2 = "Caused by: java\\.lang\\.Throwable: Manually triggered debug crash";
+
+    if (RegexChecker.logContainsOneOfPatterns(log, pattern1, pattern2)) {
+        // If you don't want to use localization, you can just pass a raw string:
+        // Analysis.addWarning(log, "Manual crash detected!");
+
+        // Using internal localization key shipped with mod:
+        Analysis.addWarning(log, Analysis.lang("custom.manual_crash"));
+        // Now String recieved from Analysis.lang("custom.manual_crash") will be displayed to user as warning.
+    }
+}

@@ -13,7 +13,7 @@ public class KnownCrashReason {
     protected String message;
     protected int priority;
     protected String dontShowAgainKey = null;
-    protected int customOkDelay = 0;
+    protected int customOkDelay = -1;
     protected HashSet<String> conflictingReasons = new HashSet<>();
     public static HashSet<KnownCrashReason> shownKnownCrashReasons = new HashSet<>();
 

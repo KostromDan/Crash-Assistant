@@ -12,7 +12,6 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDe
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ScriptedAnalysis;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
@@ -875,11 +874,10 @@ public class CrashAssistantGUI {
  
 
                         if (!alreadyShown) {
-                            int delay = CrashAssistantConfig.getInteger("analysis.first_show_delay");
-                            if (crashReason instanceof ScriptedAnalysis) {
-                                delay = 0;
+                            int delay = crashReason.getOkDelay();
+                            if (delay == -1) {
+                                delay = CrashAssistantConfig.getInteger("analysis.first_show_delay");
                             }
-                            if (crashReason.getOkDelay() > 0) delay = crashReason.getOkDelay();
 
                             if (delay > 0) {
                                 okButton.setEnabled(false);

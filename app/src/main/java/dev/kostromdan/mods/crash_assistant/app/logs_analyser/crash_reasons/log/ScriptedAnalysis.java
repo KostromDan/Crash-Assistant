@@ -19,6 +19,7 @@ public class ScriptedAnalysis extends KnownCrashReason {
     public ScriptedAnalysis(LogType logType, String message) {
         super(logType, message, new String[0]);
         priority = 10000;
+        this.customOkDelay = 0;
     }
 
     public ScriptedAnalysis(LogType logType, ScriptWarning warning) {

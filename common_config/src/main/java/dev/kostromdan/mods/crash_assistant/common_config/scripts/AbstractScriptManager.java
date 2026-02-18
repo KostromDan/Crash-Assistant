@@ -57,6 +57,15 @@ public abstract class AbstractScriptManager {
             return;
         }
 
+        try (Stream<Path> stream = Files.walk(scriptsDir)) {
+            if (stream.filter(Files::isRegularFile).noneMatch(path -> path.toString().endsWith(".jexl"))) {
+                return;
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to check scripts directory: {}", scriptsDir, e);
+            return;
+        }
+
         JexlEngine engine = Permissions.getEngine();
         JexlContext context = createContext();
 

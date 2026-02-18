@@ -1,4 +1,4 @@
-package dev.kostromdan.mods.crash_assistant.app.scripts.permissions;
+package dev.kostromdan.mods.crash_assistant.common_config.scripts.permissions;
 
 import org.apache.commons.jexl3.introspection.JexlPermissions;
 
@@ -11,7 +11,7 @@ public class SmartJexlPermissions implements JexlPermissions {
     private final JexlPermissions delegate;
 
     public SmartJexlPermissions(Set<String> whitelistedClasses) {
-        JexlPermissions baseDenyAll = JexlPermissions.parse("dev.kostromdan.mods.crash_assistant.app.scripts.sandbox_allowed.*");
+        JexlPermissions baseDenyAll = JexlPermissions.parse("dev.kostromdan.mods.crash_assistant.deny_all.*");
         this.delegate = new JexlPermissions.ClassPermissions(baseDenyAll, whitelistedClasses);
     }
 

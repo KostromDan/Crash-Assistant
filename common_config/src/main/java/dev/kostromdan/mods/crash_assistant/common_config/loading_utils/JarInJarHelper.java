@@ -168,31 +168,31 @@ public class JarInJarHelper {
 
     public static void setupScripts() {
         if (CrashAssistantConfig.getBoolean("scripts.generate_scripts_folder_with_example")) {
-            Path scriptsDir = Paths.get("config", "crash_assistant", "scripts", "log_analysis");
-            try {
-                Files.createDirectories(scriptsDir);
-                try (Stream<Path> stream = Files.list(scriptsDir)) {
-                    if (!stream.findAny().isPresent()) {
-                        Path exampleScript = scriptsDir.resolve("example.jexl");
-                        unzipFromJar("/META-INF/scripts/log_analysis/example.jexl", exampleScript);
-                    }
-                }
-            } catch (IOException e) {
-                LOGGER.error("Failed to setup scripts directory", e);
-            }
+            setupScriptDirectory(
+                    Paths.get("config", "crash_assistant", "scripts", "log_analysis"),
+                    "/META-INF/scripts/log_analysis/example.jexl",
+                    "example.jexl"
+            );
 
-            Path startupScriptsDir = Paths.get("config", "crash_assistant", "scripts", "startup");
-            try {
-                Files.createDirectories(startupScriptsDir);
-                try (Stream<Path> stream = Files.list(startupScriptsDir)) {
-                    if (!stream.findAny().isPresent()) {
-                        Path exampleScript = startupScriptsDir.resolve("example_startup.jexl");
-                        unzipFromJar("/META-INF/scripts/startup/example.jexl", exampleScript);
-                    }
+            setupScriptDirectory(
+                    Paths.get("config", "crash_assistant", "scripts", "startup"),
+                    "/META-INF/scripts/startup/example.jexl",
+                    "example.jexl"
+            );
+        }
+    }
+
+    private static void setupScriptDirectory(Path scriptsDir, String exampleResourcePath, String exampleFileName) {
+        try {
+            Files.createDirectories(scriptsDir);
+            try (Stream<Path> stream = Files.list(scriptsDir)) {
+                if (!stream.findAny().isPresent()) {
+                    Path exampleScript = scriptsDir.resolve(exampleFileName);
+                    unzipFromJar(exampleResourcePath, exampleScript);
                 }
-            } catch (IOException e) {
-                LOGGER.error("Failed to setup startup scripts directory", e);
             }
+        } catch (IOException e) {
+            LOGGER.error("Failed to setup scripts directory: " + scriptsDir, e);
         }
     }
 

@@ -15,7 +15,7 @@ import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.ScriptWarningReason;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ScriptedAnalysis;
 import java.lang.reflect.Type;
 
 import java.util.ArrayList;
@@ -214,7 +214,7 @@ public class LogAnalyser {
                 List<ScriptWarning> warnings = new Gson().fromJson(Boot.startupWarningsJson, listType);
 
                 for (ScriptWarning w : warnings) {
-                    KnownCrashReason reason = new ScriptWarningReason(null, w);
+                    KnownCrashReason reason = new ScriptedAnalysis(null, w);
                     KnownCrashReasonMessage.addCrashReasonMessage(new KnownCrashReasonMessage(null, reason));
                 }
             } catch (Exception e) {

@@ -12,6 +12,8 @@ public class KnownCrashReason {
     protected List<String> patterns;
     protected String message;
     protected int priority;
+    protected String dontShowAgainKey = null;
+    protected int customOkDelay = 0;
     protected HashSet<String> conflictingReasons = new HashSet<>();
     public static HashSet<KnownCrashReason> shownKnownCrashReasons = new HashSet<>();
 
@@ -76,12 +78,20 @@ public class KnownCrashReason {
     public boolean matches(Log log) {
         return RegexChecker.logContainsOneOfPatterns(log, patterns);
     }
-    
+
     public String getDontShowAgainKey() {
-        return null;
+        return dontShowAgainKey;
     }
-    
+
+    public void setDontShowAgainKey(String dontShowAgainKey) {
+        this.dontShowAgainKey = dontShowAgainKey;
+    }
+
     public int getOkDelay() {
-        return 0;
+        return customOkDelay;
+    }
+
+    public void setOkDelay(int okDelay) {
+        this.customOkDelay = okDelay;
     }
 }

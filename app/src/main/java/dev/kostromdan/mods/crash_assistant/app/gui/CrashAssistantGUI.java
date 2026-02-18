@@ -13,7 +13,6 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorG
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ScriptedAnalysis;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.ScriptWarningReason;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
@@ -874,13 +873,14 @@ public class CrashAssistantGUI {
 
                         okButton.addActionListener(e -> dialog.dispose());
  
-                        if (!alreadyShown && !(crashReason instanceof ScriptedAnalysis)) {
+
+                        if (!alreadyShown) {
                             int delay = CrashAssistantConfig.getInteger("analysis.first_show_delay");
-                            if (crashReason.getOkDelay() > 0) delay = crashReason.getOkDelay();
-                            if (crashReason instanceof ScriptWarningReason) {
-                                int customDelay = ((ScriptWarningReason) crashReason).getOkDelay();
-                                if (customDelay > 0) delay = customDelay;
+                            if (crashReason instanceof ScriptedAnalysis) {
+                                delay = 0;
                             }
+                            if (crashReason.getOkDelay() > 0) delay = crashReason.getOkDelay();
+
                             if (delay > 0) {
                                 okButton.setEnabled(false);
                                 final int[] secondsLeft = {delay};

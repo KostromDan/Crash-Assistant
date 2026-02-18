@@ -4,7 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.ScriptWarningReason;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ScriptedAnalysis;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.AbstractScriptManager;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
@@ -46,7 +46,7 @@ public class AnalysisScriptManager extends AbstractScriptManager {
             for (Map.Entry<Log, List<ScriptWarning>> entry : warnings.entrySet()) {
                 Log log = entry.getKey();
                 for (ScriptWarning w : entry.getValue()) {
-                    KnownCrashReason reason = new ScriptWarningReason(log != null ? log.getType() : LogType.LOG, w);
+                    KnownCrashReason reason = new ScriptedAnalysis(log != null ? log.getType() : LogType.LOG, w);
                     KnownCrashReasonMessage.addCrashReasonMessage(new KnownCrashReasonMessage(log, reason));
                 }
             }

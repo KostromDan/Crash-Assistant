@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.common_config.scripts.permissions;
 
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.JexlStreamArithmetic;
 import org.apache.commons.jexl3.JexlBuilder;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.introspection.JexlPermissions;
@@ -41,6 +42,7 @@ public class Permissions {
 
         engine = new JexlBuilder()
                 .permissions(permissions)
+                .arithmetic(new JexlStreamArithmetic(true))
                 .strict(true) // If true, throws JexlException when a method or property is not found.
                 .silent(false) // If false, exceptions are thrown to the caller instead of being swallowed.
                 .safe(false) // x.y() if x is null throws an exception

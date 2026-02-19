@@ -16,9 +16,9 @@ public class ScriptWarning {
 
     // Mod Actions
     private Mod affectedMod = null;
-    private boolean showRemoveButton = false;
-    private boolean showDisableButton = false;
-    private boolean showExplorerButton = false;
+    private boolean showRemoveButton = true;
+    private boolean showDisableButton = true;
+    private boolean showExplorerButton = true;
 
     public ScriptWarning(String message) {
         this.message = message;

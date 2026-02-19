@@ -13,8 +13,7 @@ dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogsList
 dev.kostromdan.mods.crash_assistant.app.logs_analyser.RegexChecker
 dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser
 dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParsingResult
-dev.kostromdan.mods.crash_assistant.app.scripts.sandbox_allowed.Analysis
-dev.kostromdan.mods.crash_assistant.app.scripts.sandbox_allowed.Logger
+dev.kostromdan.mods.crash_assistant.app.scripts.Analysis
 dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig
 dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig
 dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider
@@ -27,6 +26,10 @@ dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModpackStatus
 dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModpackStatusChecker
 dev.kostromdan.mods.crash_assistant.common_config.mod_list.UpdatedPair
 dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp
+dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Logger
+dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptUtils
+dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning
+dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Startup
 dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker
 dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp.ComparableVersion
 dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp.VersionUtils

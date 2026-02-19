@@ -778,9 +778,10 @@ public class CrashAssistantGUI {
                         JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
                         String reasonClassName = crashReason.getClass().getSimpleName();
                         String configKey = "shown_reasons." + reasonClassName;
-                        
+
                         String dontShowAgainKey = crashReason.getDontShowAgainKey();
                         if (dontShowAgainKey != null && Objects.equals(CrashAssistantLocalConfig.get(dontShowAgainKey), true)) {
+                            CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}, due to dontShowAgainKey: {}", crashReason.getClass().getSimpleName(), dontShowAgainKey);
                             continue;
                         }
                         boolean alreadyShown = Objects.equals(CrashAssistantLocalConfig.get(configKey), true);
@@ -793,7 +794,7 @@ public class CrashAssistantGUI {
                             gbc.weightx = 1.0;
                             gbc.gridy = 0;
 
-                            
+
                             List<JButton> buttons = new ArrayList<>();
                             List<Consumer<JDialog>> actions = new ArrayList<>();
 
@@ -871,7 +872,7 @@ public class CrashAssistantGUI {
                         }
 
                         okButton.addActionListener(e -> dialog.dispose());
- 
+
 
                         if (!alreadyShown) {
                             int delay = crashReason.getOkDelay();

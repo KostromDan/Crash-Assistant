@@ -12,11 +12,12 @@ import java.io.InputStream;
 
 public class Logger {
     private static final org.apache.logging.log4j.Logger STATIC_LOGGER;
-    private static final org.apache.logging.log4j.Logger GAME_LOGGER = LogManager.getLogger("StartupScripts");
+    private static org.apache.logging.log4j.Logger GAME_LOGGER = LogManager.getLogger("StartupScripts");
 
     static {
         if (ClassExistenceChecker.classExists("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp")) {
             STATIC_LOGGER = LogManager.getLogger("LogAnalysisScripts");
+            GAME_LOGGER = null; // On LogAnalysis stage should not be used and must be unavailable.
         } else {
             STATIC_LOGGER = createStartupLogger();
         }

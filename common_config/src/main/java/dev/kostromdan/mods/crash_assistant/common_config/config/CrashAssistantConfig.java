@@ -378,7 +378,7 @@ public class CrashAssistantConfig {
                 "Enable feature.",
                 true);
         addOption("scripts.generate_scripts_folder_with_example",
-                "By changing this value you can disable creating \"scripts\" folder and placing \"example.jexl\" file there.",
+                "By changing this value you can disable creating \"scripts\" folder and placing example scripts there.",
                 true);
 
         config.setComment("gui_customisation", "You can customise GUI with this options.");

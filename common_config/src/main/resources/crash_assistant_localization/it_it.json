@@ -8,6 +8,7 @@
   "commands.crash_command_done": "Fatto!",
   "commands.crash_command_validation_failed": "Validazione del comando fallita!\nArgomento non valido:",
   "commands.crash_command_validation_failed_to_crash": "Validazione del comando fallita!\nTarget di crash non valido:",
+  "custom.manual_crash": "Questo crash è stato causato dalla pressione prolungata di <strong>F3 + C</strong>.",
   "commands.diff_copy": "copia differenze lista mod",
   "commands.diff_tooltip": "Clicca per copiare le differenze della lista mod",
   "commands.mod_config_tooltip": "Clicca per aprire la configurazione",

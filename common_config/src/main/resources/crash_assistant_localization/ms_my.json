@@ -8,6 +8,7 @@
   "commands.crash_command_done": "Selesai!",
   "commands.crash_command_validation_failed": "Pengesahan perintah gagal!\nArgumen tidak sah:",
   "commands.crash_command_validation_failed_to_crash": "Pengesahan perintah gagal!\nSasaran ranap tidak sah:",
+  "custom.manual_crash": "Crash ini disebabkan oleh menahan <strong>F3 + C</strong>.",
   "commands.diff_copy": "salin perbezaan senarai mod",
   "commands.diff_tooltip": "Klik untuk salin perbezaan senarai mod",
   "commands.mod_config_tooltip": "Klik untuk buka konfigurasi",

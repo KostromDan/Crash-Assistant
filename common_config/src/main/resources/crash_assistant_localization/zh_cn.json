@@ -8,6 +8,7 @@
   "commands.crash_command_done": "操作完成！",
   "commands.crash_command_validation_failed": "命令验证失败！\n非法参数：",
   "commands.crash_command_validation_failed_to_crash": "命令验证失败！\n非法的崩溃目标：",
+  "custom.manual_crash": "该崩溃由长按 <strong>F3 + C</strong> 引起。",
   "commands.diff_copy": "复制模组差异列表",
   "commands.diff_tooltip": "点击复制模组差异列表",
   "commands.mod_config_tooltip": "点击打开配置",

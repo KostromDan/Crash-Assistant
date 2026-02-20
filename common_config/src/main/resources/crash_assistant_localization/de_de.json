@@ -8,6 +8,7 @@
   "commands.crash_command_done": "Fertig!",
   "commands.crash_command_validation_failed": "Validierung des Befehls fehlgeschlagen!\nUngültiges Argument:",
   "commands.crash_command_validation_failed_to_crash": "Validierung des Befehls fehlgeschlagen!\nUngültiges Absturz-Ziel:",
+  "custom.manual_crash": "Dieser Absturz wurde durch das Halten von <strong>F3 + C</strong> verursacht.",
   "commands.diff_copy": "Mod-Listen-Diff kopieren",
   "commands.diff_tooltip": "Klicken, um Mod-Listen-Diff zu kopieren",
   "commands.mod_config_tooltip": "Klicken, um Konfiguration zu öffnen",

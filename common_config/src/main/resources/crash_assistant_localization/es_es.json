@@ -8,6 +8,7 @@
   "commands.crash_command_done": "¡Hecho!",
   "commands.crash_command_validation_failed": "¡Falló la validación del comando!\nArgumento ilegal:",
   "commands.crash_command_validation_failed_to_crash": "¡Falló la validación del comando!\nObjetivo de crasheo ilegal:",
+  "custom.manual_crash": "Este cierre inesperado fue causado por mantener presionadas las teclas <strong>F3 + C</strong>.",
   "commands.diff_copy": "copiar diferencia de la lista de mods",
   "commands.diff_tooltip": "Haz clic para copiar la diferencia de la lista de mods",
   "commands.mod_config_tooltip": "Haz clic para abrir la configuración",

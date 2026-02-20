@@ -8,6 +8,7 @@
   "commands.crash_command_done": "Готово!",
   "commands.crash_command_validation_failed": "Ошибка проверки команды!\nНеверный аргумент:",
   "commands.crash_command_validation_failed_to_crash": "Ошибка проверки команды!\nНедопустимая цель для краша:",
+  "custom.manual_crash": "Этот краш был вызван удержанием комбинации клавиш <strong>F3 + C</strong>.",
   "commands.diff_copy": "скопировать различия в списке модов",
   "commands.diff_tooltip": "Нажмите, чтобы скопировать различия в списке модов",
   "commands.mod_config_tooltip": "Нажмите, чтобы открыть конфиг",

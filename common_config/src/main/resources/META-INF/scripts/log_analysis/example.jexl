@@ -20,7 +20,7 @@ for (log : requested_logs) {
     // If you want to get not the entire log, but the last 100 lines as a List<String>, you can use: log.getReader().getLastNLines(100); or the first lines: log.getReader().getFirstNLines(10)
 
     // You can use standard Java regex classes (Pattern, Matcher) if you need to extract specific data (like a version number) from the log.
-    // However, if you just need a simple true/false check without manually reading the log text, you can use the 'RegexChecker' utility for convenience.
+    // However, if you just need a simple true/false check, you can use the 'RegexChecker' utility for convenience.
     // It can check multiple patterns at once.
     // RegexChecker.logContainsOneOfPatterns returns true if ANY of the patterns match.
     // You can give this function any number of patterns.

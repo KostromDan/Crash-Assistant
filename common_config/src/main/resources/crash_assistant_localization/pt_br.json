@@ -8,6 +8,7 @@
   "commands.crash_command_done": "Concluído!",
   "commands.crash_command_validation_failed": "Validação do comando falhou!\nArgumento ilegal:",
   "commands.crash_command_validation_failed_to_crash": "Validação do comando falhou!\nAlvo de crash ilegal:",
+  "custom.manual_crash": "Este erro foi causado ao segurar <strong>F3 + C</strong>.",
   "commands.diff_copy": "copiar diff da lista de mods",
   "commands.diff_tooltip": "Clique para copiar o diff da lista de mods",
   "commands.mod_config_tooltip": "Clique para abrir a configuração",

@@ -1,39 +1,18 @@
 package dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils;
 
-import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.ConfigurationFactory;
-import org.apache.logging.log4j.core.config.ConfigurationSource;
 
-import java.io.InputStream;
 
-public class Logger {
+public class MinecraftLogger {
     private static final org.apache.logging.log4j.Logger STATIC_LOGGER;
 
     static {
         if (ClassExistenceChecker.classExists("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp")) {
-            STATIC_LOGGER = LogManager.getLogger("LogAnalysisScripts");
+            STATIC_LOGGER = null; // On LogAnalysis stage should not be used and must be unavailable.
         } else {
-            STATIC_LOGGER = createStartupLogger();
+            STATIC_LOGGER = LogManager.getLogger("StartupScripts");
         }
-    }
-
-    private static org.apache.logging.log4j.Logger createStartupLogger() {
-        try (InputStream is = Logger.class.getResourceAsStream("/log4j2-startup.xml")) {
-            if (is != null) {
-                LoggerContext context = new LoggerContext("CrashAssistantStartupScripts");
-                ConfigurationSource source = new ConfigurationSource(is);
-                Configuration config = ConfigurationFactory.getInstance().getConfiguration(context, source);
-                context.start(config);
-                return context.getLogger("StartupScripts");
-            }
-        } catch (Throwable e) {
-            JarInJarHelper.LOGGER.error("Error while loading log4j2-startup.xml", e);
-        }
-        return LogManager.getLogger("StartupScripts");
     }
 
     public static void info(CharSequence message) {

@@ -49,5 +49,6 @@ public class StartupWarningViewer {
             LOGGER.error("Failed to display startup warnings", e);
             JOptionPane.showMessageDialog(null, "Error displaying startup warnings: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+        System.exit(0);
     }
 }

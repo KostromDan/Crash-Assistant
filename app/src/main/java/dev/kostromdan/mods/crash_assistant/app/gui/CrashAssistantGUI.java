@@ -751,7 +751,19 @@ public class CrashAssistantGUI {
         synchronized (KnownCrashReasonMessage.class) {
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessages()) {
+                    boolean isHeadless = frame == null;
+                    if (isHeadless) {
+                        frame = new JFrame(LanguageProvider.get("gui.window_name"));
+                        frame.setUndecorated(true);
+                        frame.setBackground(new Color(0, 0, 0, 0));
+                        frame.setSize(0, 0);
+                        frame.setLocationRelativeTo(null);
+                        frame.setAlwaysOnTop(true);
+                        setUpIcon(frame);
+                        frame.setVisible(true);
+                    }
+                    try {
+                        for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessages()) {
                         if (crashReasonMessage.isShownWarn()) continue;
                         KnownCrashReason crashReason = crashReasonMessage.getReason();
                         if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason)) continue;
@@ -903,6 +915,12 @@ public class CrashAssistantGUI {
                         long showStartTime = System.currentTimeMillis();
                         dialog.setVisible(true);
                         CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {} (Seen warning for {}s)", crashReason.getClass().getSimpleName(), (System.currentTimeMillis() - showStartTime) / 1000.0);
+                        }
+                    } finally {
+                        if (isHeadless) {
+                            if (frame != null) frame.dispose();
+                            frame = null;
+                        }
                     }
                 });
             } catch (Exception e) {

@@ -82,7 +82,9 @@ public abstract class AbstractScriptManager {
     }
 
     protected void runScript(Path path, JexlEngine engine, JexlContext context) {
-        String scriptName = getScriptsDir().getFileName().toString() + "/" + path.getFileName().toString();
+        Path scriptsDir = getScriptsDir();
+        String relativizedPath = scriptsDir.relativize(path).toString().replace('\\', '/');
+        String scriptName = scriptsDir.getFileName().toString() + "/" + relativizedPath;
 
         if (executedScripts.contains(scriptName) && !ScriptUtils.isAlwaysRun(scriptName)) {
             return;

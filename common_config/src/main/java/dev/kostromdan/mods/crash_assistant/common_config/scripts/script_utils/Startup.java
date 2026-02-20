@@ -59,6 +59,7 @@ public class Startup extends ScriptUtils {
     public static void markForCrash() {
         shouldCrash = true;
         JarInJarHelper.LOGGER.warn("Script {} marked game for crash!", getCurrentScriptName());
+        Logger.warn("Script {} marked game for crash!", getCurrentScriptName());
     }
 
     public static List<ScriptWarning> getBootWarnings() {

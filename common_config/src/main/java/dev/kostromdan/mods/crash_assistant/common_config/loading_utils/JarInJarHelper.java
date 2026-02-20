@@ -165,7 +165,7 @@ public class JarInJarHelper {
             JarInJarHelper.checkForIncompatibleMods(true);
             if (Startup.isMarkedForCrash()) {
                 LOGGER.error("Game crash requested by startup scripts.");
-                System.exit(-1);
+                ProcessHelper.exitProcess(-1);
             }
             crashIfConfigured();
         } catch (Throwable e) {
@@ -346,7 +346,7 @@ public class JarInJarHelper {
     public static void crashIfConfigured() {
         if (CrashAssistantConfig.getBoolean("debug.crash_after_init")) {
             JarInJarHelper.LOGGER.error("Game crashed due to 'debug.crash_after_init' config option enabled in {}", CrashAssistantConfig.getConfigPath());
-            System.exit(-1);
+            ProcessHelper.exitProcess(-1);
         }
     }
 

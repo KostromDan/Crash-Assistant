@@ -12,6 +12,7 @@ import java.io.InputStream;
 
 public class Logger {
     private static final org.apache.logging.log4j.Logger STATIC_LOGGER;
+    private static final org.apache.logging.log4j.Logger GAME_LOGGER = LogManager.getLogger("StartupScripts");
 
     static {
         if (ClassExistenceChecker.classExists("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp")) {
@@ -33,7 +34,7 @@ public class Logger {
         } catch (Throwable e) {
             JarInJarHelper.LOGGER.error("Error while loading log4j2-startup.xml", e);
         }
-        return LogManager.getLogger("StartupScripts");
+        return GAME_LOGGER;
     }
 
     public static void info(CharSequence message) {
@@ -64,46 +65,6 @@ public class Logger {
         STATIC_LOGGER.info(message, throwable);
     }
 
-    public static void info(String message, Object p0) {
-        STATIC_LOGGER.info(message, p0);
-    }
-
-    public static void info(String message, Object p0, Object p1) {
-        STATIC_LOGGER.info(message, p0, p1);
-    }
-
-    public static void info(String message, Object p0, Object p1, Object p2) {
-        STATIC_LOGGER.info(message, p0, p1, p2);
-    }
-
-    public static void info(String message, Object p0, Object p1, Object p2, Object p3) {
-        STATIC_LOGGER.info(message, p0, p1, p2, p3);
-    }
-
-    public static void info(String message, Object p0, Object p1, Object p2, Object p3, Object p4) {
-        STATIC_LOGGER.info(message, p0, p1, p2, p3, p4);
-    }
-
-    public static void info(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5) {
-        STATIC_LOGGER.info(message, p0, p1, p2, p3, p4, p5);
-    }
-
-    public static void info(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6) {
-        STATIC_LOGGER.info(message, p0, p1, p2, p3, p4, p5, p6);
-    }
-
-    public static void info(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7) {
-        STATIC_LOGGER.info(message, p0, p1, p2, p3, p4, p5, p6, p7);
-    }
-
-    public static void info(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8) {
-        STATIC_LOGGER.info(message, p0, p1, p2, p3, p4, p5, p6, p7, p8);
-    }
-
-    public static void info(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9) {
-        STATIC_LOGGER.info(message, p0, p1, p2, p3, p4, p5, p6, p7, p8, p9);
-    }
-
     public static void warn(CharSequence message) {
         STATIC_LOGGER.warn(message);
     }
@@ -130,46 +91,6 @@ public class Logger {
 
     public static void warn(String message, Throwable throwable) {
         STATIC_LOGGER.warn(message, throwable);
-    }
-
-    public static void warn(String message, Object p0) {
-        STATIC_LOGGER.warn(message, p0);
-    }
-
-    public static void warn(String message, Object p0, Object p1) {
-        STATIC_LOGGER.warn(message, p0, p1);
-    }
-
-    public static void warn(String message, Object p0, Object p1, Object p2) {
-        STATIC_LOGGER.warn(message, p0, p1, p2);
-    }
-
-    public static void warn(String message, Object p0, Object p1, Object p2, Object p3) {
-        STATIC_LOGGER.warn(message, p0, p1, p2, p3);
-    }
-
-    public static void warn(String message, Object p0, Object p1, Object p2, Object p3, Object p4) {
-        STATIC_LOGGER.warn(message, p0, p1, p2, p3, p4);
-    }
-
-    public static void warn(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5) {
-        STATIC_LOGGER.warn(message, p0, p1, p2, p3, p4, p5);
-    }
-
-    public static void warn(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6) {
-        STATIC_LOGGER.warn(message, p0, p1, p2, p3, p4, p5, p6);
-    }
-
-    public static void warn(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7) {
-        STATIC_LOGGER.warn(message, p0, p1, p2, p3, p4, p5, p6, p7);
-    }
-
-    public static void warn(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8) {
-        STATIC_LOGGER.warn(message, p0, p1, p2, p3, p4, p5, p6, p7, p8);
-    }
-
-    public static void warn(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9) {
-        STATIC_LOGGER.warn(message, p0, p1, p2, p3, p4, p5, p6, p7, p8, p9);
     }
 
     public static void error(CharSequence message) {
@@ -200,43 +121,90 @@ public class Logger {
         STATIC_LOGGER.error(message, throwable);
     }
 
-    public static void error(String message, Object p0) {
-        STATIC_LOGGER.error(message, p0);
-    }
 
-    public static void error(String message, Object p0, Object p1) {
-        STATIC_LOGGER.error(message, p0, p1);
-    }
+    public static class Game {
+        public static void info(CharSequence message) {
+            GAME_LOGGER.info(message);
+        }
 
-    public static void error(String message, Object p0, Object p1, Object p2) {
-        STATIC_LOGGER.error(message, p0, p1, p2);
-    }
+        public static void info(CharSequence message, Throwable throwable) {
+            GAME_LOGGER.info(message, throwable);
+        }
 
-    public static void error(String message, Object p0, Object p1, Object p2, Object p3) {
-        STATIC_LOGGER.error(message, p0, p1, p2, p3);
-    }
+        public static void info(Object message) {
+            GAME_LOGGER.info(message);
+        }
 
-    public static void error(String message, Object p0, Object p1, Object p2, Object p3, Object p4) {
-        STATIC_LOGGER.error(message, p0, p1, p2, p3, p4);
-    }
+        public static void info(Object message, Throwable throwable) {
+            GAME_LOGGER.info(message, throwable);
+        }
 
-    public static void error(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5) {
-        STATIC_LOGGER.error(message, p0, p1, p2, p3, p4, p5);
-    }
+        public static void info(String message) {
+            GAME_LOGGER.info(message);
+        }
 
-    public static void error(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6) {
-        STATIC_LOGGER.error(message, p0, p1, p2, p3, p4, p5, p6);
-    }
+        public static void info(String message, Object... params) {
+            GAME_LOGGER.info(message, params);
+        }
 
-    public static void error(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7) {
-        STATIC_LOGGER.error(message, p0, p1, p2, p3, p4, p5, p6, p7);
-    }
+        public static void info(String message, Throwable throwable) {
+            GAME_LOGGER.info(message, throwable);
+        }
 
-    public static void error(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8) {
-        STATIC_LOGGER.error(message, p0, p1, p2, p3, p4, p5, p6, p7, p8);
-    }
+        public static void warn(CharSequence message) {
+            GAME_LOGGER.warn(message);
+        }
 
-    public static void error(String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9) {
-        STATIC_LOGGER.error(message, p0, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+        public static void warn(CharSequence message, Throwable throwable) {
+            GAME_LOGGER.warn(message, throwable);
+        }
+
+        public static void warn(Object message) {
+            GAME_LOGGER.warn(message);
+        }
+
+        public static void warn(Object message, Throwable throwable) {
+            GAME_LOGGER.warn(message, throwable);
+        }
+
+        public static void warn(String message) {
+            GAME_LOGGER.warn(message);
+        }
+
+        public static void warn(String message, Object... params) {
+            GAME_LOGGER.warn(message, params);
+        }
+
+        public static void warn(String message, Throwable throwable) {
+            GAME_LOGGER.warn(message, throwable);
+        }
+
+        public static void error(CharSequence message) {
+            GAME_LOGGER.error(message);
+        }
+
+        public static void error(CharSequence message, Throwable throwable) {
+            GAME_LOGGER.error(message, throwable);
+        }
+
+        public static void error(Object message) {
+            GAME_LOGGER.error(message);
+        }
+
+        public static void error(Object message, Throwable throwable) {
+            GAME_LOGGER.error(message, throwable);
+        }
+
+        public static void error(String message) {
+            GAME_LOGGER.error(message);
+        }
+
+        public static void error(String message, Object... params) {
+            GAME_LOGGER.error(message, params);
+        }
+
+        public static void error(String message, Throwable throwable) {
+            GAME_LOGGER.error(message, throwable);
+        }
     }
 }

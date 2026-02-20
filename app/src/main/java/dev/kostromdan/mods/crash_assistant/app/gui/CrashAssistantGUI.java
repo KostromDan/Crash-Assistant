@@ -824,13 +824,19 @@ public class CrashAssistantGUI {
                             }
 
                             JPanel southContainer = new JPanel(new BorderLayout());
+                            southContainer.add(autoFixPanel, BorderLayout.CENTER);
+
+                            JPanel bottomRow = new JPanel(new BorderLayout());
                             if (dontShowAgainKey != null) {
                                 JCheckBox dontShowBox = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
                                 String finalDontShowAgainKey = dontShowAgainKey;
                                 dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
-                                southContainer.add(dontShowBox, BorderLayout.NORTH);
+                                bottomRow.add(dontShowBox, BorderLayout.WEST);
                             }
-                            southContainer.add(autoFixPanel, BorderLayout.CENTER);
+                            JPanel okPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+                            okPanel.add(okButton);
+                            bottomRow.add(okPanel, BorderLayout.CENTER);
+                            southContainer.add(bottomRow, BorderLayout.SOUTH);
 
                             JPanel mainPanel = new JPanel(new BorderLayout(10, 5));
                             mainPanel.add(messagePane, BorderLayout.CENTER);
@@ -841,8 +847,8 @@ public class CrashAssistantGUI {
                                     JOptionPane.WARNING_MESSAGE,
                                     JOptionPane.DEFAULT_OPTION,
                                     null,
-                                    new Object[]{okButton},
-                                    okButton
+                                    new Object[]{},
+                                    null
                             );
 
                             dialog = optionPane.createDialog(
@@ -858,24 +864,28 @@ public class CrashAssistantGUI {
                                 button.addActionListener(e -> action.accept(finalDialog));
                             }
                         } else {
-                            Object messageObject = messagePane;
+                            JPanel panel = new JPanel(new BorderLayout(10, 5));
+                            panel.add(messagePane, BorderLayout.CENTER);
+
+                            JPanel bottomRow = new JPanel(new BorderLayout());
                             if (dontShowAgainKey != null) {
-                                JPanel panel = new JPanel(new BorderLayout(10, 5));
-                                panel.add(messagePane, BorderLayout.CENTER);
                                 JCheckBox dontShowBox = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
                                 String finalDontShowAgainKey = dontShowAgainKey;
                                 dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
-                                panel.add(dontShowBox, BorderLayout.SOUTH);
-                                messageObject = panel;
+                                bottomRow.add(dontShowBox, BorderLayout.WEST);
                             }
+                            JPanel okPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+                            okPanel.add(okButton);
+                            bottomRow.add(okPanel, BorderLayout.CENTER);
+                            panel.add(bottomRow, BorderLayout.SOUTH);
 
                             JOptionPane optionPane = new JOptionPane(
-                                    messageObject,
+                                    panel,
                                     JOptionPane.WARNING_MESSAGE,
                                     JOptionPane.DEFAULT_OPTION,
                                     null,
-                                    new Object[]{okButton},
-                                    okButton
+                                    new Object[]{},
+                                    null
                             );
                             dialog = optionPane.createDialog(
                                     frame,

@@ -159,8 +159,6 @@ java.lang.UnsupportedOperationException
 java.lang.VerifyError
 java.lang.VirtualMachineError
 java.lang.Void
-java.lang.module.ModuleDescriptor
-java.lang.module.ModuleDescriptor$Version
 java.math.BigDecimal
 java.math.BigInteger
 java.math.MathContext

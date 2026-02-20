@@ -59,7 +59,7 @@ public class JarInJarHelper {
             Files.copy(originalModJarPath, tempModJarPath, StandardCopyOption.REPLACE_EXISTING);
 
             setupScripts();
-            StartupScriptManager.runStartupSequence();
+            StartupScriptManager.runStartupSequence(tempAppJarPath, tempModJarPath);
 
             String childProcess = ProcessHelper.getChildProcessesInfo();
             if (!childProcess.isEmpty()) {
@@ -109,6 +109,13 @@ public class JarInJarHelper {
             if (PlatformHelp.modLoadedWithConnector) {
                 argsList.add("-modLoadedWithConnector");
             }
+
+            List<ScriptWarning> bootWarnings = Startup.getBootWarnings();
+            if (!bootWarnings.isEmpty()) {
+                argsList.add("-bootWarnings");
+                argsList.add(Base64.getEncoder().encodeToString(new GsonBuilder().create().toJson(bootWarnings).getBytes(StandardCharsets.UTF_8)));
+            }
+
             List<ScriptWarning> startupWarnings = Startup.getCrashWarnings();
             if (!startupWarnings.isEmpty()) {
                 argsList.add("-startupWarnings");

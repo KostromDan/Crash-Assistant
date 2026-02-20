@@ -1,14 +1,13 @@
 package dev.kostromdan.mods.crash_assistant.common_config.scripts;
 
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.permissions.Permissions;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Logger;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.JexlScript;
 import org.apache.commons.jexl3.MapContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,7 +20,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public abstract class AbstractScriptManager {
-    protected static final Logger LOGGER = LogManager.getLogger("ScriptManager");
     protected static final Set<String> executedScripts = Collections.synchronizedSet(new HashSet<>());
 
     /**
@@ -62,7 +60,7 @@ public abstract class AbstractScriptManager {
                 return;
             }
         } catch (IOException e) {
-            LOGGER.error("Failed to check scripts directory: {}", scriptsDir, e);
+            Logger.error("Failed to check scripts directory: {}", scriptsDir, e);
             return;
         }
 
@@ -75,7 +73,7 @@ public abstract class AbstractScriptManager {
                     .sorted(Comparator.comparing(Path::getFileName))
                     .forEach(path -> runScript(path, engine, context));
         } catch (IOException e) {
-            LOGGER.error("Failed to walk scripts directory: {}", scriptsDir, e);
+            Logger.error("Failed to walk scripts directory: {}", scriptsDir, e);
         }
     }
 
@@ -90,7 +88,7 @@ public abstract class AbstractScriptManager {
             return;
         }
 
-        LOGGER.info("Running script: {}", scriptName);
+        Logger.info("Running script: {}", scriptName);
         ScriptUtils.setCurrentScriptName(scriptName);
         try {
             // Read script content
@@ -98,7 +96,7 @@ public abstract class AbstractScriptManager {
             try {
                 scriptContent = new String(Files.readAllBytes(path));
             } catch (IOException e) {
-                LOGGER.error("Failed to read script: {}", path, e);
+                Logger.error("Failed to read script: {}", path, e);
                 return;
             }
 
@@ -108,7 +106,7 @@ public abstract class AbstractScriptManager {
                 script.execute(context);
                 executedScripts.add(scriptName);
             } catch (Exception e) {
-                LOGGER.error("Error executing script: {}", path, e);
+                Logger.error("Error executing script: {}", path, e);
             }
         } finally {
             ScriptUtils.setCurrentScriptName(null);

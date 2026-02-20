@@ -96,6 +96,20 @@ public class CrashAssistantApp {
             } else if ("-customLatestLogPath".equals(args[i]) && i + 1 < args.length) {
                 customLatestLogPath = args[i + 1];
                 LOGGER.info("customLatestLogPath: {}", customLatestLogPath);
+            } else if ("-bootWarnings".equals(args[i]) && i + 1 < args.length) {
+                try {
+                    String decoded = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
+                    LOGGER.info("Boot warnings: {}", decoded);
+                } catch (Exception e) {
+                    LOGGER.error("Failed to parse bootWarnings", e);
+                }
+            } else if ("-warnsProcessOutput".equals(args[i]) && i + 1 < args.length) {
+                try {
+                    String decoded = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
+                    LOGGER.info("Boot warnings process output:\n{}\n", decoded);
+                } catch (Exception e) {
+                    LOGGER.error("Failed to parse warnsProcessOutput", e);
+                }
             }
         }
         LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);

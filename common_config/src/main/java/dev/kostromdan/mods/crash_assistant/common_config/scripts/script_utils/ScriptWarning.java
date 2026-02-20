@@ -48,9 +48,6 @@ public class ScriptWarning {
      */
     public ScriptWarning withModActions(Mod mod) {
         this.affectedMod = mod;
-        this.showRemoveButton = true;
-        this.showDisableButton = true;
-        this.showExplorerButton = true;
         return this;
     }
     

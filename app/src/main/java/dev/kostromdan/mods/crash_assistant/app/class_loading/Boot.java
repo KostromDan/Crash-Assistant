@@ -275,6 +275,8 @@ public class Boot {
 
     private static String getBootWarningsOutput(List<String> argsList) {
         try {
+            argsList.removeIf(arg -> arg.startsWith("-Dlog4j2.configurationFile="));
+            argsList.add(1, "-Dlog4j2.configurationFile=log4j2-console.xml");
             argsList.add("-bootWarningsVisible");
             ProcessBuilder pb = new ProcessBuilder(argsList);
             pb.redirectErrorStream(true);

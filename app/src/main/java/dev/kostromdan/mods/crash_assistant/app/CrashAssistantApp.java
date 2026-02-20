@@ -17,6 +17,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
+import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -53,7 +54,7 @@ public class CrashAssistantApp {
     public static long terminatedProcessesLocationEndTime = 0;
     public static String customLatestLogPath = null;
 
-
+    @NoJexl
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             LOGGER.error("Uncaught exception in \"{}\" thread:", thread.getName(), throwable);
@@ -179,6 +180,7 @@ public class CrashAssistantApp {
         return false;
     }
 
+    @NoJexl
     public static void checkRendererFile() {
         if (renderer != null) return;
         if (Boot.serialisedGPUs == null) return;
@@ -413,7 +415,7 @@ public class CrashAssistantApp {
     }
 
 
-    public static void startApp() {
+    private static void startApp() {
         GUIStartedLaunching = true;
         try {
             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
@@ -424,7 +426,7 @@ public class CrashAssistantApp {
         }
     }
 
-    public static boolean locateAndAddHsErr() {
+    private static boolean locateAndAddHsErr() {
         if (located_hs_err) return false;
         Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(Boot.parentPID);
         if (hsErrLog.isPresent()) {
@@ -439,7 +441,7 @@ public class CrashAssistantApp {
         return false;
     }
 
-    public static void callUpdateLogsListInGUI() {
+    private static void callUpdateLogsListInGUI() {
         try {
             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
             Method method = clazz.getMethod("updateLogsListInGUI");
@@ -449,7 +451,7 @@ public class CrashAssistantApp {
         }
     }
 
-    public static void waitGuiInitialisationFinished() {
+    private static void waitGuiInitialisationFinished() {
         long startTime = System.currentTimeMillis();
         while (true) {
             if (System.currentTimeMillis() >= startTime + 7000) {
@@ -468,7 +470,7 @@ public class CrashAssistantApp {
         }
     }
 
-    public static void startLocatingTerminatedProcesses() {
+    private static void startLocatingTerminatedProcesses() {
         new Thread(() -> {
             long startTime = System.currentTimeMillis();
             terminatedProcessesLocationEndTime = System.currentTimeMillis() + 7000;

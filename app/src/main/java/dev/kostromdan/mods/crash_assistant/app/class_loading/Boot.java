@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.class_loading;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
+import org.apache.commons.jexl3.annotations.NoJexl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +42,7 @@ public class Boot {
     public static boolean bootWarningsVisible = false;
 
 
+    @NoJexl
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         try {
             List<String> effectiveArgs = new ArrayList<String>();

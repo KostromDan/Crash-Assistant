@@ -5,6 +5,8 @@ com.google.gson.JsonObject
 com.google.gson.JsonParser
 com.google.gson.JsonPrimitive
 com.google.gson.JsonSyntaxException
+dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp
+dev.kostromdan.mods.crash_assistant.app.class_loading.Boot
 dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log
 dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogComparator
 dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogReader
@@ -63,8 +65,6 @@ java.io.IOException
 java.io.InputStream
 java.io.InputStreamReader
 java.io.OutputStream
-java.io.PrintStream
-java.io.PrintWriter
 java.io.Reader
 java.io.StreamTokenizer
 java.io.StringReader
@@ -304,9 +304,6 @@ java.util.EventListenerProxy
 java.util.FormatFlagsConversionMismatchException
 java.util.Formattable
 java.util.FormattableFlags
-java.util.Formatter
-java.util.Formatter$BigDecimalLayoutForm
-java.util.FormatterClosedException
 java.util.GregorianCalendar
 java.util.HashMap
 java.util.HashSet

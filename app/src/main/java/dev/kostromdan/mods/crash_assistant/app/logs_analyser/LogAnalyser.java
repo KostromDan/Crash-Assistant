@@ -208,10 +208,10 @@ public class LogAnalyser {
 
         registerCodexKnownCrashReason(new ErroringEntity());
 
-        if (Boot.startupWarningsJson != null) {
+        if (Boot.getStartupWarningsJson() != null) {
             try {
                 Type listType = new TypeToken<List<ScriptWarning>>(){}.getType();
-                List<ScriptWarning> warnings = new Gson().fromJson(Boot.startupWarningsJson, listType);
+                List<ScriptWarning> warnings = new Gson().fromJson(Boot.getStartupWarningsJson(), listType);
 
                 for (ScriptWarning w : warnings) {
                     KnownCrashReason reason = new ScriptedAnalysis(null, w);

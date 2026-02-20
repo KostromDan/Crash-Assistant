@@ -35,8 +35,9 @@ import java.util.regex.Pattern;
 
 public class CrashAssistantApp {
     public static final Logger LOGGER = LogManager.getLogger(CrashAssistantApp.class);
+    private static String customLatestLogPath = null;
+    private static boolean GUIStartedLaunching = false;
     public static long GUIStartTime = -1;
-    public static boolean GUIStartedLaunching = false;
     public static boolean GUIInitialisationFinished = false;
     public static String parentXms = null;
     public static String parentXmx = null;
@@ -48,11 +49,7 @@ public class CrashAssistantApp {
     public static String renderer = null;
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
-    public static boolean stopFunctionFired = false;
-    public static boolean closeFunctionFailed = false;
-    public static boolean emergencySaveFired = false;
     public static long terminatedProcessesLocationEndTime = 0;
-    public static String customLatestLogPath = null;
 
     @NoJexl
     public static void main(String[] args) {
@@ -113,7 +110,7 @@ public class CrashAssistantApp {
                 }
             }
         }
-        LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
+        LOGGER.info("Boot.getSerialisedGPUs():\n{}", Boot.getSerialisedGPUs());
 
         LOGGER.info("os.name: {}", PlatformHelp.OS);
 
@@ -183,7 +180,7 @@ public class CrashAssistantApp {
     @NoJexl
     public static void checkRendererFile() {
         if (renderer != null) return;
-        if (Boot.serialisedGPUs == null) return;
+        if (Boot.getSerialisedGPUs() == null) return;
         Optional<String> potentialRenderer = ProcessSignalIO.get("renderer", Boot.parentPID);
 
         if (potentialRenderer.isPresent()) {
@@ -192,8 +189,8 @@ public class CrashAssistantApp {
                 String normalizedRenderer = removeSpacesAndLowerCase(renderer);
                 LOGGER.info("Minecraft is running on renderer:\n{}", renderer);
 
-                if (Boot.serialisedGPUs != null) {
-                    List<GPU> gpus = GPU.deserializeGPUs(Boot.serialisedGPUs);
+                if (Boot.getSerialisedGPUs() != null) {
+                    List<GPU> gpus = GPU.deserializeGPUs(Boot.getSerialisedGPUs());
                     List<String> dedicatedGpus = new ArrayList<>();
                     Optional<GPU> foundGPU = Optional.empty();
                     for (GPU gpu : gpus) {
@@ -377,15 +374,15 @@ public class CrashAssistantApp {
         joinedWorldSuccessfully = ProcessSignalIO.exists("joined_world", Boot.parentPID);
         LOGGER.info("Joined world successfully: {}", joinedWorldSuccessfully);
 
-        stopFunctionFired = ProcessSignalIO.exists("normal_stop", Boot.parentPID);
+        boolean stopFunctionFired = ProcessSignalIO.exists("normal_stop", Boot.parentPID);
         if (!stopFunctionFired) crashed = true;
         LOGGER.info("stop() function of Minecraft fired: {}", stopFunctionFired);
 
-        closeFunctionFailed = ProcessSignalIO.exists("close_failed", Boot.parentPID);
+        boolean closeFunctionFailed = ProcessSignalIO.exists("close_failed", Boot.parentPID);
         if (closeFunctionFailed) crashed = true;
         LOGGER.info("close() function of Minecraft failed: {}", closeFunctionFailed);
 
-        emergencySaveFired = ProcessSignalIO.exists("emergency_save", Boot.parentPID);
+        boolean emergencySaveFired = ProcessSignalIO.exists("emergency_save", Boot.parentPID);
         if (emergencySaveFired) crashed = true;
         LOGGER.info("emergencySave() function of Minecraft fired: {}", emergencySaveFired);
 

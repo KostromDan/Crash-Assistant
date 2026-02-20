@@ -25,21 +25,21 @@ import java.util.concurrent.TimeUnit;
 
 
 public class Boot {
-    public static String classPath = null;
+    private static String classPath = null;
+    private static boolean recursiveStart = false;
+    private static boolean gpuDetect = false;
+    private static boolean bootWarningsVisible = false;
+    private static String bootWarningsJson = null;
+    private static String startupWarningsJson = null;
+    private static String serialisedGPUs = null;
     public static String crashAssistantModJarName = null;
-    public static boolean recursiveStart = false;
-    public static boolean gpuDetect = false;
     public static boolean vulkanAddonLoaded = false;
-    public static String serialisedGPUs = null;
     public static long parentPID = -1;
     public static long parentStarted = -1;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
     public static List<String> APP_ARGS;
     public static String MINECRAFT_LAUNCH_COMMAND;
     public static String MINECRAFT_JVM_ARGS;
-    public static String startupWarningsJson = null;
-    public static String bootWarningsJson = null;
-    public static boolean bootWarningsVisible = false;
 
 
     @NoJexl
@@ -299,5 +299,13 @@ public class Boot {
         } catch (Throwable ignored) {
             return "Error while getting output from boot warnings process: " + ErrorUtils.getErrorMessageAndStackTrace(ignored);
         }
+    }
+
+    public static String getStartupWarningsJson() {
+        return startupWarningsJson;
+    }
+
+    public static String getSerialisedGPUs(){
+        return serialisedGPUs;
     }
 }

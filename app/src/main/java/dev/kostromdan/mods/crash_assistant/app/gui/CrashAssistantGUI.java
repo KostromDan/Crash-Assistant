@@ -1049,7 +1049,7 @@ public class CrashAssistantGUI {
     public static void showEarlyIntegratedGPUWarning() {
         synchronized (KnownCrashReasonMessage.class) {
             try {
-                if (Boot.serialisedGPUs == null) return;
+                if (Boot.getSerialisedGPUs() == null) return;
                 if (CrashAssistantApp.renderer != null && !Objects.equals(CrashAssistantApp.renderer, "UNDEFINED"))
                     return;
                 Log latest = null;

@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -55,25 +56,26 @@ public abstract class AbstractScriptManager {
             return;
         }
 
+        List<Path> scriptPaths;
         try (Stream<Path> stream = Files.walk(scriptsDir)) {
-            if (stream.filter(Files::isRegularFile).noneMatch(path -> path.toString().endsWith(".jexl"))) {
-                return;
-            }
+            scriptPaths = stream.filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".jexl"))
+                    .sorted(Comparator.comparing(Path::getFileName))
+                    .toList();
         } catch (IOException e) {
-            Logger.error("Failed to check scripts directory: {}", scriptsDir, e);
+            Logger.error("Failed to walk scripts directory: {}", scriptsDir, e);
+            return;
+        }
+
+        if (scriptPaths.isEmpty()) {
             return;
         }
 
         JexlEngine engine = Permissions.getEngine();
         JexlContext context = createContext();
 
-        try (Stream<Path> paths = Files.walk(scriptsDir)) {
-            paths.filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".jexl"))
-                    .sorted(Comparator.comparing(Path::getFileName))
-                    .forEach(path -> runScript(path, engine, context));
-        } catch (IOException e) {
-            Logger.error("Failed to walk scripts directory: {}", scriptsDir, e);
+        for (Path path : scriptPaths) {
+            runScript(path, engine, context);
         }
     }
 

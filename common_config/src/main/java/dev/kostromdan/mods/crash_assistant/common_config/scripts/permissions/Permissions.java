@@ -30,13 +30,16 @@ public class Permissions {
     // Stores ALL classes (top-level + inner) strictly for JEXL Whitelist.
     private static final Set<String> WHITELISTED_CLASSES = new HashSet<>();
 
+    private static final boolean isDevEnvironment = Files.isRegularFile(Paths.get("app/src/main/java/dev/kostromdan/mods/crash_assistant/app/CrashAssistantApp.java"));
+
+
     public static synchronized JexlEngine getEngine() {
         if (engine != null) {
             return engine;
         }
 
         loadClasses();
-        
+
         // Use SmartJexlPermissions to handle Arrays and Primitives dynamically
         JexlPermissions permissions = new SmartJexlPermissions(WHITELISTED_CLASSES);
 
@@ -75,6 +78,10 @@ public class Permissions {
                 while ((line = reader.readLine()) != null) {
                     String trimmed = line.trim();
                     if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
+                    if (isDevEnvironment && trimmed.startsWith("dev.kostromdan.mods.crash_assistant.commons.")) {
+                        // Revert relocating package. In dev runs classes are not relocated yet.
+                        trimmed = trimmed.replace("dev.kostromdan.mods.crash_assistant.commons.", "org.apache.commons.");
+                    }
 
                     try {
                         Class<?> clazz = Class.forName(trimmed);
@@ -117,6 +124,10 @@ public class Permissions {
         Map<String, String> registeredShortNames = new HashMap<>();
 
         for (String className : classes) {
+            if (isDevEnvironment && className.startsWith("dev.kostromdan.mods.crash_assistant.commons.")) {
+                // Revert relocating package. In dev runs classes are not relocated yet.
+                className = className.replace("dev.kostromdan.mods.crash_assistant.commons.", "org.apache.commons.");
+            }
             try {
                 Class<?> clazz = Class.forName(className);
 

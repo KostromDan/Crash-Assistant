@@ -366,6 +366,7 @@ public class CrashAssistantApp {
 
 
         LogsList.addIfExistsAndModified(new Log(LogType.CRASH_ASSISTANT, Paths.get("logs", "crash_assistant", "crash_assistant_app.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.STARTUP_SCRIPTS, Paths.get("logs", "crash_assistant", "startup_scripts.log")));
 
 
         gameLaunchedSuccessfully = ProcessSignalIO.exists("successful_launch", Boot.parentPID);

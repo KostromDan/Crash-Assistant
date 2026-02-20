@@ -23,7 +23,8 @@ public class LogComparator implements Comparator<Log> {
             LogType.CRAFT_TWEAKER,
             LogType.REI,
             LogType.CRASH_ASSISTANT,
-            LogType.MOD_LIST
+            LogType.MOD_LIST,
+            LogType.STARTUP_SCRIPTS
     );
 
     private static final List<LogType> FINAL_LOG_TYPE_ORDER = new ArrayList<>();

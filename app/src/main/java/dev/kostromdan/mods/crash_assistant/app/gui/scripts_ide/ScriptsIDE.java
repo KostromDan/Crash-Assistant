@@ -210,7 +210,7 @@ public class ScriptsIDE {
         Analysis.getRegisteredWarnings().clear();
         Analysis.getRegisteredWarnings().putAll(originalWarnings);
         
-        boolean deleteLogsUrl = false;
+        boolean deleteLogsUrl = true;
         Object val = CrashAssistantLocalConfig.get("ide.delete_logs_on_exit");
         if (val instanceof Boolean) deleteLogsUrl = (Boolean) val;
         
@@ -478,9 +478,9 @@ public class ScriptsIDE {
         logsControlPanel.add(addPanel);
         logsControlPanel.add(actionPanel);
         
-        JCheckBox cbDeleteLogs = new JCheckBox("Delete logs after exiting IDE");
+        JCheckBox cbDeleteLogs = new JCheckBox("Remove temporary logs folder after exiting IDE");
         
-        boolean deleteLogsState = false;
+        boolean deleteLogsState = true;
         Object storedVal = CrashAssistantLocalConfig.get("ide.delete_logs_on_exit");
         if (storedVal instanceof Boolean) deleteLogsState = (Boolean) storedVal;
         

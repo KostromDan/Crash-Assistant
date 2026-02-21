@@ -94,7 +94,6 @@ java.lang.ClassNotFoundException
 java.lang.CloneNotSupportedException
 java.lang.Cloneable
 java.lang.Comparable
-java.lang.Deprecated
 java.lang.Double
 java.lang.Enum
 java.lang.EnumConstantNotPresentException
@@ -102,7 +101,6 @@ java.lang.Error
 java.lang.Exception
 java.lang.ExceptionInInitializerError
 java.lang.Float
-java.lang.FunctionalInterface
 java.lang.IllegalAccessError
 java.lang.IllegalAccessException
 java.lang.IllegalArgumentException
@@ -133,13 +131,11 @@ java.lang.Number
 java.lang.NumberFormatException
 java.lang.Object
 java.lang.OutOfMemoryError
-java.lang.Override
 java.lang.Readable
 java.lang.Record
 java.lang.ReflectiveOperationException
 java.lang.Runnable
 java.lang.RuntimeException
-java.lang.SafeVarargs
 java.lang.SecurityException
 java.lang.Short
 java.lang.StackOverflowError
@@ -149,7 +145,6 @@ java.lang.String
 java.lang.StringBuffer
 java.lang.StringBuilder
 java.lang.StringIndexOutOfBoundsException
-java.lang.SuppressWarnings
 java.lang.Throwable
 java.lang.TypeNotPresentException
 java.lang.UnknownError
@@ -300,7 +295,6 @@ java.util.EmptyStackException
 java.util.EnumMap
 java.util.EnumSet
 java.util.Enumeration
-java.util.EventListenerProxy
 java.util.FormatFlagsConversionMismatchException
 java.util.Formattable
 java.util.FormattableFlags
@@ -342,8 +336,6 @@ java.util.NavigableMap
 java.util.NavigableSet
 java.util.NoSuchElementException
 java.util.Objects
-java.util.Observable
-java.util.Observer
 java.util.Optional
 java.util.OptionalDouble
 java.util.OptionalInt
@@ -401,10 +393,6 @@ java.util.concurrent.CopyOnWriteArrayList
 java.util.concurrent.CopyOnWriteArraySet
 java.util.concurrent.DelayQueue
 java.util.concurrent.Delayed
-java.util.concurrent.Flow$Processor
-java.util.concurrent.Flow$Publisher
-java.util.concurrent.Flow$Subscriber
-java.util.concurrent.Flow$Subscription
 java.util.concurrent.LinkedBlockingDeque
 java.util.concurrent.LinkedBlockingQueue
 java.util.concurrent.LinkedTransferQueue
@@ -485,21 +473,6 @@ java.util.stream.IntStream$IntMapMultiConsumer
 java.util.stream.LongStream
 java.util.stream.LongStream$Builder
 java.util.stream.LongStream$LongMapMultiConsumer
-java.util.stream.Node$Builder
-java.util.stream.Node$Builder$OfDouble
-java.util.stream.Node$Builder$OfInt
-java.util.stream.Node$Builder$OfLong
-java.util.stream.Node$OfDouble
-java.util.stream.Node$OfInt
-java.util.stream.Node$OfLong
-java.util.stream.Node$OfPrimitive
-java.util.stream.Sink$ChainedDouble
-java.util.stream.Sink$ChainedInt
-java.util.stream.Sink$ChainedLong
-java.util.stream.Sink$ChainedReference
-java.util.stream.Sink$OfDouble
-java.util.stream.Sink$OfInt
-java.util.stream.Sink$OfLong
 java.util.stream.Stream
 java.util.stream.Stream$Builder
 java.util.stream.StreamSupport

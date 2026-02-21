@@ -817,13 +817,14 @@ public class CrashAssistantGUI {
                                 autoFixButton.setForeground(
                                         ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.auto_fix_button_foreground_color"),
                                                 autoFixButton.getForeground()));
+                                gbc.insets = new Insets(0, 0, 5, 0);
                                 autoFixPanel.add(autoFixButton, gbc);
                                 gbc.gridy++;
                                 buttons.add(autoFixButton);
                                 actions.add(entry.getValue());
                             }
 
-                            JPanel southContainer = new JPanel(new BorderLayout());
+                            JPanel southContainer = new JPanel(new BorderLayout(0, 10));
                             southContainer.add(autoFixPanel, BorderLayout.CENTER);
 
                             JPanel bottomRow = new JPanel(new BorderLayout());
@@ -838,7 +839,7 @@ public class CrashAssistantGUI {
                             bottomRow.add(okPanel, BorderLayout.CENTER);
                             southContainer.add(bottomRow, BorderLayout.SOUTH);
 
-                            JPanel mainPanel = new JPanel(new BorderLayout(10, 5));
+                            JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
                             mainPanel.add(messagePane, BorderLayout.CENTER);
                             mainPanel.add(southContainer, BorderLayout.SOUTH);
 
@@ -864,7 +865,7 @@ public class CrashAssistantGUI {
                                 button.addActionListener(e -> action.accept(finalDialog));
                             }
                         } else {
-                            JPanel panel = new JPanel(new BorderLayout(10, 5));
+                            JPanel panel = new JPanel(new BorderLayout(10, 10));
                             panel.add(messagePane, BorderLayout.CENTER);
 
                             JPanel bottomRow = new JPanel(new BorderLayout());
@@ -1028,7 +1029,7 @@ public class CrashAssistantGUI {
                     bottomPanel.add(dontShowAgainCheck);
                     bottomPanel.add(okButton);
 
-                    JPanel mainPanel = new JPanel(new BorderLayout(10, 5));
+                    JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
                     mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
                     mainPanel.add(textPanel, BorderLayout.CENTER);
                     mainPanel.add(bottomPanel, BorderLayout.SOUTH);

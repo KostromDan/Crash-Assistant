@@ -28,17 +28,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultHighlighter;
-import javax.swing.text.DefaultStyledDocument;
-import javax.swing.text.Element;
-import javax.swing.text.Highlighter;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
-import javax.swing.text.StyledDocument;
-import javax.swing.undo.UndoManager;
+import javax.swing.text.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 
@@ -82,9 +72,44 @@ public class ScriptsIDE {
     private Thread runThread;
     private Thread tailerThread;
     
-    private UndoManager undoManager = new UndoManager();
-    {
-        undoManager.setLimit(200);
+    // --- Undo/Redo system (snapshot-based, avoids Swing UndoManager stale-view bug JDK-8061830) ---
+    private final List<String> undoTextStack = new ArrayList<>();
+    private final List<Integer> undoCaretStack = new ArrayList<>();
+    private final List<String> redoTextStack = new ArrayList<>();
+    private final List<Integer> redoCaretStack = new ArrayList<>();
+    private boolean undoRedoInProgress = false;
+    private static final int MAX_UNDO = 200;
+    // snapshotText: the document text at the last committed snapshot point.
+    // On the first edit in a burst, this is captured as the "before" state.
+    private String snapshotText = "";
+    private String pendingUndoText = null;
+    private int pendingUndoCaret = 0;
+    private final javax.swing.Timer undoCoalesceTimer = new javax.swing.Timer(300, ev -> commitPendingUndo());
+    { undoCoalesceTimer.setRepeats(false); }
+
+    /** Commits any pending undo state to the stack immediately. */
+    private void commitPendingUndo() {
+        undoCoalesceTimer.stop();
+        if (pendingUndoText != null) {
+            if (undoTextStack.isEmpty() || !undoTextStack.get(undoTextStack.size() - 1).equals(pendingUndoText)) {
+                undoTextStack.add(pendingUndoText);
+                undoCaretStack.add(pendingUndoCaret);
+                if (undoTextStack.size() > MAX_UNDO) { undoTextStack.remove(0); undoCaretStack.remove(0); }
+            }
+            pendingUndoText = null;
+        }
+    }
+
+    private void clearUndoHistory() {
+        undoCoalesceTimer.stop();
+        undoTextStack.clear();
+        undoCaretStack.clear();
+        redoTextStack.clear();
+        redoCaretStack.clear();
+        pendingUndoText = null;
+        try {
+            snapshotText = editorArea.getDocument().getText(0, editorArea.getDocument().getLength());
+        } catch (Exception ex) { snapshotText = ""; }
     }
     
     private final File crashAssistantLogFile = new File("logs/crash_assistant/crash_assistant_app.log");
@@ -390,6 +415,7 @@ public class ScriptsIDE {
                 return false;
             }
         };
+        editorArea.setEditorKit(new NoWrapEditorKit());
         editorArea.setDocument(new JexlSyntaxDocument());
         editorArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
 
@@ -402,41 +428,95 @@ public class ScriptsIDE {
                 highlighter.removeAllHighlights();
                 isDirty = true;
                 frame.setTitle("Scripts IDE - *" + currentScriptFile.getName());
+                if (!undoRedoInProgress) {
+                    // Clear redo immediately on any new user edit
+                    redoTextStack.clear();
+                    redoCaretStack.clear();
+                    // On first edit in a burst, capture the pre-edit snapshot
+                    if (pendingUndoText == null) {
+                        pendingUndoText = snapshotText;
+                        pendingUndoCaret = e.getOffset();
+                    }
+                    // Restart coalesce timer (groups rapid removes+inserts like paste)
+                    undoCoalesceTimer.restart();
+                    // Always update snapshotText to current document state
+                    try {
+                        snapshotText = editorArea.getDocument().getText(0, editorArea.getDocument().getLength());
+                    } catch (Exception ex) { /* ignore */ }
+                }
             }
             @Override public void insertUpdate(DocumentEvent e) { onChange(e); }
             @Override public void removeUpdate(DocumentEvent e) { onChange(e); }
             @Override public void changedUpdate(DocumentEvent e) { onChange(e); }
         });
-        
-        editorArea.getDocument().addUndoableEditListener(e -> {
-            if (e.getEdit() instanceof DocumentEvent && ((DocumentEvent) e.getEdit()).getType() == DocumentEvent.EventType.CHANGE) {
-                return;
-            }
-            undoManager.addEdit(e.getEdit());
-        });
-        
+
         InputMap im = editorArea.getInputMap(JComponent.WHEN_FOCUSED);
         ActionMap am = editorArea.getActionMap();
-        
+
         im.put(KeyStroke.getKeyStroke("control Z"), "Undo");
         im.put(KeyStroke.getKeyStroke("control Y"), "Redo");
         im.put(KeyStroke.getKeyStroke("control shift Z"), "Redo");
-        
+
         am.put("Undo", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (undoManager.canUndo()) {
-                    undoManager.undo();
-                    try { ((JexlSyntaxDocument)editorArea.getDocument()).refreshSyntaxHighlighting(); } catch(Exception ex) {}
+                // Flush any pending edit burst into the undo stack first
+                commitPendingUndo();
+                if (undoTextStack.isEmpty()) return;
+                undoRedoInProgress = true;
+                try {
+                    JexlSyntaxDocument doc = (JexlSyntaxDocument) editorArea.getDocument();
+                    // Push current state to redo
+                    String current = doc.getText(0, doc.getLength());
+                    redoTextStack.add(current);
+                    redoCaretStack.add(editorArea.getCaretPosition());
+                    // Pop previous state from undo
+                    String prev = undoTextStack.remove(undoTextStack.size() - 1);
+                    int prevCaret = undoCaretStack.remove(undoCaretStack.size() - 1);
+                    // Replace document content directly (bypasses auto-indent)
+                    doc.setSuppressHighlighting(true);
+                    doc.remove(0, doc.getLength());
+                    doc.insertString(0, prev, null);
+                    doc.setSuppressHighlighting(false);
+                    editorArea.setCaretPosition(Math.min(prevCaret, prev.length()));
+                    // Update snapshot to the restored text
+                    snapshotText = prev;
+                    SwingUtilities.invokeLater(() -> {
+                        try { doc.refreshSyntaxHighlighting(); } catch(Exception ex) {}
+                    });
+                } catch (Exception ex) { /* ignore */ } finally {
+                    undoRedoInProgress = false;
                 }
             }
         });
         am.put("Redo", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (undoManager.canRedo()) {
-                    undoManager.redo();
-                    try { ((JexlSyntaxDocument)editorArea.getDocument()).refreshSyntaxHighlighting(); } catch(Exception ex) {}
+                commitPendingUndo();
+                if (redoTextStack.isEmpty()) return;
+                undoRedoInProgress = true;
+                try {
+                    JexlSyntaxDocument doc = (JexlSyntaxDocument) editorArea.getDocument();
+                    // Push current state to undo
+                    String current = doc.getText(0, doc.getLength());
+                    undoTextStack.add(current);
+                    undoCaretStack.add(editorArea.getCaretPosition());
+                    // Pop next state from redo
+                    String next = redoTextStack.remove(redoTextStack.size() - 1);
+                    int nextCaret = redoCaretStack.remove(redoCaretStack.size() - 1);
+                    // Replace document content directly (bypasses auto-indent)
+                    doc.setSuppressHighlighting(true);
+                    doc.remove(0, doc.getLength());
+                    doc.insertString(0, next, null);
+                    doc.setSuppressHighlighting(false);
+                    editorArea.setCaretPosition(Math.min(nextCaret, next.length()));
+                    // Update snapshot to the restored text
+                    snapshotText = next;
+                    SwingUtilities.invokeLater(() -> {
+                        try { doc.refreshSyntaxHighlighting(); } catch(Exception ex) {}
+                    });
+                } catch (Exception ex) { /* ignore */ } finally {
+                    undoRedoInProgress = false;
                 }
             }
         });
@@ -771,7 +851,7 @@ public class ScriptsIDE {
                 editorArea.setText(content);
                 editorArea.setCaretPosition(0);
                 // Clear undo history when loading a new script
-                undoManager.discardAllEdits();
+                clearUndoHistory();
                 
                 isDirty = false;
                 frame.setTitle("Scripts IDE - " + currentScriptFile.getName());
@@ -900,6 +980,10 @@ class JexlSyntaxDocument extends DefaultStyledDocument {
     private final javax.swing.Timer highlightTimer;
     private boolean suppressHighlighting = false;
 
+    public void setSuppressHighlighting(boolean suppress) {
+        this.suppressHighlighting = suppress;
+    }
+
     public JexlSyntaxDocument() {
         boolean isDark = FlatLaf.isLafDark();
         
@@ -973,6 +1057,11 @@ class JexlSyntaxDocument extends DefaultStyledDocument {
 
     @Override
     public void insertString(int offset, String str, AttributeSet a) throws BadLocationException {
+        if (suppressHighlighting) {
+            // Raw mode: bypass auto-indent/tab/brace logic (used by undo/redo)
+            super.insertString(offset, str, a);
+            return;
+        }
         if ("\t".equals(str)) {
             Element root = getDefaultRootElement();
             int index = root.getElementIndex(offset);
@@ -1107,6 +1196,53 @@ class JexlSyntaxDocument extends DefaultStyledDocument {
         
         m = Pattern.compile("//[^\\n]*|/\\*.*?\\*/", Pattern.DOTALL).matcher(text);
         while (m.find()) setCharacterAttributes(m.start(), m.end() - m.start(), attrComment, false);
+    }
+}
+
+class NoWrapEditorKit extends StyledEditorKit {
+    @Override
+    public ViewFactory getViewFactory() {
+        return new NoWrapViewFactory();
+    }
+
+    private static class NoWrapViewFactory implements ViewFactory {
+        @Override
+        public View create(Element elem) {
+            String kind = elem.getName();
+            if (kind != null) {
+                switch (kind) {
+                    case AbstractDocument.ContentElementName:
+                        // SafeLabelView catches stale-offset crashes in getBreakSpot
+                        return new LabelView(elem) {
+                            @Override
+                            public int getBreakWeight(int axis, float pos, float len) {
+                                try {
+                                    return super.getBreakWeight(axis, pos, len);
+                                } catch (Exception e) {
+                                    return BadBreakWeight;
+                                }
+                            }
+                        };
+                    case AbstractDocument.ParagraphElementName:
+                        // Use BoxView instead of ParagraphView to completely eliminate
+                        // FlowView/LogicalView line-breaking machinery and avoid
+                        // GlyphView.getBreakSpot stale offset crashes (JDK-8061830).
+                        return new BoxView(elem, View.X_AXIS) {
+                            @Override
+                            public float getAlignment(int axis) {
+                                return 0f; // left-align (BoxView defaults to 0.5 = center)
+                            }
+                        };
+                    case AbstractDocument.SectionElementName:
+                        return new BoxView(elem, View.Y_AXIS);
+                    case StyleConstants.ComponentElementName:
+                        return new ComponentView(elem);
+                    case StyleConstants.IconElementName:
+                        return new IconView(elem);
+                }
+            }
+            return new LabelView(elem);
+        }
     }
 }
 

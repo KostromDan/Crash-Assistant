@@ -112,7 +112,7 @@ public class Boot {
 
             if (bootWarningsVisible) {
                 try {
-                    Class<?> startupWarningViewerClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.StartupWarningViewer");
+                    Class<?> startupWarningViewerClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.StartupWarningViewer");
                     Method mainMethod = startupWarningViewerClass.getMethod("main", String[].class);
                     
                     String encodedWarnings = null;

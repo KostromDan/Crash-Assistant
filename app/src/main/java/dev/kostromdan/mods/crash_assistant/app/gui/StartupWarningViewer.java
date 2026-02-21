@@ -1,8 +1,7 @@
-package dev.kostromdan.mods.crash_assistant.app;
+package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;

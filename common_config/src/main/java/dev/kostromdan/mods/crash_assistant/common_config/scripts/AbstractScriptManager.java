@@ -27,6 +27,10 @@ public abstract class AbstractScriptManager {
         executedScripts.clear();
     }
 
+    public static Set<String> getExecutedScripts() {
+        return executedScripts;
+    }
+
     /**
      * Returns the directory where scripts are located.
      */

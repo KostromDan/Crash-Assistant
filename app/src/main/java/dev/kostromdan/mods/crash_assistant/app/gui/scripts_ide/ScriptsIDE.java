@@ -41,7 +41,7 @@ import javax.swing.text.StyledDocument;
 import javax.swing.undo.UndoManager;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import javax.swing.text.JTextComponent;
+
 import java.awt.event.ActionEvent;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -80,8 +80,12 @@ public class ScriptsIDE {
     private JTable logsTable;
     private DefaultTableModel logsTableModel;
     private Thread runThread;
+    private Thread tailerThread;
     
     private UndoManager undoManager = new UndoManager();
+    {
+        undoManager.setLimit(200);
+    }
     
     private final File crashAssistantLogFile = new File("logs/crash_assistant/crash_assistant_app.log");
     private long logFilePointer = 0;
@@ -101,6 +105,9 @@ public class ScriptsIDE {
     }
 
     public static void main(String[] args) {
+        if (isIdeRunning) {
+            return;
+        }
         ThemeUtils.ensureThemesApplied();
         ControlPanel.stopMovingToTop = true;
 
@@ -111,7 +118,6 @@ public class ScriptsIDE {
                 ide.createAndShowGUI();
             } else {
                 ide.restoreSystemState();
-                System.exit(0);
             }
         });
     }
@@ -218,15 +224,9 @@ public class ScriptsIDE {
         if (val instanceof Boolean) deleteLogsUrl = (Boolean) val;
         
         if (deleteLogsUrl) {
-            if (tempIdeLogsDir != null && tempIdeLogsDir.exists()) {
-                File[] files = tempIdeLogsDir.listFiles();
-                if (files != null) {
-                    for (File f : files) {
-                        f.delete();
-                    }
-                }
-                tempIdeLogsDir.delete();
-            }
+            try {
+                org.apache.commons.io.FileUtils.deleteDirectory(tempIdeLogsDir);
+            } catch (IOException ignored) {}
         }
     }
 
@@ -287,6 +287,9 @@ public class ScriptsIDE {
                     }
                 }
                 restoreSystemState();
+                if (tailerThread != null && tailerThread.isAlive()) {
+                    tailerThread.interrupt();
+                }
                 frame.dispose();
             }
         });
@@ -569,12 +572,12 @@ public class ScriptsIDE {
                     synchronized (Analysis.getRegisteredWarnings()) {
                         cachedWarnings.putAll(Analysis.getRegisteredWarnings());
                     }
+                    Set<String> cachedExecutedScripts = new HashSet<>(AbstractScriptManager.getExecutedScripts());
                     
                     // Reset to absolute zero for the isolated run
                     Analysis.getRegisteredWarnings().clear();
                     KnownCrashReasonMessage.getAllMessages().clear();
                     KnownCrashReason.shownKnownCrashReasons.clear();
-                    
                     AbstractScriptManager.clearExecutedScripts();
                     
                     // Clean cache to not measure Jexl engine init
@@ -625,16 +628,17 @@ public class ScriptsIDE {
                         Analysis.getRegisteredWarnings().clear();
                         Analysis.getRegisteredWarnings().putAll(cachedWarnings);
                     }
+                    
+                    AbstractScriptManager.clearExecutedScripts();
+                    AbstractScriptManager.getExecutedScripts().addAll(cachedExecutedScripts);
 
                 } catch (Exception ex) {
                     // Extract line number if JEXL failed
                     highlightErrorLine(ex.getMessage());
                 } finally {
-                    if (tempIdeScriptsDir != null && tempIdeScriptsDir.exists()) {
-                        File[] files = tempIdeScriptsDir.listFiles();
-                        if (files != null) for(File t : files) t.delete();
-                        tempIdeScriptsDir.delete();
-                    }
+                    try {
+                        org.apache.commons.io.FileUtils.deleteDirectory(tempIdeScriptsDir);
+                    } catch (IOException ignored) {}
                     SwingUtilities.invokeLater(() -> {
                         btnRun.setEnabled(true);
                         btnTerminate.setEnabled(false);
@@ -654,7 +658,12 @@ public class ScriptsIDE {
 
         btnAddClipboard.addActionListener(e -> {
             try {
-                String data = (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+                java.awt.datatransfer.Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                if (!clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+                    JOptionPane.showMessageDialog(frame, "Clipboard does not contain text data.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                String data = (String) clipboard.getData(DataFlavor.stringFlavor);
                 if (data == null || data.isEmpty()) return;
                 
                 LogType selectedType = (LogType) logTypeCombo.getSelectedItem();
@@ -875,6 +884,7 @@ public class ScriptsIDE {
                 }
             }
         });
+        tailerThread = tailer;
         tailer.setDaemon(true);
         tailer.start();
     }
@@ -887,6 +897,8 @@ class JexlSyntaxDocument extends DefaultStyledDocument {
     private final AttributeSet attrComment;
     private final AttributeSet attrNormal;
     private final AttributeSet attrVariable;
+    private final javax.swing.Timer highlightTimer;
+    private boolean suppressHighlighting = false;
 
     public JexlSyntaxDocument() {
         boolean isDark = FlatLaf.isLafDark();
@@ -940,6 +952,15 @@ class JexlSyntaxDocument extends DefaultStyledDocument {
         attrComment = context.addAttribute(context.getEmptySet(), StyleConstants.Foreground, comColor);
         attrNormal = context.addAttribute(context.getEmptySet(), StyleConstants.Foreground, normColor);
         attrVariable = context.addAttribute(context.getEmptySet(), StyleConstants.Foreground, varColor);
+        
+        highlightTimer = new javax.swing.Timer(300, e -> {
+            try {
+                refreshSyntaxHighlighting();
+            } catch (BadLocationException ex) {
+                // Ignore
+            }
+        });
+        highlightTimer.setRepeats(false);
     }
     
     private Color getColor(String[] keys, Color defaultColor) {
@@ -1003,7 +1024,7 @@ class JexlSyntaxDocument extends DefaultStyledDocument {
             }
         }
         super.insertString(offset, str, a);
-        refreshSyntaxHighlighting();
+        scheduleHighlighting();
     }
 
     private String calculateIdealIndent(int offset) throws BadLocationException {
@@ -1030,7 +1051,12 @@ class JexlSyntaxDocument extends DefaultStyledDocument {
     @Override
     public void remove(int offs, int len) throws BadLocationException {
         super.remove(offs, len);
-        refreshSyntaxHighlighting();
+        scheduleHighlighting();
+    }
+
+    private void scheduleHighlighting() {
+        if (suppressHighlighting) return;
+        highlightTimer.restart();
     }
 
     public void refreshSyntaxHighlighting() throws BadLocationException {

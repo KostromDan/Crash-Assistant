@@ -39,6 +39,9 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 import javax.swing.undo.UndoManager;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -436,6 +439,9 @@ public class ScriptsIDE {
         });
 
         JScrollPane editorScroll = new JScrollPane(editorArea);
+        LineNumberView lineNumberView = new LineNumberView(editorArea);
+        editorScroll.setRowHeaderView(lineNumberView);
+        editorScroll.getViewport().addChangeListener(e -> lineNumberView.repaint());
         editorPanel.add(editorScroll, BorderLayout.CENTER);
 
         JPanel logsPanel = new JPanel(new BorderLayout());
@@ -1075,5 +1081,92 @@ class JexlSyntaxDocument extends DefaultStyledDocument {
         
         m = Pattern.compile("//[^\\n]*|/\\*.*?\\*/", Pattern.DOTALL).matcher(text);
         while (m.find()) setCharacterAttributes(m.start(), m.end() - m.start(), attrComment, false);
+    }
+}
+
+class LineNumberView extends JComponent {
+    private final JTextPane textPane;
+    private final int borderGap = 8;
+
+    public LineNumberView(JTextPane textPane) {
+        this.textPane = textPane;
+        textPane.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { repaint(); }
+            @Override public void removeUpdate(DocumentEvent e) { repaint(); }
+            @Override public void changedUpdate(DocumentEvent e) { repaint(); }
+        });
+        textPane.addCaretListener(new CaretListener() {
+            @Override public void caretUpdate(CaretEvent e) { repaint(); }
+        });
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(getComponentWidth(), textPane.getHeight());
+    }
+
+    private int getComponentWidth() {
+        int lineCount = textPane.getDocument().getDefaultRootElement().getElementCount();
+        int maxDigits = Math.max(3, String.valueOf(lineCount).length());
+        FontMetrics metrics = getFontMetrics(textPane.getFont());
+        return maxDigits * metrics.charWidth('0') + borderGap * 2;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+        Font font = textPane.getFont();
+        g2d.setFont(font);
+        FontMetrics metrics = g2d.getFontMetrics(font);
+        int fontHeight = metrics.getHeight();
+        int fontAscent = metrics.getAscent();
+
+        Rectangle clip = g2d.getClipBounds();
+        
+        // Background
+        Color bg = UIManager.getColor("Editor.gutter.background");
+        if (bg == null) bg = textPane.getBackground().darker();
+        g2d.setColor(bg);
+        g2d.fillRect(clip.x, clip.y, clip.width, clip.height);
+
+        // Right border line
+        Color border = UIManager.getColor("Editor.gutter.borderColor");
+        if (border == null) border = Color.GRAY;
+        g2d.setColor(border);
+        int componentWidth = getComponentWidth();
+        g2d.drawLine(componentWidth - 1, clip.y, componentWidth - 1, clip.y + clip.height);
+
+        Element root = textPane.getDocument().getDefaultRootElement();
+        int lineCount = root.getElementCount();
+
+        int currentLine = root.getElementIndex(textPane.getCaretPosition());
+
+        Color normalColor = UIManager.getColor("Editor.gutter.foreground");
+        if (normalColor == null) normalColor = Color.GRAY;
+        
+        Color currentColor = UIManager.getColor("Editor.gutter.selectionForeground");
+        if (currentColor == null) currentColor = UIManager.getColor("Editor.foreground");
+        if (currentColor == null) currentColor = textPane.getForeground();
+
+        for (int i = 0; i < lineCount; i++) {
+            try {
+                Rectangle r = textPane.modelToView2D(root.getElement(i).getStartOffset()).getBounds();
+                if (r.y + fontHeight < clip.y) continue;
+                if (r.y > clip.y + clip.height) break;
+
+                if (i == currentLine) {
+                    g2d.setColor(currentColor);
+                } else {
+                    g2d.setColor(normalColor);
+                }
+
+                String lineNumber = String.valueOf(i + 1);
+                int stringWidth = metrics.stringWidth(lineNumber);
+                g2d.drawString(lineNumber, componentWidth - borderGap - stringWidth, r.y + fontAscent);
+            } catch (Exception e) {}
+        }
     }
 }

@@ -11,6 +11,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.EpicFig
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
+import dev.kostromdan.mods.crash_assistant.app.gui.scripts_ide.ScriptsIDE;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
@@ -544,6 +545,13 @@ public class CrashAssistantGUI {
         });
         fileMenu.add(openConfigItem);
 
+        // Open Scripts IDE
+        if (CrashAssistantConfig.getBoolean("scripts.enabled") && CrashAssistantConfig.getBoolean("scripts.ide_enabled") && (PlatformHelp.isLinkDefault() || ModListDiff.isModpackCreator())) {
+            JMenuItem scriptsIdeItem = new JMenuItem("Scripts IDE");
+            scriptsIdeItem.addActionListener(e -> ScriptsIDE.main(null));
+            fileMenu.add(scriptsIdeItem);
+        }
+
         // Analysis menu items
         boolean analysisMenuEnabled = CrashAssistantConfig.getBoolean("analysis_tools.enabled");
         JMenu analysisMenu = new JMenu(LanguageProvider.get("gui.menu.analysis"));
@@ -853,7 +861,7 @@ public class CrashAssistantGUI {
                             );
 
                             dialog = optionPane.createDialog(
-                                    frame,
+                                    ScriptsIDE.isIdeRunning() ? null : frame,
                                     crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyzer") : LanguageProvider.get("gui.logs_analyzer")
                             );
 
@@ -889,7 +897,7 @@ public class CrashAssistantGUI {
                                     null
                             );
                             dialog = optionPane.createDialog(
-                                    frame,
+                                    ScriptsIDE.isIdeRunning() ? null : frame,
                                     crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyzer") : LanguageProvider.get("gui.logs_analyzer")
                             );
                         }

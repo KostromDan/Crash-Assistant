@@ -94,4 +94,21 @@ public class KnownCrashReason {
     public void setOkDelay(int okDelay) {
         this.customOkDelay = okDelay;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        KnownCrashReason that = (KnownCrashReason) o;
+        String thisName = getReasonName();
+        String thatName = that.getReasonName();
+        if (thisName != null ? !thisName.equals(thatName) : thatName != null) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        String name = getReasonName();
+        return name != null ? name.hashCode() : 0;
+    }
 }

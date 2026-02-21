@@ -65,5 +65,12 @@ public class LogComparator implements Comparator<Log> {
         // If types are the same, compare by name
         return log1.getName().compareTo(log2.getName());
     }
+
+    public static int compareLogTypes(LogType type1, LogType type2) {
+        return Integer.compare(
+                FINAL_LOG_TYPE_ORDER.indexOf(type1),
+                FINAL_LOG_TYPE_ORDER.indexOf(type2)
+        );
+    }
 }
 

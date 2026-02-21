@@ -47,4 +47,10 @@ public class CrashAssistantLocalConfig {
         config.set(key, value);
         save();
     }
+
+    @NoJexl
+    public static void clearAll() {
+        config.clear();
+        save();
+    }
 }

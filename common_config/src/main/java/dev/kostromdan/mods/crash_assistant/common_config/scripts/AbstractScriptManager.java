@@ -23,6 +23,10 @@ import java.util.stream.Stream;
 public abstract class AbstractScriptManager {
     protected static final Set<String> executedScripts = Collections.synchronizedSet(new HashSet<>());
 
+    public static void clearExecutedScripts() {
+        executedScripts.clear();
+    }
+
     /**
      * Returns the directory where scripts are located.
      */

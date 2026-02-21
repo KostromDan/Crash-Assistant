@@ -377,6 +377,9 @@ public class CrashAssistantConfig {
         addOption("scripts.enabled",
                 "Enable feature.",
                 true);
+        addOption("scripts.ide_enabled",
+                "Enable Scripts IDE in the GUI.",
+                true);
         addOption("scripts.generate_scripts_folder_with_example",
                 "By changing this value you can disable creating \"scripts\" folder and placing example scripts there.",
                 true);

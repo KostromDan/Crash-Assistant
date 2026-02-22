@@ -414,6 +414,10 @@ public class ScriptsIDE {
             public boolean getScrollableTracksViewportWidth() {
                 return false;
             }
+            @Override
+            public boolean getScrollableTracksViewportHeight() {
+                return false;
+            }
         };
         editorArea.setEditorKit(new NoWrapEditorKit());
         editorArea.setDocument(new JexlSyntaxDocument());
@@ -1234,7 +1238,12 @@ class NoWrapEditorKit extends StyledEditorKit {
                             }
                         };
                     case AbstractDocument.SectionElementName:
-                        return new BoxView(elem, View.Y_AXIS);
+                        return new BoxView(elem, View.Y_AXIS) {
+                            @Override
+                            public float getAlignment(int axis) {
+                                return 0f; // top-align (BoxView defaults to 0.5 = center)
+                            }
+                        };
                     case StyleConstants.ComponentElementName:
                         return new ComponentView(elem);
                     case StyleConstants.IconElementName:

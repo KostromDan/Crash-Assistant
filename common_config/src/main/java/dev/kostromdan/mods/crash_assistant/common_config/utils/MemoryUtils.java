@@ -5,6 +5,7 @@ import java.lang.management.MemoryMXBean;
 import java.util.Locale;
 
 import com.sun.management.OperatingSystemMXBean;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 public final class MemoryUtils {
     public static final long BYTES_IN_MEGABYTE = 1024L * 1024L;
@@ -80,28 +81,46 @@ public final class MemoryUtils {
 
     /**
      * Returns total swap space (pagefile) size in bytes.
+     * On Windows, Java returns Commit Limit (RAM + Pagefile), so we calculate the actual Pagefile size.
      *
      * @return total swap space size in bytes
      */
     public static long getSystemTotalSwapBytes() {
-        return OS_BEAN.getTotalSwapSpaceSize();
+        long rawSwap = OS_BEAN.getTotalSwapSpaceSize();
+
+        if (PlatformHelp.isWindows()) {
+            long totalRam = OS_BEAN.getTotalPhysicalMemorySize();
+            return Math.max(0L, rawSwap - totalRam);
+        }
+
+        return rawSwap;
     }
 
     /**
      * Returns used swap space (pagefile) size in bytes.
+     * On Windows, Java returns Total Committed Memory, so we subtract used physical RAM to get used Pagefile.
      *
      * @return used swap space size in bytes
      */
     public static long getSystemUsedSwapBytes() {
-        long totalSwap = OS_BEAN.getTotalSwapSpaceSize();
-        long freeSwap = OS_BEAN.getFreeSwapSpaceSize();
+        long rawTotalSwap = OS_BEAN.getTotalSwapSpaceSize();
+        long rawFreeSwap = OS_BEAN.getFreeSwapSpaceSize();
 
-        // If swap is disabled, totalSwap is 0, so we return 0 to avoid negative values or errors
-        if (totalSwap == 0) {
+        if (rawTotalSwap == 0) {
             return 0L;
         }
 
-        return totalSwap - freeSwap;
+        long usedCommitCharge = rawTotalSwap - rawFreeSwap;
+
+        if (PlatformHelp.isWindows()) {
+            long totalRam = OS_BEAN.getTotalPhysicalMemorySize();
+            long freeRam = OS_BEAN.getFreePhysicalMemorySize();
+            long usedRam = totalRam - freeRam;
+
+            return Math.max(0L, usedCommitCharge - usedRam);
+        }
+
+        return usedCommitCharge;
     }
 
     /**
@@ -110,6 +129,10 @@ public final class MemoryUtils {
      * @return free swap space size in bytes
      */
     public static long getSystemFreeSwapBytes() {
+        if (PlatformHelp.isWindows()) {
+            return Math.max(0L, getSystemTotalSwapBytes() - getSystemUsedSwapBytes());
+        }
+
         return OS_BEAN.getFreeSwapSpaceSize();
     }
 

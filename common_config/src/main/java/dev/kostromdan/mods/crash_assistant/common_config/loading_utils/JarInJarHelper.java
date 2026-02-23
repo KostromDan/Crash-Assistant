@@ -2,7 +2,6 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import com.sun.management.OperatingSystemMXBean;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
@@ -11,17 +10,14 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.StartupScriptManager;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.LatestLogLocator;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Startup;
+
 import java.io.*;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -31,6 +27,8 @@ import java.nio.file.FileSystem;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static dev.kostromdan.mods.crash_assistant.common_config.utils.MemoryUtils.*;
 
 public class JarInJarHelper {
     public static Logger LOGGER = LogManager.getLogger("CrashAssistantJarInJarHelper");
@@ -98,12 +96,18 @@ public class JarInJarHelper {
             argsList.add(originalModJarPath.getFileName().toString());
             argsList.add("-classPath");
             argsList.add(fullClassPath);
-            argsList.add("-parentXms");
-            argsList.add(getJvmArgValue("Xms", "unknown"));
-            argsList.add("-parentXmx");
-            argsList.add(getJvmArgValue("Xmx", "unknown"));
+            argsList.add("-minecraftXms");
+            argsList.add(formatMemorySize(getJvmInitialHeapBytes()));
+            argsList.add("-minecraftXmx");
+            argsList.add(formatMemorySize(getJvmMaxHeapBytes()));
             argsList.add("-systemRAM");
-            argsList.add(formatMemorySize(getTotalPhysicalMemory()));
+            argsList.add(formatMemorySize(getSystemTotalMemoryBytes()));
+            argsList.add("-systemUsedRAMAtMinecraftLaunchMoment");
+            argsList.add(formatMemorySize(getSystemUsedMemoryBytes() - getJvmAllocatedMemoryBytes()));
+            argsList.add("-systemSwapSpace");
+            argsList.add(formatMemorySize((getSystemTotalSwapBytes())));
+            argsList.add("-systemUsedSwapSpaceAtMinecraftLaunchMoment");
+            argsList.add(formatMemorySize((getSystemUsedSwapBytes())));
             argsList.add("-processor");
             argsList.add(Base64.getEncoder().encodeToString(ProcessHelper.getProcessorName().getBytes(StandardCharsets.UTF_8)));
             if (PlatformHelp.modLoadedWithConnector) {
@@ -200,22 +204,6 @@ public class JarInJarHelper {
             }
         } catch (IOException e) {
             LOGGER.error("Failed to setup scripts directory: " + scriptsDir, e);
-        }
-    }
-
-
-    /**
-     * Returns the total physical memory (RAM) in bytes, or -1 if the value
-     * cannot be determined on the current JVM/OS.
-     */
-    public static long getTotalPhysicalMemory() {
-        try {
-            OperatingSystemMXBean osBean =
-                    (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-            return osBean.getTotalPhysicalMemorySize();  // value in bytes
-        } catch (Throwable t) {
-            // Either the cast failed (non-HotSpot VM) or the method is unavailable
-            return -1L;
         }
     }
 
@@ -567,57 +555,6 @@ public class JarInJarHelper {
         Map<String, Path> outerFsArgs = Collections.singletonMap("packagePath", pathInModFile);
         FileSystem zipFS = FileSystems.newFileSystem(filePathUri, outerFsArgs);
         return zipFS.getPath("/");
-    }
-
-    /**
-     * Retrieves the value of a JVM argument from the current runtime.
-     *
-     * @param argName  The name of the JVM argument to retrieve (without the leading dash), e.g., "Xmx"
-     * @param fallback The fallback value to return if the argument is not found
-     * @return The value of the JVM argument if found, otherwise the fallback value
-     */
-    public static String getJvmArgValue(String argName, String fallback) {
-        try {
-            List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
-            for (String arg : inputArgs) {
-                if (arg.startsWith("-" + argName)) {
-                    // If the argument is in the form -Xmx512m, extract just the 512m part
-                    if (arg.length() > argName.length() + 1) {
-                        return arg.substring(argName.length() + 1);
-                    }
-                    return arg.substring(1); // Remove the leading dash if no value part
-                }
-            }
-
-            // For Xmx, use current allocated memory as fallback if requested
-            if (argName.equals("Xmx") && fallback.equals("unknown")) {
-                return formatMemorySize(Runtime.getRuntime().maxMemory());
-            }
-
-            return fallback;
-        } catch (Exception e) {
-            LOGGER.error("Error retrieving JVM argument {}: {}", argName, e.getMessage());
-            return fallback;
-        }
-    }
-
-    /**
-     * Formats memory size in bytes to a human-readable format suitable for Xmx/Xms arguments.
-     *
-     * @param bytes Memory size in bytes
-     * @return Formatted memory size (e.g., "512m", "2.5g")
-     */
-    private static String formatMemorySize(long bytes) {
-        if (bytes >= 1073741824) { // 1 GB
-            double gb = bytes / 1073741824.0;
-            // Format with one decimal place and remove trailing zero if it's a whole number
-            String formatted = String.format(Locale.US, "%.1f", gb).replace(".0", "");
-            return formatted + "g";
-        } else {
-            double mb = bytes / 1048576.0;
-            String formatted = String.format(Locale.US, "%.1f", mb).replace(".0", "");
-            return formatted + "m"; // Convert to MB
-        }
     }
 
     private static void fixIncorrectJnaPlatform(List<String> classPathEntries) {

@@ -33,15 +33,20 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static dev.kostromdan.mods.crash_assistant.common_config.utils.MemoryUtils.*;
+
 public class CrashAssistantApp {
     public static final Logger LOGGER = LogManager.getLogger(CrashAssistantApp.class);
     private static String customLatestLogPath = null;
     private static boolean GUIStartedLaunching = false;
     public static long GUIStartTime = -1;
     public static boolean GUIInitialisationFinished = false;
-    public static String parentXms = null;
-    public static String parentXmx = null;
+    public static String minecraftXms = null;
+    public static String minecraftXmx = null;
     public static String systemRAM = null;
+    public static String systemUsedRAMAtMinecraftLaunchMoment = null;
+    public static String systemSwapSpace = null;
+    public static String systemUsedSwapSpaceAtMinecraftLaunchMoment = null;
     public static String processor = null;
     public static boolean crashed = false;
     public static boolean crashed_with_report = false;
@@ -67,15 +72,24 @@ public class CrashAssistantApp {
         LOGGER.info("Parent started: {}", Boot.parentStarted);
 
         for (int i = 0; i < args.length; i++) {
-            if ("-parentXms".equals(args[i]) && i + 1 < args.length) {
-                parentXms = args[i + 1];
-                LOGGER.info("parentXms: {}", parentXms);
-            } else if ("-parentXmx".equals(args[i]) && i + 1 < args.length) {
-                parentXmx = args[i + 1];
-                LOGGER.info("parentXmx: {}", parentXmx);
+            if ("-minecraftXms".equals(args[i]) && i + 1 < args.length) {
+                minecraftXms = args[i + 1];
+                LOGGER.info("minecraftXms: {}", minecraftXms);
+            } else if ("-minecraftXmx".equals(args[i]) && i + 1 < args.length) {
+                minecraftXmx = args[i + 1];
+                LOGGER.info("minecraftXmx: {}", minecraftXmx);
             } else if ("-systemRAM".equals(args[i]) && i + 1 < args.length) {
                 systemRAM = args[i + 1];
                 LOGGER.info("systemRAM: {}", systemRAM);
+            } else if ("-systemUsedRAMAtMinecraftLaunchMoment".equals(args[i]) && i + 1 < args.length) {
+                systemUsedRAMAtMinecraftLaunchMoment = args[i + 1];
+                LOGGER.info("systemUsedRAMAtMinecraftLaunchMoment: {}", systemUsedRAMAtMinecraftLaunchMoment);
+            } else if ("-systemSwapSpace".equals(args[i]) && i + 1 < args.length) {
+                systemSwapSpace = args[i + 1];
+                LOGGER.info("systemSwapSpace: {}", systemSwapSpace);
+            } else if ("-systemUsedSwapSpaceAtMinecraftLaunchMoment".equals(args[i]) && i + 1 < args.length) {
+                systemUsedSwapSpaceAtMinecraftLaunchMoment = args[i + 1];
+                LOGGER.info("systemUsedSwapSpaceAtMinecraftLaunchMoment: {}", systemUsedSwapSpaceAtMinecraftLaunchMoment);
             } else if ("-processor".equals(args[i]) && i + 1 < args.length) {
                 processor = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
                 LOGGER.info("processor: {}", processor);
@@ -240,6 +254,9 @@ public class CrashAssistantApp {
         UUIDUtils.startCheck();
 
         new Thread(LanguageProvider::updateLang).start(); // Init lang async.
+
+        LOGGER.info("System used RAM after Minecraft process finish moment: {}", formatMemorySize(getSystemUsedMemoryBytes()));
+        LOGGER.info("System used Swap Space after Minecraft process finish moment: {}", formatMemorySize(getSystemUsedSwapBytes()));
 
         if (customLatestLogPath != null) {
             ModListUtils.MODS_FOLDER = Paths.get(customLatestLogPath).getParent().getParent().resolve("mods").resolve("fabric-" + PlatformHelp.minecraftVersion);

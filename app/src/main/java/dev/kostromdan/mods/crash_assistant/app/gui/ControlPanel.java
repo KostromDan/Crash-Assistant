@@ -574,9 +574,9 @@ public class ControlPanel {
                 if (entry.getKey() instanceof OutOfMemoryError) {
                     analysis_sb.append(LanguageProvider.getMsgLang("warnings_common.memory_args").replace("$CURRENT_MEMORY_ARGS$", ""), false);
                     analysis_sb.append("Xms: ", false);
-                    analysis_sb.append(CrashAssistantApp.parentXms, "red", false);
+                    analysis_sb.append(CrashAssistantApp.minecraftXms, "red", false);
                     analysis_sb.append(", Xmx: ", false);
-                    analysis_sb.append(CrashAssistantApp.parentXmx, "green", false);
+                    analysis_sb.append(CrashAssistantApp.minecraftXmx, "green", false);
                     analysis_sb.append(", systemRAM: ", false);
                     analysis_sb.append(CrashAssistantApp.systemRAM, "blue");
                     analysis_sb.append("");
@@ -714,7 +714,7 @@ public class ControlPanel {
     }
 
     public static String getCurrentMemoryArgsString() {
-        return "Xms: " + CrashAssistantApp.parentXms + ", Xmx: " + CrashAssistantApp.parentXmx;
+        return "Xms: " + CrashAssistantApp.minecraftXms + ", Xmx: " + CrashAssistantApp.minecraftXmx;
     }
 
     public static String getCurrentMemoryAgsMessage() {

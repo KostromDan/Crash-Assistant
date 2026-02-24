@@ -20,6 +20,7 @@ public class ModListUtils {
     public static final Logger LOGGER = LogManager.getLogger();
     public static Path MODS_FOLDER = Paths.get("mods");
     private static final Path RESOURCEPACKS_FOLDER = Paths.get("resourcepacks");
+    private static final Path DATAPACKS_FOLDER = Paths.get("datapacks");
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
     public static String currentUsername = "";
     private static LinkedHashSet<Mod> cachedModList = null;
@@ -64,6 +65,14 @@ public class ModListUtils {
                     String filename = path.getFileName().toString();
                     if (Files.isDirectory(path) || filename.endsWith(".zip")) {
                         currentMods.add(new Mod(filename + " (resourcepack)", null, null, null, new HashSet<>(), new ArrayList<>(), null));
+                    }
+                });
+            }
+            if (Files.exists(DATAPACKS_FOLDER) && CrashAssistantConfig.getBoolean("modpack_modlist.add_datapacks")) {
+                Files.list(DATAPACKS_FOLDER).sorted(new PathComparator()).forEach(path -> {
+                    String filename = path.getFileName().toString();
+                    if (Files.isDirectory(path) || filename.endsWith(".zip")) {
+                        currentMods.add(new Mod(filename + " (datapack)", null, null, null, new HashSet<>(), new ArrayList<>(), null));
                     }
                 });
             }

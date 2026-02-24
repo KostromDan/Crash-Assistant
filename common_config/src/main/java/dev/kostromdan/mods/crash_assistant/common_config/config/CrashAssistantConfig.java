@@ -287,6 +287,10 @@ public class CrashAssistantConfig {
                 "If enabled, will add resourcepacks to modlist.json\n" +
                         "After filename where will be ' (resourcepack)' suffix.",
                 false);
+        addOption("modpack_modlist.add_datapacks",
+                "If enabled, will add datapacks to modlist.json\n" +
+                        "After filename where will be ' (datapacks)' suffix.",
+                false);
         addOption("modpack_modlist.add_modloader_jar_name",
                 "If enabled, will add modloader jar name to modlist, to easily track if user changed version of modloader.",
                 true);

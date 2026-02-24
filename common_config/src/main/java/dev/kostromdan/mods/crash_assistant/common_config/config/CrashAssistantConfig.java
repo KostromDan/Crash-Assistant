@@ -390,8 +390,9 @@ public class CrashAssistantConfig {
                         "If file doesn't exist and no core theme matches, themes will be disabled and Standard Swing look and feel used.\n" +
                         "Supported core themes: 'FlatLightLaf', 'FlatDarkLaf', 'FlatIntelliJLaf', 'FlatDarculaLaf', 'FlatMacLightLaf', 'FlatMacDarkLaf'.\n" +
                         "Supports any IntelliJ Theme file with '.theme.json' extension.\n" +
+                        "If you prefer standard Swing look and feel, use 'Swing'.\n" +
                         "Look out our guide about theme support: https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Theme%20Support/Getting%20Started.md",
-                "example.theme.json");
+                "FlatLightLaf");
         addOption("gui_customisation.disable_upload_all_button",
                 "Will hide Upload All Button from GUI.",
                 false);

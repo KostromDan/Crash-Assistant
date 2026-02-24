@@ -1,38 +1,71 @@
-// This is an example script for Crash Assistant.
-// It detects if the crash was triggered manually by the user (F3 + C).
+// --- Configuration Area ---
+var MIN_CRITICAL_GB = 4.0;
+var MIN_RECOMMENDED_GB = 8.0;
+var MAX_RECOMMENDED_GB = 12.0;
+// --------------------------
 
-// You can use the 'Analysis' object to add warnings.
-// If you want your custom warning to be localized, you can use the "config/crash_assistant/crash_assistant_localization_overrides" folder.
-// Your custom keys with the prefix 'custom.' will NOT be automatically cleared as unused.
-// Example: Analysis.addWarning(log, Analysis.lang("custom.manual_crash"));
+// Most options are commented out. Please uncomment them to enable them
 
-// Full documentation: https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Scripting%20Support/Getting%20Started.md
+var xmxBytes = MemoryUtils.getJvmMaxHeapBytes();
+var xmxGB = MemoryUtils.bytesToGigabytes(xmxBytes);
+var formattedXmx = MemoryUtils.formatMemorySize(xmxBytes);
 
-// Request specific log types for analysis.
-var requested_logs = LogsList.getLogs(CRASH_REPORT);
-// You can request multiple log types: var requested_logs = LogsList.getLogs(LOG, CRASH_REPORT, HS_ERR, STDERR_STREAM)
-// Warning: if you want to analyze WIN_EVENT log type, due to they coming with delay, they are not available on first launch of script.
-// In such case you must allow your script to run on second time analysis calls (then log is added later): Analysis.markRunAlways()
+// 1. Critical Minimum Check
+if (xmxGB < MIN_CRITICAL_GB) {
+    Startup.addBootWarning("You have allocated only <strong>" + formattedXmx + "</strong>.\n" +
+        "The modpack will <strong>NOT start</strong> and will likely freeze during the loading process.\n" +
+        "Please allocate at least <strong>" + MIN_RECOMMENDED_GB + " GB</strong> in your launcher settings.");
+}
+// 2. Minimum Recommended Check
+else if (xmxGB < MIN_RECOMMENDED_GB) {
+    var lowMemWarn = Startup.addBootWarning("You have allocated <strong>" + formattedXmx + "</strong>.\n" +
+        "This modpack needs a minimum of <strong>" + MIN_RECOMMENDED_GB + " GB</strong> to run stable.\n" +
+        "Please allocate more memory to avoid crashes and low FPS.");
+    lowMemWarn.withDontShowAgain("low_memory_check");
+}
 
-for (log : requested_logs) {
-    var log_text = log.getReader().getAllLinesString();
-    // If you want to get lines as List<String>, not a single String, you can by: log.getReader().getAllLinesList()
-    // If you want to get not entire log, but 100 last lines as List<String>, you can by: log.getReader().getLastNLines(100); or first lines: log.getReader().getFirstNLines(10)
+// 3. Excessive Allocation Check
+// Warning starts exactly when Xmx exceeds MAX_RECOMMENDED_GB.
+if (xmxGB > MAX_RECOMMENDED_GB) {
+    var excessiveMemWarn = Startup.addBootWarning("You have allocated <strong>" + formattedXmx + "</strong>.\n" +
+        "This will <strong>not work well</strong> and you should expect <strong>significant lag spikes</strong>.\n" +
+        "This modpack will never use more than <strong>" + MAX_RECOMMENDED_GB + " GB</strong>. It is highly recommended to reduce allocation to <strong>8-12 GB</strong>.");
+    excessiveMemWarn.withDontShowAgain("excessive_memory_check");
+}
 
-    // You can use standard Java regex classes since they are whitelisted and already imported.
-    // However, for convenience, you can use the 'RegexChecker' utility.
-    // It can check multiple patterns at once.
-    // RegexChecker.logContainsOneOfPatterns returns true if ANY of the patterns match.
-    // You can give this function any number of patterns
-    var pattern1 = "Description: Manually triggered debug crash";
-    var pattern2 = "Caused by: java\\.lang\\.Throwable: Manually triggered debug crash";
+// 4. Over-Allocation vs Total Capacity Check (Hardware Limit)
+var totalSystemCapacity = MemoryUtils.getSystemTotalMemoryBytes() + MemoryUtils.getSystemTotalSwapBytes();
+if (xmxBytes > totalSystemCapacity) {
+    Startup.addBootWarning("<strong>CRITICAL</strong>: You have allocated <strong>" + formattedXmx +
+        "</strong> to the game, which exceeds your total available system memory (<strong>" + MemoryUtils.formatMemorySize(totalSystemCapacity) +
+        "</strong> including Swap).\n" + "The game <strong>WILL crash</strong>. Please reduce your Xmx setting.");
+}
 
-    if (RegexChecker.logContainsOneOfPatterns(log, pattern1, pattern2)) {
-        // If you don't want to use localization, you can just pass a raw string:
-        // Analysis.addWarning(log, "Manual crash detected!");
+// 5. High System Load Check (Current Capacity)
+var systemAvailable = MemoryUtils.getSystemFreeMemoryBytes() + MemoryUtils.getSystemFreeSwapBytes();
+var jvmAllocated = MemoryUtils.getJvmAllocatedMemoryBytes();
+var stillNeeded = xmxBytes - jvmAllocated;
 
-        // Using internal localization key shipped with mod:
-        Analysis.addWarning(log, Analysis.lang("custom.manual_crash"));
-        // Now String recieved from Analysis.lang("custom.manual_crash") will be displayed to user as warning.
-    }
+if (xmxBytes > 0 && stillNeeded > 0 && systemAvailable < stillNeeded) {
+    var highLoadWarn = Startup.addBootWarning("You have allocated <strong>" + formattedXmx + "</strong>, but it seems your memory is <strong>heavily loaded</strong> by other applications.\n" +
+        "The amount of available memory (<strong>" + MemoryUtils.formatMemorySize(systemAvailable) + "</strong>) is less than what Minecraft might still need to reach its limit.\n" +
+        "Please <strong>close unnecessary applications</strong> (like browsers or other games) to prevent a crash.");
+    highLoadWarn.withDontShowAgain("high_system_load_check");
+}
+
+// 6. Windows Swap/Pagefile Check
+if (PlatformHelp.isWindows() && MemoryUtils.getSystemTotalSwapBytes() == 0) {
+    var noSwapWarn = Startup.addBootWarning("<strong>WARNING</strong>: You have allocated <strong>" + formattedXmx + "</strong>, but Windows Swap (Pagefile) is <strong>disabled</strong>.\n" +
+        "Java requires active swap space to function correctly on Windows, even if you have enough free RAM.\n" +
+        "The game is likely to <strong>crash</strong>. Please enable the Windows Pagefile in System Settings.");
+    noSwapWarn.withDontShowAgain("windows_no_swap_check");
+}
+
+// 7. Large Heap / ZGC Advice
+var jvmArgs = ArgUtils.getSafeJvmArgs();
+if (xmxGB > 10.0 && !jvmArgs.contains("-XX:+UseZGC")) {
+    var zgcWarn = Startup.addBootWarning("You have allocated a <strong>large amount</strong> of memory (<strong>" + formattedXmx + "</strong>).\n" +
+        "To avoid long garbage collection pauses (<strong>lag spikes</strong>), it is recommended to add the '<strong>-XX:+UseZGC</strong>' " +
+        "argument to your JVM settings.");
+    zgcWarn.withDontShowAgain("zgc_recommendation_check");
 }

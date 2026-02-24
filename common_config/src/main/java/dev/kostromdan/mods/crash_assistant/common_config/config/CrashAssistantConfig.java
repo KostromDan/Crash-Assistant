@@ -463,7 +463,8 @@ public class CrashAssistantConfig {
                 "255_100_100");
         addOption("gui_customisation.modpack_logo_path",
                 "Path to a modpack logo to display in the top of the GUI.\n" +
-                        "Path is relative to the Minecraft instance folder. Leave empty to disable.",
+                        "Path is relative to the Minecraft instance folder. Leave empty to disable.\n" +
+                        "WARNING: use only '/' path separator. '\\' will corrupt config!",
                 "");
         addOption("gui_customisation.modpack_logo_large_mode",
                 "If true, the logo will be larger, Replacing a some of `don't send screenshot` notice.\n" +

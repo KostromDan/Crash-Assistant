@@ -41,6 +41,7 @@ public class JarInJarHelper {
         }
         isClient = true;
         try {
+            DefaultConfigModsCompatibility.copyDefaultConfigs();
             if (CrashAssistantConfig.getBoolean("general.generate_own_launcher_log")) LauncherLogger.redirectToFile();
 
             Path originalModJarPath = Paths.get(LibrariesJarLocator.getOurModJarPath()).toAbsolutePath();

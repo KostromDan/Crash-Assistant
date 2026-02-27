@@ -19,9 +19,12 @@ import java.util.List;
 
 public class StartupWarningViewer {
     private static final Logger LOGGER = LogManager.getLogger("StartupWarningViewer");
+    public static boolean isStartupWarning = false;
 
     public static void main(String[] args) {
         ThemeUtils.ensureThemesApplied();
+
+        isStartupWarning = true;
 
         if (args.length < 1) {
             LOGGER.error("No arguments provided to StartupWarningViewer");

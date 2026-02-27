@@ -204,6 +204,7 @@
   "gui.log_deletion.title": "Gestor de registros subidos ($LANG.gui.window_name$)",
   "gui.log_deletion.unselect_all": "Deseleccionar todo",
   "gui.logs_analyzer": "Analizador de Registros ($LANG.gui.window_name$)",
+  "gui.startup_warning_dialog_title": "Advertencia de inicio ($LANG.gui.window_name$)",
   "gui.menu.analysis": "Análisis",
   "gui.menu.analysis.azure_lib_addons_compatibility": "Compatibilidad de complementos del mod AzureLib",
   "gui.menu.analysis.azure_lib_addons_compatibility.desc": "Identifica mods que dependen del mod AzureLib pero son incompatibles con tu versión actual.\nAyuda a resolver fallos causados por estos desajustes de versión.",

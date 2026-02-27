@@ -204,6 +204,7 @@
   "gui.log_deletion.title": "上传日志管理器 ($LANG.gui.window_name$)",
   "gui.log_deletion.unselect_all": "全不选",
   "gui.logs_analyzer": "日志分析器 ($LANG.gui.window_name$)",
+  "gui.startup_warning_dialog_title": "启动警告 ($LANG.gui.window_name$)",
   "gui.menu.analysis": "分析",
   "gui.menu.analysis.azure_lib_addons_compatibility": "AzureLib 模组插件兼容性",
   "gui.menu.analysis.azure_lib_addons_compatibility.desc": "识别依赖 AzureLib 但与您当前版本不兼容的模组。\n有助于解决由此类版本不匹配引起的崩溃。",

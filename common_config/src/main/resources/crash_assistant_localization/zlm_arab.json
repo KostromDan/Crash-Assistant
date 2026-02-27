@@ -204,6 +204,7 @@
   "gui.log_deletion.title": "Pengurus Log yang Dimuat Naik ($LANG.gui.window_name$)",
   "gui.log_deletion.unselect_all": "Nyahpilih Semua",
   "gui.logs_analyzer": "Penganalisis Log ($LANG.gui.window_name$)",
+  "gui.startup_warning_dialog_title": "Amaran Permulaan ($LANG.gui.window_name$)",
   "gui.menu.analysis": "Analisis",
   "gui.menu.analysis.azure_lib_addons_compatibility": "Keserasian mod tambahan AzureLib",
   "gui.menu.analysis.azure_lib_addons_compatibility.desc": "Mengenal pasti mod yang bergantung pada mod AzureLib tetapi tidak serasi dengan versi semasa anda.\nMembantu menyelesaikan ranap permainan yang disebabkan oleh versi yang tidak sepadan.",

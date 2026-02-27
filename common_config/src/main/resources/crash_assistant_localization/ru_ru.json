@@ -204,6 +204,7 @@
   "gui.log_deletion.title": "Менеджер загруженных логов ($LANG.gui.window_name$)",
   "gui.log_deletion.unselect_all": "Снять выделение",
   "gui.logs_analyzer": "Анализатор логов ($LANG.gui.window_name$)",
+  "gui.startup_warning_dialog_title": "Предупреждение при запуске ($LANG.gui.window_name$)",
   "gui.menu.analysis": "Анализ",
   "gui.menu.analysis.azure_lib_addons_compatibility": "Совместимость аддонов мода AzureLib",
   "gui.menu.analysis.azure_lib_addons_compatibility.desc": "Определяет моды, которые зависят от мода AzureLib, но несовместимы с вашей текущей версией.\nПомогает устранять краши, вызванные такими несовпадениями версий.",

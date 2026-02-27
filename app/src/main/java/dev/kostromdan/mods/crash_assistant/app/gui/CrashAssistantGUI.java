@@ -754,6 +754,16 @@ public class CrashAssistantGUI {
         frame.repaint();
     }
 
+    public static String getCrashReasonsDialogName(KnownCrashReasonMessage crashReasonMessage) {
+        if (crashReasonMessage.isCodexMessage()) {
+            return LanguageProvider.get("gui.codex_logs_analyzer");
+        } else if (StartupWarningViewer.isStartupWarning) {
+            return LanguageProvider.get("gui.startup_warning_dialog_title");
+        }
+        return LanguageProvider.get("gui.logs_analyzer");
+
+    }
+
     public static synchronized void showKnownCrashReasonsWarnings() {
         ControlPanel.stopMovingToTop = true;
         synchronized (KnownCrashReasonMessage.class) {
@@ -772,168 +782,168 @@ public class CrashAssistantGUI {
                     }
                     try {
                         for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessages()) {
-                        if (crashReasonMessage.isShownWarn()) continue;
-                        KnownCrashReason crashReason = crashReasonMessage.getReason();
-                        if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason)) continue;
-                        HashSet<String> conflictingReasons = crashReason.getConflictingReasons();
-                        if (!conflictingReasons.isEmpty() &&
-                                KnownCrashReason.shownKnownCrashReasons.stream()
-                                        .anyMatch(x -> conflictingReasons
-                                                .contains(x.getClass().getSimpleName()))) {
-                            CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}",
-                                    crashReason.getClass().getSimpleName());
-                            continue;
-                        }
-
-                        KnownCrashReason.shownKnownCrashReasons.add(crashReason);
-                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
-                                crashReason.getClass().getSimpleName(),
-                                "\n \n" + HtmlToMarkdown.convert(crashReasonMessage.getMessage()) + "\n \n");
-                        crashReasonMessage.setShownWarn(true);
-
-                        JEditorPane messagePane = CrashAssistantGUI.getEditorPane(crashReasonMessage.getMessage(), crashReasonMessage.isCodexMessage());
-
-                        LinkedHashMap<String, Consumer<JDialog>> autoFixButtons = crashReason.getAutoFixButtons();
-
-                        JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
-                        String reasonClassName = crashReason.getClass().getSimpleName();
-                        String configKey = "shown_reasons." + reasonClassName;
-
-                        String dontShowAgainKey = crashReason.getDontShowAgainKey();
-                        if (dontShowAgainKey != null && Objects.equals(CrashAssistantLocalConfig.get(dontShowAgainKey), true)) {
-                            CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}, due to dontShowAgainKey: {}", crashReason.getClass().getSimpleName(), dontShowAgainKey);
-                            continue;
-                        }
-                        boolean alreadyShown = Objects.equals(CrashAssistantLocalConfig.get(configKey), true);
-
-                        JDialog dialog;
-                        if (!autoFixButtons.isEmpty()) {
-                            JPanel autoFixPanel = new JPanel(new GridBagLayout());
-                            GridBagConstraints gbc = new GridBagConstraints();
-                            gbc.fill = GridBagConstraints.HORIZONTAL;
-                            gbc.weightx = 1.0;
-                            gbc.gridy = 0;
-
-
-                            List<JButton> buttons = new ArrayList<>();
-                            List<Consumer<JDialog>> actions = new ArrayList<>();
-
-                            for (Map.Entry<String, Consumer<JDialog>> entry : autoFixButtons.entrySet()) {
-                                JButton autoFixButton = new JButton(entry.getKey());
-                                autoFixButton.setFont(autoFixButton.getFont().deriveFont(Font.BOLD,
-                                        CrashAssistantConfig.getInteger("gui_customisation.auto_fix_button_font_size")));
-                                autoFixButton.setForeground(
-                                        ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.auto_fix_button_foreground_color"),
-                                                autoFixButton.getForeground()));
-                                gbc.insets = new Insets(0, 0, 5, 0);
-                                autoFixPanel.add(autoFixButton, gbc);
-                                gbc.gridy++;
-                                buttons.add(autoFixButton);
-                                actions.add(entry.getValue());
+                            if (crashReasonMessage.isShownWarn()) continue;
+                            KnownCrashReason crashReason = crashReasonMessage.getReason();
+                            if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason)) continue;
+                            HashSet<String> conflictingReasons = crashReason.getConflictingReasons();
+                            if (!conflictingReasons.isEmpty() &&
+                                    KnownCrashReason.shownKnownCrashReasons.stream()
+                                            .anyMatch(x -> conflictingReasons
+                                                    .contains(x.getClass().getSimpleName()))) {
+                                CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}",
+                                        crashReason.getClass().getSimpleName());
+                                continue;
                             }
 
-                            JPanel southContainer = new JPanel(new BorderLayout(0, 10));
-                            southContainer.add(autoFixPanel, BorderLayout.CENTER);
+                            KnownCrashReason.shownKnownCrashReasons.add(crashReason);
+                            CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
+                                    crashReason.getClass().getSimpleName(),
+                                    "\n \n" + HtmlToMarkdown.convert(crashReasonMessage.getMessage()) + "\n \n");
+                            crashReasonMessage.setShownWarn(true);
 
-                            JPanel bottomRow = new JPanel(new BorderLayout());
-                            if (dontShowAgainKey != null) {
-                                JCheckBox dontShowBox = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
-                                String finalDontShowAgainKey = dontShowAgainKey;
-                                dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
-                                bottomRow.add(dontShowBox, BorderLayout.WEST);
+                            JEditorPane messagePane = CrashAssistantGUI.getEditorPane(crashReasonMessage.getMessage(), crashReasonMessage.isCodexMessage());
+
+                            LinkedHashMap<String, Consumer<JDialog>> autoFixButtons = crashReason.getAutoFixButtons();
+
+                            JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
+                            String reasonClassName = crashReason.getClass().getSimpleName();
+                            String configKey = "shown_reasons." + reasonClassName;
+
+                            String dontShowAgainKey = crashReason.getDontShowAgainKey();
+                            if (dontShowAgainKey != null && Objects.equals(CrashAssistantLocalConfig.get(dontShowAgainKey), true)) {
+                                CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}, due to dontShowAgainKey: {}", crashReason.getClass().getSimpleName(), dontShowAgainKey);
+                                continue;
                             }
-                            JPanel okPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-                            okPanel.add(okButton);
-                            bottomRow.add(okPanel, BorderLayout.CENTER);
-                            southContainer.add(bottomRow, BorderLayout.SOUTH);
+                            boolean alreadyShown = Objects.equals(CrashAssistantLocalConfig.get(configKey), true);
 
-                            JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-                            mainPanel.add(messagePane, BorderLayout.CENTER);
-                            mainPanel.add(southContainer, BorderLayout.SOUTH);
-
-                            JOptionPane optionPane = new JOptionPane(
-                                    mainPanel,
-                                    JOptionPane.WARNING_MESSAGE,
-                                    JOptionPane.DEFAULT_OPTION,
-                                    null,
-                                    new Object[]{},
-                                    null
-                            );
-
-                            dialog = optionPane.createDialog(
-                                    ScriptsIDE.isIdeRunning() ? null : frame,
-                                    crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyzer") : LanguageProvider.get("gui.logs_analyzer")
-                            );
+                            JDialog dialog;
+                            if (!autoFixButtons.isEmpty()) {
+                                JPanel autoFixPanel = new JPanel(new GridBagLayout());
+                                GridBagConstraints gbc = new GridBagConstraints();
+                                gbc.fill = GridBagConstraints.HORIZONTAL;
+                                gbc.weightx = 1.0;
+                                gbc.gridy = 0;
 
 
-                            for (int i = 0; i < buttons.size(); i++) {
-                                JButton button = buttons.get(i);
-                                Consumer<JDialog> action = actions.get(i);
-                                JDialog finalDialog = dialog;
-                                button.addActionListener(e -> action.accept(finalDialog));
+                                List<JButton> buttons = new ArrayList<>();
+                                List<Consumer<JDialog>> actions = new ArrayList<>();
+
+                                for (Map.Entry<String, Consumer<JDialog>> entry : autoFixButtons.entrySet()) {
+                                    JButton autoFixButton = new JButton(entry.getKey());
+                                    autoFixButton.setFont(autoFixButton.getFont().deriveFont(Font.BOLD,
+                                            CrashAssistantConfig.getInteger("gui_customisation.auto_fix_button_font_size")));
+                                    autoFixButton.setForeground(
+                                            ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.auto_fix_button_foreground_color"),
+                                                    autoFixButton.getForeground()));
+                                    gbc.insets = new Insets(0, 0, 5, 0);
+                                    autoFixPanel.add(autoFixButton, gbc);
+                                    gbc.gridy++;
+                                    buttons.add(autoFixButton);
+                                    actions.add(entry.getValue());
+                                }
+
+                                JPanel southContainer = new JPanel(new BorderLayout(0, 10));
+                                southContainer.add(autoFixPanel, BorderLayout.CENTER);
+
+                                JPanel bottomRow = new JPanel(new BorderLayout());
+                                if (dontShowAgainKey != null) {
+                                    JCheckBox dontShowBox = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+                                    String finalDontShowAgainKey = dontShowAgainKey;
+                                    dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
+                                    bottomRow.add(dontShowBox, BorderLayout.WEST);
+                                }
+                                JPanel okPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+                                okPanel.add(okButton);
+                                bottomRow.add(okPanel, BorderLayout.CENTER);
+                                southContainer.add(bottomRow, BorderLayout.SOUTH);
+
+                                JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+                                mainPanel.add(messagePane, BorderLayout.CENTER);
+                                mainPanel.add(southContainer, BorderLayout.SOUTH);
+
+                                JOptionPane optionPane = new JOptionPane(
+                                        mainPanel,
+                                        JOptionPane.WARNING_MESSAGE,
+                                        JOptionPane.DEFAULT_OPTION,
+                                        null,
+                                        new Object[]{},
+                                        null
+                                );
+
+                                dialog = optionPane.createDialog(
+                                        ScriptsIDE.isIdeRunning() ? null : frame,
+                                        getCrashReasonsDialogName(crashReasonMessage)
+                                );
+
+
+                                for (int i = 0; i < buttons.size(); i++) {
+                                    JButton button = buttons.get(i);
+                                    Consumer<JDialog> action = actions.get(i);
+                                    JDialog finalDialog = dialog;
+                                    button.addActionListener(e -> action.accept(finalDialog));
+                                }
+                            } else {
+                                JPanel panel = new JPanel(new BorderLayout(10, 10));
+                                panel.add(messagePane, BorderLayout.CENTER);
+
+                                JPanel bottomRow = new JPanel(new BorderLayout());
+                                if (dontShowAgainKey != null) {
+                                    JCheckBox dontShowBox = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+                                    String finalDontShowAgainKey = dontShowAgainKey;
+                                    dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
+                                    bottomRow.add(dontShowBox, BorderLayout.WEST);
+                                }
+                                JPanel okPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+                                okPanel.add(okButton);
+                                bottomRow.add(okPanel, BorderLayout.CENTER);
+                                panel.add(bottomRow, BorderLayout.SOUTH);
+
+                                JOptionPane optionPane = new JOptionPane(
+                                        panel,
+                                        JOptionPane.WARNING_MESSAGE,
+                                        JOptionPane.DEFAULT_OPTION,
+                                        null,
+                                        new Object[]{},
+                                        null
+                                );
+                                dialog = optionPane.createDialog(
+                                        ScriptsIDE.isIdeRunning() ? null : frame,
+                                        getCrashReasonsDialogName(crashReasonMessage)
+                                );
                             }
-                        } else {
-                            JPanel panel = new JPanel(new BorderLayout(10, 10));
-                            panel.add(messagePane, BorderLayout.CENTER);
 
-                            JPanel bottomRow = new JPanel(new BorderLayout());
-                            if (dontShowAgainKey != null) {
-                                JCheckBox dontShowBox = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
-                                String finalDontShowAgainKey = dontShowAgainKey;
-                                dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
-                                bottomRow.add(dontShowBox, BorderLayout.WEST);
-                            }
-                            JPanel okPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-                            okPanel.add(okButton);
-                            bottomRow.add(okPanel, BorderLayout.CENTER);
-                            panel.add(bottomRow, BorderLayout.SOUTH);
-
-                            JOptionPane optionPane = new JOptionPane(
-                                    panel,
-                                    JOptionPane.WARNING_MESSAGE,
-                                    JOptionPane.DEFAULT_OPTION,
-                                    null,
-                                    new Object[]{},
-                                    null
-                            );
-                            dialog = optionPane.createDialog(
-                                    ScriptsIDE.isIdeRunning() ? null : frame,
-                                    crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyzer") : LanguageProvider.get("gui.logs_analyzer")
-                            );
-                        }
-
-                        okButton.addActionListener(e -> dialog.dispose());
+                            okButton.addActionListener(e -> dialog.dispose());
 
 
-                        if (!alreadyShown) {
-                            int delay = crashReason.getOkDelay();
-                            if (delay == -1) {
-                                delay = CrashAssistantConfig.getInteger("analysis.first_show_delay");
+                            if (!alreadyShown) {
+                                int delay = crashReason.getOkDelay();
+                                if (delay == -1) {
+                                    delay = CrashAssistantConfig.getInteger("analysis.first_show_delay");
+                                }
+
+                                if (delay > 0) {
+                                    okButton.setEnabled(false);
+                                    final int[] secondsLeft = {delay};
+                                    okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
+                                    javax.swing.Timer timer = new javax.swing.Timer(1000, null);
+                                    timer.addActionListener(e -> {
+                                        secondsLeft[0]--;
+                                        if (secondsLeft[0] <= 0) {
+                                            okButton.setText(LanguageProvider.get("gui.ok"));
+                                            okButton.setEnabled(true);
+                                            timer.stop();
+                                        } else {
+                                            okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
+                                        }
+                                    });
+                                    timer.start();
+                                }
+                                CrashAssistantLocalConfig.set(configKey, true);
                             }
 
-                            if (delay > 0) {
-                                okButton.setEnabled(false);
-                                final int[] secondsLeft = {delay};
-                                okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
-                                javax.swing.Timer timer = new javax.swing.Timer(1000, null);
-                                timer.addActionListener(e -> {
-                                    secondsLeft[0]--;
-                                    if (secondsLeft[0] <= 0) {
-                                        okButton.setText(LanguageProvider.get("gui.ok"));
-                                        okButton.setEnabled(true);
-                                        timer.stop();
-                                    } else {
-                                        okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
-                                    }
-                                });
-                                timer.start();
-                            }
-                            CrashAssistantLocalConfig.set(configKey, true);
-                        }
-
-                        long showStartTime = System.currentTimeMillis();
-                        dialog.setVisible(true);
-                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {} (Seen warning for {}s)", crashReason.getClass().getSimpleName(), (System.currentTimeMillis() - showStartTime) / 1000.0);
+                            long showStartTime = System.currentTimeMillis();
+                            dialog.setVisible(true);
+                            CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {} (Seen warning for {}s)", crashReason.getClass().getSimpleName(), (System.currentTimeMillis() - showStartTime) / 1000.0);
                         }
                     } finally {
                         if (isHeadless) {

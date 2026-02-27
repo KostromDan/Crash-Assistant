@@ -204,6 +204,7 @@
   "gui.log_deletion.title": "Gestione log caricati ($LANG.gui.window_name$)",
   "gui.log_deletion.unselect_all": "Deseleziona tutti",
   "gui.logs_analyzer": "Analizzatore logs ($LANG.gui.window_name$)",
+  "gui.startup_warning_dialog_title": "Avviso all'avvio ($LANG.gui.window_name$)",
   "gui.menu.analysis": "Analisi",
   "gui.menu.analysis.azure_lib_addons_compatibility": "Compatibilità degli addon di AzureLib",
   "gui.menu.analysis.azure_lib_addons_compatibility.desc": "Identifica i mod che dipendono dalla mod AzureLib ma sono incompatibili con la tua versione attuale.\nAiuta a risolvere crash causati da tali disallineamenti di versione.",

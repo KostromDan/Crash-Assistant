@@ -13,6 +13,7 @@ public class KnownCrashReason {
     protected String message;
     protected int priority;
     protected String dontShowAgainKey = null;
+    protected String dontShowAgainCheckboxText = null;
     protected int customOkDelay = -1;
     protected HashSet<String> conflictingReasons = new HashSet<>();
     public static HashSet<KnownCrashReason> shownKnownCrashReasons = new HashSet<>();
@@ -85,6 +86,14 @@ public class KnownCrashReason {
 
     public void setDontShowAgainKey(String dontShowAgainKey) {
         this.dontShowAgainKey = dontShowAgainKey;
+    }
+
+    public String getDontShowAgainCheckboxText() {
+        return dontShowAgainCheckboxText;
+    }
+
+    public void setDontShowAgainCheckboxText(String dontShowAgainCheckboxText) {
+        this.dontShowAgainCheckboxText = dontShowAgainCheckboxText;
     }
 
     public int getOkDelay() {

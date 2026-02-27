@@ -12,6 +12,7 @@ public class ScriptWarning {
     // Configuration
     private int priority = 10000;
     private String dontShowAgainKey = null;
+    private String dontShowAgainCheckboxText = null;
     private int okDelay = 0; // seconds
 
     // Mod Actions
@@ -34,6 +35,11 @@ public class ScriptWarning {
 
     public ScriptWarning withDontShowAgain(String configKey) {
         this.dontShowAgainKey = configKey;
+        return this;
+    }
+
+    public ScriptWarning withCustomDontShowAgainCheckboxText(String checkboxText) {
+        this.dontShowAgainCheckboxText = checkboxText;
         return this;
     }
 
@@ -85,6 +91,10 @@ public class ScriptWarning {
 
     public String getDontShowAgainKey() {
         return dontShowAgainKey;
+    }
+
+    public String getDontShowAgainCheckboxText() {
+        return dontShowAgainCheckboxText;
     }
 
     public int getOkDelay() {

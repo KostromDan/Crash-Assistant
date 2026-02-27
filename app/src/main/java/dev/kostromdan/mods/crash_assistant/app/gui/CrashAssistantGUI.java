@@ -849,7 +849,8 @@ public class CrashAssistantGUI {
 
                                 JPanel bottomRow = new JPanel(new BorderLayout());
                                 if (dontShowAgainKey != null) {
-                                    JCheckBox dontShowBox = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+                                    String text = crashReason.getDontShowAgainCheckboxText();
+                                    JCheckBox dontShowBox = new JCheckBox(text != null ? text : LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
                                     String finalDontShowAgainKey = dontShowAgainKey;
                                     dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
                                     bottomRow.add(dontShowBox, BorderLayout.WEST);
@@ -890,7 +891,8 @@ public class CrashAssistantGUI {
 
                                 JPanel bottomRow = new JPanel(new BorderLayout());
                                 if (dontShowAgainKey != null) {
-                                    JCheckBox dontShowBox = new JCheckBox(LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+                                    String text = crashReason.getDontShowAgainCheckboxText();
+                                    JCheckBox dontShowBox = new JCheckBox(text != null ? text : LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
                                     String finalDontShowAgainKey = dontShowAgainKey;
                                     dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
                                     bottomRow.add(dontShowBox, BorderLayout.WEST);
@@ -1358,28 +1360,27 @@ public class CrashAssistantGUI {
         JEditorPane pane = new JEditorPane();
         pane.setEditable(false);
         pane.setContentType("text/html");
-        StringBuilder html = new StringBuilder();
-        html.append("<html>");
-        if (width != null) {
-            html.append("<body style='width:" + width + "px;'>");
+
+        String content = "<div " + (wrap ? "" : "style='white-space:nowrap;'") + ">" +
+                text.replaceAll("\n", "<br>") + "</div>";
+
+        pane.setText("<html><body>" + content + "</body></html>");
+
+        CrashAssistantApp.LOGGER.info("Width: " + width + "pane.getPreferredSize().width: " + pane.getPreferredSize().width);
+        if (width != null && pane.getPreferredSize().width - 180 > width) {
+            pane.setText("<html><body style='width:" + width + "px;'>" + content + "</body></html>");
         }
-        html.append("<div " + (wrap ? "" : "style='white-space:nowrap;'") + ">" + text.replaceAll("\n", "<br>") + "</div>");
-        if (width != null) {
-            html.append("</body>");
-        }
-        html.append("</html>");
-        pane.setText(html.toString());
 
         Font defaultFont = UIManager.getFont("Label.font");
         String bodyRule = "body { font-family: " + defaultFont.getFamily() + "; " +
                 "font-size: " + defaultFont.getSize() + "pt; }";
         ((HTMLDocument) pane.getDocument()).getStyleSheet().addRule(bodyRule);
 
-        pane.setEditable(false);
         pane.setOpaque(false);
         pane.setBackground(new JButton().getBackground());
         pane.addHyperlinkListener(getHyperlinkListener());
         pane.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         return pane;
     }
 

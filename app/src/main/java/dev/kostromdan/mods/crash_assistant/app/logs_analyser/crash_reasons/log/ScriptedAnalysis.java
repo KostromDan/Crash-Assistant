@@ -29,6 +29,7 @@ public class ScriptedAnalysis extends KnownCrashReason {
         super(logType != null ? logType : LogType.LOG, warning.getMessage(), new String[0]);
         this.priority = warning.getPriority();
         this.dontShowAgainKey = warning.getDontShowAgainKey();
+        this.dontShowAgainCheckboxText = warning.getDontShowAgainCheckboxText();
         this.customOkDelay = warning.getOkDelay();
 
         Mod mod = warning.getAffectedMod();

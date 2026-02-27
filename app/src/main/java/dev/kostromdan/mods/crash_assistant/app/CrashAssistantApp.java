@@ -54,6 +54,7 @@ public class CrashAssistantApp {
     public static String renderer = null;
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
+    public static boolean preventCrashAssistantWindow = false;
     public static long terminatedProcessesLocationEndTime = 0;
 
     @NoJexl
@@ -148,7 +149,6 @@ public class CrashAssistantApp {
         }
 
         FileUtils.removeTmpFiles(localFolder);
-        FileUtils.removeOldLogsFolder();
 
         WinEventCleaner.cleanOldWinEventFiles();
 
@@ -391,6 +391,9 @@ public class CrashAssistantApp {
         joinedWorldSuccessfully = ProcessSignalIO.exists("joined_world", Boot.parentPID);
         LOGGER.info("Joined world successfully: {}", joinedWorldSuccessfully);
 
+        preventCrashAssistantWindow = ProcessSignalIO.exists("prevent_crash_assistant_window", Boot.parentPID);
+        LOGGER.info("Prevent Crash Assistant Window: {}", preventCrashAssistantWindow);
+
         boolean stopFunctionFired = ProcessSignalIO.exists("normal_stop", Boot.parentPID);
         if (!stopFunctionFired) crashed = true;
         LOGGER.info("stop() function of Minecraft fired: {}", stopFunctionFired);
@@ -402,6 +405,8 @@ public class CrashAssistantApp {
         boolean emergencySaveFired = ProcessSignalIO.exists("emergency_save", Boot.parentPID);
         if (emergencySaveFired) crashed = true;
         LOGGER.info("emergencySave() function of Minecraft fired: {}", emergencySaveFired);
+
+        if (preventCrashAssistantWindow) crashed = false;
 
         LOGGER.info("isModpackCreator: {}", ModListDiff.isModpackCreator());
         LOGGER.info("isHelpLinkDefault: {}", PlatformHelp.isLinkDefault());

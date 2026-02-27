@@ -3,10 +3,13 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
+import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,6 +93,36 @@ public class ScriptedAnalysis extends KnownCrashReason {
                     }
                 });
             }
+        }
+
+        if (warning.isShowKillMinecraftButton()) {
+            String label = LanguageProvider.get("gui.kill_minecraft_button");
+            if (label.equals("gui.kill_minecraft_button")) label = "Kill Minecraft Process";
+
+            autoFixButtons.put(label, dialog -> {
+                try {
+                    long pid = Boot.parentPID;
+                    if (pid != -1 && ProcessHelper.isProcessAlive(pid)) {
+                        if (Boot.parentStarted != -1 && ProcessHelper.getProcessStartTime(pid) != Boot.parentStarted) {
+                            JOptionPane.showMessageDialog(dialog, LanguageProvider.get("gui.kill_minecraft_error"), "Error", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+                        boolean success = ProcessHelper.destroyProcessForcibly(pid);
+                        if (success) {
+                            JOptionPane.showMessageDialog(dialog, LanguageProvider.get("gui.kill_minecraft_success"), "Success", JOptionPane.INFORMATION_MESSAGE);
+                            ProcessSignalIO.postAsOtherProcess("prevent_crash_assistant_window", Boot.parentPID);
+                            dialog.dispose();
+                        } else {
+                            JOptionPane.showMessageDialog(dialog, LanguageProvider.get("gui.kill_minecraft_error"), "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(dialog, LanguageProvider.get("gui.kill_minecraft_error"), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (Exception e) {
+                    CrashAssistantApp.LOGGER.error("Failed to kill Minecraft process", e);
+                    JOptionPane.showMessageDialog(dialog, LanguageProvider.get("gui.kill_minecraft_error"), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
         }
     }
 

@@ -19,6 +19,7 @@ public class ScriptWarning {
     private boolean showRemoveButton = true;
     private boolean showDisableButton = true;
     private boolean showExplorerButton = true;
+    private boolean showKillMinecraftButton = false;
 
     public ScriptWarning(String message) {
         this.message = message;
@@ -67,6 +68,11 @@ public class ScriptWarning {
         return this;
     }
 
+    public ScriptWarning withKillMinecraftButton(boolean enable) {
+        this.showKillMinecraftButton = enable;
+        return this;
+    }
+
     // --- Getters ---
 
     public String getMessage() {
@@ -99,5 +105,9 @@ public class ScriptWarning {
     
     public boolean isShowExplorerButton() {
         return showExplorerButton;
+    }
+
+    public boolean isShowKillMinecraftButton() {
+        return showKillMinecraftButton;
     }
 }

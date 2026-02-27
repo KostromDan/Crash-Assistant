@@ -3,7 +3,6 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.common_config.config.ProblematicModsConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.IncompatibleMod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModDataParser;
@@ -166,7 +165,6 @@ public class JarInJarHelper {
 
             Process crashAssistantAppProcess = crashAssistantAppProcessBuilder.start();
             ChildProcessLogger.captureOutput(crashAssistantAppProcess);
-            ProblematicModsConfig.crashIfProblematicMod();
             JarInJarHelper.checkForIncompatibleMods(true);
             if (Startup.isMarkedForCrash()) {
                 LOGGER.error("Game crash requested by startup scripts.");

@@ -43,8 +43,8 @@ public class ScriptWarning {
     }
 
     /**
-     * Enables standard mod management buttons (Remove, Disable, Show in Explorer) 
-     * for the specified mod, similar to details in IncompatibleModsWarning.
+     * Enables standard mod management buttons (Remove, Disable, Show in Explorer)
+     * for the specified mod.
      * The OK/Close button is always present.
      */
     public ScriptWarning withModActions(Mod mod) {

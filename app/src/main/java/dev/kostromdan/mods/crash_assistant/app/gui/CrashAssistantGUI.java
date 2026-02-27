@@ -13,6 +13,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorG
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 import dev.kostromdan.mods.crash_assistant.app.gui.scripts_ide.ScriptsIDE;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ScriptedAnalysis;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
@@ -446,7 +447,6 @@ public class CrashAssistantGUI {
         controlPanel.updateModListInfo();
         showCrashAssistantDuplicatedWarning();
         showIncompatibleModsWarning();
-        IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         showTooManyChangesWarning();
         IntelChipBugWarning.showIfAffected(false);
         showEarlyIntegratedGPUWarning();
@@ -801,7 +801,9 @@ public class CrashAssistantGUI {
                                     "\n \n" + HtmlToMarkdown.convert(crashReasonMessage.getMessage()) + "\n \n");
                             crashReasonMessage.setShownWarn(true);
 
-                            JEditorPane messagePane = CrashAssistantGUI.getEditorPane(crashReasonMessage.getMessage(), crashReasonMessage.isCodexMessage());
+                            boolean isFromScripts = crashReason instanceof ScriptedAnalysis;
+
+                            JEditorPane messagePane = CrashAssistantGUI.getEditorPane(crashReasonMessage.getMessage(), crashReasonMessage.isCodexMessage() || isFromScripts, isFromScripts ? 600 : null);
 
                             LinkedHashMap<String, Consumer<JDialog>> autoFixButtons = crashReason.getAutoFixButtons();
 

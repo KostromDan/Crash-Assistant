@@ -13,6 +13,7 @@ public enum LogType {
     MOD_LIST,
     KUBE_JS,
     CRAFT_TWEAKER,
+    GROOVY,
     REI,
     CRASH_ASSISTANT,
     STARTUP_SCRIPTS

@@ -22,6 +22,7 @@ public class LogComparator implements Comparator<Log> {
             LogType.KUBE_JS,
             LogType.CRAFT_TWEAKER,
             LogType.REI,
+            LogType.GROOVY,
             LogType.CRASH_ASSISTANT,
             LogType.MOD_LIST,
             LogType.STARTUP_SCRIPTS

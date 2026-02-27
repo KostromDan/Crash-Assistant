@@ -370,6 +370,10 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.KUBE_JS, "KubeJS: startup.log", Paths.get("logs", "kubejs", "startup.log")));
 
         LogsList.addIfExistsAndModified(new Log(LogType.CRAFT_TWEAKER, Paths.get("logs", "crafttweaker.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.CRAFT_TWEAKER, Paths.get("crafttweaker.log")));
+
+        LogsList.addIfExistsAndModified(new Log(LogType.GROOVY, Paths.get("logs", "groovy.log")));
+
         LogsList.addIfExistsAndModified(new Log(LogType.REI, Paths.get("logs", "rei.log")));
         Path reiIssuesPath = Paths.get("logs", "rei-issues.log");
         try {

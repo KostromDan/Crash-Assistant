@@ -7,6 +7,10 @@ import java.util.Locale;
 import com.sun.management.OperatingSystemMXBean;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
+import org.apache.commons.jexl3.annotations.NoJexl;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public final class MemoryUtils {
     public static final long BYTES_IN_MEGABYTE = 1024L * 1024L;
     public static final long BYTES_IN_GIGABYTE = 1024L * 1024L * 1024L;
@@ -81,28 +85,57 @@ public final class MemoryUtils {
 
     /**
      * Returns total swap space (pagefile) size in bytes.
-     * On Windows, Java returns Commit Limit (RAM + Pagefile), so we calculate the actual Pagefile size.
+     * On Windows, we use JNA to get the actual Pagefile size.
+     * If JNA fails, we fall back to mathematical approximation (Commit Limit - RAM).
      *
      * @return total swap space size in bytes
      */
     public static long getSystemTotalSwapBytes() {
-        long rawSwap = OS_BEAN.getTotalSwapSpaceSize();
-
         if (PlatformHelp.isWindows()) {
-            long totalRam = OS_BEAN.getTotalPhysicalMemorySize();
-            return Math.max(0L, rawSwap - totalRam);
+            if (WindowsSwapHelper.isSupported()) {
+                return WindowsSwapHelper.getTotalSwap();
+            } else {
+                // Fallback logic if JNA fails on Windows
+                long rawSwap = OS_BEAN.getTotalSwapSpaceSize();
+                long totalRam = OS_BEAN.getTotalPhysicalMemorySize();
+                return Math.max(0L, rawSwap - totalRam);
+            }
         }
 
-        return rawSwap;
+        return OS_BEAN.getTotalSwapSpaceSize();
     }
 
     /**
      * Returns used swap space (pagefile) size in bytes.
-     * On Windows, Java returns Total Committed Memory, so we subtract used physical RAM to get used Pagefile.
+     * On Windows, we use JNA to get the actual Pagefile usage.
+     * If JNA fails, we fall back to mathematical approximation (Commit Charge - used RAM)
+     * and cap it at total swap to prevent anomalous readings.
      *
      * @return used swap space size in bytes
      */
     public static long getSystemUsedSwapBytes() {
+        if (PlatformHelp.isWindows()) {
+            if (WindowsSwapHelper.isSupported()) {
+                return WindowsSwapHelper.getUsedSwap();
+            } else {
+                // Fallback logic if JNA fails on Windows
+                long rawTotalSwap = OS_BEAN.getTotalSwapSpaceSize();
+                long rawFreeSwap = OS_BEAN.getFreeSwapSpaceSize();
+
+                if (rawTotalSwap == 0) return 0L;
+
+                long usedCommitCharge = rawTotalSwap - rawFreeSwap;
+                long totalRam = OS_BEAN.getTotalPhysicalMemorySize();
+                long freeRam = OS_BEAN.getFreePhysicalMemorySize();
+                long usedRam = totalRam - freeRam;
+
+                long calculatedUsedSwap = Math.max(0L, usedCommitCharge - usedRam);
+                long totalSwap = getSystemTotalSwapBytes();
+
+                return Math.min(totalSwap, calculatedUsedSwap);
+            }
+        }
+
         long rawTotalSwap = OS_BEAN.getTotalSwapSpaceSize();
         long rawFreeSwap = OS_BEAN.getFreeSwapSpaceSize();
 
@@ -110,17 +143,7 @@ public final class MemoryUtils {
             return 0L;
         }
 
-        long usedCommitCharge = rawTotalSwap - rawFreeSwap;
-
-        if (PlatformHelp.isWindows()) {
-            long totalRam = OS_BEAN.getTotalPhysicalMemorySize();
-            long freeRam = OS_BEAN.getFreePhysicalMemorySize();
-            long usedRam = totalRam - freeRam;
-
-            return Math.max(0L, usedCommitCharge - usedRam);
-        }
-
-        return usedCommitCharge;
+        return rawTotalSwap - rawFreeSwap;
     }
 
     /**
@@ -220,5 +243,44 @@ public final class MemoryUtils {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid memory size format: " + formattedSize, e);
         }
+    }
+
+    @NoJexl
+    public static void main(String[] args) {
+        Logger logger = LogManager.getLogger(MemoryUtils.class);
+
+        logger.info("JNA Supported (Windows check): {}", PlatformHelp.isWindows() ? WindowsSwapHelper.isSupported() : "N/A (Not Windows)");
+
+        logger.info("--- JVM Memory ---");
+        long jvmInit = getJvmInitialHeapBytes();
+        logger.info("getJvmInitialHeapBytes(): {} bytes ({})", jvmInit, formatMemorySize(jvmInit));
+
+        long jvmMax = getJvmMaxHeapBytes();
+        logger.info("getJvmMaxHeapBytes(): {} bytes ({})", jvmMax, formatMemorySize(jvmMax));
+
+        long jvmAllocated = getJvmAllocatedMemoryBytes();
+        logger.info("getJvmAllocatedMemoryBytes(): {} bytes ({})", jvmAllocated, formatMemorySize(jvmAllocated));
+
+        logger.info("--- System RAM ---");
+        long sysTotalMem = getSystemTotalMemoryBytes();
+        logger.info("getSystemTotalMemoryBytes(): {} bytes ({})", sysTotalMem, formatMemorySize(sysTotalMem));
+
+        long sysUsedMem = getSystemUsedMemoryBytes();
+        logger.info("getSystemUsedMemoryBytes(): {} bytes ({})", sysUsedMem, formatMemorySize(sysUsedMem));
+
+        long sysFreeMem = getSystemFreeMemoryBytes();
+        logger.info("getSystemFreeMemoryBytes(): {} bytes ({})", sysFreeMem, formatMemorySize(sysFreeMem));
+
+        logger.info("--- Swap/Pagefile ---");
+        long sysTotalSwap = getSystemTotalSwapBytes();
+        logger.info("getSystemTotalSwapBytes(): {} bytes ({})", sysTotalSwap, formatMemorySize(sysTotalSwap));
+
+        long sysUsedSwap = getSystemUsedSwapBytes();
+        logger.info("getSystemUsedSwapBytes(): {} bytes ({})", sysUsedSwap, formatMemorySize(sysUsedSwap));
+
+        long sysFreeSwap = getSystemFreeSwapBytes();
+        logger.info("getSystemFreeSwapBytes(): {} bytes ({})", sysFreeSwap, formatMemorySize(sysFreeSwap));
+
+        logger.info("=== Check finished ===");
     }
 }

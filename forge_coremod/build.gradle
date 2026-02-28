@@ -38,6 +38,10 @@ shadowJar {
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
     relocate 'org.apache.commons.jexl3', 'dev.kostromdan.mods.crash_assistant.commons.jexl3'
     relocate 'org.apache.commons.logging', 'dev.kostromdan.mods.crash_assistant.commons.logging'
+
+    exclude "META-INF/maven/**"
+    exclude "META-INF/LICENSE.txt"
+    exclude "META-INF/NOTICE.txt"
 }
 
 tasks.withType(Jar).configureEach {

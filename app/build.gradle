@@ -88,6 +88,7 @@ shadowJar {
         exclude(dependency('net.java.dev.jna:.*'))
         exclude(dependency('org.lwjgl:.*'))
         exclude(project(':common_config'))
+        exclude("META-INF/LICENSE")
     }
 }
 

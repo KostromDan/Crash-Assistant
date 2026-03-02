@@ -13,6 +13,7 @@
             - You can add buttons to warnings for mods removal (like in `problematic_mods_config.json`).
         - Analyze Minecraft or JVM arguments and if some are causing problems warn users about them.
         - Analyze How much RAM is allocated and add warnings about it.
+            - By default, example script will warn about over allocation of ram (more than system can provide).
     - If you want to implement something via scripts you don't know how too, please contact us. We will either tell you
       how to or implement new features.
 - `problematic_mods_config.json` functionality was removed, if current config exists it will be automatically
@@ -40,6 +41,7 @@
 - Adjusted UUID verification behavior; a mismatch between Mojang's servers and the local username is now treated as a
   recent username change rather than immediate offline mode, reducing false positives.
 - Added KubeJS class filter to prevent usage of JEXL / Crash Assistant classes from KubeJS.
+- Added `groovy.log` and legacy `crafttweaker.log` logs detection.
 
 1.10.30:
 

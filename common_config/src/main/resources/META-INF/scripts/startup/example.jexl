@@ -1,45 +1,60 @@
+// This is an example script for Crash Assistant.
+// It designed to demonstrate abilities of startup scripts and by default warn about over allocation of ram (more than system can provide).
+// With startup scripts you can do including but not limited:
+//     - Analyse ram alloction.
+//     - Analyse jvm / minecraft args.
+//     - Analyse modlist for incompatible / removed neccery mods.
+// Full documentation and more examples: https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Scripting%20Support/Getting%20Started.md
+
+
 // --- Configuration Area ---
 var MIN_CRITICAL_GB = 4.0;
 var MIN_RECOMMENDED_GB = 8.0;
 var MAX_RECOMMENDED_GB = 12.0;
 // --------------------------
 
-// Most options are commented out. Please uncomment them to enable them
+// Most options are commented out. Please uncomment them to enable them.
 
 var xmxBytes = MemoryUtils.getJvmMaxHeapBytes();
 var xmxGB = MemoryUtils.bytesToGigabytes(xmxBytes);
 var formattedXmx = MemoryUtils.formatMemorySize(xmxBytes);
 
 // 1. Critical Minimum Check
-if (xmxGB < MIN_CRITICAL_GB) {
-    Startup.addBootWarning("You have allocated only <strong>" + formattedXmx + "</strong>.\n" +
-        "The modpack will <strong>NOT start</strong> and will likely freeze during the loading process.\n" +
-        "Please allocate at least <strong>" + MIN_RECOMMENDED_GB + " GB</strong> in your launcher settings.");
-}
+//if (xmxGB < MIN_CRITICAL_GB) {
+//    var msg = LanguageProvider.get("custom.critical_min");
+//    msg = msg.replace("$XMX$", formattedXmx);
+//    msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
+//    Startup.addBootWarning(msg);
+//}
+
 // 2. Minimum Recommended Check
-else if (xmxGB < MIN_RECOMMENDED_GB) {
-    var lowMemWarn = Startup.addBootWarning("You have allocated <strong>" + formattedXmx + "</strong>.\n" +
-        "This modpack needs a minimum of <strong>" + MIN_RECOMMENDED_GB + " GB</strong> to run stable.\n" +
-        "Please allocate more memory to avoid crashes and low FPS.");
-    lowMemWarn.withDontShowAgain("low_memory_check");
-}
+//else if (xmxGB < MIN_RECOMMENDED_GB) {
+//    var msg = LanguageProvider.get("custom.min_recommended");
+//    msg = msg.replace("$XMX$", formattedXmx);
+//    msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
+//    var lowMemWarn = Startup.addBootWarning(msg);
+//    lowMemWarn.withDontShowAgain("low_memory_check");
+//}
 
 // 3. Excessive Allocation Check
 // Warning starts exactly when Xmx exceeds MAX_RECOMMENDED_GB.
-if (xmxGB > MAX_RECOMMENDED_GB) {
-    var excessiveMemWarn = Startup.addBootWarning("You have allocated <strong>" + formattedXmx + "</strong>.\n" +
-        "This will <strong>not work well</strong> and you should expect <strong>significant lag spikes</strong>.\n" +
-        "This modpack will never use more than <strong>" + MAX_RECOMMENDED_GB + " GB</strong>. It is highly recommended to reduce allocation to <strong>8-12 GB</strong>.");
-    excessiveMemWarn.withDontShowAgain("excessive_memory_check");
-}
+//if (xmxGB > MAX_RECOMMENDED_GB) {
+//    var msg = LanguageProvider.get("custom.excessive_allocation");
+//    msg = msg.replace("$XMX$", formattedXmx);
+//    msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
+//    msg = msg.replace("$MAX_RECOMMENDED$", MAX_RECOMMENDED_GB.toString());
+//    var excessiveMemWarn = Startup.addBootWarning(msg);
+//    excessiveMemWarn.withDontShowAgain("excessive_memory_check");
+//}
 
 // 4. Over-Allocation vs Total Capacity Check (Hardware Limit)
 var totalSystemCapacity = MemoryUtils.getSystemTotalMemoryBytes() + MemoryUtils.getSystemTotalSwapBytes();
 var exceedsTotalSystemCapacity = xmxBytes > totalSystemCapacity;
 if (exceedsTotalSystemCapacity) {
-    Startup.addBootWarning("<strong>CRITICAL</strong>: You have allocated <strong>" + formattedXmx +
-        "</strong> to the game, which exceeds your total available system memory (<strong>" + MemoryUtils.formatMemorySize(totalSystemCapacity) +
-        "</strong> including Swap).\n" + "The game <strong>WILL crash</strong>. Please reduce your Xmx setting.");
+    var msg = LanguageProvider.get("custom.over_allocation");
+    msg = msg.replace("$XMX$", formattedXmx);
+    msg = msg.replace("$TOTAL_CAPACITY$", MemoryUtils.formatMemorySize(totalSystemCapacity));
+    Startup.addBootWarning(msg);
 }
 
 // 5. High System Load Check (Current Capacity)
@@ -48,25 +63,26 @@ var jvmAllocated = MemoryUtils.getJvmAllocatedMemoryBytes();
 var stillNeeded = xmxBytes - jvmAllocated;
 
 if (!exceedsTotalSystemCapacity && xmxBytes > 0 && stillNeeded > 0 && systemAvailable < stillNeeded) {
-    var highLoadWarn = Startup.addBootWarning("You have allocated <strong>" + formattedXmx + "</strong>, but it seems your memory is <strong>heavily loaded</strong> by other applications.\n" +
-        "The amount of available memory (<strong>" + MemoryUtils.formatMemorySize(systemAvailable) + "</strong>) is less than what Minecraft might still need to reach its limit.\n" +
-        "Please <strong>close unnecessary applications</strong> (like browsers or other games) to prevent a crash.");
+    var msg = LanguageProvider.get("custom.high_system_load");
+    msg = msg.replace("$XMX$", formattedXmx);
+    msg = msg.replace("$AVAILABLE$", MemoryUtils.formatMemorySize(systemAvailable));
+    var highLoadWarn = Startup.addBootWarning(msg);
     highLoadWarn.withDontShowAgain("high_system_load_check");
 }
 
 // 6. Windows Swap/Pagefile Check
-if (PlatformHelp.isWindows() && MemoryUtils.getSystemTotalSwapBytes() == 0) {
-    var noSwapWarn = Startup.addBootWarning("<strong>WARNING</strong>: You have allocated <strong>" + formattedXmx + "</strong>, but Windows Swap (Pagefile) is <strong>disabled</strong>.\n" +
-        "Java requires active swap space to function correctly on Windows, even if you have enough free RAM.\n" +
-        "The game is likely to <strong>crash</strong>. Please enable the Windows Pagefile in System Settings.");
-    noSwapWarn.withDontShowAgain("windows_no_swap_check");
-}
+//if (PlatformHelp.isWindows() && MemoryUtils.getSystemTotalSwapBytes() == 0) {
+//    var msg = LanguageProvider.get("custom.windows_no_swap");
+//    msg = msg.replace("$XMX$", formattedXmx);
+//    var noSwapWarn = Startup.addBootWarning(msg);
+//    noSwapWarn.withDontShowAgain("windows_no_swap_check");
+//}
 
 // 7. Large Heap / ZGC Advice
-var jvmArgs = ArgUtils.getSafeJvmArgs();
-if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
-    var zgcWarn = Startup.addBootWarning("You have allocated a <strong>large amount</strong> of memory (<strong>" + formattedXmx + "</strong>).\n" +
-        "To avoid long garbage collection pauses (<strong>lag spikes</strong>), it is recommended to add the '<strong>-XX:+UseZGC</strong>' " +
-        "argument to your JVM settings.");
-    zgcWarn.withDontShowAgain("zgc_recommendation_check");
-}
+//var jvmArgs = ArgUtils.getSafeJvmArgs();
+//if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
+//    var msg = LanguageProvider.get("custom.large_heap_zgc");
+//    msg = msg.replace("$XMX$", formattedXmx);
+//    var zgcWarn = Startup.addBootWarning(msg);
+//    zgcWarn.withDontShowAgain("zgc_recommendation_check");
+//}

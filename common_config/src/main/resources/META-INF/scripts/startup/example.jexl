@@ -35,7 +35,8 @@ if (xmxGB > MAX_RECOMMENDED_GB) {
 
 // 4. Over-Allocation vs Total Capacity Check (Hardware Limit)
 var totalSystemCapacity = MemoryUtils.getSystemTotalMemoryBytes() + MemoryUtils.getSystemTotalSwapBytes();
-if (xmxBytes > totalSystemCapacity) {
+var exceedsTotalSystemCapacity = xmxBytes > totalSystemCapacity;
+if (exceedsTotalSystemCapacity) {
     Startup.addBootWarning("<strong>CRITICAL</strong>: You have allocated <strong>" + formattedXmx +
         "</strong> to the game, which exceeds your total available system memory (<strong>" + MemoryUtils.formatMemorySize(totalSystemCapacity) +
         "</strong> including Swap).\n" + "The game <strong>WILL crash</strong>. Please reduce your Xmx setting.");
@@ -46,7 +47,7 @@ var systemAvailable = MemoryUtils.getSystemFreeMemoryBytes() + MemoryUtils.getSy
 var jvmAllocated = MemoryUtils.getJvmAllocatedMemoryBytes();
 var stillNeeded = xmxBytes - jvmAllocated;
 
-if (xmxBytes > 0 && stillNeeded > 0 && systemAvailable < stillNeeded) {
+if (!exceedsTotalSystemCapacity && xmxBytes > 0 && stillNeeded > 0 && systemAvailable < stillNeeded) {
     var highLoadWarn = Startup.addBootWarning("You have allocated <strong>" + formattedXmx + "</strong>, but it seems your memory is <strong>heavily loaded</strong> by other applications.\n" +
         "The amount of available memory (<strong>" + MemoryUtils.formatMemorySize(systemAvailable) + "</strong>) is less than what Minecraft might still need to reach its limit.\n" +
         "Please <strong>close unnecessary applications</strong> (like browsers or other games) to prevent a crash.");
@@ -63,7 +64,7 @@ if (PlatformHelp.isWindows() && MemoryUtils.getSystemTotalSwapBytes() == 0) {
 
 // 7. Large Heap / ZGC Advice
 var jvmArgs = ArgUtils.getSafeJvmArgs();
-if (xmxGB > 10.0 && !jvmArgs.contains("-XX:+UseZGC")) {
+if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
     var zgcWarn = Startup.addBootWarning("You have allocated a <strong>large amount</strong> of memory (<strong>" + formattedXmx + "</strong>).\n" +
         "To avoid long garbage collection pauses (<strong>lag spikes</strong>), it is recommended to add the '<strong>-XX:+UseZGC</strong>' " +
         "argument to your JVM settings.");

@@ -1366,7 +1366,6 @@ public class CrashAssistantGUI {
 
         pane.setText("<html><body>" + content + "</body></html>");
 
-        CrashAssistantApp.LOGGER.info("Width: " + width + "pane.getPreferredSize().width: " + pane.getPreferredSize().width);
         if (width != null && pane.getPreferredSize().width - 180 > width) {
             pane.setText("<html><body style='width:" + width + "px;'>" + content + "</body></html>");
         }

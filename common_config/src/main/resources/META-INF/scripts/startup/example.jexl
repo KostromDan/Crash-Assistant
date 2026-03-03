@@ -26,7 +26,8 @@ if (xmxGB < MIN_CRITICAL_GB) {
     var msg = LanguageProvider.get("custom.critical_min");
     msg = msg.replace("$XMX$", formattedXmx);
     msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
-    Startup.addBootWarning(msg);
+    var warn = Startup.addBootWarning(msg);
+    warn.withMemoryAllocationGuide();
 }
 
 // 2. Minimum Recommended Check
@@ -36,6 +37,7 @@ else if (xmxGB < MIN_RECOMMENDED_GB) {
     msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
     var lowMemWarn = Startup.addBootWarning(msg);
     lowMemWarn.withDontShowAgain("low_memory_check");
+    lowMemWarn.withMemoryAllocationGuide();
 }
 
 // 3. Excessive Allocation Check
@@ -47,6 +49,7 @@ if (xmxGB > MAX_RECOMMENDED_GB) {
     msg = msg.replace("$MAX_RECOMMENDED$", MAX_RECOMMENDED_GB.toString());
     var excessiveMemWarn = Startup.addBootWarning(msg);
     excessiveMemWarn.withDontShowAgain("excessive_memory_check");
+    excessiveMemWarn.withMemoryAllocationGuide();
 }
 
 // 4. Over-Allocation vs Total Capacity Check (Hardware Limit)
@@ -56,7 +59,8 @@ if (exceedsTotalSystemCapacity) {
     var msg = LanguageProvider.get("custom.over_allocation");
     msg = msg.replace("$XMX$", formattedXmx);
     msg = msg.replace("$TOTAL_CAPACITY$", MemoryUtils.formatMemorySize(totalSystemCapacity));
-    Startup.addBootWarning(msg);
+    var warn = Startup.addBootWarning(msg);
+    warn.withMemoryAllocationGuide();
 }
 
 // 5. High System Load Check (Current Capacity)
@@ -70,6 +74,7 @@ if (!exceedsTotalSystemCapacity && xmxBytes > 0 && stillNeeded > 0 && systemAvai
     msg = msg.replace("$AVAILABLE$", MemoryUtils.formatMemorySize(systemAvailable));
     var highLoadWarn = Startup.addBootWarning(msg);
     highLoadWarn.withDontShowAgain("high_system_load_check");
+    highLoadWarn.withMemoryAllocationGuide();
 }
 
 // 6. Windows Swap/Pagefile Check
@@ -78,6 +83,7 @@ if (PlatformHelp.isWindows() && MemoryUtils.getSystemTotalSwapBytes() == 0) {
     msg = msg.replace("$XMX$", formattedXmx);
     var noSwapWarn = Startup.addBootWarning(msg);
     noSwapWarn.withDontShowAgain("windows_no_swap_check");
+    noSwapWarn.withMemoryAllocationGuide();
 }
 
 // 7. Large Heap / ZGC Advice
@@ -88,6 +94,7 @@ if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
     msg = msg.replace("$XMX$", formattedXmx);
     var zgcWarn = Startup.addBootWarning(msg);
     zgcWarn.withDontShowAgain("zgc_recommendation_check");
+    zgcWarn.withJvmArgsGuide();
 }
 
 // 8. Incompatible mods check / modlist amalysis

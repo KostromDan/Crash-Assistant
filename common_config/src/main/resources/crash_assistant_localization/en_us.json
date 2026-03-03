@@ -170,6 +170,8 @@
   "gui.files_remover.select_first_warning_body": "Select a file(s) first!",
   "gui.files_remover.select_first_warning_title": "Warning",
   "gui.files_remover.title": "Files Remover ($LANG.gui.window_name$)",
+  "gui.guide.jvm_args": "How to manage JVM arguments?",
+  "gui.guide.memory_allocation": "How to manage RAM allocation?",
   "gui.incompatible_mod": "Incompatible Mod Found ($LANG.gui.window_name$)",
   "gui.integrated_gpu": "Integrated GPU Warning ($LANG.gui.window_name$)",
   "gui.integrated_gpu_autofix_button": "Auto-Fix",

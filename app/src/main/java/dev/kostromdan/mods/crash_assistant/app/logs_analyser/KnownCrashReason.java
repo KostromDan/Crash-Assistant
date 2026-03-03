@@ -104,6 +104,31 @@ public class KnownCrashReason {
         this.customOkDelay = okDelay;
     }
 
+    public KnownCrashReason addGuideButton(String buttonText, String link) {
+        autoFixButtons.put(buttonText, dialog -> {
+            try {
+                dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel.validateIsDomainTrustedAndOpenInBrowser(link);
+            } catch (Exception e) {
+                dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp.LOGGER.error("Failed to open guide link: " + link, e);
+            }
+        });
+        return this;
+    }
+
+    public KnownCrashReason withMemoryAllocationGuide() {
+        return addGuideButton(
+                dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider.get("gui.guide.memory_allocation"),
+                dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider.RAM_ALLOCATION_GUIDE.getLink()
+        );
+    }
+
+    public KnownCrashReason withJvmArgsGuide() {
+        return addGuideButton(
+                dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider.get("gui.guide.jvm_args"),
+                dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider.JVM_ARGS_GUIDE.getLink()
+        );
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

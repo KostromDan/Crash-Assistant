@@ -125,6 +125,18 @@ public class ScriptedAnalysis extends KnownCrashReason {
                 }
             });
         }
+
+        for (String[] guide : warning.getGuideButtons()) {
+            String label = guide[0];
+            String link = guide[1];
+            autoFixButtons.put(label, dialog -> {
+                try {
+                    dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel.validateIsDomainTrustedAndOpenInBrowser(link);
+                } catch (Exception e) {
+                    dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp.LOGGER.error("Failed to open guide link: " + link, e);
+                }
+            });
+        }
     }
 
 

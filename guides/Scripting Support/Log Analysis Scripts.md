@@ -58,6 +58,10 @@ The object returned by `Analysis.addWarning(…)` allows method chaining to conf
 * `withRemoveButton(boolean enable)`: Explicitly toggles the "Remove" button (requires `withModActions` context).
 * `withDisableButton(boolean enable)`: Explicitly toggles the "Disable" button.
 * `withExplorerButton(boolean enable)`: Explicitly toggles the "Show in Explorer" button.
+* `withKillMinecraftButton(boolean enable)`: Adds a button allowing the user to forcefully terminate the Minecraft process.
+* `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser. Checks for trusted domains.
+* `withMemoryAllocationGuide()`: Adds a pre-configured guide button explaining how to manage RAM allocation.
+* `withJvmArgsGuide()`: Adds a pre-configured guide button explaining how to manage JVM arguments.
 
 ---
 

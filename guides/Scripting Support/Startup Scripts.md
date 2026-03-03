@@ -21,6 +21,9 @@ Startup scripts execute synchronously at the absolute beginning of the Minecraft
 * `withModActions(Mod mod)`: Renders functional contextual action buttons (Remove, Disable, Show in Explorer) targeting the passed `Mod`.
   * Specific action toggles: `withRemoveButton(boolean)`, `withDisableButton(boolean)`, `withExplorerButton(boolean)`.
 * `withKillMinecraftButton(boolean enable)`: Adds a button allowing the user to forcefully terminate the Minecraft process.
+* `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser. Checks for trusted domains.
+* `withMemoryAllocationGuide()`: Adds a pre-configured guide button explaining how to manage RAM allocation.
+* `withJvmArgsGuide()`: Adds a pre-configured guide button explaining how to manage JVM arguments.
 
 ### Hardware Inspection (`MemoryUtils`)
 * `MemoryUtils.getJvmInitialHeapBytes()`: Initial JVM heap size (`-Xms`) in bytes.

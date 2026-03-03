@@ -4,7 +4,7 @@ To change the amount of RAM allocated to a specific instance in Prism Launcher:
 
 1. Open **Prism Launcher** and select the instance you want to modify.
 2. Click the **Edit** button in the right-side menu.
-<img width="1259" height="1023" alt="image" src="https://github.com/user-attachments/assets/bf4c3d8a-30af-40f9-9037-7af10648942b" />
+<img width="1259" height="1023" alt="image" src="https://github.com/user-attachments/assets/a9da94c7-8bfa-4ab2-a3e4-a5550da8f0ff" />
 
 3. In the new window, select the **Settings** tab from the left sidebar.
 4. Check the **Memory** box to enable custom allocation.

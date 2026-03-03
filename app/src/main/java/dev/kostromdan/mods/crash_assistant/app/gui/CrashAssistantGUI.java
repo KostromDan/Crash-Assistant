@@ -819,6 +819,15 @@ public class CrashAssistantGUI {
                             boolean alreadyShown = Objects.equals(CrashAssistantLocalConfig.get(configKey), true);
 
                             JDialog dialog;
+                            JCheckBox dontShowBoxRef = null;
+                            if (dontShowAgainKey != null) {
+                                String text = crashReason.getDontShowAgainCheckboxText();
+                                dontShowBoxRef = new JCheckBox(text != null ? text : LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+                                String finalDontShowAgainKey = dontShowAgainKey;
+                                JCheckBox finalBox = dontShowBoxRef;
+                                dontShowBoxRef.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, finalBox.isSelected()));
+                            }
+
                             if (!autoFixButtons.isEmpty()) {
                                 JPanel autoFixPanel = new JPanel(new GridBagLayout());
                                 GridBagConstraints gbc = new GridBagConstraints();
@@ -848,12 +857,8 @@ public class CrashAssistantGUI {
                                 southContainer.add(autoFixPanel, BorderLayout.CENTER);
 
                                 JPanel bottomRow = new JPanel(new BorderLayout());
-                                if (dontShowAgainKey != null) {
-                                    String text = crashReason.getDontShowAgainCheckboxText();
-                                    JCheckBox dontShowBox = new JCheckBox(text != null ? text : LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
-                                    String finalDontShowAgainKey = dontShowAgainKey;
-                                    dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
-                                    bottomRow.add(dontShowBox, BorderLayout.WEST);
+                                if (dontShowBoxRef != null) {
+                                    bottomRow.add(dontShowBoxRef, BorderLayout.WEST);
                                 }
                                 JPanel okPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
                                 okPanel.add(okButton);
@@ -890,12 +895,8 @@ public class CrashAssistantGUI {
                                 panel.add(messagePane, BorderLayout.CENTER);
 
                                 JPanel bottomRow = new JPanel(new BorderLayout());
-                                if (dontShowAgainKey != null) {
-                                    String text = crashReason.getDontShowAgainCheckboxText();
-                                    JCheckBox dontShowBox = new JCheckBox(text != null ? text : LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
-                                    String finalDontShowAgainKey = dontShowAgainKey;
-                                    dontShowBox.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, dontShowBox.isSelected()));
-                                    bottomRow.add(dontShowBox, BorderLayout.WEST);
+                                if (dontShowBoxRef != null) {
+                                    bottomRow.add(dontShowBoxRef, BorderLayout.WEST);
                                 }
                                 JPanel okPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
                                 okPanel.add(okButton);
@@ -927,14 +928,26 @@ public class CrashAssistantGUI {
 
                                 if (delay > 0) {
                                     okButton.setEnabled(false);
+                                    if (dontShowBoxRef != null) dontShowBoxRef.setEnabled(false);
+                                    dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+                                    
                                     final int[] secondsLeft = {delay};
+                                    final int initialDelay = delay;
                                     okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
                                     javax.swing.Timer timer = new javax.swing.Timer(1000, null);
+                                    JCheckBox finalDontShowBox = dontShowBoxRef;
+                                    JDialog finalDialog1 = dialog;
                                     timer.addActionListener(e -> {
                                         secondsLeft[0]--;
+                                        int elapsed = initialDelay - secondsLeft[0];
+                                        if (elapsed >= 5 && finalDialog1.getDefaultCloseOperation() == JDialog.DO_NOTHING_ON_CLOSE) {
+                                            finalDialog1.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                                        }
                                         if (secondsLeft[0] <= 0) {
                                             okButton.setText(LanguageProvider.get("gui.ok"));
                                             okButton.setEnabled(true);
+                                            if (finalDontShowBox != null) finalDontShowBox.setEnabled(true);
+                                            finalDialog1.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
                                             timer.stop();
                                         } else {
                                             okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");

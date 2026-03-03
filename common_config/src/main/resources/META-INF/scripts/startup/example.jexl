@@ -7,7 +7,9 @@
 // Full documentation and more examples: https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Scripting%20Support/Getting%20Started.md
 
 
-// --- Configuration Area ---
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;// --- Configuration Area ---
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Startup;
+
 var MIN_CRITICAL_GB = 4.0;
 var MIN_RECOMMENDED_GB = 8.0;
 var MAX_RECOMMENDED_GB = 12.0;
@@ -20,32 +22,32 @@ var xmxGB = MemoryUtils.bytesToGigabytes(xmxBytes);
 var formattedXmx = MemoryUtils.formatMemorySize(xmxBytes);
 
 // 1. Critical Minimum Check
-//if (xmxGB < MIN_CRITICAL_GB) {
-//    var msg = LanguageProvider.get("custom.critical_min");
-//    msg = msg.replace("$XMX$", formattedXmx);
-//    msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
-//    Startup.addBootWarning(msg);
-//}
+if (xmxGB < MIN_CRITICAL_GB) {
+    var msg = LanguageProvider.get("custom.critical_min");
+    msg = msg.replace("$XMX$", formattedXmx);
+    msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
+    Startup.addBootWarning(msg);
+}
 
 // 2. Minimum Recommended Check
-//else if (xmxGB < MIN_RECOMMENDED_GB) {
-//    var msg = LanguageProvider.get("custom.min_recommended");
-//    msg = msg.replace("$XMX$", formattedXmx);
-//    msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
-//    var lowMemWarn = Startup.addBootWarning(msg);
-//    lowMemWarn.withDontShowAgain("low_memory_check");
-//}
+else if (xmxGB < MIN_RECOMMENDED_GB) {
+    var msg = LanguageProvider.get("custom.min_recommended");
+    msg = msg.replace("$XMX$", formattedXmx);
+    msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
+    var lowMemWarn = Startup.addBootWarning(msg);
+    lowMemWarn.withDontShowAgain("low_memory_check");
+}
 
 // 3. Excessive Allocation Check
 // Warning starts exactly when Xmx exceeds MAX_RECOMMENDED_GB.
-//if (xmxGB > MAX_RECOMMENDED_GB) {
-//    var msg = LanguageProvider.get("custom.excessive_allocation");
-//    msg = msg.replace("$XMX$", formattedXmx);
-//    msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
-//    msg = msg.replace("$MAX_RECOMMENDED$", MAX_RECOMMENDED_GB.toString());
-//    var excessiveMemWarn = Startup.addBootWarning(msg);
-//    excessiveMemWarn.withDontShowAgain("excessive_memory_check");
-//}
+if (xmxGB > MAX_RECOMMENDED_GB) {
+    var msg = LanguageProvider.get("custom.excessive_allocation");
+    msg = msg.replace("$XMX$", formattedXmx);
+    msg = msg.replace("$MIN_RECOMMENDED$", MIN_RECOMMENDED_GB.toString());
+    msg = msg.replace("$MAX_RECOMMENDED$", MAX_RECOMMENDED_GB.toString());
+    var excessiveMemWarn = Startup.addBootWarning(msg);
+    excessiveMemWarn.withDontShowAgain("excessive_memory_check");
+}
 
 // 4. Over-Allocation vs Total Capacity Check (Hardware Limit)
 var totalSystemCapacity = MemoryUtils.getSystemTotalMemoryBytes() + MemoryUtils.getSystemTotalSwapBytes();
@@ -71,18 +73,63 @@ if (!exceedsTotalSystemCapacity && xmxBytes > 0 && stillNeeded > 0 && systemAvai
 }
 
 // 6. Windows Swap/Pagefile Check
-//if (PlatformHelp.isWindows() && MemoryUtils.getSystemTotalSwapBytes() == 0) {
-//    var msg = LanguageProvider.get("custom.windows_no_swap");
-//    msg = msg.replace("$XMX$", formattedXmx);
-//    var noSwapWarn = Startup.addBootWarning(msg);
-//    noSwapWarn.withDontShowAgain("windows_no_swap_check");
-//}
+if (PlatformHelp.isWindows() && MemoryUtils.getSystemTotalSwapBytes() == 0) {
+    var msg = LanguageProvider.get("custom.windows_no_swap");
+    msg = msg.replace("$XMX$", formattedXmx);
+    var noSwapWarn = Startup.addBootWarning(msg);
+    noSwapWarn.withDontShowAgain("windows_no_swap_check");
+}
 
 // 7. Large Heap / ZGC Advice
-//var jvmArgs = ArgUtils.getSafeJvmArgs();
-//if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
-//    var msg = LanguageProvider.get("custom.large_heap_zgc");
-//    msg = msg.replace("$XMX$", formattedXmx);
-//    var zgcWarn = Startup.addBootWarning(msg);
-//    zgcWarn.withDontShowAgain("zgc_recommendation_check");
-//}
+var jvmArgs = ArgUtils.getSafeJvmArgs();
+var launchArgs = ArgUtils.getSafeLaunchArgs();
+if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
+    var msg = LanguageProvider.get("custom.large_heap_zgc");
+    msg = msg.replace("$XMX$", formattedXmx);
+    var zgcWarn = Startup.addBootWarning(msg);
+    zgcWarn.withDontShowAgain("zgc_recommendation_check");
+}
+
+// 8. Incompatible mods check / modlist amalysis
+var allMods = ModListUtils.getCurrentModList(true);
+var mods = allMods.stream().toMap(m -> m.modId, m -> m);
+
+// 8.1. Hard incompatibilty.
+var some_mod = mods.get("some_mod_id");
+if (some_mod != null) {
+    var warn = Startup.addCrashWarning("Some mod (<strong>" + some_mod.jarName + "</strong>) is not compatible with this modpack!\n" +
+        "Ussage of it corrupting your worlds, remove mod to continue!");
+    warn.withModActions(some_mod);
+    Startup.markForCrash();
+}
+
+// 8.2. Neccecry dependecy was removed.
+var some_neccery_mod = mods.get("some_neccery_mod_id");
+if (some_neccery_mod == null) {
+    var warn = Startup.addCrashWarning("Some neccery mod was removed.\n" +
+        "Without it modpack won't work. Return mod to continue.");
+    Startup.markForCrash();
+}
+
+// 8.3. Hard incompatibilty, but with a way to bypass.
+var some_mod_2 = mods.get("some_mod_id_2");
+var some_mod_2_dont_show_again_key = "some_mod_id_2_dont_show_again";
+// If user cliucked DontShowAgain, CrashAssistantLocalConfig will have `dont_show_again_key`, so it won't crash again after clicking checkbox.
+if (some_mod_2 != null && !Objects.equals(CrashAssistantLocalConfig.get(some_mod_2_dont_show_again_key), true)) {
+    var warn = Startup.addCrashWarning("Some mod (<strong>" + some_mod_2.jarName + "</strong>) is not compatible with this modpack!\n" +
+        "Ussage of it corrupting your worlds! You will recive no support!");
+    warn.withModActions(some_mod_2);
+    warn.withDontShowAgain(some_mod_2_dont_show_again_key);
+    warn.withCustomDontShowAgainCheckboxText("I understand the consequences, please let me launch the game.");
+    warn.withOkDelay(15);
+    Startup.markForCrash();
+}
+
+// 8.4. Just startup warn in case of some mod detected, no crash.
+var some_mod_3 = mods.get("some_mod_id_3");
+if (some_mod_3 != null) {
+    var warn = Startup.addBootWarning("Some mod (<strong>" + some_mod_3.jarName + "</strong>) detected.\n" +
+        "Be aware that it will havily increase ram usage, even if functionality is not used.");
+    warn.withModActions(some_mod_3);
+    warn.withDontShowAgain("some_mod_3");
+}

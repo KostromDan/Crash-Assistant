@@ -73,17 +73,14 @@ The startup scripts are expected to be debugged by a launching minecraft process
 Compares explicit JVM Heap configuration arguments to the physical limitations of the host machine hardware.
 
 ```java
-// Retrieve limits using MemoryUtils
 var xmxBytes = MemoryUtils.getJvmMaxHeapBytes();
 var totalSystemCapacity = MemoryUtils.getSystemTotalMemoryBytes() + MemoryUtils.getSystemTotalSwapBytes();
 
-// Check if JVM limit exceeds the physical limits of the OS environment
 if (xmxBytes > totalSystemCapacity) {
     var msg = "You've allocated " + MemoryUtils.formatMemorySize(xmxBytes) + 
               ", but your system only has " + 
               MemoryUtils.formatMemorySize(totalSystemCapacity) + " available!";
     
-    // Display boot warning (non-fatal) and add "Don't show again" option
     var warn = Startup.addBootWarning(msg);
     warn.withDontShowAgain("ram_over_allocation");
     warn.withMemoryAllocationGuide();
@@ -94,11 +91,9 @@ if (xmxBytes > totalSystemCapacity) {
 Warns users requesting bloated JVM arguments without appropriate Garbage Collector optimizations.
 
 ```java
-// Convert JVM Xmx constraint into readable GB format
 var xmxGB = MemoryUtils.bytesToGigabytes(MemoryUtils.getJvmMaxHeapBytes());
 var jvmArgs = ArgUtils.getSafeJvmArgs();
 
-// We determine that anything mapped > 12 GB requires ZGC or performance decreases inherently
 if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
     var warn = Startup.addBootWarning("For heap sizes over 12GB, we heavily advise adding -XX:+UseZGC to JVM arguments.");
     warn.withDontShowAgain("zgc_recommend");
@@ -110,26 +105,23 @@ if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
 Halt application execution if problematic JAR assets are detected dynamically, prompting immediate user interactions for deletion or bypass.
 
 ```java
-// Map the ModList objects to their IDs for rapid lookups and context validation
 var allMods = ModListUtils.getCurrentModList(true);
 var mods = allMods.stream().toMap(m -> m.modId, m -> m);
 
 var badMod = mods.get("problematic_mod_id");
 
 if (badMod != null) {
-    // Standard explicit evaluation of saved bypass properties
     var bypassKey = "problematic_mod_bypass_key";
     var isBypassed = Objects.equals(CrashAssistantLocalConfig.get(bypassKey), true);
-    ,
-    // Emit fatal warning notifying users of failure condition
+    
     var warn = Startup.addCrashWarning(badMod.jarName + " will corrupt your worlds!");
     
-    warn.withModActions(badMod) // Provide built-in mod interaction buttons via GUI ("Remove", "Open in Explorer")
+    warn.withModActions(badMod)
         .withDontShowAgain(bypassKey)
         .withCustomDontShowAgainCheckboxText("I accept the risks of corruption, let me play")
-        .withOkDelay(15); // Require users to read by forcing a 15-second wait interaction
+        .withOkDelay(15);
     if (!isBypassed) {
-        Startup.markForCrash(); // Inject fatal system halt logic
+        Startup.markForCrash();
     }
 }
 ```

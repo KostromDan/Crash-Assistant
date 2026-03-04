@@ -125,11 +125,9 @@ Uses standard Java classes (`Pattern` and `Matcher`) to extract specific data na
 ```java
 var logs = LogsList.getLogs(LOG);
 
+var pattern = Pattern.compile("Fabric loader version: (\\d+\\.\\d+\\.\\d+)");
+
 for (log : logs) {
-    // Compile standard Java Pattern (mapped dynamically in JEXL)
-    var pattern = Pattern.compile("Fabric loader version: (\\d+\\.\\d+\\.\\d+)");
-    
-    // Retrieve the entire log as string and feed to Matcher
     var matcher = pattern.matcher(log.getReader().getAllLinesString());
     
     // If pattern found, extract the exact version group and emit warning
@@ -183,20 +181,14 @@ var hs_err_logs = LogsList.getLogs(HS_ERR);
 
 var driver_version = null;
 
-// Iterate LOG files line by line (using an enhanced for-loop)
+// [16:03:03] [EarlyDisplay/INFO]: GL info: NVIDIA GeForce RTX 5090 ... GL version 4.6.0 NVIDIA 576.65, NVIDIA Corporation
+var pattern = Pattern.compile("GL version .* NVIDIA (\\d+\\.\\d+),");
+
 for (log : latest_logs) {
-    var lines = log.getReader().getAllLinesList();
-    for (line : lines) {
-        // Find driver version relying on the exact log format output:
-        // [16:03:03] [EarlyDisplay/INFO]: GL info: NVIDIA GeForce RTX 5090 ... GL version 4.6.0 NVIDIA 576.65, NVIDIA Corporation
-        var matcher = Pattern.compile("GL version .* NVIDIA (\\d+\\.\\d+),").matcher(line);
-        if (matcher.find()) {
-            driver_version = matcher.group(1).trim();
-            break; // Stop parsing lines
-        }
-    }
-    if (driver_version != null) {
-        break; // Stop parsing logs once found
+    var matcher = pattern.matcher(log.getReader().getAllLinesString());
+    if (matcher.find()) {
+        driver_version = matcher.group(1).trim();
+        break;
     }
 }
 

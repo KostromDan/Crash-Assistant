@@ -1,6 +1,8 @@
 # Startup Scripts
 
-Startup scripts execute synchronously at the absolute beginning of the Minecraft launch sequence. They evaluate conditions, hardware limitations, parameters, and mod lists to prevent broken game states.
+Startup scripts execute at the absolute beginning of the Minecraft launch sequence. Use them for checking system memory limits, JVM/launch arguments, mod list constraints, adding startup/crash warnings, and preventing the game from launching if necessary.
+
+The startup scripts are expected to be debugged by a launching minecraft process, since you immediately will see results. Don't try to use scripts IDE for debugging them, it won't work. It's only for log analysis scripts.
 
 ## API Documentation
 
@@ -84,6 +86,7 @@ if (xmxBytes > totalSystemCapacity) {
     // Display boot warning (non-fatal) and add "Don't show again" option
     var warn = Startup.addBootWarning(msg);
     warn.withDontShowAgain("ram_over_allocation");
+    warn.withMemoryAllocationGuide();
 }
 ```
 
@@ -99,6 +102,7 @@ var jvmArgs = ArgUtils.getSafeJvmArgs();
 if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
     var warn = Startup.addBootWarning("For heap sizes over 12GB, we heavily advise adding -XX:+UseZGC to JVM arguments.");
     warn.withDontShowAgain("zgc_recommend");
+    warn.withJvmArgsGuide();
 }
 ```
 
@@ -116,16 +120,15 @@ if (badMod != null) {
     // Standard explicit evaluation of saved bypass properties
     var bypassKey = "problematic_mod_bypass_key";
     var isBypassed = Objects.equals(CrashAssistantLocalConfig.get(bypassKey), true);
+    ,
+    // Emit fatal warning notifying users of failure condition
+    var warn = Startup.addCrashWarning(badMod.jarName + " will corrupt your worlds!");
     
+    warn.withModActions(badMod) // Provide built-in mod interaction buttons via GUI ("Remove", "Open in Explorer")
+        .withDontShowAgain(bypassKey)
+        .withCustomDontShowAgainCheckboxText("I accept the risks of corruption, let me play")
+        .withOkDelay(15); // Require users to read by forcing a 15-second wait interaction
     if (!isBypassed) {
-        // Emit fatal warning notifying users of failure condition
-        var warn = Startup.addCrashWarning(badMod.jarName + " will corrupt your worlds!");
-        
-        warn.withModActions(badMod) // Provide built-in mod interaction buttons via GUI ("Remove", "Open in Explorer")
-            .withDontShowAgain(bypassKey)
-            .withCustomDontShowAgainCheckboxText("I accept the risks of corruption, let me play")
-            .withOkDelay(15); // Require users to read by forcing a 15-second wait interaction
-            
         Startup.markForCrash(); // Inject fatal system halt logic
     }
 }

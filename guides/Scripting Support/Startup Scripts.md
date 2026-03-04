@@ -24,6 +24,7 @@ Startup scripts execute synchronously at the absolute beginning of the Minecraft
 * `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser. Checks for trusted domains.
 * `withMemoryAllocationGuide()`: Adds a pre-configured guide button explaining how to manage RAM allocation.
 * `withJvmArgsGuide()`: Adds a pre-configured guide button explaining how to manage JVM arguments.
+* `withJavaVersionGuide()`: Adds a pre-configured guide button explaining how to change the Java version.
 
 ### Hardware Inspection (`MemoryUtils`)
 * `MemoryUtils.getJvmInitialHeapBytes()`: Initial JVM heap size (`-Xms`) in bytes.

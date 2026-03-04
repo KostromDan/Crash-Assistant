@@ -62,6 +62,7 @@ The object returned by `Analysis.addWarning(…)` allows method chaining to conf
 * `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser. Checks for trusted domains.
 * `withMemoryAllocationGuide()`: Adds a pre-configured guide button explaining how to manage RAM allocation.
 * `withJvmArgsGuide()`: Adds a pre-configured guide button explaining how to manage JVM arguments.
+* `withJavaVersionGuide()`: Adds a pre-configured guide button explaining how to change the Java version.
 
 ---
 

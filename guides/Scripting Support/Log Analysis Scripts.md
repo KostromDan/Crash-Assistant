@@ -1,6 +1,6 @@
 # Log Analysis Scripts
 
-Log Analysis scripts execute during issue detection, giving you full access to gathered log files, search utilities, and warning creation mechanisms.
+Log Analysis scripts execute right before crash assistant log analysis, giving you ability to analyse logs and add warnings.
 
 To conveniently debug log analysis scripts you can use built-in IDE (`file -> Scripts IDE`). If you don't see this option you need to add your username to modpack creators in the crash assistant config as end users of modpacks won't see it.
 
@@ -63,8 +63,25 @@ The object returned by `Analysis.addWarning(…)` allows method chaining to conf
 
 ### Environment Evaluation
 * `PlatformHelp.isWindows()`, `PlatformHelp.isMac()`, `PlatformHelp.isLinux()`: Evaluates the operating system in use.
-* **Warning:** ArgUtils / MemoryUtils in Log Analysis context will return args / memory settings of Crash Assistant process, if you want from Minecraft, use:
-  * 
+
+> [!WARNING]
+> `ArgUtils` and `MemoryUtils` within the Log Analysis context return settings for the **Crash Assistant** process. To access Minecraft's environment settings, use:
+> * `Boot.MINECRAFT_JVM_ARGS` / `Boot.MINECRAFT_LAUNCH_COMMAND`: `String` JVM arguments and full launch command of the Minecraft process.
+> * `CrashAssistantApp.minecraftXmx` / `CrashAssistantApp.minecraftXms`: Exact Xmx/Xms values passed to Minecraft. (String, e.g. `2.5g`)
+> * `CrashAssistantApp.processor`: CPU model name as a `String` (e.g. `"12th Gen Intel(R) Core(TM) i7-12700H"`).
+> * `CrashAssistantApp.renderer`: The GPU/Driver string Minecraft actually used from logs as a `String` (e.g. `"NVIDIA GeForce RTX 3060/PCIe/SSE2"`).
+
+### Hardware Inspection (`MemoryUtils`)
+* `MemoryUtils.getSystemTotalMemoryBytes()`: Physical machine RAM (bytes).
+* `MemoryUtils.getSystemUsedMemoryBytes()`: Physical machine RAM currently used (bytes).
+* `MemoryUtils.getSystemFreeMemoryBytes()`: Physical machine RAM currently unused (bytes).
+* `MemoryUtils.getSystemTotalSwapBytes()`: Physical machine swap/pagefile size (bytes).
+* `MemoryUtils.getSystemUsedSwapBytes()`: Physical machine swap/pagefile currently used (bytes).
+* `MemoryUtils.getSystemFreeSwapBytes()`: Physical machine swap/pagefile currently unused (bytes).
+* `MemoryUtils.bytesToMegabytes(long bytes)`: Converts bytes to megabytes (returns `double`).
+* `MemoryUtils.bytesToGigabytes(long bytes)`: Converts bytes to gigabytes (returns `double`).
+* `MemoryUtils.formatMemorySize(long bytes)`: Formats memory size to human-readable string (e.g., "512m", "2.5g").
+* `MemoryUtils.parseMemorySize(String formattedSize)`: Parses formatted memory string back into bytes.
 
 ### Mod Ecosystem Evaluation (`ModListUtils`)
 * `ModListUtils.getCurrentModList(true)`: Retrieves a `LinkedHashSet<Mod>` representing all active instance mods, datapacks, and resource packs.

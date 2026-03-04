@@ -88,7 +88,7 @@ if (xmxBytes > totalSystemCapacity) {
 ```
 
 ### Example 2: JVM Parameter Recommendation
-Warns users requesting bloated JVM arguments without appropriate Garbage Collector optimizations.
+Warns users allocated too much RAM without ZGC arg
 
 ```java
 var xmxGB = MemoryUtils.bytesToGigabytes(MemoryUtils.getJvmMaxHeapBytes());
@@ -102,7 +102,7 @@ if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
 ```
 
 ### Example 3: Resolving Mod List Incompatibilities 
-Halt application execution if problematic JAR assets are detected dynamically, prompting immediate user interactions for deletion or bypass.
+Marking mod incompatible with way to bypass.
 
 ```java
 var allMods = ModListUtils.getCurrentModList(true);

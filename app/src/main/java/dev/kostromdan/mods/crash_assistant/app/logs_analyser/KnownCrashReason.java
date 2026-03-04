@@ -129,6 +129,13 @@ public class KnownCrashReason {
         );
     }
 
+    public KnownCrashReason withJavaVersionGuide() {
+        return addGuideButton(
+                dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider.get("gui.guide.java_version"),
+                dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider.JAVA_VERSION_GUIDE.getLink()
+        );
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

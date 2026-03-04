@@ -25,6 +25,7 @@ public enum LinksProvider {
 
     JVM_ARGS_GUIDE(() -> "https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/End%20User%20Guides/How%20To%20Manage%20JVM%20Arguments.md"),
     RAM_ALLOCATION_GUIDE(() -> "https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/End%20User%20Guides/How%20To%20Manage%20RAM%20Allocation.md"),
+    JAVA_VERSION_GUIDE(() -> "https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/End%20User%20Guides/How%20To%20Manage%20Java%20Version.md"),
 
     // Mod links:
     CRASH_ASSISTANT(() -> "https://www.curseforge.com/minecraft/mc-mods/crash-assistant"),

@@ -99,6 +99,11 @@ public class ScriptWarning {
                 LinksProvider.JVM_ARGS_GUIDE.getLink());
     }
 
+    public ScriptWarning withJavaVersionGuide() {
+        return addGuideButton(LanguageProvider.get("gui.guide.java_version"),
+                LinksProvider.JAVA_VERSION_GUIDE.getLink());
+    }
+
     // --- Getters ---
 
     public String getMessage() {

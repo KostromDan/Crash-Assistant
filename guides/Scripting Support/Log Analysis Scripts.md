@@ -2,6 +2,8 @@
 
 Log Analysis scripts execute during issue detection, giving you full access to gathered log files, search utilities, and warning creation mechanisms.
 
+To conveniently debug log analysis scripts you can use built-in IDE (`file -> Scripts IDE`). If you don't see this option you need to add your username to modpack creators in the crash assistant config as end users of modpacks won't see it.
+
 ## API Documentation
 
 ### Accessing Logs
@@ -10,8 +12,8 @@ Log Analysis scripts execute during issue detection, giving you full access to g
     * Examples of `LogType`: `LOG`, `CRASH_REPORT`, `HS_ERR`, `STDERR_STREAM`, `WIN_EVENT`, `LAUNCHER_LOG`.
 
 ### `Log` Object
-* `log.getName()`: Returns the logical name of the log `String` (e.g. `latest.log`).
-* `log.getFileName()`: Returns `String` (e.g. `latest.log`).
+* `log.getName()`: Returns the logical name of the log `String` (e.g. `CurseForge: launcher_log.txt`).
+* `log.getFileName()`: Returns `String` (e.g. `launcher_log.txt`).
 * `log.getType()`: Returns the `LogType`.
 * `log.getReader()`: Returns the `LogReader` instance for the file.
 
@@ -35,15 +37,13 @@ Log Analysis scripts execute during issue detection, giving you full access to g
 * `VersionUtils.inRange(String version, String minVersion, String maxVersion)`: Returns `true` if `version` falls inside the bounding ranges.
 
 ### Java Crash Parsing (`HsErrParser`)
-* `HsErrParser.parseHsErr(Log log)`: Returns an `Optional<HsErrParsingResult>` extracting hardware configuration (memory/page files) and problematic frames.
-* `HsErrParser.hsErrContainsOneOfFrames(Log log, String... frames)`: Returns `true` if the JVM crash log's problematic DLL frame matches any of the given frame names.
+* `HsErrParser.hsErrContainsOneOfFrames(Log log, String... frames)`: Returns `true` if the JVM crash log's problematic frame matches any of the given frame names.
 * `HsErrParser.hsErrContainsAllOfFrames(Log log, String... frames)`: Returns `true` if ALL provided frames match inside the problematic frame block.
 
 ### Creating Warnings (`Analysis`)
-* `Analysis.addWarning(String message)`: Creates a global warning not tied to a specific log. Returns `ScriptWarning`.
+* `Analysis.addWarning(String message)`: Creates a global warning not tied to a specific log (Use only if there is really no log object attached to this warning. Otherwise use the next option.). Returns `ScriptWarning`.
 * `Analysis.addWarning(Log log, String message)`: Creates a warning attached to `log`. Returns `ScriptWarning`.
-    * You can use `LanguageProvider.get("custom.key")` to fetch localized messages.
-* `Analysis.markRunAlways()`: Forces the script to run repeatedly on subsequent analysis passes (e.g. when late logs arrive).
+* `Analysis.markRunAlways()`: Forces the script to run repeatedly on subsequent analysis passes (e.g. when late logs arrive, like `WIN_EVENT`).
 * `Analysis.setGlobal(String key, Object value)`: Persists an object across execution passes.
 * `Analysis.getGlobal(String key)`: Retrieves a persisted object.
 

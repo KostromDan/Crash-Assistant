@@ -54,15 +54,27 @@ The object returned by `Analysis.addWarning(…)` allows method chaining to conf
 * `withDontShowAgain(String configKey)`: Adds a "Don't show again" checkbox tied to `configKey`.
 * `withCustomDontShowAgainCheckboxText(String text)`: Modifies the "Don't show again" checkbox text to the custom one.
 * `withOkDelay(int seconds)`: Disables the "OK/Close" button for the specified duration (in seconds).
-* `withModActions(Mod mod)`: Injects buttons for managing a problematic mod ("Remove", "Disable", "Show in Explorer").
-* `withRemoveButton(boolean enable)`: Explicitly toggles the "Remove" button (requires `withModActions` context).
-* `withDisableButton(boolean enable)`: Explicitly toggles the "Disable" button.
-* `withExplorerButton(boolean enable)`: Explicitly toggles the "Show in Explorer" button.
-* `withKillMinecraftButton(boolean enable)`: Adds a button allowing the user to forcefully terminate the Minecraft process.
+* `withModActions(Mod mod)`: Renders functional contextual action buttons (Remove, Disable, Show in Explorer) targeting the passed `Mod`.
+    * Specific action toggles: `withRemoveButton(boolean)`, `withDisableButton(boolean)`, `withExplorerButton(boolean)`. They are enabled by default use for disabling.
 * `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser. Checks for trusted domains.
 * `withMemoryAllocationGuide()`: Adds a pre-configured guide button explaining how to manage RAM allocation.
 * `withJvmArgsGuide()`: Adds a pre-configured guide button explaining how to manage JVM arguments.
 * `withJavaVersionGuide()`: Adds a pre-configured guide button explaining how to change the Java version.
+
+### Environment Evaluation
+* `PlatformHelp.isWindows()`, `PlatformHelp.isMac()`, `PlatformHelp.isLinux()`: Evaluates the operating system in use.
+* **Warning:** ArgUtils / MemoryUtils in Log Analysis context will return args / memory settings of Crash Assistant process, if you want from Minecraft, use:
+  * 
+
+### Mod Ecosystem Evaluation (`ModListUtils`)
+* `ModListUtils.getCurrentModList(true)`: Retrieves a `LinkedHashSet<Mod>` representing all active instance mods, datapacks, and resource packs.
+
+### `Mod` Data Object
+* `mod.getJarName()`: File name of the mod.
+* `mod.getModId()`: The internal Mod ID.
+* `mod.getVersion()`: The declared mod version.
+* `mod.IsMCreator()`: Returns `true` if the mod is detected as an MCreator mod.
+
 
 ---
 

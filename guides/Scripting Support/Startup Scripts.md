@@ -19,7 +19,7 @@ Startup scripts execute synchronously at the absolute beginning of the Minecraft
 * `withCustomDontShowAgainCheckboxText(String text)`: Allows customizing the label of the "Don't show again" checkbox.
 * `withOkDelay(int seconds)`: Adds a mandatory delay timeout to the "OK" button (forces the user to wait `n` seconds to proceed/close).
 * `withModActions(Mod mod)`: Renders functional contextual action buttons (Remove, Disable, Show in Explorer) targeting the passed `Mod`.
-  * Specific action toggles: `withRemoveButton(boolean)`, `withDisableButton(boolean)`, `withExplorerButton(boolean)`.
+  * Specific action toggles: `withRemoveButton(boolean)`, `withDisableButton(boolean)`, `withExplorerButton(boolean)`. They are enabled by default use for disabling.
 * `withKillMinecraftButton(boolean enable)`: Adds a button allowing the user to forcefully terminate the Minecraft process.
 * `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser. Checks for trusted domains.
 * `withMemoryAllocationGuide()`: Adds a pre-configured guide button explaining how to manage RAM allocation.

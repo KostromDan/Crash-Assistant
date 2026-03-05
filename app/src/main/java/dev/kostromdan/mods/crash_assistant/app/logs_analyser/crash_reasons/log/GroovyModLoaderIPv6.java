@@ -36,6 +36,7 @@ public class GroovyModLoaderIPv6 extends KnownCrashReason {
         autoFixButtons.put(LanguageProvider.get("gui.analysis.gml_autofix.find_mods"), (dialog) -> {
             new JdepsDependenciesAnalysisGUI((JFrame) dialog.getOwner(), "org.groovymc.gml").start();
         });
+        this.withJvmArgsGuide();
     }
 
     @Override

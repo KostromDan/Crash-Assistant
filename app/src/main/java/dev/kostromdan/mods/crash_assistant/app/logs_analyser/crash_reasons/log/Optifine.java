@@ -16,6 +16,7 @@ public class Optifine extends KnownCrashReason {
                 LogType.LOG,
                 LanguageProvider.get("warnings.optifine")
         );
+        this.setDontShowAgainKey("warnings.optifine");
     }
 
     @Override

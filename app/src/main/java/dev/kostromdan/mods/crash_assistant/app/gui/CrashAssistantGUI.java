@@ -11,7 +11,9 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.EpicFig
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
+import dev.kostromdan.mods.crash_assistant.app.gui.scripts_ide.ScriptsIDE;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ScriptedAnalysis;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
@@ -445,7 +447,6 @@ public class CrashAssistantGUI {
         controlPanel.updateModListInfo();
         showCrashAssistantDuplicatedWarning();
         showIncompatibleModsWarning();
-        IncompatibleModsWarning.showWarnings(CrashAssistantGUI.frame);
         showTooManyChangesWarning();
         IntelChipBugWarning.showIfAffected(false);
         showEarlyIntegratedGPUWarning();
@@ -543,6 +544,13 @@ public class CrashAssistantGUI {
             }
         });
         fileMenu.add(openConfigItem);
+
+        // Open Scripts IDE
+        if (CrashAssistantConfig.getBoolean("scripts.enabled") && CrashAssistantConfig.getBoolean("scripts.ide_enabled") && (PlatformHelp.isLinkDefault() || ModListDiff.isModpackCreator())) {
+            JMenuItem scriptsIdeItem = new JMenuItem("Scripts IDE");
+            scriptsIdeItem.addActionListener(e -> ScriptsIDE.main(null));
+            fileMenu.add(scriptsIdeItem);
+        }
 
         // Analysis menu items
         boolean analysisMenuEnabled = CrashAssistantConfig.getBoolean("analysis_tools.enabled");
@@ -746,132 +754,219 @@ public class CrashAssistantGUI {
         frame.repaint();
     }
 
+    public static String getCrashReasonsDialogName(KnownCrashReasonMessage crashReasonMessage) {
+        if (crashReasonMessage.isCodexMessage()) {
+            return LanguageProvider.get("gui.codex_logs_analyzer");
+        } else if (StartupWarningViewer.isStartupWarning) {
+            return LanguageProvider.get("gui.startup_warning_dialog_title");
+        }
+        return LanguageProvider.get("gui.logs_analyzer");
+
+    }
+
     public static synchronized void showKnownCrashReasonsWarnings() {
         ControlPanel.stopMovingToTop = true;
         synchronized (KnownCrashReasonMessage.class) {
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessages()) {
-                        if (crashReasonMessage.isShownWarn()) continue;
-                        KnownCrashReason crashReason = crashReasonMessage.getReason();
-                        if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason)) continue;
-                        HashSet<String> conflictingReasons = crashReason.getConflictingReasons();
-                        if (!conflictingReasons.isEmpty() &&
-                                KnownCrashReason.shownKnownCrashReasons.stream()
-                                        .anyMatch(x -> conflictingReasons
-                                                .contains(x.getClass().getSimpleName()))) {
-                            CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}",
-                                    crashReason.getClass().getSimpleName());
-                            continue;
-                        }
-
-                        KnownCrashReason.shownKnownCrashReasons.add(crashReason);
-                        CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
-                                crashReason.getClass().getSimpleName(),
-                                "\n \n" + HtmlToMarkdown.convert(crashReasonMessage.getMessage()) + "\n \n");
-                        crashReasonMessage.setShownWarn(true);
-
-                        JEditorPane messagePane = CrashAssistantGUI.getEditorPane(crashReasonMessage.getMessage(), crashReasonMessage.isCodexMessage());
-
-                        LinkedHashMap<String, Consumer<JDialog>> autoFixButtons = crashReason.getAutoFixButtons();
-
-                        JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
-                        String reasonClassName = crashReason.getClass().getSimpleName();
-                        String configKey = "shown_reasons." + reasonClassName;
-                        boolean alreadyShown = Objects.equals(CrashAssistantLocalConfig.get(configKey), true);
-
-                        JDialog dialog;
-                        if (!autoFixButtons.isEmpty()) {
-                            JPanel autoFixPanel = new JPanel(new GridBagLayout());
-                            GridBagConstraints gbc = new GridBagConstraints();
-                            gbc.fill = GridBagConstraints.HORIZONTAL;
-                            gbc.weightx = 1.0;
-                            gbc.gridy = 0;
-
-                            // Create a list to hold buttons, so we can add listeners later
-                            List<JButton> buttons = new ArrayList<>();
-                            List<Consumer<JDialog>> actions = new ArrayList<>();
-
-                            for (Map.Entry<String, Consumer<JDialog>> entry : autoFixButtons.entrySet()) {
-                                JButton autoFixButton = new JButton(entry.getKey());
-                                autoFixButton.setFont(autoFixButton.getFont().deriveFont(Font.BOLD,
-                                        CrashAssistantConfig.getInteger("gui_customisation.auto_fix_button_font_size")));
-                                autoFixButton.setForeground(
-                                        ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.auto_fix_button_foreground_color"),
-                                                autoFixButton.getForeground()));
-                                autoFixPanel.add(autoFixButton, gbc);
-                                gbc.gridy++;
-                                buttons.add(autoFixButton);
-                                actions.add(entry.getValue());
+                    boolean isHeadless = frame == null;
+                    if (isHeadless) {
+                        frame = new JFrame(LanguageProvider.get("gui.window_name"));
+                        frame.setUndecorated(true);
+                        frame.setBackground(new Color(0, 0, 0, 0));
+                        frame.setSize(0, 0);
+                        frame.setLocationRelativeTo(null);
+                        frame.setAlwaysOnTop(true);
+                        setUpIcon(frame);
+                        frame.setVisible(true);
+                    }
+                    try {
+                        for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessages()) {
+                            if (crashReasonMessage.isShownWarn()) continue;
+                            KnownCrashReason crashReason = crashReasonMessage.getReason();
+                            if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason)) continue;
+                            HashSet<String> conflictingReasons = crashReason.getConflictingReasons();
+                            if (!conflictingReasons.isEmpty() &&
+                                    KnownCrashReason.shownKnownCrashReasons.stream()
+                                            .anyMatch(x -> conflictingReasons
+                                                    .contains(x.getClass().getSimpleName()))) {
+                                CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}",
+                                        crashReason.getClass().getSimpleName());
+                                continue;
                             }
 
-                            JPanel mainPanel = new JPanel(new BorderLayout(10, 5));
-                            mainPanel.add(messagePane, BorderLayout.CENTER);
-                            mainPanel.add(autoFixPanel, BorderLayout.SOUTH);
+                            KnownCrashReason.shownKnownCrashReasons.add(crashReason);
+                            CrashAssistantApp.LOGGER.info("Showing KnownCrashReason: {}\n{}",
+                                    crashReason.getClass().getSimpleName(),
+                                    "\n \n" + HtmlToMarkdown.convert(crashReasonMessage.getMessage()) + "\n \n");
+                            crashReasonMessage.setShownWarn(true);
 
-                            JOptionPane optionPane = new JOptionPane(
-                                    mainPanel,
-                                    JOptionPane.WARNING_MESSAGE,
-                                    JOptionPane.DEFAULT_OPTION,
-                                    null,
-                                    new Object[]{okButton},
-                                    okButton
-                            );
+                            boolean isFromScripts = crashReason instanceof ScriptedAnalysis;
 
-                            dialog = optionPane.createDialog(
-                                    frame,
-                                    crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyzer") : LanguageProvider.get("gui.logs_analyzer")
-                            );
+                            JEditorPane messagePane = CrashAssistantGUI.getEditorPane(crashReasonMessage.getMessage(), crashReasonMessage.isCodexMessage() || isFromScripts, isFromScripts ? 600 : null);
 
-                            // Add listeners now that the dialog is created
-                            for (int i = 0; i < buttons.size(); i++) {
-                                JButton button = buttons.get(i);
-                                Consumer<JDialog> action = actions.get(i);
-                                JDialog finalDialog = dialog;
-                                button.addActionListener(e -> action.accept(finalDialog));
+                            LinkedHashMap<String, Consumer<JDialog>> autoFixButtons = crashReason.getAutoFixButtons();
+
+                            JButton okButton = new JButton(LanguageProvider.get("gui.ok"));
+                            String reasonClassName = crashReason.getClass().getSimpleName();
+                            String configKey = "shown_reasons." + reasonClassName;
+
+                            String dontShowAgainKey = crashReason.getDontShowAgainKey();
+                            if (dontShowAgainKey != null && Objects.equals(CrashAssistantLocalConfig.get(dontShowAgainKey), true)) {
+                                CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}, due to dontShowAgainKey: {}", crashReason.getClass().getSimpleName(), dontShowAgainKey);
+                                continue;
                             }
-                        } else {
-                            JOptionPane optionPane = new JOptionPane(
-                                    messagePane,
-                                    JOptionPane.WARNING_MESSAGE,
-                                    JOptionPane.DEFAULT_OPTION,
-                                    null,
-                                    new Object[]{okButton},
-                                    okButton
-                            );
-                            dialog = optionPane.createDialog(
-                                    frame,
-                                    crashReasonMessage.isCodexMessage() ? LanguageProvider.get("gui.codex_logs_analyzer") : LanguageProvider.get("gui.logs_analyzer")
-                            );
-                        }
+                            boolean alreadyShown = Objects.equals(CrashAssistantLocalConfig.get(configKey), true);
 
-                        okButton.addActionListener(e -> dialog.dispose());
-
-                        if (!alreadyShown) {
-                            int delay = CrashAssistantConfig.getInteger("analysis.first_show_delay");
-                            if (delay > 0) {
-                                okButton.setEnabled(false);
-                                final int[] secondsLeft = {delay};
-                                okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
-                                javax.swing.Timer timer = new javax.swing.Timer(1000, null);
-                                timer.addActionListener(e -> {
-                                    secondsLeft[0]--;
-                                    if (secondsLeft[0] <= 0) {
-                                        okButton.setText(LanguageProvider.get("gui.ok"));
-                                        okButton.setEnabled(true);
-                                        timer.stop();
-                                    } else {
-                                        okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
-                                    }
-                                });
-                                timer.start();
+                            JDialog dialog;
+                            JCheckBox dontShowBoxRef = null;
+                            if (dontShowAgainKey != null) {
+                                String text = crashReason.getDontShowAgainCheckboxText();
+                                dontShowBoxRef = new JCheckBox(text != null ? text : LanguageProvider.get("gui.intel_corrupted_dont_show_again"));
+                                String finalDontShowAgainKey = dontShowAgainKey;
+                                JCheckBox finalBox = dontShowBoxRef;
+                                dontShowBoxRef.addActionListener(e -> CrashAssistantLocalConfig.set(finalDontShowAgainKey, finalBox.isSelected()));
                             }
-                            CrashAssistantLocalConfig.set(configKey, true);
-                        }
 
-                        long showStartTime = System.currentTimeMillis();
-                        dialog.setVisible(true);
-                        CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {} (Seen warning for {}s)", crashReason.getClass().getSimpleName(), (System.currentTimeMillis() - showStartTime) / 1000.0);
+                            if (!autoFixButtons.isEmpty()) {
+                                JPanel autoFixPanel = new JPanel(new GridBagLayout());
+                                GridBagConstraints gbc = new GridBagConstraints();
+                                gbc.fill = GridBagConstraints.HORIZONTAL;
+                                gbc.weightx = 1.0;
+                                gbc.gridy = 0;
+
+
+                                List<JButton> buttons = new ArrayList<>();
+                                List<Consumer<JDialog>> actions = new ArrayList<>();
+
+                                for (Map.Entry<String, Consumer<JDialog>> entry : autoFixButtons.entrySet()) {
+                                    JButton autoFixButton = new JButton(entry.getKey());
+                                    autoFixButton.setFont(autoFixButton.getFont().deriveFont(Font.BOLD,
+                                            CrashAssistantConfig.getInteger("gui_customisation.auto_fix_button_font_size")));
+                                    autoFixButton.setForeground(
+                                            ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.auto_fix_button_foreground_color"),
+                                                    autoFixButton.getForeground()));
+                                    gbc.insets = new Insets(0, 0, 5, 0);
+                                    autoFixPanel.add(autoFixButton, gbc);
+                                    gbc.gridy++;
+                                    buttons.add(autoFixButton);
+                                    actions.add(entry.getValue());
+                                }
+
+                                JPanel southContainer = new JPanel(new BorderLayout(0, 10));
+                                southContainer.add(autoFixPanel, BorderLayout.CENTER);
+
+                                JPanel bottomRow = new JPanel(new BorderLayout());
+                                if (dontShowBoxRef != null) {
+                                    bottomRow.add(dontShowBoxRef, BorderLayout.WEST);
+                                }
+                                JPanel okPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+                                okPanel.add(okButton);
+                                bottomRow.add(okPanel, BorderLayout.CENTER);
+                                southContainer.add(bottomRow, BorderLayout.SOUTH);
+
+                                JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+                                mainPanel.add(messagePane, BorderLayout.CENTER);
+                                mainPanel.add(southContainer, BorderLayout.SOUTH);
+
+                                JOptionPane optionPane = new JOptionPane(
+                                        mainPanel,
+                                        JOptionPane.WARNING_MESSAGE,
+                                        JOptionPane.DEFAULT_OPTION,
+                                        null,
+                                        new Object[]{},
+                                        null
+                                );
+
+                                dialog = optionPane.createDialog(
+                                        ScriptsIDE.isIdeRunning() ? null : frame,
+                                        getCrashReasonsDialogName(crashReasonMessage)
+                                );
+
+
+                                for (int i = 0; i < buttons.size(); i++) {
+                                    JButton button = buttons.get(i);
+                                    Consumer<JDialog> action = actions.get(i);
+                                    JDialog finalDialog = dialog;
+                                    button.addActionListener(e -> action.accept(finalDialog));
+                                }
+                            } else {
+                                JPanel panel = new JPanel(new BorderLayout(10, 10));
+                                panel.add(messagePane, BorderLayout.CENTER);
+
+                                JPanel bottomRow = new JPanel(new BorderLayout());
+                                if (dontShowBoxRef != null) {
+                                    bottomRow.add(dontShowBoxRef, BorderLayout.WEST);
+                                }
+                                JPanel okPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+                                okPanel.add(okButton);
+                                bottomRow.add(okPanel, BorderLayout.CENTER);
+                                panel.add(bottomRow, BorderLayout.SOUTH);
+
+                                JOptionPane optionPane = new JOptionPane(
+                                        panel,
+                                        JOptionPane.WARNING_MESSAGE,
+                                        JOptionPane.DEFAULT_OPTION,
+                                        null,
+                                        new Object[]{},
+                                        null
+                                );
+                                dialog = optionPane.createDialog(
+                                        ScriptsIDE.isIdeRunning() ? null : frame,
+                                        getCrashReasonsDialogName(crashReasonMessage)
+                                );
+                            }
+
+                            okButton.addActionListener(e -> dialog.dispose());
+
+
+                            if (!alreadyShown) {
+                                int delay = crashReason.getOkDelay();
+                                if (delay == -1) {
+                                    delay = CrashAssistantConfig.getInteger("analysis.first_show_delay");
+                                }
+
+                                if (delay > 0) {
+                                    okButton.setEnabled(false);
+                                    if (dontShowBoxRef != null) dontShowBoxRef.setEnabled(false);
+                                    dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+                                    
+                                    final int[] secondsLeft = {delay};
+                                    final int initialDelay = delay;
+                                    okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
+                                    javax.swing.Timer timer = new javax.swing.Timer(1000, null);
+                                    JCheckBox finalDontShowBox = dontShowBoxRef;
+                                    JDialog finalDialog1 = dialog;
+                                    timer.addActionListener(e -> {
+                                        secondsLeft[0]--;
+                                        int elapsed = initialDelay - secondsLeft[0];
+                                        if (elapsed >= 5 && finalDialog1.getDefaultCloseOperation() == JDialog.DO_NOTHING_ON_CLOSE) {
+                                            finalDialog1.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                                        }
+                                        if (secondsLeft[0] <= 0) {
+                                            okButton.setText(LanguageProvider.get("gui.ok"));
+                                            okButton.setEnabled(true);
+                                            if (finalDontShowBox != null) finalDontShowBox.setEnabled(true);
+                                            finalDialog1.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                                            timer.stop();
+                                        } else {
+                                            okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
+                                        }
+                                    });
+                                    timer.start();
+                                }
+                                CrashAssistantLocalConfig.set(configKey, true);
+                            }
+
+                            long showStartTime = System.currentTimeMillis();
+                            dialog.setVisible(true);
+                            CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {} (Seen warning for {}s)", crashReason.getClass().getSimpleName(), (System.currentTimeMillis() - showStartTime) / 1000.0);
+                        }
+                    } finally {
+                        if (isHeadless) {
+                            if (frame != null) frame.dispose();
+                            frame = null;
+                        }
                     }
                 });
             } catch (Exception e) {
@@ -924,7 +1019,7 @@ public class CrashAssistantGUI {
         synchronized (KnownCrashReasonMessage.class) {
             try {
                 try {
-                    if (Objects.equals(dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig.get("too_many_changes.dont_show_again"), true)) {
+                    if (Objects.equals(CrashAssistantLocalConfig.get("too_many_changes.dont_show_again"), true)) {
                         return;
                     }
                 } catch (Throwable ignored) {
@@ -969,7 +1064,7 @@ public class CrashAssistantGUI {
                     bottomPanel.add(dontShowAgainCheck);
                     bottomPanel.add(okButton);
 
-                    JPanel mainPanel = new JPanel(new BorderLayout(10, 5));
+                    JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
                     mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
                     mainPanel.add(textPanel, BorderLayout.CENTER);
                     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
@@ -990,7 +1085,7 @@ public class CrashAssistantGUI {
     public static void showEarlyIntegratedGPUWarning() {
         synchronized (KnownCrashReasonMessage.class) {
             try {
-                if (Boot.serialisedGPUs == null) return;
+                if (Boot.getSerialisedGPUs() == null) return;
                 if (CrashAssistantApp.renderer != null && !Objects.equals(CrashAssistantApp.renderer, "UNDEFINED"))
                     return;
                 Log latest = null;
@@ -1278,28 +1373,26 @@ public class CrashAssistantGUI {
         JEditorPane pane = new JEditorPane();
         pane.setEditable(false);
         pane.setContentType("text/html");
-        StringBuilder html = new StringBuilder();
-        html.append("<html>");
-        if (width != null) {
-            html.append("<body style='width:" + width + "px;'>");
+
+        String content = "<div " + (wrap ? "" : "style='white-space:nowrap;'") + ">" +
+                text.replaceAll("\n", "<br>") + "</div>";
+
+        pane.setText("<html><body>" + content + "</body></html>");
+
+        if (width != null && pane.getPreferredSize().width - 180 > width) {
+            pane.setText("<html><body style='width:" + width + "px;'>" + content + "</body></html>");
         }
-        html.append("<div " + (wrap ? "" : "style='white-space:nowrap;'") + ">" + text.replaceAll("\n", "<br>") + "</div>");
-        if (width != null) {
-            html.append("</body>");
-        }
-        html.append("</html>");
-        pane.setText(html.toString());
 
         Font defaultFont = UIManager.getFont("Label.font");
         String bodyRule = "body { font-family: " + defaultFont.getFamily() + "; " +
                 "font-size: " + defaultFont.getSize() + "pt; }";
         ((HTMLDocument) pane.getDocument()).getStyleSheet().addRule(bodyRule);
 
-        pane.setEditable(false);
         pane.setOpaque(false);
         pane.setBackground(new JButton().getBackground());
         pane.addHyperlinkListener(getHyperlinkListener());
         pane.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         return pane;
     }
 

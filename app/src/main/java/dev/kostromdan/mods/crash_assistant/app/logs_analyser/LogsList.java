@@ -3,13 +3,13 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import org.apache.commons.jexl3.annotations.NoJexl;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class LogsList {
     private static final Set<Log> logs = Collections.synchronizedSet(new TreeSet<>(new LogComparator()));
@@ -22,10 +22,22 @@ public class LogsList {
         return logs.stream().anyMatch(log -> log.getType() == LogType.LAUNCHER_LOG);
     }
 
+    public static List<Log> getLogs(List<LogType> types) {
+        return logs.stream()
+                .filter(log -> types.contains(log.getType()))
+                .collect(Collectors.toList());
+    }
+
+    public static List<Log> getLogs(LogType... types) {
+        return getLogs(Arrays.asList(types));
+    }
+
+    @NoJexl
     public static void addIfExistsAndModified(Log log) {
         addIfExistsAndModified(log, true, true);
     }
 
+    @NoJexl
     public static void addIfExistsAndModified(Log log, boolean checkModified, boolean checkSize) {
         if (Files.exists(log.getPath()) && Files.isRegularFile(log.getPath())) {
             if (CrashAssistantConfig.getBlacklistedLogs().stream().anyMatch(

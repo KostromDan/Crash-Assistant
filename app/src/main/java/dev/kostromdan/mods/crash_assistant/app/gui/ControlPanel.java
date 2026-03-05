@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.exceptions.DeclinedException;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.OutOfMemoryError;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ScriptedAnalysis;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParser;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser.HsErrParsingResult;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
@@ -559,7 +560,13 @@ public class ControlPanel {
             analysis_sb.append(Integer.toString(reasonToLogs.size()), "blue", false);
             analysis_sb.append(LanguageProvider.getMsgLang("msg.found_analysis_2"));
 
+            int scriptedResultsCount = (int) KnownCrashReasonMessage.getAllMessages().stream()
+                    .filter(msg -> msg.getReason() instanceof ScriptedAnalysis)
+                    .count();
+
             for (Map.Entry<KnownCrashReason, List<Log>> entry : reasonToLogs.entrySet()) {
+                if (entry.getKey() instanceof ScriptedAnalysis) continue;
+
                 analysis_sb.append(entry.getKey().getClass().getSimpleName(), "blue", false);
                 analysis_sb.append(LanguageProvider.getMsgLang("msg.found_analysis_in") + entry.getValue().stream()
                         .map(Log::getFileName)
@@ -567,13 +574,17 @@ public class ControlPanel {
                 if (entry.getKey() instanceof OutOfMemoryError) {
                     analysis_sb.append(LanguageProvider.getMsgLang("warnings_common.memory_args").replace("$CURRENT_MEMORY_ARGS$", ""), false);
                     analysis_sb.append("Xms: ", false);
-                    analysis_sb.append(CrashAssistantApp.parentXms, "red", false);
+                    analysis_sb.append(CrashAssistantApp.minecraftXms, "red", false);
                     analysis_sb.append(", Xmx: ", false);
-                    analysis_sb.append(CrashAssistantApp.parentXmx, "green", false);
+                    analysis_sb.append(CrashAssistantApp.minecraftXmx, "green", false);
                     analysis_sb.append(", systemRAM: ", false);
                     analysis_sb.append(CrashAssistantApp.systemRAM, "blue");
                     analysis_sb.append("");
                 }
+            }
+            if (scriptedResultsCount > 0) {
+                analysis_sb.append(LanguageProvider.getMsgLang("msg.scripted_analysis"), "blue", false);
+                analysis_sb.append(": " + scriptedResultsCount + " " + LanguageProvider.getMsgLang("msg.scripted_analysis_results"));
             }
             String ansiAnalysis = analysis_sb.toAnsi(true).trim();
             if (!ansiAnalysis.isEmpty()) {
@@ -703,7 +714,7 @@ public class ControlPanel {
     }
 
     public static String getCurrentMemoryArgsString() {
-        return "Xms: " + CrashAssistantApp.parentXms + ", Xmx: " + CrashAssistantApp.parentXmx;
+        return "Xms: " + CrashAssistantApp.minecraftXms + ", Xmx: " + CrashAssistantApp.minecraftXmx;
     }
 
     public static String getCurrentMemoryAgsMessage() {

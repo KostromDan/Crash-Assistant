@@ -13,6 +13,7 @@ public class LibOpenALDotSo extends KnownCrashReason {
                 LogType.HS_ERR,
                 LanguageProvider.get("warnings.libopenal_so")
         );
+        this.withJvmArgsGuide();
     }
 
     @Override

@@ -22,8 +22,10 @@ public class LogComparator implements Comparator<Log> {
             LogType.KUBE_JS,
             LogType.CRAFT_TWEAKER,
             LogType.REI,
+            LogType.GROOVY,
             LogType.CRASH_ASSISTANT,
-            LogType.MOD_LIST
+            LogType.MOD_LIST,
+            LogType.STARTUP_SCRIPTS
     );
 
     private static final List<LogType> FINAL_LOG_TYPE_ORDER = new ArrayList<>();
@@ -63,6 +65,13 @@ public class LogComparator implements Comparator<Log> {
         }
         // If types are the same, compare by name
         return log1.getName().compareTo(log2.getName());
+    }
+
+    public static int compareLogTypes(LogType type1, LogType type2) {
+        return Integer.compare(
+                FINAL_LOG_TYPE_ORDER.indexOf(type1),
+                FINAL_LOG_TYPE_ORDER.indexOf(type2)
+        );
     }
 }
 

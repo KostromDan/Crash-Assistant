@@ -88,6 +88,7 @@ shadowJar {
         exclude(dependency('org.lwjgl:.*'))
         exclude(project(':common_config'))
         exclude("META-INF/LICENSE")
+        exclude("META-INF/maven/**")
     }
 }
 

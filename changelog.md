@@ -46,6 +46,7 @@
 - Added KubeJS class filter to prevent usage of JEXL / Crash Assistant classes from KubeJS.
 - Added `groovy.log` and legacy `crafttweaker.log` logs detection.
 - 1.7.10: fixed mod jar was blocked, while crash assistant is running.
+- Fixed typo in `gui.simple_mode.prompt_question`.
 
 1.10.30:
 

@@ -69,7 +69,7 @@ public abstract class AbstractScriptManager {
             scriptPaths = stream.filter(Files::isRegularFile)
                     .filter(path -> path.toString().endsWith(".jexl"))
                     .sorted(Comparator.comparing(Path::getFileName))
-                    .toList();
+                    .collect(java.util.stream.Collectors.toList());
         } catch (IOException e) {
             Logger.error("Failed to walk scripts directory: {}", scriptsDir, e);
             return;

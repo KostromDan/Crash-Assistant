@@ -16,7 +16,7 @@ public interface FileUtils {
             Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if (file.toString().endsWith(".tmp")) {
+                    if (file.toString().endsWith(".tmp") && attrs.lastModifiedTime().toMillis() < Boot.parentStarted) {
                         Files.delete(file);
                     }
                     return FileVisitResult.CONTINUE;
@@ -29,17 +29,6 @@ public interface FileUtils {
             });
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while deleting tmp files: ", e);
-        }
-    }
-
-    static void removeOldLogsFolder() {
-        try {
-            org.apache.commons.io.FileUtils.deleteDirectory(Paths.get("local", "crash_assistant", "logs").toFile());
-        } catch (Exception ignored) {
-        }
-        try {
-            Files.delete(Paths.get("logs", "crash_assistant", "latest.log")); // renamed to crash_assistant_app.log
-        } catch (Exception ignored) {
         }
     }
 

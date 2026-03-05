@@ -318,7 +318,7 @@
   "gui.simple_mode.button": "Show Logs (Expert Mode)",
   "gui.simple_mode.prompt_dont_ask": "Don't ask again",
   "gui.simple_mode.prompt_no": "No",
-  "gui.simple_mode.prompt_question": "Do you want to always show logs? (Expert Mod)",
+  "gui.simple_mode.prompt_question": "Do you want to always show logs? (Expert Mode)",
   "gui.simple_mode.prompt_title": "Expert Mode",
   "gui.simple_mode.prompt_yes": "Yes",
   "gui.split_log_dialog_action_browser": "open in browser",

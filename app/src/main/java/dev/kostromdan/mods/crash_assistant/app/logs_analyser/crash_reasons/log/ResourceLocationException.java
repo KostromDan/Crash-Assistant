@@ -17,6 +17,7 @@ public class ResourceLocationException extends KnownCrashReason {
                 }},
                 LanguageProvider.get("warnings.resource_location_exception")
         );
+        this.withJvmArgsGuide();
     }
 
     @Override

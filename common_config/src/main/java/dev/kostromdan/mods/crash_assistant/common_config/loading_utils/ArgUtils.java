@@ -1,10 +1,12 @@
 package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
+import org.apache.commons.jexl3.annotations.NoJexl;
+
 import java.lang.management.ManagementFactory;
 import java.util.regex.Pattern;
 
 public class ArgUtils {
-    public static String launchArgs = null;
+    private static String launchArgs = null;
 
     public static String getSafeLaunchArgs() {
         if (launchArgs != null) return censor(launchArgs);
@@ -24,7 +26,7 @@ public class ArgUtils {
         return censor(args);
     }
 
-    public static String censor(String input) {
+    private static String censor(String input) {
         if (input == null) return null;
 
         input = input.replaceAll("(--(accessToken|xuid)[\\s=:,]*)([^\\s,]+)", "$1????????");
@@ -39,10 +41,12 @@ public class ArgUtils {
         return input;
     }
 
+    @NoJexl
     public static void setLaunchArgs(String args) {
         launchArgs = args;
     }
 
+    @NoJexl
     public static void setLaunchArgs(String[] args) {
         setLaunchArgs(String.join(", ", args));
     }

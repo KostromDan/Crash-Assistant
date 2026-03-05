@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import org.apache.commons.jexl3.annotations.NoJexl;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -24,15 +25,18 @@ public class Mod {
 
     public static final Type TYPE = new TypeToken<LinkedHashSet<Mod>>() {
     }.getType();
+
     public static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(TYPE, new Mod.ModAdapter())
             .setPrettyPrinting()
             .create();
 
+    @NoJexl
     public Mod(String jarName, String modId, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar) {
         this(jarName, modId, version, isMCreator, mixinConfigs, jarJarMods, pathFromJarJar, null, null);
     }
 
+    @NoJexl
     public Mod(String jarName, String modId, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar, Long curseForgeHash, String modrinthHash) {
         this.jarName = jarName;
         this.modId = modId;
@@ -88,6 +92,7 @@ public class Mod {
      * @param mods           Collection of mods to write
      * @throws IOException If an I/O error occurs
      */
+    @NoJexl
     public static void writeModlistTxt(Path modListTxtPath, Collection<Mod> mods) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
             writer.write("Mods count: " + mods.size() + "\n \n");
@@ -218,6 +223,7 @@ public class Mod {
         return Objects.hash(jarName);
     }
 
+    @NoJexl
     public static class ModAdapter implements JsonDeserializer<LinkedHashSet<Mod>>, JsonSerializer<LinkedHashSet<Mod>> {
         @Override
         public LinkedHashSet<Mod> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

@@ -17,6 +17,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
+import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,14 +33,20 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static dev.kostromdan.mods.crash_assistant.common_config.utils.MemoryUtils.*;
+
 public class CrashAssistantApp {
     public static final Logger LOGGER = LogManager.getLogger(CrashAssistantApp.class);
+    private static String customLatestLogPath = null;
+    private static boolean GUIStartedLaunching = false;
     public static long GUIStartTime = -1;
-    public static boolean GUIStartedLaunching = false;
     public static boolean GUIInitialisationFinished = false;
-    public static String parentXms = null;
-    public static String parentXmx = null;
+    public static String minecraftXms = null;
+    public static String minecraftXmx = null;
     public static String systemRAM = null;
+    public static String systemUsedRAMAtMinecraftLaunchMoment = null;
+    public static String systemSwapSpace = null;
+    public static String systemUsedSwapSpaceAtMinecraftLaunchMoment = null;
     public static String processor = null;
     public static boolean crashed = false;
     public static boolean crashed_with_report = false;
@@ -47,13 +54,10 @@ public class CrashAssistantApp {
     public static String renderer = null;
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
-    public static boolean stopFunctionFired = false;
-    public static boolean closeFunctionFailed = false;
-    public static boolean emergencySaveFired = false;
+    public static boolean preventCrashAssistantWindow = false;
     public static long terminatedProcessesLocationEndTime = 0;
-    public static String customLatestLogPath = null;
 
-
+    @NoJexl
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             LOGGER.error("Uncaught exception in \"{}\" thread:", thread.getName(), throwable);
@@ -69,15 +73,24 @@ public class CrashAssistantApp {
         LOGGER.info("Parent started: {}", Boot.parentStarted);
 
         for (int i = 0; i < args.length; i++) {
-            if ("-parentXms".equals(args[i]) && i + 1 < args.length) {
-                parentXms = args[i + 1];
-                LOGGER.info("parentXms: {}", parentXms);
-            } else if ("-parentXmx".equals(args[i]) && i + 1 < args.length) {
-                parentXmx = args[i + 1];
-                LOGGER.info("parentXmx: {}", parentXmx);
+            if ("-minecraftXms".equals(args[i]) && i + 1 < args.length) {
+                minecraftXms = args[i + 1];
+                LOGGER.info("minecraftXms: {}", minecraftXms);
+            } else if ("-minecraftXmx".equals(args[i]) && i + 1 < args.length) {
+                minecraftXmx = args[i + 1];
+                LOGGER.info("minecraftXmx: {}", minecraftXmx);
             } else if ("-systemRAM".equals(args[i]) && i + 1 < args.length) {
                 systemRAM = args[i + 1];
                 LOGGER.info("systemRAM: {}", systemRAM);
+            } else if ("-systemUsedRAMAtMinecraftLaunchMoment".equals(args[i]) && i + 1 < args.length) {
+                systemUsedRAMAtMinecraftLaunchMoment = args[i + 1];
+                LOGGER.info("systemUsedRAMAtMinecraftLaunchMoment: {}", systemUsedRAMAtMinecraftLaunchMoment);
+            } else if ("-systemSwapSpace".equals(args[i]) && i + 1 < args.length) {
+                systemSwapSpace = args[i + 1];
+                LOGGER.info("systemSwapSpace: {}", systemSwapSpace);
+            } else if ("-systemUsedSwapSpaceAtMinecraftLaunchMoment".equals(args[i]) && i + 1 < args.length) {
+                systemUsedSwapSpaceAtMinecraftLaunchMoment = args[i + 1];
+                LOGGER.info("systemUsedSwapSpaceAtMinecraftLaunchMoment: {}", systemUsedSwapSpaceAtMinecraftLaunchMoment);
             } else if ("-processor".equals(args[i]) && i + 1 < args.length) {
                 processor = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
                 LOGGER.info("processor: {}", processor);
@@ -96,9 +109,23 @@ public class CrashAssistantApp {
             } else if ("-customLatestLogPath".equals(args[i]) && i + 1 < args.length) {
                 customLatestLogPath = args[i + 1];
                 LOGGER.info("customLatestLogPath: {}", customLatestLogPath);
+            } else if ("-bootWarnings".equals(args[i]) && i + 1 < args.length) {
+                try {
+                    String decoded = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
+                    LOGGER.info("Boot warnings: {}", decoded);
+                } catch (Exception e) {
+                    LOGGER.error("Failed to parse bootWarnings", e);
+                }
+            } else if ("-warnsProcessOutput".equals(args[i]) && i + 1 < args.length) {
+                try {
+                    String decoded = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
+                    LOGGER.info("Boot warnings process output:\n{}\n", decoded);
+                } catch (Exception e) {
+                    LOGGER.error("Failed to parse warnsProcessOutput", e);
+                }
             }
         }
-        LOGGER.info("Boot.serialisedGPUs:\n{}", Boot.serialisedGPUs);
+        LOGGER.info("Boot.getSerialisedGPUs():\n{}", Boot.getSerialisedGPUs());
 
         LOGGER.info("os.name: {}", PlatformHelp.OS);
 
@@ -122,7 +149,6 @@ public class CrashAssistantApp {
         }
 
         FileUtils.removeTmpFiles(localFolder);
-        FileUtils.removeOldLogsFolder();
 
         WinEventCleaner.cleanOldWinEventFiles();
 
@@ -165,9 +191,10 @@ public class CrashAssistantApp {
         return false;
     }
 
+    @NoJexl
     public static void checkRendererFile() {
         if (renderer != null) return;
-        if (Boot.serialisedGPUs == null) return;
+        if (Boot.getSerialisedGPUs() == null) return;
         Optional<String> potentialRenderer = ProcessSignalIO.get("renderer", Boot.parentPID);
 
         if (potentialRenderer.isPresent()) {
@@ -176,8 +203,8 @@ public class CrashAssistantApp {
                 String normalizedRenderer = removeSpacesAndLowerCase(renderer);
                 LOGGER.info("Minecraft is running on renderer:\n{}", renderer);
 
-                if (Boot.serialisedGPUs != null) {
-                    List<GPU> gpus = GPU.deserializeGPUs(Boot.serialisedGPUs);
+                if (Boot.getSerialisedGPUs() != null) {
+                    List<GPU> gpus = GPU.deserializeGPUs(Boot.getSerialisedGPUs());
                     List<String> dedicatedGpus = new ArrayList<>();
                     Optional<GPU> foundGPU = Optional.empty();
                     for (GPU gpu : gpus) {
@@ -227,6 +254,9 @@ public class CrashAssistantApp {
         UUIDUtils.startCheck();
 
         new Thread(LanguageProvider::updateLang).start(); // Init lang async.
+
+        LOGGER.info("System used RAM after Minecraft process finish moment: {}", formatMemorySize(getSystemUsedMemoryBytes()));
+        LOGGER.info("System used Swap Space after Minecraft process finish moment: {}", formatMemorySize(getSystemUsedSwapBytes()));
 
         if (customLatestLogPath != null) {
             ModListUtils.MODS_FOLDER = Paths.get(customLatestLogPath).getParent().getParent().resolve("mods").resolve("fabric-" + PlatformHelp.minecraftVersion);
@@ -340,6 +370,10 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.KUBE_JS, "KubeJS: startup.log", Paths.get("logs", "kubejs", "startup.log")));
 
         LogsList.addIfExistsAndModified(new Log(LogType.CRAFT_TWEAKER, Paths.get("logs", "crafttweaker.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.CRAFT_TWEAKER, Paths.get("crafttweaker.log")));
+
+        LogsList.addIfExistsAndModified(new Log(LogType.GROOVY, Paths.get("logs", "groovy.log")));
+
         LogsList.addIfExistsAndModified(new Log(LogType.REI, Paths.get("logs", "rei.log")));
         Path reiIssuesPath = Paths.get("logs", "rei-issues.log");
         try {
@@ -352,6 +386,7 @@ public class CrashAssistantApp {
 
 
         LogsList.addIfExistsAndModified(new Log(LogType.CRASH_ASSISTANT, Paths.get("logs", "crash_assistant", "crash_assistant_app.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.STARTUP_SCRIPTS, Paths.get("logs", "crash_assistant", "startup_scripts.log")));
 
 
         gameLaunchedSuccessfully = ProcessSignalIO.exists("successful_launch", Boot.parentPID);
@@ -360,17 +395,22 @@ public class CrashAssistantApp {
         joinedWorldSuccessfully = ProcessSignalIO.exists("joined_world", Boot.parentPID);
         LOGGER.info("Joined world successfully: {}", joinedWorldSuccessfully);
 
-        stopFunctionFired = ProcessSignalIO.exists("normal_stop", Boot.parentPID);
+        preventCrashAssistantWindow = ProcessSignalIO.exists("prevent_crash_assistant_window", Boot.parentPID);
+        LOGGER.info("Prevent Crash Assistant Window: {}", preventCrashAssistantWindow);
+
+        boolean stopFunctionFired = ProcessSignalIO.exists("normal_stop", Boot.parentPID);
         if (!stopFunctionFired) crashed = true;
         LOGGER.info("stop() function of Minecraft fired: {}", stopFunctionFired);
 
-        closeFunctionFailed = ProcessSignalIO.exists("close_failed", Boot.parentPID);
+        boolean closeFunctionFailed = ProcessSignalIO.exists("close_failed", Boot.parentPID);
         if (closeFunctionFailed) crashed = true;
         LOGGER.info("close() function of Minecraft failed: {}", closeFunctionFailed);
 
-        emergencySaveFired = ProcessSignalIO.exists("emergency_save", Boot.parentPID);
+        boolean emergencySaveFired = ProcessSignalIO.exists("emergency_save", Boot.parentPID);
         if (emergencySaveFired) crashed = true;
         LOGGER.info("emergencySave() function of Minecraft fired: {}", emergencySaveFired);
+
+        if (preventCrashAssistantWindow) crashed = false;
 
         LOGGER.info("isModpackCreator: {}", ModListDiff.isModpackCreator());
         LOGGER.info("isHelpLinkDefault: {}", PlatformHelp.isLinkDefault());
@@ -398,7 +438,7 @@ public class CrashAssistantApp {
     }
 
 
-    public static void startApp() {
+    private static void startApp() {
         GUIStartedLaunching = true;
         try {
             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
@@ -409,7 +449,7 @@ public class CrashAssistantApp {
         }
     }
 
-    public static boolean locateAndAddHsErr() {
+    private static boolean locateAndAddHsErr() {
         if (located_hs_err) return false;
         Optional<Path> hsErrLog = HsErrHelper.locateHsErrLog(Boot.parentPID);
         if (hsErrLog.isPresent()) {
@@ -424,7 +464,7 @@ public class CrashAssistantApp {
         return false;
     }
 
-    public static void callUpdateLogsListInGUI() {
+    private static void callUpdateLogsListInGUI() {
         try {
             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
             Method method = clazz.getMethod("updateLogsListInGUI");
@@ -434,7 +474,7 @@ public class CrashAssistantApp {
         }
     }
 
-    public static void waitGuiInitialisationFinished() {
+    private static void waitGuiInitialisationFinished() {
         long startTime = System.currentTimeMillis();
         while (true) {
             if (System.currentTimeMillis() >= startTime + 7000) {
@@ -453,7 +493,7 @@ public class CrashAssistantApp {
         }
     }
 
-    public static void startLocatingTerminatedProcesses() {
+    private static void startLocatingTerminatedProcesses() {
         new Thread(() -> {
             long startTime = System.currentTimeMillis();
             terminatedProcessesLocationEndTime = System.currentTimeMillis() + 7000;

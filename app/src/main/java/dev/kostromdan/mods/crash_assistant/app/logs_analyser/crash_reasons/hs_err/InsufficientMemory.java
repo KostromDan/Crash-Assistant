@@ -19,6 +19,7 @@ public class InsufficientMemory extends KnownCrashReason {
                 LogType.HS_ERR,
                 applyEndRecommendations(LanguageProvider.get("warnings.insufficient_memory"))
         );
+        this.withMemoryAllocationGuide();
     }
 
     public static String applyEndRecommendations(String message) {

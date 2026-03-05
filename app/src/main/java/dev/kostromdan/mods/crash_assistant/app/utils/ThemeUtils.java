@@ -41,6 +41,8 @@ public class ThemeUtils {
         if (themeName == null) return false;
         try {
             switch (themeName.toLowerCase()) {
+                case "swing":
+                    return true;
                 case "flatlightlaf":
                     return FlatLightLaf.setup();
                 case "flatdarklaf":

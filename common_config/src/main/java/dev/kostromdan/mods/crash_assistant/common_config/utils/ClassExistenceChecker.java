@@ -12,7 +12,7 @@ public interface ClassExistenceChecker {
      */
     static boolean classExists(String className) {
         try {
-            Class.forName(className);
+            Class.forName(className, false, ClassExistenceChecker.class.getClassLoader());
             return true;
         } catch (ClassNotFoundException ignored) {
             return false;

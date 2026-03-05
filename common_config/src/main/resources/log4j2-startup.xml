@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="logPath">logs/crash_assistant/startup_scripts.log</Property>
+    </Properties>
+    <Appenders>
+        <File name="StartupFile" fileName="${logPath}" append="false">
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%level] [%logger{36}]: %msg%n"/>
+        </File>
+    </Appenders>
+    <Loggers>
+        <Logger name="Script" level="info" additivity="false">
+            <AppenderRef ref="StartupFile"/>
+        </Logger>
+        <Root level="info">
+            <AppenderRef ref="StartupFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

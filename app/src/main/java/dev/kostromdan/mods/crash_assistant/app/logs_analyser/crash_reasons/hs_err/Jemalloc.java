@@ -13,6 +13,7 @@ public class Jemalloc extends KnownCrashReason {
                 LogType.HS_ERR,
                 LanguageProvider.get("warnings.jemalloc")
         );
+        this.withJvmArgsGuide();
     }
 
     @Override

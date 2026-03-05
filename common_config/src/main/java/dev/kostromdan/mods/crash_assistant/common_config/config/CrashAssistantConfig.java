@@ -5,6 +5,7 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.ParsingException;
 import com.electronwill.nightconfig.toml.TomlFormat;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.Lang;
+import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -286,6 +287,10 @@ public class CrashAssistantConfig {
                 "If enabled, will add resourcepacks to modlist.json\n" +
                         "After filename where will be ' (resourcepack)' suffix.",
                 false);
+        addOption("modpack_modlist.add_datapacks",
+                "If enabled, will add datapacks to modlist.json\n" +
+                        "After filename where will be ' (datapacks)' suffix.",
+                false);
         addOption("modpack_modlist.add_modloader_jar_name",
                 "If enabled, will add modloader jar name to modlist, to easily track if user changed version of modloader.",
                 true);
@@ -370,14 +375,28 @@ public class CrashAssistantConfig {
                         "On first world join of modpack creator if set to false shows greeting, then self enables.",
                 false);
 
+        config.setComment("scripts", "Settings of scripting feature.\n" +
+                "Allows you to add custom scripts for log analysis.\n" +
+                "Scripts should be placed in config/crash_assistant/scripts/log_analysis folder.");
+        addOption("scripts.enabled",
+                "Enable feature.",
+                true);
+        addOption("scripts.ide_enabled",
+                "Enable Scripts IDE in the GUI.",
+                true);
+        addOption("scripts.generate_scripts_folder_with_example",
+                "By changing this value you can disable creating \"scripts\" folder and placing example scripts there.",
+                true);
+
         config.setComment("gui_customisation", "You can customise GUI with this options.");
         addOption("gui_customisation.theme_file_name",
                 "Name of a FlatLaf IntelliJ Themes file in config/crash_assistant folder or core theme name.\n" +
                         "If file doesn't exist and no core theme matches, themes will be disabled and Standard Swing look and feel used.\n" +
                         "Supported core themes: 'FlatLightLaf', 'FlatDarkLaf', 'FlatIntelliJLaf', 'FlatDarculaLaf', 'FlatMacLightLaf', 'FlatMacDarkLaf'.\n" +
                         "Supports any IntelliJ Theme file with '.theme.json' extension.\n" +
+                        "If you prefer standard Swing look and feel, use 'Swing'.\n" +
                         "Look out our guide about theme support: https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Theme%20Support/Getting%20Started.md",
-                "example.theme.json");
+                "FlatLightLaf");
         addOption("gui_customisation.disable_upload_all_button",
                 "Will hide Upload All Button from GUI.",
                 false);
@@ -444,7 +463,8 @@ public class CrashAssistantConfig {
                 "255_100_100");
         addOption("gui_customisation.modpack_logo_path",
                 "Path to a modpack logo to display in the top of the GUI.\n" +
-                        "Path is relative to the Minecraft instance folder. Leave empty to disable.",
+                        "Path is relative to the Minecraft instance folder. Leave empty to disable.\n" +
+                        "WARNING: use only '/' path separator. '\\' will corrupt config!",
                 "");
         addOption("gui_customisation.modpack_logo_large_mode",
                 "If true, the logo will be larger, Replacing a some of `don't send screenshot` notice.\n" +
@@ -551,6 +571,7 @@ public class CrashAssistantConfig {
         return CONFIG_PATH;
     }
 
+    @NoJexl
     public static void executeWithLock(Runnable body) {
         Exception ex = null;
         try {
@@ -582,7 +603,7 @@ public class CrashAssistantConfig {
         }
     }
 
-    public static void update() {
+    private static void update() {
         executeWithLock(() -> {
             if (!CONFIG_PATH.toFile().exists() || CONFIG_PATH.toFile().lastModified() > lastConfigUpdate) {
                 load();
@@ -590,7 +611,7 @@ public class CrashAssistantConfig {
         });
     }
 
-    public static void load() {
+    private static void load() {
         executeWithLock(() -> {
             try {
                 config.load();
@@ -621,7 +642,7 @@ public class CrashAssistantConfig {
         });
     }
 
-    public static long getCommentsHash() {
+    private static long getCommentsHash() {
         long hash = 0;
         hash += config.commentMap().hashCode();
         for (Map.Entry<String, Object> entry : config.valueMap().entrySet()) {
@@ -721,7 +742,7 @@ public class CrashAssistantConfig {
         }
     }
 
-    public static void save() {
+    private static void save() {
         executeWithLock(() -> {
             config.save();
             lastConfigUpdate = CONFIG_PATH.toFile().lastModified();
@@ -757,6 +778,7 @@ public class CrashAssistantConfig {
         });
     }
 
+    @NoJexl
     public static void main(String[] args) { // Debug config.
     }
 }

@@ -6,13 +6,24 @@ This project contains source code based upon, or includes source code from, the 
 The complete text for each software license can be found in the directory "thirdparty/licenses".
 
 * Maven
-  * Copyright (c) 2001-2022 The Apache Software Foundation
+  * Copyright (c) 2001-2026 The Apache Software Foundation
   * License: Apache License Version 2.0, January 2004
   * Original Source:
     * https://github.com/apache/maven/blob/maven-3.9.x/maven-artifact/src/main/java/org/apache/maven/artifact/versioning/ComparableVersion.java
   * Files:
     * common_config/src/main/java/dev/kostromdan/mods/crash_assistant/common_config/utils/maven_version_cmp/ComparableVersion.java
 
+* Apache Commons JEXL
+  * Copyright (c) 2001-2026 The Apache Software Foundation
+  * License: Apache License Version 2.0, January 2004
+  * Original Source:
+    * https://github.com/apache/commons-jexl
+
+* FlatLaf - Flat Look and Feel
+  * Copyright (c) 2003-2026 FormDev Software GmbH.
+  * License: Apache License Version 2.0, January 2004
+  * Original Source:
+    * https://github.com/JFormDesigner/FlatLaf/
 
 * Localization contributions made to Crash Assistant before relicensing from LGPL v3 to KostromDan’s Modded Minecraft License (Version 1.0.0).
   * Copyright (c) KostromDan and other Crash Assistant contributors. https://github.com/KostromDan/Crash-Assistant/graphs/contributors

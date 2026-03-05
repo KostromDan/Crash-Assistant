@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import org.apache.commons.io.input.ReversedLinesFileReader;
+import org.apache.commons.jexl3.annotations.NoJexl;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -28,12 +29,14 @@ public class LogReader {
     boolean isLogProcessed = false;
     long sizeOnLastRead = -1;
 
+    @NoJexl
     public LogReader(Log log) {
         this.firstLines = new ArrayList<>(maxUploadLines);
         this.lastLines = null;
         this.log = log;
     }
 
+    @NoJexl
     public synchronized void readLogFile(boolean checkUpdated) throws IOException {
         if (isLogProcessed && (!checkUpdated || Files.size(log.getPath()) == sizeOnLastRead)) {
             return;
@@ -102,6 +105,7 @@ public class LogReader {
     /**
      * Different versions of common-io having different implementations, so we have to deal with it.
      */
+    @NoJexl
     @SuppressWarnings("deprecation")
     private ReversedLinesFileReader createReversedLinesFileReader() throws IOException {
         try {
@@ -115,15 +119,17 @@ public class LogReader {
         }
     }
 
-
+    @NoJexl
     public String getFirstLinesString() {
         return String.join("\n", firstLines);
     }
 
+    @NoJexl
     public List<String> getFirstLinesList() {
         return firstLines;
     }
 
+    @NoJexl
     public String getLastLinesString() {
         return lastLines == null ? null : String.join("\n", lastLines);
     }
@@ -148,11 +154,40 @@ public class LogReader {
         }
     }
 
+    @NoJexl
     public synchronized void destroyAllLinesCache() {
         synchronized (this) {
             allLinesStringCached = null;
             allLinesListCached = null;
         }
+    }
+
+    /**
+     * Returns the first n lines from the log file as a list of strings.
+     * If n is greater than the number of available lines, all lines are returned.
+     *
+     * @param n number of lines to return
+     * @return list of first n lines
+     */
+    public synchronized List<String> getFirstNLines(int n) {
+        List<String> allLines = getAllLinesList();
+        if (allLines.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        int endIndex = Math.min(allLines.size(), Math.max(0, n));
+        return new ArrayList<>(allLines.subList(0, endIndex));
+    }
+
+    /**
+     * Returns the first line from the log file.
+     * If the log file is empty, returns an empty string.
+     *
+     * @return the first line or empty string if file is empty
+     */
+    public synchronized String getFirstLine() {
+        List<String> firstLine = getFirstNLines(1);
+        return !firstLine.isEmpty() ? firstLine.get(0) : "";
     }
 
     /**

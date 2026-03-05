@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * A dialog for showing and handling the privacy policy acceptance.
@@ -18,6 +19,27 @@ public class PrivacyPolicyDialog {
     // Static boolean to track if the dialog should be shown during the current launch
     private static boolean acceptedForCurrentLaunch = false;
 
+    // Synchronization primitives for ensurePrivacyPolicyAccepted()
+    private static final Object ensureLock = new Object();
+    private static CountDownLatch currentBatchLatch = null;
+    private static volatile boolean currentBatchResult = false;
+
+    /**
+     * Checks whether the privacy policy has already been accepted (config, session, or disabled).
+     */
+    private static boolean isAlreadyAccepted() {
+        if (Objects.equals(CrashAssistantLocalConfig.get("privacy.accepted_privacy_info"), LanguageProvider.get("gui.privacy.crash_assistant_privacy_policy.version"))) {
+            return true;
+        }
+        if (acceptedForCurrentLaunch) {
+            return true;
+        }
+        if (!CrashAssistantConfig.getBoolean("general.enable_privacy_policy_acceptance")) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Shows a dialog asking the user to accept the privacy policy for uploading logs.
      * If the user has already accepted the privacy policy, the dialog is not shown and the function returns true.
@@ -25,18 +47,7 @@ public class PrivacyPolicyDialog {
      * @return true if the user accepts the privacy policy or has already accepted it, false otherwise
      */
     public static boolean showPrivacyPolicyDialog() {
-        // Check if the user has already accepted the privacy policy
-        if (Objects.equals(CrashAssistantLocalConfig.get("privacy.accepted_privacy_info"), LanguageProvider.get("gui.privacy.crash_assistant_privacy_policy.version"))) {
-            return true;
-        }
-
-        // Check if the user has accepted for the current launch
-        if (acceptedForCurrentLaunch) {
-            return true;
-        }
-
-        // Check if privacy policy acceptance disabled in config.
-        if (!CrashAssistantConfig.getBoolean("general.enable_privacy_policy_acceptance")) {
+        if (isAlreadyAccepted()) {
             return true;
         }
 
@@ -118,6 +129,72 @@ public class PrivacyPolicyDialog {
     }
 
     /**
+     * Thread-safe blocking method to ensure the privacy policy is accepted.
+     * Multiple threads can call this simultaneously - only the first will show the dialog,
+     * others will block and wait. On accept all get true; on decline a single warning is
+     * shown from here and all get false.
+     *
+     * @return true if accepted, false if declined
+     */
+    public static boolean ensurePrivacyPolicyAccepted() {
+        if (isAlreadyAccepted()) return true;
+
+        CountDownLatch myLatch;
+        boolean iAmFirst;
+
+        synchronized (ensureLock) {
+            if (isAlreadyAccepted()) return true;
+
+            if (currentBatchLatch != null) {
+                // Dialog is currently showing - join this batch
+                myLatch = currentBatchLatch;
+                iAmFirst = false;
+            } else {
+                // No dialog showing - start new batch
+                currentBatchLatch = new CountDownLatch(1);
+                myLatch = currentBatchLatch;
+                iAmFirst = true;
+            }
+        }
+
+        if (iAmFirst) {
+            try {
+                final boolean[] result = {false};
+                SwingUtilities.invokeAndWait(() -> {
+                    result[0] = showPrivacyPolicyDialog();
+                    if (!result[0]) {
+                        // Show ONE declined warning from here
+                        JOptionPane.showMessageDialog(
+                                CrashAssistantGUI.getFrame(),
+                                LanguageProvider.get("gui.privacy.declined"),
+                                LanguageProvider.get("gui.privacy.title"),
+                                JOptionPane.WARNING_MESSAGE
+                        );
+                    }
+                });
+                currentBatchResult = result[0];
+            } catch (Exception e) {
+                CrashAssistantApp.LOGGER.error("Error in ensurePrivacyPolicyAccepted", e);
+                currentBatchResult = false;
+            } finally {
+                synchronized (ensureLock) {
+                    currentBatchLatch = null;
+                }
+                myLatch.countDown();
+            }
+        }
+
+        try {
+            myLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+
+        return currentBatchResult;
+    }
+
+    /**
      * Resets the privacy consent settings according to the following rules:
      * 1. If privacy.accepted_privacy_info is not null, remove it from local config
      * 2. If acceptedForCurrentLaunch is true, set it to false
@@ -138,6 +215,7 @@ public class PrivacyPolicyDialog {
             acceptedForCurrentLaunch = false;
             changesApplied = true;
         }
+
 
         // Check if general.enable_privacy_policy_acceptance is true and set it to false if so
         if (!CrashAssistantConfig.getBoolean("general.enable_privacy_policy_acceptance")) {

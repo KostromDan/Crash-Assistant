@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.class_loading;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
+import org.apache.commons.jexl3.annotations.NoJexl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,12 +25,15 @@ import java.util.concurrent.TimeUnit;
 
 
 public class Boot {
-    public static String classPath = null;
+    private static String classPath = null;
+    private static boolean recursiveStart = false;
+    private static boolean gpuDetect = false;
+    private static boolean bootWarningsVisible = false;
+    private static String bootWarningsJson = null;
+    private static String startupWarningsJson = null;
+    private static String serialisedGPUs = null;
     public static String crashAssistantModJarName = null;
-    public static boolean recursiveStart = false;
-    public static boolean gpuDetect = false;
     public static boolean vulkanAddonLoaded = false;
-    public static String serialisedGPUs = null;
     public static long parentPID = -1;
     public static long parentStarted = -1;
     public static List<String> JVM_ARGS = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -38,6 +42,7 @@ public class Boot {
     public static String MINECRAFT_JVM_ARGS;
 
 
+    @NoJexl
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         try {
             List<String> effectiveArgs = new ArrayList<String>();
@@ -54,6 +59,8 @@ public class Boot {
                     recursiveStart = true;
                 } else if ("-gpuDetect".equals(args[i])) {
                     gpuDetect = true;
+                } else if ("-bootWarningsVisible".equals(args[i])) {
+                    bootWarningsVisible = true;
                 }
             }
 
@@ -76,6 +83,10 @@ public class Boot {
                     MINECRAFT_JVM_ARGS = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
                 }else if ("-modLoadedWithConnector".equals(effectiveArgs.get(i))){
                     PlatformHelp.modLoadedWithConnector = true;
+                } else if ("-startupWarnings".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    startupWarningsJson = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
+                } else if ("-bootWarnings".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    bootWarningsJson = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
                 }
             }
 
@@ -96,6 +107,27 @@ public class Boot {
                     serialisedGPUs = ErrorUtils.getErrorMessageAndStackTrace(e);
                 }
                 System.out.println(serialisedGPUs);
+                System.exit(0);
+            }
+
+            if (bootWarningsVisible) {
+                try {
+                    Class<?> startupWarningViewerClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.StartupWarningViewer");
+                    Method mainMethod = startupWarningViewerClass.getMethod("main", String[].class);
+                    
+                    String encodedWarnings = null;
+                     for (int i = 0; i < effectiveArgs.size(); i++) {
+                        if ("-bootWarnings".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                            encodedWarnings = effectiveArgs.get(i+1);
+                            break;
+                        }
+                    }
+                    if (encodedWarnings != null) {
+                        mainMethod.invoke(null, (Object) new String[]{encodedWarnings});
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
                 System.exit(0);
             }
 
@@ -120,6 +152,14 @@ public class Boot {
                 if (serialisedGPUs != null) {
                     String encodedGPUs = Base64.getEncoder().encodeToString(serialisedGPUs.getBytes(StandardCharsets.UTF_8));
                     Files.write(Paths.get(argsFilePath), Arrays.asList("-serialisedGPUs", encodedGPUs), StandardOpenOption.APPEND);
+                }
+
+                if (bootWarningsJson != null) {
+                     String warningsOutput = getBootWarningsOutput(new ArrayList<>(baseChildCommand));
+                     if (warningsOutput != null) {
+                         String encodedWarnsOutput = Base64.getEncoder().encodeToString(warningsOutput.getBytes(StandardCharsets.UTF_8));
+                         Files.write(Paths.get(argsFilePath), Arrays.asList("-warnsProcessOutput", encodedWarnsOutput), StandardOpenOption.APPEND);
+                     }
                 }
 
                 List<String> finalLaunchCommand = new ArrayList<>(baseChildCommand);
@@ -233,5 +273,39 @@ public class Boot {
         } catch (Throwable ignored) {
             return "Error while getting gpus with GPUDetector process: " + ErrorUtils.getErrorMessageAndStackTrace(ignored);
         }
+    }
+
+    private static String getBootWarningsOutput(List<String> argsList) {
+        try {
+            argsList.removeIf(arg -> arg.startsWith("-Dlog4j2.configurationFile="));
+            argsList.add(1, "-Dlog4j2.configurationFile=log4j2-console.xml");
+            argsList.add("-bootWarningsVisible");
+            ProcessBuilder pb = new ProcessBuilder(argsList);
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            process.waitFor();
+
+            try (InputStream is = process.getInputStream()) {
+                StringBuilder output = new StringBuilder();
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    output.append(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
+                }
+                return output.toString();
+            }
+
+        } catch (Throwable ignored) {
+            return "Error while getting output from boot warnings process: " + ErrorUtils.getErrorMessageAndStackTrace(ignored);
+        }
+    }
+
+    public static String getStartupWarningsJson() {
+        return startupWarningsJson;
+    }
+
+    public static String getSerialisedGPUs(){
+        return serialisedGPUs;
     }
 }

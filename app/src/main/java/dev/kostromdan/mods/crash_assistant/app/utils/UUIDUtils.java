@@ -139,8 +139,10 @@ public class UUIDUtils {
                         String serverName = json.get("name").getAsString();
                         String actualName = getUsername();
                         if (actualName != null && !actualName.equalsIgnoreCase(serverName)) {
-                            CrashAssistantApp.LOGGER.warn("UUID mismatch! mojang: {}, local: {}; assuming offline mode.", serverName, actualName);
-                            return UUIDCheckStatus.PIRACY_OR_OFFLINE;
+                            CrashAssistantApp.LOGGER.warn("UUID mismatch! mojang: {}, local: {}; assuming recent username change.", serverName, actualName);
+                            // Prism is using random UUIDs in case of offline mod. But it is extremely unlikely what random UUID will be a valid one.
+                            // But most cases here will be licensed players which recently changed username, and launcher haven't for whatever reason yet updated it.
+                            return UUIDCheckStatus.FAILED;
                         }
                     }
                 } catch (Exception e) {

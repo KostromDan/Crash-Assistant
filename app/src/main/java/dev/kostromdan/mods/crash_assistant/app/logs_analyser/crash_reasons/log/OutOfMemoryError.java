@@ -19,6 +19,7 @@ public class OutOfMemoryError extends KnownCrashReason {
                 InsufficientMemory.applyEndRecommendations(LanguageProvider.get("warnings.out_of_memory_error")),
                 "java\\.lang\\.OutOfMemoryError"
         );
+        this.withMemoryAllocationGuide();
     }
 
     @Override

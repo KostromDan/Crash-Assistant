@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import org.apache.commons.jexl3.annotations.NoJexl;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -26,6 +27,7 @@ public class RegexChecker {
         }
     }
 
+    @NoJexl
     public static boolean logContainsOneOfPatterns(String logContents, Path logFile, Collection<String> patterns) {
         if (patterns == null) {
             return false;
@@ -33,6 +35,7 @@ public class RegexChecker {
         return logContainsOneOfPatterns(logContents, logFile, patterns.toArray(new String[0]));
     }
 
+    @NoJexl
     public static boolean logContainsOneOfPatterns(String logContents, Path logFile, String... patterns) {
         if (patterns.length == 0) {
             return false;

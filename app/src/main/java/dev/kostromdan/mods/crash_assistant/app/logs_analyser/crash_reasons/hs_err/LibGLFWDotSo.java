@@ -17,6 +17,7 @@ public class LibGLFWDotSo extends KnownCrashReason {
                     put("$LINK.GLFW_DOWNLOAD$", LanguageProvider.get("warnings_common.repository"));
                 }})
         );
+        this.withJvmArgsGuide();
     }
 
     @Override

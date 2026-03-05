@@ -18,6 +18,7 @@ public class MacJDK extends KnownCrashReason {
                     put("$LINK.ATL$", "ATLauncher");
                 }})
         );
+        this.withJavaVersionGuide();
     }
 
     @Override

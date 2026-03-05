@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,6 +20,7 @@ public class ModListUtils {
     public static final Logger LOGGER = LogManager.getLogger();
     public static Path MODS_FOLDER = Paths.get("mods");
     private static final Path RESOURCEPACKS_FOLDER = Paths.get("resourcepacks");
+    private static final Path DATAPACKS_FOLDER = Paths.get("datapacks");
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
     public static String currentUsername = "";
     private static LinkedHashSet<Mod> cachedModList = null;
@@ -66,6 +68,14 @@ public class ModListUtils {
                     }
                 });
             }
+            if (Files.exists(DATAPACKS_FOLDER) && CrashAssistantConfig.getBoolean("modpack_modlist.add_datapacks")) {
+                Files.list(DATAPACKS_FOLDER).sorted(new PathComparator()).forEach(path -> {
+                    String filename = path.getFileName().toString();
+                    if (Files.isDirectory(path) || filename.endsWith(".zip")) {
+                        currentMods.add(new Mod(filename + " (datapack)", null, null, null, new HashSet<>(), new ArrayList<>(), null));
+                    }
+                });
+            }
             if (useCache) {
                 cachedModList = currentMods;
             }
@@ -90,6 +100,7 @@ public class ModListUtils {
         return new LinkedHashSet<>();
     }
 
+    @NoJexl
     public static void saveCurrentModList() {
         try {
             try (FileWriter writer = new FileWriter(JSON_FILE.toFile())) {

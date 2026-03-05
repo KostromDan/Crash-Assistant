@@ -32,15 +32,21 @@ dependencies {
 
     shadowBundle 'com.electronwill.night-config:toml:3.6.3'
     shadowBundle 'com.electronwill.night-config:json:3.6.3'
+    shadowBundle 'org.apache.commons:commons-jexl3:3.6.2'
     implementation project(path: ':common_config')
     shadowBundle project(path: ':common_config')
-
 }
 
 shadowJar {
     archiveClassifier.set('dev-shadow')
     configurations = [project.configurations.shadowBundle]
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
+    relocate 'org.apache.commons.jexl3', 'dev.kostromdan.mods.crash_assistant.commons.jexl3'
+    relocate 'org.apache.commons.logging', 'dev.kostromdan.mods.crash_assistant.commons.logging'
+
+    exclude "META-INF/maven/**"
+    exclude "META-INF/LICENSE.txt"
+    exclude "META-INF/NOTICE.txt"
 }
 
 remapJar {
@@ -71,7 +77,7 @@ processResources {
 
 unifiedPublishing {
     project {
-        gameVersions = ["1.16.5"]
+        gameVersions = ["1.19", "1.19.1", "1.19.2", "1.19.3", "1.19.4", "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4"]
         gameLoaders = ["fabric", "quilt"]
 
         displayName = tasks.remapJar.archiveFile.get().asFile.name

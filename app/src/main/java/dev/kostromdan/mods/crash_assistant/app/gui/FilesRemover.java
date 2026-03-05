@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
+import dev.kostromdan.mods.crash_assistant.app.utils.ThemeUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
@@ -770,6 +771,7 @@ public class FilesRemover extends JDialog {
     // ------------------------------- DEMO LAUNCHER -------------------------------
 
     public static void main(String[] args) {
+        ThemeUtils.ensureThemesApplied();
         SwingUtilities.invokeLater(() -> {
             JFrame launcher = new JFrame("FilesRemover Demo");
             launcher.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

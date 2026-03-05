@@ -14,6 +14,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.apache.commons:commons-jexl3:3.6.2")
     implementation 'org.apache.logging.log4j:log4j-core:2.0-beta9'
     implementation 'org.apache.logging.log4j:log4j-api:2.0-beta9'
     implementation 'commons-io:commons-io:2.15.1'
@@ -25,16 +26,21 @@ dependencies {
 }
 
 shadowJar {
-    archiveClassifier.set('')
+    archiveClassifier.set('shadow')
 
     // Relocate Night Config packages
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
+    relocate 'org.apache.commons.jexl3', 'dev.kostromdan.mods.crash_assistant.commons.jexl3'
+    relocate 'org.apache.commons.logging', 'dev.kostromdan.mods.crash_assistant.commons.logging'
 
     dependencies {
         exclude(dependency('org.apache.logging.log4j:.*'))
         exclude(dependency('commons-io:commons-io:2.15.1'))
 //        exclude(dependency('net.java.dev.jna:.*'))
         exclude(dependency('com.google.code.gson:.*'))
+        exclude "META-INF/maven/**"
+        exclude "META-INF/LICENSE.txt"
+        exclude "META-INF/NOTICE.txt"
     }
 }
 

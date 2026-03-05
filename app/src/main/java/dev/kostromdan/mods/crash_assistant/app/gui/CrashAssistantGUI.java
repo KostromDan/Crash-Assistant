@@ -676,8 +676,8 @@ public class CrashAssistantGUI {
 
         JCheckBox dontAskAgain = new JCheckBox(LanguageProvider.get("gui.simple_mode.prompt_dont_ask"));
         JPanel messagePanel = new JPanel(new BorderLayout(0, 8));
-        JLabel messageLabel = new JLabel("<html>" + LanguageProvider.get("gui.simple_mode.prompt_question") + "</html>");
-        messagePanel.add(messageLabel, BorderLayout.CENTER);
+        JEditorPane messagePane = getEditorPane(LanguageProvider.get("gui.simple_mode.prompt_question"), false);
+        messagePanel.add(messagePane, BorderLayout.CENTER);
         messagePanel.add(dontAskAgain, BorderLayout.SOUTH);
 
         Object[] options = new Object[]{

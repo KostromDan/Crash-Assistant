@@ -1324,7 +1324,7 @@ class LineNumberView extends JComponent {
 
         for (int i = 0; i < lineCount; i++) {
             try {
-                Rectangle r = textPane.modelToView2D(root.getElement(i).getStartOffset()).getBounds();
+                Rectangle r = textPane.modelToView(root.getElement(i).getStartOffset());
                 if (r.y + fontHeight < clip.y) continue;
                 if (r.y > clip.y + clip.height) break;
 

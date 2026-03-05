@@ -21,6 +21,7 @@ dependencies {
     shadowBundle project(path: ':common_config')
     shadowBundle 'com.electronwill.night-config:toml:3.6.4'
     shadowBundle 'com.electronwill.night-config:json:3.6.4'
+    shadowBundle 'org.apache.commons:commons-jexl3:3.6.2'
 }
 
 processResources {
@@ -35,6 +36,12 @@ shadowJar {
     archiveClassifier.set('dev-shadow')
     configurations = [project.configurations.shadowBundle]
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
+    relocate 'org.apache.commons.jexl3', 'dev.kostromdan.mods.crash_assistant.commons.jexl3'
+    relocate 'org.apache.commons.logging', 'dev.kostromdan.mods.crash_assistant.commons.logging'
+
+    exclude "META-INF/maven/**"
+    exclude "META-INF/LICENSE.txt"
+    exclude "META-INF/NOTICE.txt"
 }
 
 tasks.withType(Jar).configureEach {

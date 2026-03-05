@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationFactory;
+import org.apache.logging.log4j.core.config.ConfigurationSource;
 
 import java.io.InputStream;
 
@@ -24,8 +25,8 @@ public class Logger {
         try (InputStream is = Logger.class.getResourceAsStream("/log4j2-startup.xml")) {
             if (is != null) {
                 LoggerContext context = new LoggerContext("CrashAssistantStartupScripts");
-                ConfigurationFactory.ConfigurationSource source = new ConfigurationFactory.ConfigurationSource(is);
-                Configuration config = ConfigurationFactory.getInstance().getConfiguration(source);
+                ConfigurationSource source = new ConfigurationSource(is);
+                Configuration config = ConfigurationFactory.getInstance().getConfiguration(context, source);
                 context.start(config);
                 return context.getLogger("StartupScripts");
             }

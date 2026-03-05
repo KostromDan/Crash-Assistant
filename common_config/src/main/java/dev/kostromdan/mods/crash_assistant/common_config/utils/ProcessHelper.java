@@ -141,8 +141,6 @@ public class ProcessHelper {
         classes.add(org.apache.logging.log4j.LogManager.class);
         classes.add(org.apache.logging.log4j.core.LoggerContext.class);
         classes.add(org.apache.commons.io.input.ReversedLinesFileReader.class);
-        classes.add(com.sun.jna.Memory.class);
-        classes.add(com.sun.jna.platform.win32.Tlhelp32.class);
         return classes;
     }
 

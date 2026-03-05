@@ -375,13 +375,15 @@ public class ControlPanel {
                         if (filePanel.getLastError() != null &&
                                 !(filePanel.getLastError() instanceof UploadException && filePanel.getLastError().getMessage().startsWith("Crash Assistant log"))) {
                             if (!(filePanel.getLastError() instanceof DeclinedException)) {
-                                String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError();
-                                JOptionPane.showMessageDialog(
-                                        panel,
-                                        message,
-                                        LanguageProvider.get("gui.failed_to_upload_file") + "!",
-                                        JOptionPane.ERROR_MESSAGE
-                                );
+                                synchronized (FilePanel.uploadErrorDialogLock) {
+                                    String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError();
+                                    JOptionPane.showMessageDialog(
+                                            panel,
+                                            message,
+                                            LanguageProvider.get("gui.failed_to_upload_file") + "!",
+                                            JOptionPane.ERROR_MESSAGE
+                                    );
+                                }
                             }
                             uploadAllButton.setText(LanguageProvider.get("gui.error"));
                             CrashAssistantGUI.highlightButton(uploadAllButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_error_color"), new Color(255, 100, 100)), 2600);

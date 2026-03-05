@@ -367,16 +367,15 @@ public class ControlPanel {
                         Log log = filePanel.getLog();
                         if (filePanel.getLastError() != null &&
                                 !(filePanel.getLastError() instanceof UploadException && filePanel.getLastError().getMessage().startsWith("Crash Assistant log"))) {
-                            String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError();
-                            if (filePanel.getLastError() instanceof DeclinedException) {
-                                message = filePanel.getLastError().getMessage();
+                            if (!(filePanel.getLastError() instanceof DeclinedException)) {
+                                String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError();
+                                JOptionPane.showMessageDialog(
+                                        panel,
+                                        message,
+                                        LanguageProvider.get("gui.failed_to_upload_file") + "!",
+                                        JOptionPane.ERROR_MESSAGE
+                                );
                             }
-                            JOptionPane.showMessageDialog(
-                                    panel,
-                                    message,
-                                    LanguageProvider.get("gui.failed_to_upload_file") + "!",
-                                    JOptionPane.ERROR_MESSAGE
-                            );
                             uploadAllButton.setText(LanguageProvider.get("gui.error"));
                             CrashAssistantGUI.highlightButton(uploadAllButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_error_color"), new Color(255, 100, 100)), 2600);
 
@@ -701,8 +700,12 @@ public class ControlPanel {
     }
 
     public static CompletableFuture<String> uploadModlistDiff(String diff) {
-        return ApiProvider.getMcLogsClient().uploadLog("ModList Diff", diff).thenApply(response -> {
-
+        return CompletableFuture.supplyAsync(() -> {
+            if (!PrivacyPolicyDialog.ensurePrivacyPolicyAccepted()) {
+                throw new DeclinedException(LanguageProvider.get("gui.privacy.declined"));
+            }
+            return null;
+        }).thenCompose(ignored -> ApiProvider.getMcLogsClient().uploadLog("ModList Diff", diff).thenApply(response -> {
             if (response.isSuccess()) {
                 String finalLink = CrashAssistantGUI.transformLink(response.getUrl());
                 CrashAssistantApp.LOGGER.info("Modlist diff uploaded successfully: " + finalLink);
@@ -710,7 +713,7 @@ public class ControlPanel {
             } else {
                 throw new UploadException("An error occurred when uploading modlist diff: " + response.getError());
             }
-        });
+        }));
     }
 
     public static String getCurrentMemoryArgsString() {

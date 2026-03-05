@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.config;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import com.electronwill.nightconfig.json.JsonFormat;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import org.apache.commons.jexl3.annotations.NoJexl;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +20,7 @@ public class CrashAssistantLocalConfig {
         load();
     }
 
+    @NoJexl
     public static void load() {
         try{
             config.load();
@@ -28,6 +30,7 @@ public class CrashAssistantLocalConfig {
         }
     }
 
+    @NoJexl
     public static void save() {
         config.save();
     }
@@ -42,6 +45,12 @@ public class CrashAssistantLocalConfig {
 
     public static void set(String key, Object value) {
         config.set(key, value);
+        save();
+    }
+
+    @NoJexl
+    public static void clearAll() {
+        config.clear();
         save();
     }
 }

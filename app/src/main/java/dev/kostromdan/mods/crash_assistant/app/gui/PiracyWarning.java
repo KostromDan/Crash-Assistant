@@ -61,14 +61,24 @@ public class PiracyWarning extends JDialog {
 
         if (delay > 0) {
             okButton.setEnabled(false);
+            dontShowAgainCheck.setEnabled(false);
+            setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+            
             final int[] secondsLeft = {delay};
+            final int initialDelay = delay;
             okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");
             Timer timer = new Timer(1000, null);
             timer.addActionListener(e -> {
                 secondsLeft[0]--;
+                int elapsed = initialDelay - secondsLeft[0];
+                if (elapsed >= 5 && getDefaultCloseOperation() == JDialog.DO_NOTHING_ON_CLOSE) {
+                    setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                }
                 if (secondsLeft[0] <= 0) {
                     okButton.setText(LanguageProvider.get("gui.ok"));
                     okButton.setEnabled(true);
+                    dontShowAgainCheck.setEnabled(true);
+                    setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
                     timer.stop();
                 } else {
                     okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");

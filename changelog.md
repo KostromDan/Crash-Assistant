@@ -1,14 +1,50 @@
-1.10.31:
+1.11.0 major update:
 
 - Added theme support. Look config `gui_customisation.theme_file_name` for instructions.
   [Documentation and Examples](https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Theme%20Support/Getting%20Started.md)
+    - Default theme is `FlatLightLaf`. If you want GUI to look as it was before, use `Swing`.
+- Added JEXL scripting engine support, allowing the creation of custom log analysis and early startup scripts.
+  [Documentation and Examples](https://github.com/KostromDan/Crash-Assistant/blob/pages/guides/Scripting%20Support/Getting%20Started.md)
+    - Log Analysis scripts (Running after crash before usual log analysis):
+        - Analyze logs and add custom warning as with simple regex as very complex log analysis which requires you to
+          iterate line by line from multiple logs.
+    - Startup scripts (Running very early at Minecraft process right before crash assistant process start):
+        - Add warnings if user added or removed some mods.
+            - You can add buttons to warnings for mods removal (like in `problematic_mods_config.json`).
+        - Analyze Minecraft or JVM arguments and if some are causing problems warn users about them.
+        - Analyze How much RAM is allocated and add warnings about it.
+            - By default, example script will warn about over allocation of ram (more than system can provide).
+    - If you want to implement something via scripts you don't know how too, please contact us. We will either tell you
+      how to or implement new features.
+- `problematic_mods_config.json` functionality was removed, if current config exists it will be automatically
+  transformed into startup scripts with 100% identical functionality. Now via scripts you can make it significantly more
+  flexible, like adding don't show again checkbox, adjusting priorities and so on.
+- Added a built-in Scripts IDE (accessible via `file -> Scripts IDE` menu) with syntax highlighting, undo/redo, and an
+  integrated console to easily write and test your Log Analysis scripts. Startup scripts are expected to be tested
+  manually since they are running immediately after game start, so IDE for them is not needed.
 - Added in `LogDeletionDialog` ability to select logs, select all logs, and delete selected logs.
 - Added ability to customize color of animated border and text inside it.
 - Added ability to customize color of buttons blinking colors.
 - Now after upload all button enabling, it requests focus.
 - Minor grammar fixes in `warnings.piracy`.
+- Warnings `Jemalloc`, `LibGLFWDotSo`, `LibOpenALDotSo`, `ResourceLocationException`, and `GroovyModLoaderIPv6` now
+  include a JVM arguments guide; `OutOfMemoryError` and `InsufficientMemory` now include memory allocation instructions;
+  `MacJDK` now includes a Java version guide;
 - Added debug option `debug.crash_after_init` to crash immediately after Crash Assistant launched its process to
   conveniently debug it, configure it without need to manually crash.
+- Language provider now preserves localization keys starting with `custom.` in the localization overrides folder,
+  even if they do not exist in the mod's internal translation files. To add ability to create own language keys.
+- Added `modpack_modlist.add_datapacks` config option to track datapacks in the generated `modlist.json`.
+- Added compatibility with `yosbr` and `modpack_defaults`, automatically copying default Crash Assistant
+  configs from their directories if present. This needed because our entry point is earlier than theirs.
+- Added logging of currently used ram, swap space and currently used swap space at moment of minecraft launch and moment
+  of minecraft crash.
+- Added a "Don't show again" checkbox to the OptiFine warning dialog.
+- Improved temporary files cleanup logic to only remove `.tmp` files older than the current Minecraft launch process.
+- Adjusted UUID verification behavior; a mismatch between Mojang's servers and the local username is now treated as a
+  recent username change rather than immediate offline mode, reducing false positives.
+- Added KubeJS class filter to prevent usage of JEXL / Crash Assistant classes from KubeJS.
+- Added `groovy.log` and legacy `crafttweaker.log` logs detection.
 
 1.10.30:
 

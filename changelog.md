@@ -27,6 +27,9 @@
 - Added ability to customize color of buttons blinking colors.
 - Now after upload all button enabling, it requests focus.
 - Minor grammar fixes in `warnings.piracy`.
+- Warnings `Jemalloc`, `LibGLFWDotSo`, `LibOpenALDotSo`, `ResourceLocationException`, and `GroovyModLoaderIPv6` now
+  include a JVM arguments guide; `OutOfMemoryError` and `InsufficientMemory` now include memory allocation instructions;
+  `MacJDK` now includes a Java version guide;
 - Added debug option `debug.crash_after_init` to crash immediately after Crash Assistant launched its process to
   conveniently debug it, configure it without need to manually crash.
 - Language provider now preserves localization keys starting with `custom.` in the localization overrides folder,

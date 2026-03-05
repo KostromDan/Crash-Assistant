@@ -321,12 +321,32 @@ public class ControlPanel {
         ModListDiffDialog.showDialog(dialog);
     }
 
+    private void checkAndStartUploading(boolean startUploading) {
+        for (FilePanel panel : fileListPanel.getFilePanelList()) {
+            while (!panel.isUploadButtonEnabled() && (panel.getLastError() != null || panel.isWaiting())) {
+                if (panel.isWaiting()) {
+                    panel.setWaiting(false);
+                    panel.setUploadButtonEnabled(true);
+                    continue;
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            if (startUploading) panel.uploadFile(false);
+        }
+    }
+
     private void uploadAllFiles() {
         stopMovingToTop = true;
         uploadAllButton.setEnabled(false);
         new Thread(() -> {
             if (generatedMsg == null) {
                 uploadAllButton.setText(LanguageProvider.get("gui.uploading"));
+
+                checkAndStartUploading(false);
 
                 CompletableFuture<String> modlistDiffFuture = null;
                 if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
@@ -342,21 +362,8 @@ public class ControlPanel {
                 }
                 final CompletableFuture<String> finalModlistDiffFuture = modlistDiffFuture;
 
-                for (FilePanel panel : fileListPanel.getFilePanelList()) {
-                    while (!panel.isUploadButtonEnabled() && (panel.getLastError() != null || panel.isWaiting())) {
-                        if (panel.isWaiting()) {
-                            panel.setWaiting(false);
-                            panel.setUploadButtonEnabled(true);
-                            continue;
-                        }
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                    panel.uploadFile(false);
-                }
+                checkAndStartUploading(true);
+
                 outerLoop:
                 while (true) {
                     if (fileListPanel.getFilePanelList().isEmpty()) {
@@ -604,7 +611,7 @@ public class ControlPanel {
 
         StringBuilder modListDiffContent = new StringBuilder();
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-             ModListDiff modListDiff = ModListDiff.getDiff(true);
+            ModListDiff modListDiff = ModListDiff.getDiff(true);
             ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
             String modlistDiffText = diffStringBuilder.toText();
             String modListDiffAnsi = diffStringBuilder.toAnsi();
@@ -621,13 +628,13 @@ public class ControlPanel {
 
                     String summaryMsgKey = "gui.modlist_changed_label_msg";
                     String summaryContent;
-                     if (CrashAssistantConfig.getBoolean("generated_message.color_message")) {
-                         summaryContent = LanguageProvider.getMsgLang(summaryMsgKey)
+                    if (CrashAssistantConfig.getBoolean("generated_message.color_message")) {
+                        summaryContent = LanguageProvider.getMsgLang(summaryMsgKey)
                                 .replace("$ADDED_MODS_COUNT$", AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + AnsiColor.postfix)
                                 .replace("$REMOVED_MODS_COUNT$", AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + AnsiColor.postfix)
                                 .replace("$UPDATED_MODS_COUNT$", AnsiColor.BLUE.getColorPrefix() + modListDiff.getUpdatedMods().size() + AnsiColor.postfix);
                     } else {
-                         summaryContent = LanguageProvider.getMsgLang(summaryMsgKey)
+                        summaryContent = LanguageProvider.getMsgLang(summaryMsgKey)
                                 .replace("$ADDED_MODS_COUNT$", Integer.toString(modListDiff.getAddedMods().size()))
                                 .replace("$REMOVED_MODS_COUNT$", Integer.toString(modListDiff.getRemovedMods().size()))
                                 .replace("$UPDATED_MODS_COUNT$", Integer.toString(modListDiff.getUpdatedMods().size()));
@@ -636,7 +643,7 @@ public class ControlPanel {
                     String pattern = CrashAssistantConfig.get("generated_message.ansi_block_pattern", false);
                     String filePrefix = ModListDiff.getFilePrefix();
                     String firstString = ModListDiff.getFirstString(true, true, link);
-                    
+
                     modListDiffContent.append("\n");
                     modListDiffContent.append(pattern
                             .replace("$PREFIX$", filePrefix)
@@ -645,7 +652,7 @@ public class ControlPanel {
 
                 } catch (ExecutionException | InterruptedException | UploadException e) {
                     CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
-                     if (modListDiffContent.length() == 0) modListDiffContent.append("\n");
+                    if (modListDiffContent.length() == 0) modListDiffContent.append("\n");
                     modListDiffContent.append(modListDiffAnsi);
                 }
             } else {

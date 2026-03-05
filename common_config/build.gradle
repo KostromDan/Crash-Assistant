@@ -19,6 +19,7 @@ dependencies {
     compileOnly 'org.apache.logging.log4j:log4j-api:2.24.2'
     compileOnly 'com.electronwill.night-config:toml:3.6.4'
     compileOnly 'com.electronwill.night-config:json:3.6.4'
+    compileOnly 'org.apache.commons:commons-jexl3:3.6.2'
     compileOnly 'com.google.code.gson:gson:2.10.1'
     compileOnly 'commons-io:commons-io:2.15.1'
     compileOnly 'com.github.oshi:oshi-core:6.4.10'

@@ -46,6 +46,9 @@
 - Added KubeJS class filter to prevent usage of JEXL / Crash Assistant classes from KubeJS.
 - Added `groovy.log` and legacy `crafttweaker.log` logs detection.
 - 1.7.10: fixed mod jar was blocked, while crash assistant is running.
+- Fixed mod list diff uploading was ignoring privacy policy acceptance.
+- Generally rewritten privacy policy acceptance to improve stability and fix some bugs.
+- Fixed `warning_after_upload_all_button_press` wasn't able to handle `\n` correctly.
 - Fixed typo in `gui.simple_mode.prompt_question`. Thanks `Madis0` for making PR!
 
 1.10.30:

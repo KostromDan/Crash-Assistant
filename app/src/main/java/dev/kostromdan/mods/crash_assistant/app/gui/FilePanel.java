@@ -40,6 +40,7 @@ public class FilePanel {
     private final JButton browserButton;
     private Exception lastError = null;
     private boolean waiting = true;
+    public static final Object uploadErrorDialogLock = new Object();
     private final Log log;
     private final int fullButtonWidth;
 
@@ -324,13 +325,15 @@ public class FilePanel {
                         uploadButton.setText(LanguageProvider.get("gui.error"));
                         CrashAssistantGUI.highlightButton(uploadButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_error_color"), new Color(255, 100, 100)), 2800);
                         if (fromButton && !(e instanceof DeclinedException)) {
-                            String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e;
-                            JOptionPane.showMessageDialog(
-                                    panel,
-                                    message,
-                                    LanguageProvider.get("gui.failed_to_upload_file") + "!",
-                                    JOptionPane.ERROR_MESSAGE
-                            );
+                            synchronized (uploadErrorDialogLock) {
+                                String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e;
+                                JOptionPane.showMessageDialog(
+                                        panel,
+                                        message,
+                                        LanguageProvider.get("gui.failed_to_upload_file") + "!",
+                                        JOptionPane.ERROR_MESSAGE
+                                );
+                            }
                         }
                         new Timer().schedule(
                                 new TimerTask() {

@@ -11,7 +11,7 @@ public class KnownCrashReasonMessage {
     private static final Comparator<KnownCrashReasonMessage> CRASH_REASON_COMPARATOR = Comparator
             .comparingInt((KnownCrashReasonMessage msg) -> msg.getReason().getPriority())
             .reversed()
-            .thenComparing(msg -> msg.getReason().getClass().getSimpleName().toLowerCase())
+            .thenComparing(msg -> msg.getReason().getReasonName().toLowerCase())
             .thenComparing(System::identityHashCode);
     private static final SortedSet<KnownCrashReasonMessage> crashReasonMessages =
             Collections.synchronizedSortedSet(
@@ -41,6 +41,9 @@ public class KnownCrashReasonMessage {
     }
 
     public String getMessage() {
+        if (log == null) {
+            return reason.getMessage();
+        }
         return reason.getMessage().replaceAll("\\$LOG_FILENAME\\$", log.getFileName());
     }
 
@@ -56,9 +59,9 @@ public class KnownCrashReasonMessage {
         HashMap<String, List<KnownCrashReasonMessage>> messagesByReasonType = new HashMap<>();
         HashMap<KnownCrashReason, List<Log>> result = new HashMap<>();
 
-        // Group messages by reason class name (lowercase)
+        // Group messages by reason name
         for (KnownCrashReasonMessage message : crashReasonMessages) {
-            String reasonType = message.getReason().getClass().getSimpleName().toLowerCase();
+            String reasonType = message.getReason().getReasonName().toLowerCase();
             messagesByReasonType.computeIfAbsent(reasonType, k -> new ArrayList<>()).add(message);
         }
 

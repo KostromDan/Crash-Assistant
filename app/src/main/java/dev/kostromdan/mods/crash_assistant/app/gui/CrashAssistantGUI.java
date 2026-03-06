@@ -1370,7 +1370,16 @@ public class CrashAssistantGUI {
     }
 
     public static JEditorPane getEditorPane(String text, boolean wrap, Integer width) {
-        JEditorPane pane = new JEditorPane();
+        JEditorPane pane = new JEditorPane() {
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension d = super.getPreferredSize();
+                if (!wrap) {
+                    d.width += 4; // Add extra margin to compensate for scaling rounding issues (e.g. at 125% DPI)
+                }
+                return d;
+            }
+        };
         pane.setEditable(false);
         pane.setContentType("text/html");
 

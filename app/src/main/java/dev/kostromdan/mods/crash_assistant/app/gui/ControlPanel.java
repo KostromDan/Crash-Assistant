@@ -61,7 +61,14 @@ public class ControlPanel {
         boolean modListEnabled = CrashAssistantConfig.getBoolean("modpack_modlist.enabled");
         modListInitiallyVisible = modListEnabled;
         if (modListEnabled) {
-            modListLabel = new JLabel(LanguageProvider.get("gui.modlist_loading"));
+            modListLabel = new JLabel(LanguageProvider.get("gui.modlist_loading")) {
+                @Override
+                public Dimension getPreferredSize() {
+                    Dimension d = super.getPreferredSize();
+                    d.width += 4; // Add extra margin to compensate for scaling rounding issues (e.g. at 125% DPI)
+                    return d;
+                }
+            };
             // Add a bit of left padding to the detected mods text for better spacing
             modListLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
             modListLabel.setMaximumSize(modListLabel.getPreferredSize());

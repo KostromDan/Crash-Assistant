@@ -50,6 +50,7 @@
 - Generally rewritten privacy policy acceptance to improve stability and fix some bugs.
 - Fixed `warning_after_upload_all_button_press` wasn't able to handle `\n` correctly.
 - Fixed typo in `gui.simple_mode.prompt_question`. Thanks `Madis0` for making PR!
+- Removed digits after decimal point in upload all button delay. Thanks `Madis0` for making PR!
 
 1.10.30:
 

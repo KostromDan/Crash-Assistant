@@ -1,23 +1,26 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.hs_err_parser;
 
-import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.WeakHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HsErrParser {
-    private static HsErrParsingResult parsingResultCache = null;
+    private static final java.util.Map<Log, HsErrParsingResult> parsingResultCache = new WeakHashMap<>();
 
 
     public static synchronized Optional<HsErrParsingResult> parseHsErr(Log log) {
         if (log.getType() != LogType.HS_ERR) {
             return Optional.empty();
         }
-        if (parsingResultCache == null) {
-            parsingResultCache = new HsErrParsingResult();
+        if (!parsingResultCache.containsKey(log)) {
+            HsErrParsingResult result = new HsErrParsingResult();
             boolean isInsufficientMemory = false;
             List<String> lines = log.getReader().getAllLinesList();
             for (int i = 0; i < lines.size(); i++) {
@@ -31,30 +34,34 @@ public class HsErrParser {
                             frame = lines.get(i + 2);
                             fullString += "\n" + frame;
                         }
-                        parsingResultCache.setProblematicFrame(frame);
-                        parsingResultCache.setProblematicFrameFullString(fullString);
+                        result.setProblematicFrame(frame);
+                        result.setProblematicFrameFullString(fullString);
                         break;
                     }
                 } else if (line.contains("# There is insufficient memory for the Java Runtime Environment to continue.")) {
-                    parsingResultCache.setProblematicFrame(line);
-                    parsingResultCache.setProblematicFrameFullString(line);
+                    result.setProblematicFrame(line);
+                    result.setProblematicFrameFullString(line);
                     isInsufficientMemory = true;
                     break;
                 }
             }
-            parseMemorySettings(log, parsingResultCache, isInsufficientMemory);
+            parseMemorySettings(log, result, isInsufficientMemory);
+            parsingResultCache.put(log, result);
         }
-        return Optional.of(parsingResultCache);
+        return Optional.of(parsingResultCache.get(log));
     }
 
     public static synchronized Optional<HsErrParsingResult> getCachedHsErrParsingResult() {
-        return Optional.ofNullable(parsingResultCache);
+        return parsingResultCache.entrySet().stream()
+                .filter(entry -> entry.getKey().getType() == LogType.HS_ERR)
+                .map(Map.Entry::getValue)
+                .findFirst();
     }
 
     private static void parseMemorySettings(Log log, HsErrParsingResult parsingResult, boolean isInsufficientMemory) {
         String allLines = log.getReader().getAllLinesString();
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(Memory:[^\\n]*physical (\\d+)M[^\\n]*)\\n(TotalPageFile size (\\d+)M[^\\n]*)");
-        java.util.regex.Matcher matcher = pattern.matcher(allLines);
+        Pattern pattern = Pattern.compile("(Memory:[^\\n]*physical (\\d+)M[^\\n]*)\\n(TotalPageFile size (\\d+)M[^\\n]*)");
+        Matcher matcher = pattern.matcher(allLines);
 
         if (!matcher.find()) return;
 

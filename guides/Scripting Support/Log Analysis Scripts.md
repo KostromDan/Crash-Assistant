@@ -56,10 +56,16 @@ The object returned by `Analysis.addWarning(…)` allows method chaining to conf
 * `withOkDelay(int seconds)`: Disables the "OK/Close" button for the specified duration (in seconds).
 * `withModActions(Mod mod)`: Renders functional contextual action buttons (Remove, Disable, Show in Explorer) targeting the passed `Mod`.
     * Specific action toggles: `withRemoveButton(boolean)`, `withDisableButton(boolean)`, `withExplorerButton(boolean)`. They are enabled by default use for disabling.
+* `withShowModListDiffButton()`: Adds a button that opens the Mod List Diff dialog so users can compare expected vs current mod setup.
 * `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser. Checks for trusted domains.
 * `withMemoryAllocationGuide()`: Adds a pre-configured guide button explaining how to manage RAM allocation.
 * `withJvmArgsGuide()`: Adds a pre-configured guide button explaining how to manage JVM arguments.
 * `withJavaVersionGuide()`: Adds a pre-configured guide button explaining how to change the Java version.
+
+### Script Logging (`Logger`)
+* `Logger`
+  * In Log Analysis stage, it routes to `crash_assistant_app.log`.
+  * Provides static `info(...)`, `warn(...)`, and `error(...)` methods with common Log4j overloads.
 
 ### Environment Evaluation
 * `PlatformHelp.isWindows()`, `PlatformHelp.isMac()`, `PlatformHelp.isLinux()`: Evaluates the operating system in use.

@@ -1,5 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 
+import dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
+
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -117,23 +121,31 @@ public class KnownCrashReason {
 
     public KnownCrashReason withMemoryAllocationGuide() {
         return addGuideButton(
-                dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider.get("gui.guide.memory_allocation"),
-                dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider.RAM_ALLOCATION_GUIDE.getLink()
+                LanguageProvider.get("gui.guide.memory_allocation"),
+                LinksProvider.RAM_ALLOCATION_GUIDE.getLink()
         );
     }
 
     public KnownCrashReason withJvmArgsGuide() {
         return addGuideButton(
-                dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider.get("gui.guide.jvm_args"),
-                dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider.JVM_ARGS_GUIDE.getLink()
+                LanguageProvider.get("gui.guide.jvm_args"),
+                LinksProvider.JVM_ARGS_GUIDE.getLink()
         );
     }
 
     public KnownCrashReason withJavaVersionGuide() {
         return addGuideButton(
-                dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider.get("gui.guide.java_version"),
-                dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider.JAVA_VERSION_GUIDE.getLink()
+                LanguageProvider.get("gui.guide.java_version"),
+                LinksProvider.JAVA_VERSION_GUIDE.getLink()
         );
+    }
+
+    public KnownCrashReason withShowModListDiffButton() {
+        autoFixButtons.put(
+                LanguageProvider.get("gui.show_modlist_diff_button"),
+                ControlPanel::showModListDiff
+        );
+        return this;
     }
 
     @Override

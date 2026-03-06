@@ -24,7 +24,7 @@ The startup scripts are expected to be debugged by a launching minecraft process
   * Specific action toggles: `withRemoveButton(boolean)`, `withDisableButton(boolean)`, `withExplorerButton(boolean)`. They are enabled by default use for disabling.
 * `withKillMinecraftButton(boolean enable)`: Adds a button allowing the user to forcefully terminate the Minecraft process.
 * `withShowModListDiffButton()`: Adds a button that opens the Mod List Diff dialog so users can compare expected vs current mod setup.
-* `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser. Checks for trusted domains.
+* `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser.
 * `withMemoryAllocationGuide()`: Adds a pre-configured guide button explaining how to manage RAM allocation.
 * `withJvmArgsGuide()`: Adds a pre-configured guide button explaining how to manage JVM arguments.
 * `withJavaVersionGuide()`: Adds a pre-configured guide button explaining how to change the Java version.
@@ -130,6 +130,53 @@ if (badMod != null) {
         .withCustomDontShowAgainCheckboxText("I accept the risks of corruption, let me play")
         .withOkDelay(15);
     if (!isBypassed) {
+        Startup.markForCrash();
+    }
+}
+```
+
+### Example 4: Mandatory Mods Example
+Crashing if some mandatory mod is not installed and suggestion with easy installation
+
+```java
+// 1. Mandatory Mod IDs
+var mandatoryMods = ["ftblibrary", "ftbquests", "ftbteams", "ftbxmodcompat"];
+
+// 2. Configuration key for the "Don't Show Again" state
+var bypassKey = "mandatory_mods_ignore";
+
+// 3. Skip check if the user previously chose to ignore this
+var isBypassed = Objects.equals(CrashAssistantLocalConfig.get(bypassKey), true);
+
+if (!isBypassed) {
+    // Retrieve current mod list and map by ID
+    var currentMods = ModListUtils.getCurrentModList(true).stream().toMap(m -> m.modId, m -> m);
+
+    // Create a new dynamic ArrayList object
+    var missing = new('java.util.ArrayList');
+
+    for (var reqId : mandatoryMods) {
+        if (currentMods.get(reqId) == null) {
+            missing.add(reqId);
+        }
+    }
+
+    // 4. If any mandatory mods are missing
+    if (missing.size() > 0) {
+        var msg = "You are missing mandatory mods: " + missing.toString() + ".\n\n" +
+                  "Please install them for the modpack to work correctly. You can do this easily with one click:\n" +
+                  "1. Click the 'Show mod list diff' button.\n" +
+                  "2. Install mandatory mods via 'Restore' buttons.\n\n" +
+                  "The mods will then be downloaded automatically. Wait for the download to finish and... launch the game again.";
+
+        var warn = Startup.addCrashWarning(msg);
+
+        // Custom "Don't Show Again" text
+        warn.withDontShowAgain(bypassKey)
+            .withCustomDontShowAgainCheckboxText("I deleted the mods intentionally, please let me launch game and don't remind me again.");
+        warn.withShowModListDiffButton();
+
+        // 5. Block the launch
         Startup.markForCrash();
     }
 }

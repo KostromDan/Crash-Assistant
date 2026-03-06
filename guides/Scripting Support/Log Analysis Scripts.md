@@ -26,7 +26,7 @@ To conveniently debug log analysis scripts you can use built-in IDE (`file -> Sc
 * `log.getReader().getLastLine()`: Returns the last line as `String`.
 
 ### Regex Verification (`RegexChecker`)
-* `RegexChecker.logContainsOneOfPatterns(Log log, String... patterns)`: Returns `true` if *any* of the provided Regex patterns match within the log’s text. Does not perform regex extraction.
+* `RegexChecker.logContainsOneOfPatterns(Log log, String... patterns)`: Returns `true` if *any* of the provided Regex patterns match within the log’s text.
 
 ### Version Comparison (`VersionUtils`)
 * `VersionUtils.isLower(String version1, String version2)`: Returns `true` if `version1` is less than `version2` using Maven's comparable formats.
@@ -57,7 +57,7 @@ The object returned by `Analysis.addWarning(…)` allows method chaining to conf
 * `withModActions(Mod mod)`: Renders functional contextual action buttons (Remove, Disable, Show in Explorer) targeting the passed `Mod`.
     * Specific action toggles: `withRemoveButton(boolean)`, `withDisableButton(boolean)`, `withExplorerButton(boolean)`. They are enabled by default use for disabling.
 * `withShowModListDiffButton()`: Adds a button that opens the Mod List Diff dialog so users can compare expected vs current mod setup.
-* `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser. Checks for trusted domains.
+* `addGuideButton(String buttonText, String url)`: Adds a custom guide button, which will open the given URL in the default browser.
 * `withMemoryAllocationGuide()`: Adds a pre-configured guide button explaining how to manage RAM allocation.
 * `withJvmArgsGuide()`: Adds a pre-configured guide button explaining how to manage JVM arguments.
 * `withJavaVersionGuide()`: Adds a pre-configured guide button explaining how to change the Java version.
@@ -75,7 +75,7 @@ The object returned by `Analysis.addWarning(…)` allows method chaining to conf
 > * `Boot.MINECRAFT_JVM_ARGS` / `Boot.MINECRAFT_LAUNCH_COMMAND`: `String` JVM arguments and full launch command of the Minecraft process.
 > * `CrashAssistantApp.minecraftXmx` / `CrashAssistantApp.minecraftXms`: Exact Xmx/Xms values passed to Minecraft. (String, e.g. `2.5g`)
 > * `CrashAssistantApp.processor`: CPU model name as a `String` (e.g. `"12th Gen Intel(R) Core(TM) i7-12700H"`).
-> * `CrashAssistantApp.renderer`: The GPU/Driver string Minecraft actually used from logs as a `String` (e.g. `"NVIDIA GeForce RTX 3060/PCIe/SSE2"`).
+> * `CrashAssistantApp.renderer`: The GPU/Driver string Minecraft actually used as a `String` (e.g. `"NVIDIA GeForce RTX 3060/PCIe/SSE2"`).
 
 ### Hardware Inspection (`MemoryUtils`)
 * `MemoryUtils.getSystemTotalMemoryBytes()`: Physical machine RAM (bytes).

@@ -37,6 +37,7 @@ public class IntegratedGPUWarning extends JFrame {
         // Prepare the warning text.
         String content = LanguageProvider.get("warnings.integrated_gpu")
                 .replace("$I_GPU$", integratedGPU)
+                .replace("$H_SIZE$", ThemeUtils.isThemeSuccessfullyLoaded() ? "2" : "3")
                 .replace("$D_GPUS$", String.join("\n", dedicatedGPUs))
                 .replace("$JAVA_PATH$", Paths.get(JavaBinaryLocator.getJavaBinary())
                         .toAbsolutePath().toString());

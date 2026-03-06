@@ -12,7 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ThemeUtils {
-    public static boolean applied = false;
+    private static boolean applied = false;
+    private static boolean successfully = false;
 
     public static synchronized void ensureThemesApplied() {
         if (applied) return;
@@ -21,6 +22,7 @@ public class ThemeUtils {
         String themeIdentifier = CrashAssistantConfig.get("gui_customisation.theme_file_name");
 
         if (tryLoadStandardTheme(themeIdentifier)) {
+            successfully = true;
             return;
         }
 
@@ -32,9 +34,14 @@ public class ThemeUtils {
 
         try (InputStream is = Files.newInputStream(themePath)) {
             IntelliJTheme.setup(is);
+            successfully = true;
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to load custom JSON theme: " + themeIdentifier, e);
         }
+    }
+
+    public static boolean isThemeSuccessfullyLoaded() {
+        return successfully;
     }
 
     private static boolean tryLoadStandardTheme(String themeName) {

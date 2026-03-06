@@ -25,6 +25,7 @@ public class ScriptWarning {
     private boolean showDisableButton = true;
     private boolean showExplorerButton = true;
     private boolean showKillMinecraftButton = false;
+    private boolean showModListDiffButton = false;
     private List<String[]> guideButtons = new ArrayList<>();
 
     public ScriptWarning(String message) {
@@ -81,6 +82,11 @@ public class ScriptWarning {
 
     public ScriptWarning withKillMinecraftButton(boolean enable) {
         this.showKillMinecraftButton = enable;
+        return this;
+    }
+
+    public ScriptWarning withShowModListDiffButton() {
+        this.showModListDiffButton = true;
         return this;
     }
 
@@ -144,6 +150,10 @@ public class ScriptWarning {
 
     public boolean isShowKillMinecraftButton() {
         return showKillMinecraftButton;
+    }
+
+    public boolean isShowModListDiffButton() {
+        return showModListDiffButton;
     }
 
     public List<String[]> getGuideButtons() {

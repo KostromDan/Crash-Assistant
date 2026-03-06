@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ModListDiffDialog extends JFrame {
     private static ModListDiffDialog INSTANCE;
-    private final Window parentWindow;
+    private Window parentWindow;
     private static final ImageIcon CF_ICON = loadIcon("/assets/cf_logo.png");
     private static final ImageIcon MR_ICON = loadIcon("/assets/mr_logo.png");
     private final List<JButton> footerButtons = new ArrayList<JButton>();
@@ -119,10 +119,13 @@ public class ModListDiffDialog extends JFrame {
             }
         }
 
+        Window blockParent = parent;
+        if (blockParent == null) blockParent = CrashAssistantGUI.getFrame();
+
         if (INSTANCE == null) {
-            Window blockParent = CrashAssistantGUI.getFrame();
-            if (blockParent == null) blockParent = parent;
             INSTANCE = new ModListDiffDialog(blockParent);
+        } else {
+            INSTANCE.parentWindow = blockParent;
         }
         INSTANCE.setLocationRelativeTo(parent);
         INSTANCE.setVisible(true);
@@ -131,15 +134,31 @@ public class ModListDiffDialog extends JFrame {
 
     @Override
     public void setVisible(boolean b) {
+        JFrame mainFrame = CrashAssistantGUI.getFrame();
         if (b) {
-            if (parentWindow != null) parentWindow.setVisible(false);
+            if (parentWindow != null && parentWindow != mainFrame) {
+                parentWindow.setVisible(false);
+            }
+            if (mainFrame != null) {
+                mainFrame.setEnabled(false);
+            }
+            super.setVisible(true);
         } else {
-            if (parentWindow != null) {
-                parentWindow.setVisible(true);
-                parentWindow.toFront();
+            super.setVisible(false);
+            if (mainFrame != null) {
+                mainFrame.setEnabled(true);
+            }
+            if (parentWindow != null && parentWindow != mainFrame) {
+                SwingUtilities.invokeLater(() -> {
+                    parentWindow.setVisible(true);
+                    parentWindow.toFront();
+                });
+            } else if (mainFrame != null) {
+                SwingUtilities.invokeLater(() -> {
+                    mainFrame.toFront();
+                });
             }
         }
-        super.setVisible(b);
     }
 
     enum SectionType {ADDED, UPDATED, REMOVED}

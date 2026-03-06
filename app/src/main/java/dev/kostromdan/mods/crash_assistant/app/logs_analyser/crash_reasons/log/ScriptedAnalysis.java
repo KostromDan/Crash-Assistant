@@ -1,7 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -126,14 +128,26 @@ public class ScriptedAnalysis extends KnownCrashReason {
             });
         }
 
+        if (warning.isShowModListDiffButton()) {
+            String label = LanguageProvider.get("gui.show_modlist_diff_button");
+
+            autoFixButtons.put(label, dialog -> {
+                try {
+                    ControlPanel.showModListDiff(dialog);
+                } catch (Exception e) {
+                    CrashAssistantApp.LOGGER.error("Failed to open modlist diff from script", e);
+                }
+            });
+        }
+
         for (String[] guide : warning.getGuideButtons()) {
             String label = guide[0];
             String link = guide[1];
             autoFixButtons.put(label, dialog -> {
                 try {
-                    dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel.validateIsDomainTrustedAndOpenInBrowser(link);
+                    ControlPanel.validateIsDomainTrustedAndOpenInBrowser(link);
                 } catch (Exception e) {
-                    dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp.LOGGER.error("Failed to open guide link: " + link, e);
+                    CrashAssistantApp.LOGGER.error("Failed to open guide link: " + link, e);
                 }
             });
         }
@@ -150,7 +164,7 @@ public class ScriptedAnalysis extends KnownCrashReason {
     }
 
     @Override
-    public boolean matches(dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log log) {
+    public boolean matches(Log log) {
         return true;
     }
 }

@@ -323,9 +323,13 @@ public class ControlPanel {
     }
 
 
-    private void showModList() {
+    public static void showModListDiff(Window parent) {
         stopMovingToTop = true;
-        ModListDiffDialog.showDialog(dialog);
+        ModListDiffDialog.showDialog(parent);
+    }
+
+    private void showModList() {
+        showModListDiff(dialog);
     }
 
     private void checkAndStartUploading(boolean startUploading) {

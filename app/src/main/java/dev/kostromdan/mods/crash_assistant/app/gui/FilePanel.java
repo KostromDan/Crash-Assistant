@@ -251,6 +251,8 @@ public class FilePanel {
             return;
         }
         uploadButton.setEnabled(false);
+
+        lastError = null;
         new Thread(() -> {
             if(!fromButton && log.getType() == LogType.CRASH_ASSISTANT && log.getLinkToUploadedFirstLines() != null){
                 untransformCopyLinkButton();
@@ -258,8 +260,6 @@ public class FilePanel {
                 log.setLinkToUploadedLastLines(null);
             }
             if (log.getLinkToUploadedFirstLines() == null) {
-                lastError = null;
-
                 uploadButton.setText(LanguageProvider.get("gui.uploading"));
 
                 try {

@@ -57,12 +57,12 @@ public final class LauncherLogger {
         try {
             File logsDir = new File(LOGS_DIR_NAME);
             if (logsDir.exists() && !logsDir.isDirectory()) {
-                originalErr.println("[LauncherLogger] Error: Logs path exists but is not a directory: " + logsDir.getAbsolutePath());
+                JarInJarHelper.LOGGER.error("Logs path exists but is not a directory: {}", logsDir.getAbsolutePath());
                 INSTALLED.set(false);
                 return;
             }
             if (!logsDir.exists() && !logsDir.mkdirs()) {
-                originalErr.println("[LauncherLogger] Error: Failed to create logs directory: " + logsDir.getAbsolutePath());
+                JarInJarHelper.LOGGER.error("Failed to create logs directory: {}", logsDir.getAbsolutePath());
                 INSTALLED.set(false);
                 return;
             }
@@ -75,7 +75,7 @@ public final class LauncherLogger {
             try {
                 directConsoleStream = new FileOutputStream(FileDescriptor.err);
             } catch (Throwable t) {
-                originalErr.println("[LauncherLogger] Warning: FileDescriptor.err unavailable; console mirroring disabled.");
+                JarInJarHelper.LOGGER.warn("FileDescriptor.err unavailable; console mirroring disabled.");
             }
 
             AsyncLogWriter worker = new AsyncLogWriter();
@@ -89,7 +89,7 @@ public final class LauncherLogger {
             boolean injectionSuccess = injectAsyncStream(originalErr, queueStream);
 
             if (!injectionSuccess) {
-                originalErr.println("[LauncherLogger] Warning: Stream injection failed; legacy loggers may retain blocking behavior.");
+                JarInJarHelper.LOGGER.warn("Stream injection failed; legacy loggers may retain blocking behavior.");
             }
 
             // Update System.err reference for new consumers.
@@ -97,7 +97,7 @@ public final class LauncherLogger {
                 PrintStream proxyStream = new PrintStream(queueStream, true, consoleCs.name());
                 System.setErr(proxyStream);
             } catch (Throwable t) {
-                originalErr.println("[LauncherLogger] Warning: Failed to update System.err proxy.");
+                JarInJarHelper.LOGGER.warn("Failed to update System.err proxy.");
             }
 
             try {
@@ -110,7 +110,7 @@ public final class LauncherLogger {
 
                 Runtime.getRuntime().addShutdownHook(SHUTDOWN_HOOK);
             } catch (Throwable t) {
-                originalErr.println("[LauncherLogger] Warning: Failed to register shutdown hook.");
+                JarInJarHelper.LOGGER.warn("Failed to register shutdown hook.");
             }
 
         } catch (Exception e) {
@@ -125,7 +125,7 @@ public final class LauncherLogger {
                 activeWorker = null;
             }
             INSTALLED.set(false);
-            e.printStackTrace(originalErr);
+            JarInJarHelper.LOGGER.error("Error while redirecting LauncherLogger to file: ", e);
         }
     }
 

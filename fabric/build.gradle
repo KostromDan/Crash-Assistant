@@ -21,7 +21,3 @@ jar {
 	from project(':common').sourceSets.main.output
 	from zipTree("${rootProject.projectDir}/26_1_libs/common_config.jar")
 }
-
-sourcesJar {
-	from project(':common').sourceSets.main.allSource
-}

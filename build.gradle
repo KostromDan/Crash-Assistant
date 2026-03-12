@@ -32,27 +32,21 @@ subprojects {
 	}
 
 	java {
-		withSourcesJar()
-
 		sourceCompatibility = JavaVersion.VERSION_25
 		targetCompatibility = JavaVersion.VERSION_25
 	}
-
-	jar {
-		from(rootProject.file("LICENSE")) {
-			rename { "${it}_${project.archives_base_name}"}
-		}
-	}
-
-	publishing {
-		publications {
-			create("mavenJava", MavenPublication) {
-				artifactId = project.archives_base_name
-				from components.java
-			}
-		}
-
-		repositories {
-		}
-	}
 }
+
+task collectJars(type: Copy) {
+	dependsOn(
+           ":fabric:build",
+	)
+
+	from("fabric/build/libs") {
+		include '*.jar'
+	}
+
+	into("$rootDir/build/libs")
+}
+
+build.finalizedBy(collectJars)

@@ -1,3 +1,11 @@
+1.11.2:
+
+- 26.1 port for neo.
+
+1.11.1:
+
+- 26.1 port for fabric.
+
 1.11.0 major update:
 
 - Added theme support. Look config `gui_customisation.theme_file_name` for instructions.

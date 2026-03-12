@@ -1,5 +1,6 @@
 plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+	id 'net.neoforged.moddev' version '2.0.140' apply false
 }
 
 allprojects {
@@ -10,7 +11,6 @@ allprojects {
 }
 
 subprojects {
-	apply plugin: 'net.fabricmc.fabric-loom'
 	apply plugin: 'maven-publish'
 
 	version = project.version
@@ -21,10 +21,6 @@ subprojects {
 	}
 
 	repositories {
-	}
-
-	dependencies {
-		minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	}
 
 	tasks.withType(JavaCompile).configureEach {
@@ -39,10 +35,14 @@ subprojects {
 
 task collectJars(type: Copy) {
 	dependsOn(
-           ":fabric:build",
+		":fabric:build",
+		":neoforge:build",
 	)
 
 	from("fabric/build/libs") {
+		include '*.jar'
+	}
+	from("neoforge/build/libs") {
 		include '*.jar'
 	}
 

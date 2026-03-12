@@ -1,0 +1,62 @@
+apply plugin: 'net.neoforged.moddev'
+apply plugin: 'idea'
+
+base {
+	archivesName = "CrashAssistant-${project.name}-26.1"
+}
+
+neoForge {
+	version = project.neo_version
+
+	mods {
+		"${mod_id}" {
+			sourceSet(sourceSets.main)
+		}
+	}
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+configurations {
+	runtimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+	// Common project source files for compilation
+	compileOnly project(':common').sourceSets.main.output
+}
+
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+	var replaceProperties = [
+			minecraft_version      : neo_minecraft_version,
+			minecraft_version_range: neo_minecraft_version_range,
+			neo_version            : neo_version,
+			mod_id                 : mod_id,
+			mod_name               : mod_name,
+			mod_license            : license,
+			mod_version            : version,
+	]
+	inputs.properties replaceProperties
+	expand replaceProperties
+	from "src/main/templates"
+	into "build/generated/sources/modMetadata"
+}
+
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+jar {
+	from project(':common').sourceSets.main.output
+	from zipTree("${rootProject.projectDir}/26_1_libs/common_config.jar")
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+}
+
+idea {
+	module {
+		downloadSources = true
+		downloadJavadoc = true
+	}
+}

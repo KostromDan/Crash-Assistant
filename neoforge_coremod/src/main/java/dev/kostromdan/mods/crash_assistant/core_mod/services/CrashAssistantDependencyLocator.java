@@ -30,32 +30,9 @@ public class CrashAssistantDependencyLocator extends JarInJarDependencyLocator i
     public void scanMods(List<IModFile> loadedMods, IDiscoveryPipeline pipeline) {
         try {
             IModFile modFile;
-            try {
-                JarContents jarContents = JarContents.ofPath(Path.of(CrashAssistantDependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
-                modFile = IModFile.create(jarContents, JarModsDotTomlModFileReader::manifestParser);
-            } catch (NoClassDefFoundError | NoSuchMethodError e) {
-                Path path = Path.of(CrashAssistantDependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 
-                Class<?> secureJarClass = Class.forName("net.neoforged.fml.classloading.SecureJar");
-                Method fromMethod = secureJarClass.getDeclaredMethod("from", Path[].class);
-                Object secureJar = fromMethod.invoke(null, (Object) new Path[]{path});
-
-                Class<?> readerClass = Class.forName("net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader");
-                Method manifestParserMethod = readerClass.getDeclaredMethod("manifestParser", IModFile.class);
-
-                MethodHandles.Lookup lookup = MethodHandles.lookup();
-                MethodHandle manifestParserHandle = lookup.unreflect(manifestParserMethod);
-                ModFileInfoParser parser = (iModFile) -> {
-                    try {
-                        return (net.neoforged.neoforgespi.language.IModFileInfo) manifestParserHandle.invoke(iModFile);
-                    } catch (Throwable e1) {
-                        throw new RuntimeException("Failed to invoke manifestParser", e1);
-                    }
-                };
-
-                Method createMethod = IModFile.class.getDeclaredMethod("create", secureJarClass, ModFileInfoParser.class);
-                modFile = (IModFile) createMethod.invoke(null, secureJar, parser);
-            }
+            JarContents jarContents = JarContents.ofPath(Path.of(CrashAssistantDependencyLocator.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
+            modFile = IModFile.create(jarContents, JarModsDotTomlModFileReader::manifestParser);
 
             // Use reflection to access the private loadModFileFrom method
             Method loadModFileFromMethod = JarInJarDependencyLocator.class.getDeclaredMethod(

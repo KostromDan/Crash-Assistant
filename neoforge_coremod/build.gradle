@@ -1,0 +1,47 @@
+apply plugin: 'net.neoforged.moddev'
+apply plugin: 'idea'
+
+base {
+    archivesName = "CrashAssistant-neoforge-26.1"
+}
+
+neoForge {
+    version = project.neo_version
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+    compileOnly project(':neoforge').sourceSets.main.output
+}
+
+jar {
+    from zipTree("${rootProject.projectDir}/26_1_libs/common_config.jar")
+    from(project(':neoforge').tasks.jar) {
+        rename { "crash_assistant-neoforge.jar" }
+        into 'META-INF/jarjar'
+    }
+    from(zipTree(project(':neoforge').tasks.jar.archiveFile.get().asFile)) {
+        include 'META-INF/neoforge.mods.toml'
+        into ''
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}

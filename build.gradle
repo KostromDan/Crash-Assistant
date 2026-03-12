@@ -36,13 +36,13 @@ subprojects {
 task collectJars(type: Copy) {
 	dependsOn(
 		":fabric:build",
-		":neoforge:build",
+		":neoforge_coremod:build",
 	)
 
 	from("fabric/build/libs") {
 		include '*.jar'
 	}
-	from("neoforge/build/libs") {
+	from("neoforge_coremod/build/libs") {
 		include '*.jar'
 	}
 

@@ -15,8 +15,6 @@ neoForge {
 	}
 }
 
-sourceSets.main.resources { srcDir 'src/generated/resources' }
-
 configurations {
 	runtimeClasspath.extendsFrom localRuntime
 }
@@ -52,7 +50,6 @@ neoForge.ideSyncTask generateModMetadata
 
 jar {
 	from project(':common').sourceSets.main.output
-	from zipTree("${rootProject.projectDir}/26_1_libs/common_config.jar")
 }
 
 tasks.withType(JavaCompile).configureEach {

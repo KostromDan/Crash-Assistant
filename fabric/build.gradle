@@ -1,6 +1,11 @@
+plugins {
+	id "com.modrinth.minotaur" version "2.+"
+	id "net.darkhax.curseforgegradle" version "1.1.+"
+}
+
 dependencies {
 	implementation project(':common')
-	
+
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
@@ -20,4 +25,36 @@ processResources {
 jar {
 	from project(':common').sourceSets.main.output
 	from zipTree("${rootProject.projectDir}/26_1_libs/common_config.jar")
+}
+
+def parsedChangelog = file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
+		"\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
+
+if (System.getenv("MODRINTH_TOKEN") != null) {
+	modrinth {
+		token = System.getenv("MODRINTH_TOKEN")
+		projectId = "ix1qq8Ux"
+		versionNumber = project.version
+		versionName = tasks.jar.archiveFile.get().asFile.name
+		versionType = release_type
+		changelog = parsedChangelog
+		uploadFile = tasks.jar
+		gameVersions = ["26.1-pre-1"]
+		loaders = ["fabric", "quilt"]
+	}
+}
+
+if (System.getenv("CF_TOKEN") != null) {
+	tasks.register("publishCurseForge", net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+		apiToken = System.getenv("CF_TOKEN")
+
+		def mainFile = upload("1154099", tasks.jar)
+		mainFile.displayName = tasks.jar.archiveFile.get().asFile.name
+		mainFile.changelog = parsedChangelog
+		mainFile.changelogType = "markdown"
+		mainFile.releaseType = release_type
+
+		mainFile.addGameVersion("26.1-snapshot")
+		mainFile.addModLoader("Fabric", "Quilt")
+	}
 }

@@ -1,8 +1,8 @@
 package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
-import com.mojang.logging.LogUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
-import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,7 +20,7 @@ public class ChildProcessLogger extends Thread {
     private final Level logLevel;
     public ChildProcessLogger anotherChildProcessLogger;
     private static Process crashAssistantAppProcess;
-    private static final org.slf4j.Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger("ChildProcessLogger");
 
 
     public ChildProcessLogger(InputStream is, Level logLevel) {
@@ -99,5 +99,9 @@ public class ChildProcessLogger extends Thread {
                 },
                 3000
         );
+    }
+
+    public enum Level {
+        INFO, ERROR
     }
 }

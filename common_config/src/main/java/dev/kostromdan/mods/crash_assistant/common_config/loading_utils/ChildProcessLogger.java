@@ -1,7 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -100,5 +99,9 @@ public class ChildProcessLogger extends Thread {
                 },
                 3000
         );
+    }
+
+    public enum Level {
+        INFO, ERROR
     }
 }

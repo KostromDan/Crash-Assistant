@@ -49,6 +49,7 @@ def parsedChangelog = file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').s
 
 if (System.getenv("MODRINTH_TOKEN") != null) {
 	modrinth {
+		group = "upload"
 		token = System.getenv("MODRINTH_TOKEN")
 		projectId = "ix1qq8Ux"
 		versionNumber = project.version
@@ -63,6 +64,7 @@ if (System.getenv("MODRINTH_TOKEN") != null) {
 
 if (System.getenv("CF_TOKEN") != null) {
 	tasks.register("publishCurseForge", net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+		group = "upload"
 		apiToken = System.getenv("CF_TOKEN")
 
 		def mainFile = upload("1154099", tasks.jar)
@@ -74,4 +76,17 @@ if (System.getenv("CF_TOKEN") != null) {
 		mainFile.addGameVersion("26.1-snapshot")
 		mainFile.addModLoader("Fabric", "Quilt")
 	}
+}
+
+task publishUnified {
+	group = "upload"
+	if (System.getenv("MODRINTH_TOKEN") != null) dependsOn(tasks.modrinth)
+	if (System.getenv("CF_TOKEN") != null) dependsOn(tasks.publishCurseForge)
+}
+
+task publishUnifiedToLocal(type: Copy) {
+	group = "upload"
+	dependsOn(tasks.jar)
+	from(tasks.jar.archiveFile)
+	into("build/unified-local/project0")
 }

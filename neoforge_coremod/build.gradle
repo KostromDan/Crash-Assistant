@@ -1,3 +1,8 @@
+plugins {
+	id "com.modrinth.minotaur"
+	id "net.darkhax.curseforgegradle"
+}
+
 apply plugin: 'net.neoforged.moddev'
 apply plugin: 'idea'
 
@@ -40,8 +45,55 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 idea {
-    module {
-        downloadSources = true
-        downloadJavadoc = true
-    }
+	module {
+		downloadSources = true
+		downloadJavadoc = true
+	}
+}
+
+def parsedChangelog = file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
+		"\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
+
+if (System.getenv("MODRINTH_TOKEN") != null) {
+	modrinth {
+		group = "upload"
+		token = System.getenv("MODRINTH_TOKEN")
+		projectId = "ix1qq8Ux"
+		versionNumber = project.version
+		versionName = tasks.jar.archiveFile.get().asFile.name
+		versionType = release_type
+		changelog = parsedChangelog
+		uploadFile = tasks.jar
+		gameVersions = ["26.1-pre-1"]
+		loaders = ["neoforge"]
+	}
+}
+
+if (System.getenv("CF_TOKEN") != null) {
+	tasks.register("publishCurseForge", net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+		group = "upload"
+		apiToken = System.getenv("CF_TOKEN")
+
+		def mainFile = upload("1154099", tasks.jar)
+		mainFile.displayName = tasks.jar.archiveFile.get().asFile.name
+		mainFile.changelog = parsedChangelog
+		mainFile.changelogType = "markdown"
+		mainFile.releaseType = release_type
+
+		mainFile.addGameVersion("26.1-snapshot")
+		mainFile.addModLoader("NeoForge")
+	}
+}
+
+task publishUnified {
+	group = "upload"
+	if (System.getenv("MODRINTH_TOKEN") != null) dependsOn(tasks.modrinth)
+	if (System.getenv("CF_TOKEN") != null) dependsOn(tasks.publishCurseForge)
+}
+
+task publishUnifiedToLocal(type: Copy) {
+	group = "upload"
+	dependsOn(tasks.jar)
+	from(tasks.jar.archiveFile)
+	into("build/unified-local/project0")
 }

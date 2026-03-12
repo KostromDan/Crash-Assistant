@@ -60,6 +60,7 @@ class GitPortingApp:
         # Load configuration
         self.config = self.load_config()
 
+        self.create_menu()
         self.create_widgets()
 
         # Initial data population
@@ -68,6 +69,15 @@ class GitPortingApp:
 
         # Apply saved configuration
         self.apply_config_to_gui()
+
+    def create_menu(self):
+        """Creates the menu bar with File menu."""
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Force Apply Changes", command=self.force_apply_wrapper)
 
     def setup_styles(self):
         """Configures styles for ttk widgets."""
@@ -665,8 +675,8 @@ class GitPortingApp:
                             if build_opt == "clean_build": self.copy_jar_files('build/libs/*.jar', JAR_OUTPUT_DIR)
                             if publish_opt == "publishUnifiedToLocal": self.copy_jar_files('**/build/unified-local/project*/*.jar', JAR_OUTPUT_DIR)
 
-                    # --- Step 4: Push (skipped for original branch) ---
-                    if not is_original_branch and self.push_before_checkout.get():
+                    # --- Step 4: Push ---
+                    if self.push_before_checkout.get():
                          self.log(f"Pushing for branch {branch}...")
                          if not self.run_process_in_thread(['git', 'push', 'origin', branch]):
                              self.log(f"Failed to push for branch {branch}.", "WARNING")
@@ -687,6 +697,178 @@ class GitPortingApp:
                 else: self.log("Process aborted due to errors.", "ERROR")
 
                 self.root.after(0, self.toggle_controls, True)
+
+
+    def force_apply_wrapper(self):
+        """Starts the force apply process after confirmation."""
+        self.original_branch = self.get_current_branch()
+
+        self.selected_branches = [branch for branch, var in self.branch_vars.items() if var.get()]
+        if not self.selected_branches:
+            messagebox.showwarning("No Selection", "Please select at least one target branch.")
+            return
+
+        selected_commit_indices = self.commit_list.curselection()
+        if not selected_commit_indices:
+            messagebox.showwarning("No Commits", "Please select at least one commit for force apply.")
+            return
+
+        selected_commits_text = [self.commit_list.get(i) for i in selected_commit_indices]
+        self.selected_commit_hashes = [item.split(' - ')[0] for item in selected_commits_text]
+        self.selected_commit_hashes.reverse()
+
+        if not messagebox.askyesno("Force Apply Confirmation",
+            "Are you sure you want to force apply changes?\n\n"
+            "This will overwrite/delete all files changed in the selected commits "
+            "across all selected branches, regardless of their current content.",
+            icon='warning'):
+            return
+
+        self.save_config()
+        self.toggle_controls(False)
+        self.log_area.config(state=tk.NORMAL)
+        self.log_area.delete(1.0, tk.END)
+        self.log_area.config(state=tk.DISABLED)
+
+        self.log(f"Starting FORCE APPLY for {len(self.selected_branches)} branches with {len(self.selected_commit_hashes)} commits.")
+
+        thread = threading.Thread(target=self.force_apply_logic, daemon=True)
+        thread.start()
+
+    def get_changed_files_from_commits(self, commit_hashes):
+        """Returns a dict with file paths as keys and status ('M', 'A', 'D') as values
+        for all files changed across the given commits."""
+        changed_files = {}
+        for commit_hash in commit_hashes:
+            output = self.run_git_command(
+                ['git', 'diff-tree', '--no-commit-id', '-r', '--name-status', commit_hash],
+                suppress_error_popup=True
+            )
+            if output:
+                for line in output.split('\n'):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    parts = line.split('\t', 1)
+                    if len(parts) == 2:
+                        status, filepath = parts
+                        # M=modified, A=added, D=deleted; last status wins
+                        changed_files[filepath] = status[0]
+        return changed_files
+
+    def force_apply_logic(self):
+        """Force apply logic: overwrite/delete files from selected commits across branches."""
+        all_success = True
+        try:
+            # 1. Collect all changed files from selected commits (on original branch)
+            changed_files = self.get_changed_files_from_commits(self.selected_commit_hashes)
+            if not changed_files:
+                self.log("No changed files found in selected commits.", "WARNING")
+                return
+
+            self.log(f"Found {len(changed_files)} changed file(s) in selected commits:")
+            for filepath, status in changed_files.items():
+                self.log(f"  [{status}] {filepath}")
+
+            # 2. Read current content of modified/added files from original branch
+            file_contents = {}
+            for filepath, status in changed_files.items():
+                if status in ('M', 'A'):
+                    try:
+                        content = self.run_git_command(
+                            ['git', 'show', f'{self.original_branch}:{filepath}'],
+                            suppress_error_popup=True
+                        )
+                        if content is not None:
+                            file_contents[filepath] = content
+                        else:
+                            self.log(f"Warning: Could not read {filepath} from {self.original_branch}", "WARNING")
+                    except Exception as e:
+                        self.log(f"Error reading {filepath}: {e}", "ERROR")
+
+            # 3. Iterate over target branches
+            sorted_branches = sorted(self.selected_branches, key=natural_sort_key)
+            for branch in sorted_branches:
+                if branch == self.original_branch:
+                    self.log(f"Skipping original branch: {branch}")
+                    self.root.after(0, self.branch_vars[branch].set, False)
+                    continue
+
+                self.log(f"--- Force applying to branch: {branch} ---")
+
+                # Checkout
+                if self.get_current_branch() != branch:
+                    if not self.run_process_in_thread(['git', 'checkout', branch]):
+                        self.log(f"Failed to switch to branch {branch}. Process stopped.", "ERROR")
+                        all_success = False
+                        break
+
+                files_changed = False
+                for filepath, status in changed_files.items():
+                    target_path = Path(filepath)
+                    if status == 'D':
+                        # Delete file if it exists
+                        if target_path.exists():
+                            target_path.unlink()
+                            self.log(f"  Deleted: {filepath}")
+                            files_changed = True
+                        else:
+                            self.log(f"  Already absent: {filepath}")
+                    elif status in ('M', 'A'):
+                        if filepath in file_contents:
+                            # Ensure parent directory exists
+                            target_path.parent.mkdir(parents=True, exist_ok=True)
+                            # Use binary mode to read from git show and write exactly
+                            raw_content = subprocess.run(
+                                ['git', 'show', f'{self.original_branch}:{filepath}'],
+                                capture_output=True
+                            )
+                            if raw_content.returncode == 0:
+                                with open(target_path, 'wb') as f:
+                                    f.write(raw_content.stdout)
+                                self.log(f"  Overwritten: {filepath}")
+                                files_changed = True
+                            else:
+                                self.log(f"  Failed to read {filepath} from {self.original_branch}", "WARNING")
+
+                if files_changed:
+                    # Stage and commit
+                    self.run_process_in_thread(['git', 'add', '-A'])
+                    commit_subjects = []
+                    for h in self.selected_commit_hashes:
+                        subj = self.get_commit_subject(h)
+                        if subj:
+                            commit_subjects.append(subj)
+                    commit_msg = f"Force apply: {'; '.join(commit_subjects)}"
+                    if not self.run_process_in_thread(['git', 'commit', '-m', commit_msg]):
+                        self.log(f"Nothing to commit on branch {branch} (files may already be in sync).", "WARNING")
+                else:
+                    self.log(f"No file changes needed on branch {branch}.")
+
+                # Push if option is set
+                if self.push_before_checkout.get():
+                    self.log(f"Pushing for branch {branch}...")
+                    if not self.run_process_in_thread(['git', 'push', 'origin', branch]):
+                        self.log(f"Failed to push for branch {branch}.", "WARNING")
+
+                self.root.after(0, self.branch_vars[branch].set, False)
+                self.log(f"--- Branch {branch} force apply completed ---", "SUCCESS")
+
+        except Exception as e:
+            self.log(f"An error occurred during force apply: {e}", "FATAL")
+            all_success = False
+        finally:
+            self.log("Returning to original branch...")
+            if self.get_current_branch() != self.original_branch:
+                if not self.run_process_in_thread(['git', 'checkout', self.original_branch]):
+                    self.log(f"CRITICAL ERROR: Failed to return to original branch {self.original_branch}!", "ERROR")
+
+            if all_success:
+                self.log("Force apply completed successfully.", "SUCCESS")
+            else:
+                self.log("Force apply aborted due to errors.", "ERROR")
+
+            self.root.after(0, self.toggle_controls, True)
 
 
 if __name__ == "__main__":

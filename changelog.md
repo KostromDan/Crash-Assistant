@@ -1,3 +1,7 @@
+1.11.2:
+
+- 26.1 port for neo.
+
 1.11.1:
 
 - 26.1 port for fabric.

@@ -13,8 +13,6 @@ allprojects {
 }
 
 subprojects {
-	apply plugin: 'maven-publish'
-
 	version = project.version
 	group = project.maven_group
 

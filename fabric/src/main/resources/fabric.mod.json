@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "id": "${mod_id}",
+  "id": "crash_assistant",
   "version": "${version}",
-  "name": "${mod_name}",
-  "description": "${description}",
+  "name": "Crash Assistant",
+  "description": "Shows a GUI after Minecraft crashes, immediately showing all affected logs, crash reports, or hs_err files. Provides a one-click solution to upload them, copy the link, and perform other actions for easier reporting, debugging, and troubleshooting, like analysis log for the most common crash reasons.",
   "authors": [
-    "${mod_author}"
+    "KostromDan"
   ],
   "contact": {
     "homepage": "https://www.curseforge.com/minecraft/mc-mods/crash-assistant",
     "sources": "https://github.com/KostromDan/Crash-Assistant",
     "issues": "https://github.com/KostromDan/Crash-Assistant/issues"
   },
-  "license": "${license}",
+  "license": "KostromDan's Modded Minecraft License (Version 1.1.3)",
   "icon": "crash_assistant_logo.png",
   "environment": "*",
   "entrypoints": {
@@ -27,14 +27,14 @@
     "crash_assistant": "dev.kostromdan.mods.crash_assistant.fabric.entrypoint.CrashAssistantLanguageAdapter"
   },
   "mixins": [
-    "${mod_id}.mixins.json",
-    "${mod_id}-fabric.mixins.json"
+    "crash_assistant.mixins.json",
+    "crash_assistant-fabric.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=${fabric_loader_version}",
+    "fabricloader": ">=0.18.4",
     "fabric-api": "*",
-    "minecraft": "${minecraft_version_range_fabric}",
-    "java": ">=${java_version}"
+    "minecraft": ">=26",
+    "java": ">=25"
   },
   "suggests": {
     "another-mod": "*"

@@ -96,7 +96,7 @@ public class CrashAssistantCommands {
 
     public static void sendClientMsg(Component message) {
         Minecraft.getInstance().execute(() -> {
-            Minecraft.getInstance().gui.getChat().addMessage(message);
+            Minecraft.getInstance().gui.getChat().addClientSystemMessage(message);
         });
     }
 

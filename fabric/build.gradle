@@ -1,127 +1,27 @@
-plugins {
-    id 'multiloader-loader'
-    id 'fabric-loom'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id "me.shedaniel.unified-publishing" version "0.1.+"
+dependencies {
+	implementation project(':common')
+	
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
 
 base {
-    archivesName = "CrashAssistant-${project.name}-1.21.5-1.21.11"
+	archivesName = "CrashAssistant-${project.name}-26.1"
 }
 
-configurations {
-    shadowBundle {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-}
+processResources {
+	inputs.property "version", project.version
 
-dependencies {
-    minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
-    }
-    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-
-    compileOnly project(path: ':common_config')
-    shadowBundle project(path: ':common_config')
-    shadowBundle 'com.electronwill.night-config:toml:3.6.4'
-    shadowBundle 'com.electronwill.night-config:json:3.6.4'
-    shadowBundle 'org.apache.commons:commons-jexl3:3.6.2'
-}
-
-shadowJar {
-    configurations = [project.configurations.shadowBundle]
-    archiveClassifier.set('dev-shadow')
-    relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
-    relocate 'org.apache.commons.jexl3', 'dev.kostromdan.mods.crash_assistant.commons.jexl3'
-    relocate 'org.apache.commons.logging', 'dev.kostromdan.mods.crash_assistant.commons.logging'
-
-    exclude "META-INF/maven/**"
-    exclude "META-INF/LICENSE.txt"
-    exclude "META-INF/NOTICE.txt"
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version
+	}
 }
 
 jar {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    dependsOn(':app:shadowJar')
-    dependsOn tasks.shadowJar
-
-    from("$rootDir/LICENSE.md") {
-        rename { "CRASH_ASSISTANT_LICENSE.md" }
-        into ""
-    }
-    from("$rootDir/thirdparty") {
-        into "thirdparty"
-    }
-
-    from zipTree(tasks.shadowJar.archiveFile.get().asFile)
-    from(project(':app').tasks.shadowJar) {
-        into 'META-INF/jarjar'
-    }
+	from project(':common').sourceSets.main.output
+	from zipTree("${rootProject.projectDir}/26_1_libs/common_config.jar")
 }
 
-loom {
-    def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
-    if (aw.exists()) {
-        accessWidenerPath.set(aw)
-    }
-    mixin {
-        defaultRefmapName.set("${mod_id}.refmap.json")
-    }
-    runs {
-        client {
-            client()
-            setConfigName('Fabric Client')
-            ideConfigGenerated(true)
-            runDir('runs/client')
-        }
-        server {
-            server()
-            setConfigName('Fabric Server')
-            ideConfigGenerated(true)
-            runDir('runs/server')
-        }
-    }
-}
-
-unifiedPublishing {
-    project {
-        gameVersions = [
-                "1.21.5",
-                "1.21.6",
-                "1.21.7",
-                "1.21.8",
-                "1.21.9",
-                "1.21.10",
-                "1.21.11"
-        ]
-        gameLoaders = ["fabric", "quilt"]
-
-        displayName = tasks.remapJar.archiveFile.get().asFile.name
-        version = project.version
-        changelog = file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
-                "\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
-        releaseType = release_type
-
-        mainPublication tasks.remapJar
-
-        var cfToken = System.getenv("CF_TOKEN")
-        if (cfToken != null) {
-            curseforge {
-                token = cfToken
-                id = "1154099"
-            }
-        }
-
-        var mrToken = System.getenv("MODRINTH_TOKEN")
-        if (mrToken != null) {
-            modrinth {
-                token = mrToken
-                id = "ix1qq8Ux"
-            }
-        }
-    }
+sourcesJar {
+	from project(':common').sourceSets.main.allSource
 }

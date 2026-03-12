@@ -1,15 +1,9 @@
-* text eol=lf
-*.bat text eol=crlf
-*.patch text eol=lf
-*.java text eol=lf
-*.gradle text eol=crlf
-*.png binary
-*.gif binary
-*.exe binary
-*.dll binary
-*.jar binary
-*.lzma binary
-*.zip binary
-*.pyd binary
-*.cfg text eol=lf
-*.jks binary
+#
+# https://help.github.com/articles/dealing-with-line-endings/
+#
+# Linux start script should use lf
+/gradlew        text eol=lf
+
+# These are Windows script files and should use crlf
+*.bat           text eol=crlf
+

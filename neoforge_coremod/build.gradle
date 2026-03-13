@@ -29,7 +29,7 @@ dependencies {
 }
 
 jar {
-    from zipTree("${rootProject.projectDir}/26_1_libs/common_config.jar")
+    from zipTree("${rootProject.projectDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
     from(project(':neoforge').tasks.jar) {
         rename { "crash_assistant-neoforge.jar" }
         into 'META-INF/jarjar'

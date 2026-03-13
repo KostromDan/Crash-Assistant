@@ -30,6 +30,7 @@ processResources {
 		"issues_url"          : project.issues_url,
 		"loader_version"      : project.loader_version,
 		"minecraft_version"   : project.minecraft_version,
+		"fabric_minecraft_version_range"   : project.fabric_minecraft_version_range,
 		"maven_group"         : project.maven_group,
 	]
 	inputs.properties expandProps
@@ -41,7 +42,7 @@ processResources {
 
 jar {
 	from project(':common').sourceSets.main.output
-	from zipTree("${rootProject.projectDir}/26_1_libs/common_config.jar")
+	from zipTree("${rootProject.projectDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
 }
 
 def parsedChangelog = file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +

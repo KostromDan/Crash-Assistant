@@ -8,7 +8,7 @@ plugins {
 allprojects {
 	apply plugin: 'java-library'
 	dependencies {
-		implementation files("${rootProject.projectDir}/26_1_libs/common_config.jar")
+		implementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
 	}
 }
 

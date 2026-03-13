@@ -1,3 +1,9 @@
+1.11.3:
+
+- Fixed previous update broke 26.1 fabric.
+- Fixed some rare issues related with logs uploading.
+- Fixed `LauncherLogger` warnings may come with delay to original log.
+
 1.11.2:
 
 - 26.1 port for neo.

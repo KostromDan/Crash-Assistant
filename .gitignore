@@ -24,6 +24,7 @@ run
 runs
 
 /local/
+/app_common-config_libs/
 /config/
 /logs/
 /mods/

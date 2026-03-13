@@ -29,6 +29,7 @@ local
 /mods - copy/
 /saves/
 /mod_data/
+/app_common-config_libs/
 /crash-reports/
 win_event*.txt
 launcher_log.txt

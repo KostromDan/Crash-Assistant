@@ -82,6 +82,8 @@ public class JarInJarHelper {
             argsList.add(Objects.toString(ProcessHelper.getCurrentProcessStartTime()));
             argsList.add("-platform");
             argsList.add(PlatformHelp.platform.toString());
+            argsList.add("-platformOwerridenData");
+            argsList.add(PlatformHelp.platform.serializePlatformData());
             argsList.add("-loaderJarName");
             argsList.add(PlatformHelp.loaderJarName);
             argsList.add("-minecraftVersion");

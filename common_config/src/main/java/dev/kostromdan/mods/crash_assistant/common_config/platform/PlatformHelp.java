@@ -4,25 +4,26 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp.VersionUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 public enum PlatformHelp {
-    //    FORGE("https://discord.minecraftforge.net", "Minecraft Forge Discord", "#player-support channel"),
+    FORGE("https://discord.minecraftforge.net", "Minecraft Forge Discord", "#player-support channel"),
     NEOFORGE("https://discord.neoforged.net", "NeoForge Discord", "#user_support channel"),
     FABRIC("https://discord.gg/v6v4pMv", "Fabric Discord", "#player-support channel"),
     QUILT("https://discord.quiltmc.org/", "QuiltMC Discord", "#player-support channel"),
 
     UNKNOWN("https://discord.gg/moddedmc", "ModdedMC Discord", "#player-help channel"),
     CLEANROOM("https://discord.gg/sgQxDJdrnY", "Cleanroom Discord", "#lobby channel"),
-    LEGACY_MODDING("https://discord.com/invite/AJxEFs6YBN", "Legacy Modding Discord", "#modding-help forums"),
-    FORGE(CLEANROOM);
+    LEGACY_MODDING("https://discord.com/invite/AJxEFs6YBN", "Legacy Modding Discord", "#modding-help forums");
 
-    private final String helpLink;
-    private final String helpName;
-    private final String helpChannel;
+    private String helpLink;
+    private String helpName;
+    private String helpChannel;
     public static PlatformHelp platform = UNKNOWN;
     public static boolean modLoadedWithConnector = false;
     public static String loaderJarName = "UNDEFINED";
@@ -37,11 +38,31 @@ public enum PlatformHelp {
         this.helpName = helpName;
         this.helpChannel = helpChannel;
     }
+    
+    public void setPlatformDataFromOtherPlatform(PlatformHelp p) {
+        this.helpLink = p.helpLink;
+        this.helpName = p.helpName;
+        this.helpChannel = p.helpChannel;
+    }
 
-    PlatformHelp(PlatformHelp fromPlatform) {
-        this.helpLink = fromPlatform.helpLink;
-        this.helpName = fromPlatform.helpName;
-        this.helpChannel = fromPlatform.helpChannel;
+    public String serializePlatformData() {
+        String joined = String.join("\n",
+                this.helpLink,
+                this.helpName,
+                this.helpChannel
+        );
+        return Base64.getEncoder().encodeToString(joined.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public void deserializePlatformData(String data) {
+        String decoded = new String(Base64.getDecoder().decode(data), StandardCharsets.UTF_8);
+        String[] parts = decoded.split("\n", 3);
+        if (parts.length < 3) {
+            throw new IllegalArgumentException("Invalid serialized platform data: expected 3 parts, got " + parts.length);
+        }
+        this.helpLink = parts[0];
+        this.helpName = parts[1];
+        this.helpChannel = parts[2];
     }
 
     public static boolean isLinkDefault() {

@@ -24,6 +24,7 @@ public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
         String launchTarget = FMLLaunchHandler.side()
             .isClient() ? "client" : "server";
         PlatformHelp.platform = PlatformHelp.FORGE;
+        PlatformHelp.platform.setPlatformDataFromOtherPlatform(PlatformHelp.CLEANROOM);
         PlatformHelp.minecraftVersion = ForgeVersion.mcVersion;
 
         ArgUtils.setLaunchArgs(((java.util.Map<String, String>) Launch.blackboard.get("launchArgs")).entrySet().stream().flatMap(e -> Stream.of(e.getKey(), e.getValue())).toArray(String[]::new));

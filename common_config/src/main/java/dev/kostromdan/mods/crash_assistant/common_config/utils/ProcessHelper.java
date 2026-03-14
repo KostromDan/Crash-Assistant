@@ -1,55 +1,123 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
+import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.WinReg;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
-import dev.kostromdan.mods.crash_assistant.common_config.utils.maven_version_cmp.ComparableVersion;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
 import oshi.SystemInfo;
 
-import java.lang.ProcessHandle;
-import java.time.Instant;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
 
+/**
+ * Utility class for process management operations.
+ * This class delegates to an appropriate implementation based on the
+ * availability of ProcessHandle and the operating system.
+ */
 public class ProcessHelper {
+    private static final ProcessHelperImpl impl;
+    private static final boolean java9orLater = ClassExistenceChecker.classExists("java.lang.ProcessHandle");
+
+    static {
+        ProcessHelperImpl tempImpl = null;
+
+        if (isJava9orLater()) {
+            tempImpl = new ProcessHelperProcessHandleImpl();
+        } else {
+            if (PlatformHelp.isWindows()) {
+                tempImpl = new ProcessHandleWinImpl();
+            } else if (PlatformHelp.isLinux()) {
+                tempImpl = new ProcessHandleLinuxImpl();
+            } else if (PlatformHelp.isMacOS()) {
+                tempImpl = new ProcessHandleMacOSImpl();
+            }
+        }
+
+        impl = tempImpl;
+    }
+
+    /**
+     * Gets the current process ID.
+     *
+     * @return the current process ID
+     */
     public static long getCurrentProcessId() {
-        return ProcessHandle.current().pid();
+        return impl.getCurrentProcessId();
     }
 
+    /**
+     * Gets the command used to start the current process.
+     *
+     * @return an Optional containing the command, or empty if not available
+     */
     public static Optional<String> getCurrentProcessCommand() {
-        return ProcessHandle.current().info().command();
+        return impl.getCurrentProcessCommand();
     }
 
+    /**
+     * Gets the start time of the current process in milliseconds since epoch.
+     *
+     * @return the start time, or -1 if not available
+     */
     public static long getCurrentProcessStartTime() {
-        return ProcessHandle.current().info().startInstant().map(Instant::toEpochMilli).orElse(-1L);
+        return impl.getCurrentProcessStartTime();
     }
 
+    /**
+     * Gets the start time of a process with the specified ID.
+     *
+     * @param pid the process ID
+     * @return the start time in milliseconds since epoch, or -1 if not available
+     */
     public static long getProcessStartTime(long pid) {
-        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
-        if (processHandle.isEmpty()) return -1;
-        return processHandle.get().info().startInstant().map(Instant::toEpochMilli).orElse(-1L);
+        return impl.getProcessStartTime(pid);
     }
 
+    /**
+     * Checks if a process with the specified ID is alive.
+     *
+     * @param pid the process ID
+     * @return true if the process is alive, false otherwise
+     */
     public static boolean isProcessAlive(long pid) {
-        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
-        return processHandle.isPresent() && processHandle.get().isAlive();
+        return impl.isProcessAlive(pid);
     }
 
+    /**
+     * Gets information about child processes of the current process.
+     *
+     * @return a string containing information about child processes
+     */
     public static String getChildProcessesInfo() {
-        return String.join("\n", ProcessHandle.current().children()
-                .map(child -> child.pid() + ": " + child.info().startInstant().get().toEpochMilli())
-                .collect(Collectors.toList()));
+        return impl.getChildProcessesInfo();
     }
 
+    /**
+     * Attempts to destroy a process with the specified ID.
+     *
+     * @param pid the process ID
+     * @return true if the process was successfully destroyed, false otherwise
+     */
     public static boolean destroyProcess(long pid) {
-        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
-        if (processHandle.isEmpty()) return false;
-        return processHandle.get().destroy();
+        return impl.destroyProcess(pid);
     }
 
+    /**
+     * Attempts to forcibly destroy a process with the specified ID.
+     *
+     * @param pid the process ID
+     * @return true if the process was successfully destroyed, false otherwise
+     */
     public static boolean destroyProcessForcibly(long pid) {
-        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
-        if (processHandle.isEmpty()) return false;
-        return processHandle.get().destroyForcibly();
+        return impl.destroyProcessForcibly(pid);
     }
 
     /**
@@ -60,27 +128,102 @@ public class ProcessHelper {
      * @param status the exit status code to use when terminating the process
      */
     public static void exitProcess(int status) {
-        System.exit(status);
+        switch (ModVersionsHelper.versionRange) {
+            case V_1_7_10:
+            case V_1_8__1_11_2:
+            case V_1_12_2:
+                ExitVMBypass.exit(status);
+                break;
+            default:
+                System.exit(status);
+                break;
+        }
     }
 
     public static String getJavaVersion() {
-        return Runtime.version().toString();
+        if (isJava9orLater()) {
+            try {
+                return String.valueOf(Runtime.class.getMethod("version").invoke(null));
+            } catch (ReflectiveOperationException e) {
+                throw new AssertionError("Failed to call Runtime.version() on Java 9+", e);
+            }
+        }
+        return System.getProperty("java.runtime.version", "UNDEFINED");
+    }
+
+    public static boolean isJava9orLater() {
+        return java9orLater;
+    }
+
+    private static Class<?> loadClass(String className) {
+        try {
+            return Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Failed to load class: " + className, e);
+        }
     }
 
     public static List<Class<?>> getNeededForAppClasses() {
         List<Class<?>> classes = new java.util.ArrayList<>();
-        classes.add(org.apache.logging.log4j.LogManager.class);
-        classes.add(org.apache.logging.log4j.core.Core.class);
-        classes.add(com.google.gson.Gson.class);
-        classes.add(org.apache.commons.io.input.ReversedLinesFileReader.class);
-        classes.add(com.sun.jna.Memory.class);
-        classes.add(com.sun.jna.platform.win32.Tlhelp32.class);
+
+        classes.add(loadClass("org.apache.logging.log4j.LogManager"));
+        classes.add(loadClass("org.apache.commons.io.input.ReversedLinesFileReader"));
+
+        switch (ModVersionsHelper.versionRange) {
+            case V_1_18_2__MODERN:
+                classes.add(loadClass("org.apache.logging.log4j.core.Core"));
+                classes.add(loadClass("com.sun.jna.Memory"));
+                classes.add(loadClass("com.sun.jna.platform.win32.Tlhelp32"));
+                classes.add(loadClass("com.google.gson.Gson"));
+                break;
+            case V_1_17__1_18_1:
+            case V_1_13__1_16_5:
+            case V_1_12_2:
+                classes.add(loadClass("org.apache.logging.log4j.core.Core"));
+                classes.add(loadClass("com.sun.jna.Memory"));
+                classes.add(loadClass("com.sun.jna.platform.win32.Tlhelp32"));
+                break;
+            case V_1_8__1_11_2:
+                classes.add(loadClass("org.apache.logging.log4j.core.LoggerContext"));
+                classes.add(loadClass("com.sun.jna.Memory"));
+                classes.add(loadClass("com.sun.jna.platform.win32.Tlhelp32"));
+                break;
+            case V_1_7_10:
+                classes.add(loadClass("org.apache.logging.log4j.core.LoggerContext"));
+                break;
+
+        }
         return classes;
     }
 
     public static String getProcessorName() {
         try {
-            return new SystemInfo().getHardware().getProcessor().getProcessorIdentifier().getName();
+            try {
+                Class<?> systemInfoCls = Class.forName("oshi.SystemInfo");
+                Object systemInfo = systemInfoCls.getDeclaredConstructor().newInstance();
+
+                Method mGetHardware = systemInfoCls.getMethod("getHardware");
+                Object hardware = mGetHardware.invoke(systemInfo);
+
+                Method mGetProcessor = hardware.getClass().getMethod("getProcessor");
+                Object processor = mGetProcessor.invoke(hardware);
+
+                Method mGetIdentifier = processor.getClass().getMethod("getProcessorIdentifier");
+                Object identifier = mGetIdentifier.invoke(processor);
+
+                Method mGetName = identifier.getClass().getMethod("getName");
+                return (String) mGetName.invoke(identifier);
+            } catch (NoSuchMethodError | NoSuchMethodException ex) {
+                Class<?> sysInfoCls = Class.forName("oshi.SystemInfo");
+                Object sysInfo = sysInfoCls.getDeclaredConstructor().newInstance();
+
+                Object hardware = sysInfoCls.getMethod("getHardware").invoke(sysInfo);
+
+                Object[] processors = (Object[]) hardware.getClass()
+                        .getMethod("getProcessors")
+                        .invoke(hardware);
+                return String.format("%s", processors[0]).replaceAll("\\s+", " ");
+            }
         } catch (Throwable e) {
             String errorMessage = e.getMessage();
             if (errorMessage != null && errorMessage.matches(".*Failed to create temporary file for /com/sun/jna/.*\\.dll library: .*")) {

@@ -4,11 +4,8 @@ import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarH
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.ConfigurationFactory;
-import org.apache.logging.log4j.core.config.ConfigurationSource;
 
-import java.io.InputStream;
+import java.net.URL;
 
 public class Logger {
     private static final org.apache.logging.log4j.Logger STATIC_LOGGER;
@@ -22,12 +19,11 @@ public class Logger {
     }
 
     private static org.apache.logging.log4j.Logger createStartupLogger() {
-        try (InputStream is = Logger.class.getResourceAsStream("/log4j2-startup.xml")) {
-            if (is != null) {
+        try {
+            URL configUrl = Logger.class.getResource("/log4j2-startup.xml");
+            if (configUrl != null) {
                 LoggerContext context = new LoggerContext("CrashAssistantStartupScripts");
-                ConfigurationSource source = new ConfigurationSource(is);
-                Configuration config = ConfigurationFactory.getInstance().getConfiguration(context, source);
-                context.start(config);
+                context.setConfigLocation(configUrl.toURI());
                 return context.getLogger("StartupScripts");
             }
         } catch (Throwable e) {

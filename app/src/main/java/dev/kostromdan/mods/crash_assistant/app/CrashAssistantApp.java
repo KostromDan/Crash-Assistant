@@ -97,6 +97,8 @@ public class CrashAssistantApp {
             } else if ("-platform".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.platform = Enum.valueOf(PlatformHelp.class, args[i + 1]);
                 LOGGER.info("Platform: {}", PlatformHelp.platform);
+            } else if ("-platformOwerridenData".equals(args[i]) && i + 1 < args.length) {
+                PlatformHelp.platform.deserializePlatformData(args[i + 1]);
             } else if ("-loaderJarName".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.loaderJarName = args[i + 1];
                 LOGGER.info("loaderJarName: {}", PlatformHelp.loaderJarName);

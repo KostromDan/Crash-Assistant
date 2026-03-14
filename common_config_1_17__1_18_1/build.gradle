@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+version = ''
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.electronwill.night-config:toml:3.6.4'
+    implementation 'com.electronwill.night-config:json:3.6.4'
+}
+
+shadowJar {
+    dependsOn(':common_config:shadowJar')
+    dependsOn(':app_legacy:shadowJar')
+
+    archiveClassifier.set('')
+
+    from(project(':common_config').layout.buildDirectory.file('libs/common_config.jar'))
+
+    doLast {
+        def jarFile = archiveFile.get().asFile
+        def appJarFile = project(':app_legacy').layout.buildDirectory.file('libs/app_legacy.jar').get().asFile
+        if (jarFile.exists() && appJarFile.exists()) {
+            ant.zip(update: "true", destfile: jarFile) {
+                zipfileset(file: appJarFile, fullpath: "META-INF/jarjar/app.jar")
+            }
+        }
+    }
+
+    dependencies {
+        exclude "net/minecraftforge/fml/crash_assistant/**"
+    }
+
+    relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
+}
+
+build.finalizedBy(shadowJar)

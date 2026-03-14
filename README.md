@@ -39,9 +39,9 @@ For localization go [lang](common_config/src/main/resources/lang)
 
 ### How it works?
 Coremod includes 2 services:
-* [CrashAssistantTransformationService](forge_coremod%2Fsrc%2Fmain%2Fjava%2Fdev%2Fkostromdan%2Fmods%2Fcrash_assistant%2Fcore_mod%2Fservices%2FCrashAssistantTransformationService.java)
+* [CrashAssistantTransformationService.java](neoforge_coremod/src/main/java/dev/kostromdan/mods/crash_assistant/core_mod/services/CrashAssistantTransformationService.java)
   * `app` should be launched as soon as possible after game start to be able to help players even with coremod/mixin/hs_err crashes. So we launch it from static block of ITransformationService, the first point, we can launch it from forge mod.
-* [CrashAssistantDependencyLocator](forge_coremod%2Fsrc%2Fmain%2Fjava%2Fdev%2Fkostromdan%2Fmods%2Fcrash_assistant%2Fcore_mod%2Fservices%2FCrashAssistantDependencyLocator.java)
+* [CrashAssistantDependencyLocator.java](neoforge_coremod/src/main/java/dev/kostromdan/mods/crash_assistant/core_mod/services/CrashAssistantDependencyLocator.java)
   * We want to have singlefile mod, not `forge_mod.jar` and `forge_coremod.jar`. Since forge doesn't load jar in jar mods from coremods, we should do it by ourselves.
 
 

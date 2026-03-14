@@ -8,14 +8,38 @@ version = ''
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(8)
     }
+}
+
+sourceSets {
+    java9 {
+        java {
+            srcDirs = ['src/main/java9']
+        }
+    }
+}
+
+compileJava9Java {
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(9)
+    }
+    sourceCompatibility = JavaVersion.VERSION_1_9
+    targetCompatibility = JavaVersion.VERSION_1_9
+    classpath = sourceSets.main.compileClasspath + sourceSets.main.output
 }
 
 repositories {
     mavenCentral()
     maven {
         url 'https://repo.lwjgl.org/'
+    }
+    maven {
+        url = "https://maven.wagyourtail.xyz/snapshots"
+    }
+    maven {
+        name = "sponge"
+        url = "https://repo.spongepowered.org/maven"
     }
 }
 
@@ -36,14 +60,15 @@ def lwjglNatives = {
 dependencies {
     implementation 'com.formdev:flatlaf:3.7'
     implementation("org.apache.commons:commons-jexl3:3.6.2")
-    implementation 'org.apache.logging.log4j:log4j-core:2.24.2'
-    implementation 'org.apache.logging.log4j:log4j-api:2.24.2'
-    implementation 'com.electronwill.night-config:toml:3.6.4'
-    implementation 'com.electronwill.night-config:json:3.6.4'
+    implementation 'org.apache.logging.log4j:log4j-core:2.0-beta9'
+    implementation 'org.apache.logging.log4j:log4j-api:2.0-beta9'
+    implementation 'com.electronwill.night-config:toml:3.6.3'
+    implementation 'com.electronwill.night-config:json:3.6.3'
     implementation 'commons-io:commons-io:2.15.1'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'net.java.dev.jna:jna:4.4.0'
     implementation 'net.java.dev.jna:platform:3.4.0'
+    implementation 'oshi-project:oshi-core:1.1'
 
     implementation "org.lwjgl:lwjgl:$lwjglVersion"
     runtimeOnly "org.lwjgl:lwjgl:$lwjglVersion:$lwjglNatives"
@@ -56,9 +81,14 @@ jar {
     manifest {
         attributes(
                 'Main-Class': 'dev.kostromdan.mods.crash_assistant.app.class_loading.Boot',
-                'Enable-Native-Access': 'ALL-UNNAMED' // Java 22+ prevents warnings and upcoming JNI restrictions in Java 25+
+                'Enable-Native-Access': 'ALL-UNNAMED', // Java 22+ prevents warnings and upcoming JNI restrictions in Java 25+
+                'Multi-Release': 'true'
         )
     }
+    into('META-INF/versions/9') {
+        from sourceSets.java9.output
+    }
+    dependsOn compileJava9Java
 }
 
 shadowJar {
@@ -69,6 +99,10 @@ shadowJar {
     from("$rootDir/thirdparty") {
         into "thirdparty"
     }
+    into('META-INF/versions/9') {
+        from sourceSets.java9.output
+    }
+    dependsOn compileJava9Java
 
     dependsOn(':common_config:build')
     archiveClassifier.set('')
@@ -86,9 +120,15 @@ shadowJar {
         exclude(dependency('org.apache.commons:commons-jexl3:.*'))
         exclude(dependency('commons-logging:commons-logging:.*'))
         exclude(dependency('net.java.dev.jna:.*'))
+        exclude(dependency('com.github.oshi:oshi-core:.*'))
+        exclude(dependency('oshi-project:.*'))
+        exclude(dependency('org.slf4j:.*'))
         exclude(dependency('org.lwjgl:.*'))
         exclude(project(':common_config'))
         exclude("META-INF/LICENSE")
+        exclude("META-INF/maven/**")
+        exclude "META-INF/LICENSE.txt"
+        exclude "META-INF/NOTICE.txt"
     }
 }
 

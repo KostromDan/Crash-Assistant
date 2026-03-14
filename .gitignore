@@ -11,7 +11,8 @@ out
 *.ipr
 *.iws
 *.iml
-.idea
+.idea/*
+!.idea/scopes
 
 # gradle
 build
@@ -20,9 +21,10 @@ build
 # other
 eclipse
 run
+runs
 
-local
-*.architectury-transformer
+/local/
+/app_common-config_libs/
 /config/
 /logs/
 /mods/

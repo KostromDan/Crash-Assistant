@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+version = ''
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.10.1' // Same as main app, but add gson, because provided by legacy Minecraft has bug, which I don't want to fix or investigate.
+}
+
+shadowJar {
+    dependsOn(':app:shadowJar')
+
+    archiveClassifier.set('')
+
+    from(project(':app').layout.buildDirectory.file('libs/app.jar'))
+}
+
+build.finalizedBy(shadowJar)

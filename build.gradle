@@ -1,67 +1,31 @@
 plugins {
-    id 'java'
-    id 'dev.architectury.loom' version '1.7-SNAPSHOT' apply false
-    id 'architectury-plugin' version '3.4-SNAPSHOT'
-    id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
-architectury {
-    minecraft = project.minecraft_version
-}
-
-allprojects {
-    group = rootProject.maven_group
-    version = rootProject.mod_version
-}
-
-subprojects { subproject ->
-    if (!(subproject.name in ['app', 'gpu_detection_java22_ffm'])) {
-        apply plugin: 'dev.architectury.loom'
-        apply plugin: 'architectury-plugin'
-        apply plugin: 'maven-publish'
-
-        var archives_name
-        base {
-            if (subproject.name in ['forge_coremod']) {
-                archivesName = "CrashAssistant-forge-1.19-1.20.1"
-            } else {
-                archivesName = "CrashAssistant-$project.name-1.19-1.21.4"
-            }
-            archives_name = archivesName
-        }
-
-        repositories {
-        }
-
-        loom {
-            silentMojangMappingsLicense()
-        }
-
-        dependencies {
-            minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
-            mappings loom.officialMojangMappings()
-        }
-
-        java {
-            withSourcesJar()
-
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
-        }
-
-        tasks.withType(JavaCompile).configureEach {
-            it.options.release = 17
-        }
-    }
+    id 'base'
 }
 
 apply plugin: 'idea'
+
+def appProject = project(':app')
+
+def registerAppMainRunTask = { String taskName, String mainClassName ->
+    tasks.register(taskName, JavaExec) {
+        group = 'application'
+        description = "Runs ${mainClassName}"
+
+        dependsOn appProject.tasks.named('classes')
+        dependsOn appProject.tasks.named('compileJava9Java')
+
+        classpath = appProject.sourceSets.main.runtimeClasspath +
+                appProject.sourceSets.main.output +
+                appProject.sourceSets.java9.output
+        mainClass = mainClassName
+        workingDir = rootDir
+    }
+}
+
+registerAppMainRunTask('runCrashAssistantApp', 'dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp')
+registerAppMainRunTask('runIntegratedGPUWarning', 'dev.kostromdan.mods.crash_assistant.app.gui.IntegratedGPUWarning')
+registerAppMainRunTask('runIntelChipBugWarning', 'dev.kostromdan.mods.crash_assistant.app.gui.IntelChipBugWarning')
+
 idea {
     module {
         downloadSources = true
@@ -70,12 +34,39 @@ idea {
 
 
 task collectJars(type: Copy) {
-    def deps = [':fabric', ':forge_coremod']
-            .collect { path -> project(path).tasks.remapJar }
-    dependsOn deps
-    from deps
+    dependsOn(
+            ":common_config_1_7_10:shadowJar",
+            ":common_config_1_8__1_16_5:shadowJar",
+            ":common_config_1_17__1_18_1:shadowJar",
+            ":common_config_1_18_2__upper:shadowJar",
+    )
 
-    into 'build/libs'
+    doFirst {
+        def outDir = file("$rootDir/app_common-config_libs")
+        if (outDir.exists()) {
+            outDir.deleteDir()
+        }
+        outDir.mkdirs()
+    }
+
+    from("common_config_1_7_10/build/libs") {
+        include '*.jar'
+    }
+    from("common_config_1_8__1_16_5/build/libs") {
+        include '*.jar'
+    }
+    from("common_config_1_17__1_18_1/build/libs") {
+        include '*.jar'
+    }
+    from("common_config_1_18_2__upper/build/libs") {
+        include '*.jar'
+    }
+
+    into("$rootDir/app_common-config_libs")
 }
 
-assemble.dependsOn collectJars
+build.finalizedBy(collectJars)
+
+clean {
+    delete "$rootDir/app_common-config_libs"
+}

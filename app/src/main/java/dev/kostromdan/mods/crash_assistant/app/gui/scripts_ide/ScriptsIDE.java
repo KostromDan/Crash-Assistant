@@ -1258,33 +1258,6 @@ class NoWrapEditorKit extends StyledEditorKit {
 class LineNumberView extends JComponent {
     private final JTextPane textPane;
     private final int borderGap = 8;
-    private static final java.lang.reflect.Method MODEL_TO_VIEW_METHOD;
-
-    static {
-        java.lang.reflect.Method method = null;
-        try {
-            // Java 9+: modelToView2D returns Rectangle2D
-            method = JTextComponent.class.getMethod("modelToView2D", int.class);
-        } catch (NoSuchMethodException e) {
-            try {
-                // Java 8: modelToView returns Rectangle
-                method = JTextComponent.class.getMethod("modelToView", int.class);
-            } catch (NoSuchMethodException ex) {
-                throw new RuntimeException("Neither modelToView2D nor modelToView found", ex);
-            }
-        }
-        MODEL_TO_VIEW_METHOD = method;
-    }
-
-    private static Rectangle getModelToViewRect(JTextPane textPane, int offset) throws Exception {
-        Object result = MODEL_TO_VIEW_METHOD.invoke(textPane, offset);
-        if (result instanceof Rectangle) {
-            return (Rectangle) result;
-        } else if (result instanceof java.awt.geom.Rectangle2D) {
-            return ((java.awt.geom.Rectangle2D) result).getBounds();
-        }
-        return null;
-    }
 
     public LineNumberView(JTextPane textPane) {
         this.textPane = textPane;
@@ -1351,8 +1324,7 @@ class LineNumberView extends JComponent {
 
         for (int i = 0; i < lineCount; i++) {
             try {
-                Rectangle r = getModelToViewRect(textPane, root.getElement(i).getStartOffset());
-                if (r == null) continue;
+                Rectangle r = TextPaneHelper.getModelToViewRect(textPane, root.getElement(i).getStartOffset());
                 if (r.y + fontHeight < clip.y) continue;
                 if (r.y > clip.y + clip.height) break;
 

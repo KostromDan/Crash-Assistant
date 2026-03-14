@@ -12,11 +12,13 @@ if (!commonConfigJar.exists()) {
             "To build it:\n" +
             "  1. Switch to the app-common-config branch\n" +
             "  2. Run the build\n" +
-            "  3. Switch back to your current branch (${currentBranch})\n\n" +
+            "  3. Switch back to your current branch (${currentBranch})\n" +
+            "  4. Try running the build again\n\n" +
             "Commands to copy-paste:\n\n" +
             "git checkout app-common-config\n" +
             ".\\gradlew.bat clean build\n" +
-            "git checkout ${currentBranch}\n"
+            "git checkout ${currentBranch}\n" +
+            ".\\gradlew.bat clean build\n "
     )
 }
 

@@ -42,6 +42,8 @@ Generates in `app_common-config_libs` folder jars which used and included to mod
 `\common_config` has shared code for `app`, `fabric`, `forge_coremod`, `neoforge_coremod` used for runtime config, lang, launching gui app.
 * `app` is inluded in jar in jar
 
+`jar_generation` generates actual jars for other branches. Has many sub-projects, this is needed because to different versions of Minecraft we need to ship slightly different libs.
+
 ### Minecraft version branches (e.g `1.20.6-1.21.4`)
 
 Have minimal Minecraft version specific code, e.g. entrypoint, commands, events, mixins.

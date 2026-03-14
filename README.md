@@ -19,7 +19,7 @@ For localization go [crash_assistant_localization](common_config/src/main/resour
 
 Run gradle `application/runCrashAssistantApp` task. After compilation, GUI will be launched.
 
-### Compiling and testing mods for specific Minecraft version(s):
+### Compiling and testing mod for specific Minecraft version(s):
 
 1. Compile main branch `app-common-config`. It will generate a shared code for all other branches.
 2. Check out to Minecraft version branch (e.g. `1.20.6-1.21.4`).

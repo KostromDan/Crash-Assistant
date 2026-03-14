@@ -22,7 +22,7 @@ Run gradle `application/runCrashAssistantApp` task. After compilation, GUI will 
 ### Compiling and testing mod for specific Minecraft version(s):
 
 1. Compile main branch `app-common-config`. It will generate a shared code for all other branches.
-2. Check out to Minecraft version branch (e.g. `1.20.6-1.21.4`).
+2. Checkout to Minecraft version branch (e.g. `1.20.6-1.21.4`).
 3. Compile mod via gradle `build` task. It will generate mod jars in `build\libs` folder.
 
 Don't try to use loom `runClient()` functions in Minecraft version branches, as they are broken from the moment of mod creation, due to complicated structure of mod.

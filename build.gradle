@@ -4,10 +4,34 @@ plugins {
     id 'xyz.wagyourtail.unimined' version '1.4.1'
 }
 
+def commonConfigJar = file("${rootDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
+if (!commonConfigJar.exists()) {
+    def currentBranch = "git rev-parse --abbrev-ref HEAD".execute(null, rootDir).text.trim()
+    throw new GradleException(
+            "File not found: ${commonConfigJar.absolutePath}\n\n" +
+            "To build it:\n" +
+            "  1. Switch to the app-common-config branch\n" +
+            "  2. Run the build\n" +
+            "  3. Switch back to your current branch (${currentBranch})\n" +
+            "  4. Try running the build again\n\n" +
+            "Commands to copy-paste:\n\n" +
+            "git checkout app-common-config\n" +
+            ".\\gradlew.bat clean build\n" +
+            "git checkout ${currentBranch}\n" +
+            ".\\gradlew.bat clean build\n "
+    )
+}
+
 group 'dev.kostromdan.mods.crash_assistant'
 
 base {
     archivesName = '!!!CrashAssistant-' + minecraft_version
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
 }
 
 
@@ -85,35 +109,13 @@ sourceSets {
 }
 
 dependencies {
-    implementation project(path: ':common_config')
-    forgeImplementation project(path: ':common_config')
+    implementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
+    forgeImplementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
 }
 
 [forgeJar, fabricJar].each { task ->
     task.configure {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        evaluationDependsOn(':app')
-        dependsOn project(':app').tasks.named('shadowJar')
-
-        from("$rootDir/LICENSE.md") {
-            rename { "CRASH_ASSISTANT_LICENSE.md" }
-            into ""
-        }
-        from("$rootDir/thirdparty") {
-            into "thirdparty"
-        }
-
-        from(project(':app').tasks.shadowJar) {
-            into 'META-INF/jarjar'
-        }
-        evaluationDependsOn(':common_config')
-        dependsOn project(':common_config').tasks.named('shadowJar')
-        from {
-            zipTree(
-                    project(':common_config').tasks.named('shadowJar').get().archiveFile.get().asFile
-            )
-        }
+        from zipTree("${rootProject.projectDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
     }
 }
 
@@ -142,18 +144,6 @@ def configureJarNames() {
 }
 
 configureJarNames()
-
-['compileJava', 'compileFabricJava', 'compileForgeJava'].each { taskName ->
-    tasks.named(taskName) {
-        dependsOn project(':common_config').tasks.named('shadowJar')
-    }
-}
-
-project(':app') {
-    tasks.withType(JavaCompile).configureEach {
-        dependsOn project(':common_config').tasks.named('shadowJar')
-    }
-}
 
 jar {
     enabled = false

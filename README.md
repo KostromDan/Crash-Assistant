@@ -6,46 +6,61 @@
     <br><br>
 </h1>
 
-Shows a GUI after Minecraft crashes, immediately showing all affected game/launcher logs, crash reports, or hs_err files. Provides a one-click solution to upload them, copy the link, and perform other actions for easier reporting, debugging, and troubleshooting.
+Shows a GUI after Minecraft crashes, immediately displaying all affected game/launcher logs, crash reports, or hs_err files. Provides a one-click solution to upload them, copy the link, and perform other actions for easier reporting, debugging, and troubleshooting. Analyzes logs for many known crash reasons. Provides many useful analysis tools. Warns if Minecraft is running on an integrated GPU when a dedicated one is available. Includes auto-fixes for many common issues.
 
 ![image](https://github.com/user-attachments/assets/390c5475-5cdc-4750-aeee-1639e8112bff)
 
-## Contributing:
-Use gradle `build` task of root project. Compiled jars can be found in: `build\libs`:
-* `crash_assistant-fabric-<version>.jar)` fabric mod.
-* `crash_assistant-forge-<version>.jar)` forge mod.
 
-To debug the GUI in the development environment, run `main()` of [CrashAssistantApp](app/src/main/java/dev/kostromdan/mods/crash_assistant/app/CrashAssistantApp.java)
+## How to build / test:
 
-Don't try to use loom `runClient()` functions, as they are broken from the moment of mod creation, due to complicated structure of mod.
+For localization go [crash_assistant_localization](common_config/src/main/resources/crash_assistant_localization)
 
-For localization go [lang](common_config/src/main/resources/lang)
+### Testing Crash Assistant GUI:
+
+Run gradle `application/runCrashAssistantApp` task. After compilation, GUI will be launched.
+
+### Compiling and testing mods for specific Minecraft version(s):
+
+1. Compile main branch `app-common-config`. It will generate a shared code for all other branches.
+2. Check out to Minecraft version branch (e.g. `1.20.6-1.21.4`).
+3. Compile mod via gradle `build` task. It will generate mod jars in `build\libs` folder.
+
+Don't try to use loom `runClient()` functions in Minecraft version branches, as they are broken from the moment of mod creation, due to complicated structure of mod.
+They may work on some legacy versions but if they don't, this is not a bug, this is expected.
+To debug, copy mod jar from `build\libs` folder to your game.
+
 
 ## Project structure:
+
+### Main branch (`app-common-config`)
+
+Has shared code for all mc versions.
+Generates in `app_common-config_libs` folder jars which used and included to mod jar by other Minecraft version branches.
+
 `\app` has code of gui app
 
-`\fabric` has code of fabric mod
+`\common_config` has shared code for `app`, `fabric`, `forge_coremod`, `neoforge_coremod` used for runtime config, lang, launching gui app.
 * `app` is inluded in jar in jar
+
+### Minecraft version branches (e.g `1.20.6-1.21.4`)
+
+Have minimal Minecraft version specific code, e.g. entrypoint, commands, events, mixins.
+
+`\fabric` has code of fabric mod
 
 `\forge` has code of forge mod
 
-`\common` has code for fabric and forge mods shared code.
+`\neoforge` has code of neoforge mod
 
-`\common_config` has code for `app`, `fabric`, `forge_coremod` shared code used for runtime config, lang, launching gui app.
+`\common` has code for fabric, neoforge, forge mods shared code.
 
 `\forge_coremod` has code of forge coremod from which `forge` mod and `app` launched.
 
-* `app` and `forge` are inluded in jar in jar
-
-### How it works?
-Coremod includes 2 services:
-* [CrashAssistantTransformationService.java](neoforge_coremod/src/main/java/dev/kostromdan/mods/crash_assistant/core_mod/services/CrashAssistantTransformationService.java)
-  * `app` should be launched as soon as possible after game start to be able to help players even with coremod/mixin/hs_err crashes. So we launch it from static block of ITransformationService, the first point, we can launch it from forge mod.
-* [CrashAssistantDependencyLocator.java](neoforge_coremod/src/main/java/dev/kostromdan/mods/crash_assistant/core_mod/services/CrashAssistantDependencyLocator.java)
-  * We want to have singlefile mod, not `forge_mod.jar` and `forge_coremod.jar`. Since forge doesn't load jar in jar mods from coremods, we should do it by ourselves.
+`\neoforge_coremod` has code of forge coremod from which `neoforge` mod and `app` launched.
 
 
 ## Partners
+
 YourKit supports open source projects with innovative and intelligent tools
 for monitoring and profiling Java and .NET applications.
 YourKit is the creator of [YourKit Java Profiler](https://www.yourkit.com/java/profiler/),

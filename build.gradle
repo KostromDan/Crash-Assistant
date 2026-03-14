@@ -35,10 +35,10 @@ idea {
 
 task collectJars(type: Copy) {
     dependsOn(
-            ":common_config_1_7_10:shadowJar",
-            ":common_config_1_8__1_16_5:shadowJar",
-            ":common_config_1_17__1_18_1:shadowJar",
-            ":common_config_1_18_2__upper:shadowJar",
+            ":jar_generation:common_config_1_7_10:shadowJar",
+            ":jar_generation:common_config_1_8__1_16_5:shadowJar",
+            ":jar_generation:common_config_1_17__1_18_1:shadowJar",
+            ":jar_generation:common_config_1_18_2__upper:shadowJar",
     )
 
     doFirst {
@@ -49,16 +49,16 @@ task collectJars(type: Copy) {
         outDir.mkdirs()
     }
 
-    from("common_config_1_7_10/build/libs") {
+    from("jar_generation/common_config_1_7_10/build/libs") {
         include '*.jar'
     }
-    from("common_config_1_8__1_16_5/build/libs") {
+    from("jar_generation/common_config_1_8__1_16_5/build/libs") {
         include '*.jar'
     }
-    from("common_config_1_17__1_18_1/build/libs") {
+    from("jar_generation/common_config_1_17__1_18_1/build/libs") {
         include '*.jar'
     }
-    from("common_config_1_18_2__upper/build/libs") {
+    from("jar_generation/common_config_1_18_2__upper/build/libs") {
         include '*.jar'
     }
 

@@ -15,13 +15,13 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.electronwill.night-config:toml:3.6.4'
-    implementation 'com.electronwill.night-config:json:3.6.4'
+    implementation 'com.electronwill.night-config:toml:3.6.3'
+    implementation 'com.electronwill.night-config:json:3.6.3'
 }
 
 shadowJar {
     dependsOn(':common_config:shadowJar')
-    dependsOn(':app_legacy:shadowJar')
+    dependsOn(':jar_generation:app_legacy:shadowJar')
 
     archiveClassifier.set('')
 
@@ -29,16 +29,12 @@ shadowJar {
 
     doLast {
         def jarFile = archiveFile.get().asFile
-        def appJarFile = project(':app_legacy').layout.buildDirectory.file('libs/app_legacy.jar').get().asFile
+        def appJarFile = project(':jar_generation:app_legacy').layout.buildDirectory.file('libs/app_legacy.jar').get().asFile
         if (jarFile.exists() && appJarFile.exists()) {
             ant.zip(update: "true", destfile: jarFile) {
                 zipfileset(file: appJarFile, fullpath: "META-INF/jarjar/app.jar")
             }
         }
-    }
-
-    dependencies {
-        exclude "net/minecraftforge/fml/crash_assistant/**"
     }
 
     relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'

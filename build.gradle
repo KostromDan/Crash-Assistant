@@ -30,6 +30,8 @@ allprojects {
 	}
 }
 
+jar.enabled = false
+
 subprojects {
 	version = project.version
 	group = project.maven_group

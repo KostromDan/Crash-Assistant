@@ -29,6 +29,3 @@ pluginManagement {
 }
 
 rootProject.name = 'crash_assistant'
-
-include 'app'
-include 'common_config'

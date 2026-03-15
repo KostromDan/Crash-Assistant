@@ -87,7 +87,7 @@ unimined.minecraft(sourceSets.forge) {
 
     minecraftForge {
         loader project.forge_version
-//        mixinConfig "modid.mixins.json"
+        mixinConfig "crash_assistant.mixins.json"
     }
 
     defaultRemapJar = true
@@ -111,6 +111,11 @@ sourceSets {
 dependencies {
     implementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_7_10.jar")
     forgeImplementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_7_10.jar")
+    fabricImplementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_7_10.jar")
+    fabricModImplementation "net.legacyfabric.legacy-fabric-api:legacy-fabric-api:1.13.3+1.7.10"
+    mainImplementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
+    forgeImplementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
+
 }
 
 [forgeJar, fabricJar].each { task ->

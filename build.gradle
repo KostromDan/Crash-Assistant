@@ -112,7 +112,7 @@ dependencies {
     implementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
     forgeImplementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
     fabricImplementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
-    fabricModImplementation "net.legacyfabric.legacy-fabric-api:legacy-fabric-api:1.13.3+1.9.4"
+    fabricModImplementation "net.legacyfabric.legacy-fabric-api:legacy-fabric-api:1.13.3+1.12.2"
     mainImplementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
     forgeImplementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
 }

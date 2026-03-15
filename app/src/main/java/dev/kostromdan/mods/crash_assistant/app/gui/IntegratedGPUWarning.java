@@ -155,6 +155,7 @@ public class IntegratedGPUWarning extends JFrame {
 
     public static void show(String integratedGPU, List<String> dedicatedGPUs) {
         ThemeUtils.ensureThemesApplied();
+        ControlPanel.stopMovingToTop = true;
         isCurrentlyDisplayed = true;
         SwingUtilities.invokeLater(() -> {
             CrashAssistantApp.LOGGER.warn("Showing IntegratedGPUWarning.");

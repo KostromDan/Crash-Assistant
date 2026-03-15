@@ -8,6 +8,8 @@ import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
+import org.spongepowered.asm.launch.MixinBootstrap;
+import org.spongepowered.asm.mixin.MixinEnvironment;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -36,10 +38,11 @@ public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
 
     public String[] getASMTransformerClass() {
         if (FMLLaunchHandler.side().isClient()) {
-            return new String[]{"dev.kostromdan.mods.crash_assistant.forge_coremod.CrashAssistantTransformer"};
-        } else {
-            return new String[0];
+            MixinBootstrap.init();
+            MixinEnvironment e = MixinEnvironment.getDefaultEnvironment();
+            e.addConfiguration("crash_assistant.mixins.json");
         }
+        return new String[0];
     }
 
     public String getModContainerClass() {

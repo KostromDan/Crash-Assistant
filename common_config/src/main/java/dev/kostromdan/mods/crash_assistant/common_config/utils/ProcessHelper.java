@@ -14,25 +14,24 @@ import java.util.Optional;
  * availability of ProcessHandle and the operating system.
  */
 public class ProcessHelper {
-    private static final ProcessHelperImpl impl;
     private static final boolean java9orLater = ClassExistenceChecker.classExists("java.lang.ProcessHandle");
 
-    static {
-        ProcessHelperImpl tempImpl = null;
+    private static class ImplHolder {
+        static final ProcessHelperImpl IMPL;
 
-        if (isJava9orLater()) {
-            tempImpl = new ProcessHelperProcessHandleImpl();
-        } else {
-            if (PlatformHelp.isWindows()) {
-                tempImpl = new ProcessHandleWinImpl();
+        static {
+            if (isJava9orLater()) {
+                IMPL = new ProcessHelperProcessHandleImpl();
+            } else if (PlatformHelp.isWindows()) {
+                IMPL = new ProcessHandleWinImpl();
             } else if (PlatformHelp.isLinux()) {
-                tempImpl = new ProcessHandleLinuxImpl();
+                IMPL = new ProcessHandleLinuxImpl();
             } else if (PlatformHelp.isMacOS()) {
-                tempImpl = new ProcessHandleMacOSImpl();
+                IMPL = new ProcessHandleMacOSImpl();
+            } else {
+                IMPL = null; // Или какой-то DummyImpl
             }
         }
-
-        impl = tempImpl;
     }
 
     /**
@@ -41,7 +40,7 @@ public class ProcessHelper {
      * @return the current process ID
      */
     public static long getCurrentProcessId() {
-        return impl.getCurrentProcessId();
+        return ImplHolder.IMPL.getCurrentProcessId();
     }
 
     /**
@@ -50,7 +49,7 @@ public class ProcessHelper {
      * @return an Optional containing the command, or empty if not available
      */
     public static Optional<String> getCurrentProcessCommand() {
-        return impl.getCurrentProcessCommand();
+        return ImplHolder.IMPL.getCurrentProcessCommand();
     }
 
     /**
@@ -59,7 +58,7 @@ public class ProcessHelper {
      * @return the start time, or -1 if not available
      */
     public static long getCurrentProcessStartTime() {
-        return impl.getCurrentProcessStartTime();
+        return ImplHolder.IMPL.getCurrentProcessStartTime();
     }
 
     /**
@@ -69,7 +68,7 @@ public class ProcessHelper {
      * @return the start time in milliseconds since epoch, or -1 if not available
      */
     public static long getProcessStartTime(long pid) {
-        return impl.getProcessStartTime(pid);
+        return ImplHolder.IMPL.getProcessStartTime(pid);
     }
 
     /**
@@ -79,7 +78,7 @@ public class ProcessHelper {
      * @return true if the process is alive, false otherwise
      */
     public static boolean isProcessAlive(long pid) {
-        return impl.isProcessAlive(pid);
+        return ImplHolder.IMPL.isProcessAlive(pid);
     }
 
     /**
@@ -88,7 +87,7 @@ public class ProcessHelper {
      * @return a string containing information about child processes
      */
     public static String getChildProcessesInfo() {
-        return impl.getChildProcessesInfo();
+        return ImplHolder.IMPL.getChildProcessesInfo();
     }
 
     /**
@@ -98,7 +97,7 @@ public class ProcessHelper {
      * @return true if the process was successfully destroyed, false otherwise
      */
     public static boolean destroyProcess(long pid) {
-        return impl.destroyProcess(pid);
+        return ImplHolder.IMPL.destroyProcess(pid);
     }
 
     /**
@@ -108,7 +107,7 @@ public class ProcessHelper {
      * @return true if the process was successfully destroyed, false otherwise
      */
     public static boolean destroyProcessForcibly(long pid) {
-        return impl.destroyProcessForcibly(pid);
+        return ImplHolder.IMPL.destroyProcessForcibly(pid);
     }
 
     /**

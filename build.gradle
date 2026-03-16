@@ -1,7 +1,8 @@
 plugins {
     id 'java'
-    id "me.shedaniel.unified-publishing" version "0.1.+"
     id 'xyz.wagyourtail.unimined' version '1.4.1'
+    id "com.modrinth.minotaur" version "2.+"
+    id "net.darkhax.curseforgegradle" version "1.1.+"
 }
 
 def commonConfigJar = file("${rootDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
@@ -171,33 +172,79 @@ processForgeResources {
     }
 }
 
-unifiedPublishing {
-    project {
-        gameVersions = [minecraft_version]
-        gameLoaders = ["forge"]
+def parsedChangelog = file('CHANGELOG.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
+        "\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
 
-        displayName = tasks.remapForgeJar.archiveFile.get().asFile.name
-        version = rootProject.version
-        changelog = file('changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
-                "\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
-        releaseType = release_type
+if (System.getenv("MODRINTH_TOKEN") != null) {
+    modrinth {
+        token = System.getenv("MODRINTH_TOKEN")
+        projectId = "ix1qq8Ux"
+        versionType = release_type
+        changelog = parsedChangelog
+        gameVersions = [project.minecraft_version]
+    }
 
-        mainPublication tasks.remapForgeJar
-
-        var cfToken = System.getenv("CF_TOKEN")
-        if (cfToken != null) {
-            curseforge {
-                token = cfToken
-                id = "1154099"
-            }
-        }
-
-        var mrToken = System.getenv("MODRINTH_TOKEN")
-        if (mrToken != null) {
-            modrinth {
-                token = mrToken
-                id = "ix1qq8Ux"
-            }
+    tasks.register("modrinthForge", com.modrinth.minotaur.TaskModrinthUpload) {
+        group = "upload"
+        dependsOn(tasks.named("remapForgeJar"))
+        doFirst {
+            modrinth.versionNumber.set("${project.version}-forge")
+            modrinth.versionName.set(tasks.remapForgeJar.archiveFile.get().asFile.name)
+            modrinth.uploadFile.set(tasks.remapForgeJar)
+            modrinth.loaders.set(["forge"])
         }
     }
+
+    tasks.register("modrinthFabric", com.modrinth.minotaur.TaskModrinthUpload) {
+        group = "upload"
+        dependsOn(tasks.named("remapFabricJar"))
+        doFirst {
+            modrinth.versionNumber.set("${project.version}-fabric")
+            modrinth.versionName.set(tasks.remapFabricJar.archiveFile.get().asFile.name)
+            modrinth.uploadFile.set(tasks.remapFabricJar)
+            modrinth.loaders.set(["fabric", "legacy-fabric"])
+        }
+    }
+}
+
+if (System.getenv("CF_TOKEN") != null) {
+    tasks.register("publishCurseForge", net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+        group = "upload"
+        apiToken = System.getenv("CF_TOKEN")
+
+        def forgeFile = upload("1154099", tasks.remapForgeJar)
+        forgeFile.displayName = tasks.remapForgeJar.archiveFile.get().asFile.name
+        forgeFile.changelog = parsedChangelog
+        forgeFile.changelogType = "markdown"
+        forgeFile.releaseType = release_type
+        forgeFile.addGameVersion(project.minecraft_version)
+        forgeFile.addModLoader("Forge")
+
+        def fabricFile = upload("1154099", tasks.remapFabricJar)
+        fabricFile.displayName = tasks.remapFabricJar.archiveFile.get().asFile.name
+        fabricFile.changelog = parsedChangelog
+        fabricFile.changelogType = "markdown"
+        fabricFile.releaseType = release_type
+        fabricFile.addGameVersion(project.minecraft_version)
+        fabricFile.addModLoader("Fabric")
+    }
+}
+
+task publishUnified {
+    group = "upload"
+    if (System.getenv("MODRINTH_TOKEN") != null) {
+        dependsOn(tasks.named("modrinthForge"), tasks.named("modrinthFabric"))
+    }
+    if (System.getenv("CF_TOKEN") != null) {
+        dependsOn(tasks.named("publishCurseForge"))
+    }
+}
+
+task publishUnifiedToLocal(type: Copy) {
+    group = "upload"
+    dependsOn(tasks.named("remapForgeJar"), tasks.named("remapFabricJar"))
+
+    from(tasks.named("remapForgeJar").get().archiveFile)
+    from(tasks.named("remapFabricJar").get().archiveFile)
+    into("build/unified-local/project0")
 }

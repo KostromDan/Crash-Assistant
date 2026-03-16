@@ -1,6 +1,6 @@
-package dev.kostromdan.mods.crash_assistant.common.mixin;
+package dev.kostromdan.mods.crash_assistant.fabric.mixin;
 
-import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
+import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
 import net.minecraft.client.gui.GuiErrorScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class GuiErrorScreenMixin {
     @Inject(method = "initGui", at = @At("RETURN"), cancellable = false)
     private void onErrorScreenInit(CallbackInfo ci) {
-        ProcessSignalIO.post("loading_error_fml");
+        CrashAssistantEvents.onErrorScreenInit();
     }
 }

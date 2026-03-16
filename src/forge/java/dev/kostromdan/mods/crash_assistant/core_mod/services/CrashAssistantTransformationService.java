@@ -124,7 +124,7 @@ public class CrashAssistantTransformationService implements ITransformationServi
 
             for (MethodNode m : cn.methods) {
                 if (SHUTDOWN_METHOD.containsKey(m.name) && m.desc.equals(SHUTDOWN_METHOD.get(m.name))) {
-                    injectBeforeReturn(m, "dev/kostromdan/mods/crash_assistant/common/CrashAssistantHooks", "onMinecraftShutdown", "()V");
+                    injectBeforeReturn(m, "dev/kostromdan/mods/crash_assistant/common/events/CrashAssistantEvents", "onMinecraftShutdown", "()V");
                 }
             }
         }

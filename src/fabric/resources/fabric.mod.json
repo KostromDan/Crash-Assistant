@@ -31,6 +31,7 @@
     "crash_assistant-fabric.mixins.json"
   ],
   "depends": {
+    "legacy-fabric-api": "*",
     "fabricloader": ">=0.14.19",
     "minecraft": "~1.10.2",
     "java": ">=8"

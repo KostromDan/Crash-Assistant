@@ -188,7 +188,7 @@ if (System.getenv("MODRINTH_TOKEN") != null) {
         group = "upload"
         dependsOn(tasks.named("remapForgeJar"))
         doFirst {
-            modrinth.versionNumber.set("${project.version}-forge")
+            modrinth.versionNumber.set("${project.version}")
             modrinth.versionName.set(tasks.remapForgeJar.archiveFile.get().asFile.name)
             modrinth.uploadFile.set(tasks.remapForgeJar)
             modrinth.loaders.set(["forge"])
@@ -199,7 +199,7 @@ if (System.getenv("MODRINTH_TOKEN") != null) {
         group = "upload"
         dependsOn(tasks.named("remapFabricJar"))
         doFirst {
-            modrinth.versionNumber.set("${project.version}-fabric")
+            modrinth.versionNumber.set("${project.version}")
             modrinth.versionName.set(tasks.remapFabricJar.archiveFile.get().asFile.name)
             modrinth.uploadFile.set(tasks.remapFabricJar)
             modrinth.loaders.set(["fabric", "legacy-fabric"])

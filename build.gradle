@@ -1,13 +1,38 @@
 plugins {
     id 'java'
-    id "me.shedaniel.unified-publishing" version "0.1.+"
     id 'xyz.wagyourtail.unimined' version '1.4.1'
+    id "com.modrinth.minotaur" version "2.+"
+    id "net.darkhax.curseforgegradle" version "1.1.+"
+}
+
+def commonConfigJar = file("${rootDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
+if (!commonConfigJar.exists()) {
+    def currentBranch = "git rev-parse --abbrev-ref HEAD".execute(null, rootDir).text.trim()
+    throw new GradleException(
+            "File not found: ${commonConfigJar.absolutePath}\n\n" +
+            "To build it:\n" +
+            "  1. Switch to the app-common-config branch\n" +
+            "  2. Run the build\n" +
+            "  3. Switch back to your current branch (${currentBranch})\n" +
+            "  4. Try running the build again\n\n" +
+            "Commands to copy-paste:\n\n" +
+            "git checkout app-common-config\n" +
+            ".\\gradlew.bat clean build\n" +
+            "git checkout ${currentBranch}\n" +
+            ".\\gradlew.bat clean build\n "
+    )
 }
 
 group 'dev.kostromdan.mods.crash_assistant'
 
 base {
     archivesName = '!!!CrashAssistant-' + minecraft_version
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
 }
 
 
@@ -84,38 +109,14 @@ sourceSets {
 
 dependencies {
     mainImplementation "org.spongepowered:mixin:0.8.5-SNAPSHOT"
-    fabricModImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
-
-    implementation project(path: ':common_config')
-    forgeImplementation project(path: ':common_config')
-    fabricImplementation project(path: ':common_config')
+    implementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
+    forgeImplementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
+    fabricImplementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
 }
 
 [forgeJar, fabricJar].each { task ->
     task.configure {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        evaluationDependsOn(':app')
-        dependsOn project(':app').tasks.named('shadowJar')
-
-        from("$rootDir/LICENSE.md") {
-            rename { "CRASH_ASSISTANT_LICENSE.md" }
-            into ""
-        }
-        from("$rootDir/thirdparty") {
-            into "thirdparty"
-        }
-
-        from(project(':app').tasks.shadowJar) {
-            into 'META-INF/jarjar'
-        }
-        evaluationDependsOn(':common_config')
-        dependsOn project(':common_config').tasks.named('shadowJar')
-        from {
-            zipTree(
-                    project(':common_config').tasks.named('shadowJar').get().archiveFile.get().asFile
-            )
-        }
+        from zipTree("${rootProject.projectDir}/app_common-config_libs/common_config_1_8__1_16_5.jar")
     }
 }
 
@@ -135,18 +136,6 @@ def configureJarNames() {
 }
 
 configureJarNames()
-
-['compileJava', 'compileFabricJava', 'compileForgeJava'].each { taskName ->
-    tasks.named(taskName) {
-        dependsOn project(':common_config').tasks.named('shadowJar')
-    }
-}
-
-project(':app') {
-    tasks.withType(JavaCompile).configureEach {
-        dependsOn project(':common_config').tasks.named('shadowJar')
-    }
-}
 
 jar {
     enabled = false
@@ -168,33 +157,79 @@ processForgeResources {
     }
 }
 
-unifiedPublishing {
-    project {
-        gameVersions = [minecraft_version, "1.15", "1.15.1"]
-        gameLoaders = ["forge"]
+def parsedChangelog = file('CHANGELOG.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
+        "\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
 
-        displayName = tasks.remapForgeJar.archiveFile.get().asFile.name
-        version = rootProject.version
-        changelog = file('changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
-                "\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
-        releaseType = release_type
+if (System.getenv("MODRINTH_TOKEN") != null) {
+    modrinth {
+        token = System.getenv("MODRINTH_TOKEN")
+        projectId = "ix1qq8Ux"
+        versionType = release_type
+        changelog = parsedChangelog
+        gameVersions = [project.minecraft_version]
+    }
 
-        mainPublication tasks.remapForgeJar
-
-        var cfToken = System.getenv("CF_TOKEN")
-        if (cfToken != null) {
-            curseforge {
-                token = cfToken
-                id = "1154099"
-            }
-        }
-
-        var mrToken = System.getenv("MODRINTH_TOKEN")
-        if (mrToken != null) {
-            modrinth {
-                token = mrToken
-                id = "ix1qq8Ux"
-            }
+    tasks.register("modrinthForge", com.modrinth.minotaur.TaskModrinthUpload) {
+        group = "upload"
+        dependsOn(tasks.named("remapForgeJar"))
+        doFirst {
+            modrinth.versionNumber.set("${project.version}")
+            modrinth.versionName.set(tasks.remapForgeJar.archiveFile.get().asFile.name)
+            modrinth.uploadFile.set(tasks.remapForgeJar)
+            modrinth.loaders.set(["forge"])
         }
     }
+
+    tasks.register("modrinthFabric", com.modrinth.minotaur.TaskModrinthUpload) {
+        group = "upload"
+        dependsOn(tasks.named("remapFabricJar"))
+        doFirst {
+            modrinth.versionNumber.set("${project.version}")
+            modrinth.versionName.set(tasks.remapFabricJar.archiveFile.get().asFile.name)
+            modrinth.uploadFile.set(tasks.remapFabricJar)
+            modrinth.loaders.set(["fabric", "quilt"])
+        }
+    }
+}
+
+if (System.getenv("CF_TOKEN") != null) {
+    tasks.register("publishCurseForge", net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+        group = "upload"
+        apiToken = System.getenv("CF_TOKEN")
+
+        def forgeFile = upload("1154099", tasks.remapForgeJar)
+        forgeFile.displayName = tasks.remapForgeJar.archiveFile.get().asFile.name
+        forgeFile.changelog = parsedChangelog
+        forgeFile.changelogType = "markdown"
+        forgeFile.releaseType = release_type
+        forgeFile.addGameVersion(project.minecraft_version)
+        forgeFile.addModLoader("Forge")
+
+        def fabricFile = upload("1154099", tasks.remapFabricJar)
+        fabricFile.displayName = tasks.remapFabricJar.archiveFile.get().asFile.name
+        fabricFile.changelog = parsedChangelog
+        fabricFile.changelogType = "markdown"
+        fabricFile.releaseType = release_type
+        fabricFile.addGameVersion(project.minecraft_version)
+        fabricFile.addModLoader("Fabric")
+    }
+}
+
+task publishUnified {
+    group = "upload"
+    if (System.getenv("MODRINTH_TOKEN") != null) {
+        dependsOn(tasks.named("modrinthForge"), tasks.named("modrinthFabric"))
+    }
+    if (System.getenv("CF_TOKEN") != null) {
+        dependsOn(tasks.named("publishCurseForge"))
+    }
+}
+
+task publishUnifiedToLocal(type: Copy) {
+    group = "upload"
+    dependsOn(tasks.named("remapForgeJar"), tasks.named("remapFabricJar"))
+
+    from(tasks.named("remapForgeJar").get().archiveFile)
+    from(tasks.named("remapFabricJar").get().archiveFile)
+    into("build/unified-local/project0")
 }

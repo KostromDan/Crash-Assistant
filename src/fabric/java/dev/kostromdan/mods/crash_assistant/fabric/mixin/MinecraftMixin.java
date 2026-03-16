@@ -1,6 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.fabric.mixin;
 
-import dev.kostromdan.mods.crash_assistant.common.CrashAssistant;
+import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,8 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MinecraftMixin {
     @Inject(method = "<init>", at = @At("RETURN"), cancellable = false)
     private void afterInit(CallbackInfo ci) {
-        CrashAssistant.playerNickname = Minecraft.getInstance().getUser().getName();
-        ProcessSignalIO.postInfo("username", CrashAssistant.playerNickname);
+        CrashAssistantEvents.afterMinecraftInit();
     }
 
     /**
@@ -23,7 +22,7 @@ public class MinecraftMixin {
      */
     @Inject(method = "stop", at = @At("RETURN"), cancellable = false)
     private void stop(CallbackInfo ci) {
-        ProcessSignalIO.post("normal_stop");
+        CrashAssistantEvents.onMinecraftShutdown();
     }
 
     @Inject(method = "emergencySave", at = @At("HEAD"), cancellable = false)

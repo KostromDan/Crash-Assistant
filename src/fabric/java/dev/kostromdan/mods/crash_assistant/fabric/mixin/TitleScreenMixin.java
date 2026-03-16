@@ -1,6 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.fabric.mixin;
 
-import dev.kostromdan.mods.crash_assistant.common.CrashAssistantHooks;
+import dev.kostromdan.mods.crash_assistant.common.events.CrashAssistantEvents;
 import net.minecraft.client.gui.screens.TitleScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,6 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class TitleScreenMixin {
     @Inject(method = "tick", at = @At("RETURN"), cancellable = false)
     private void onClientLoaded(CallbackInfo ci) {
-        CrashAssistantHooks.onClientLoaded();
+        CrashAssistantEvents.onClientLoaded();
     }
 }

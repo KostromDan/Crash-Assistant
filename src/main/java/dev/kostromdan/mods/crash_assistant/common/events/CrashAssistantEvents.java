@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common.events;
 
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import net.minecraft.client.Minecraft;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
 import net.minecraft.util.ChatComponentText;
@@ -38,5 +40,39 @@ public class CrashAssistantEvents {
         msg.appendSibling(CrashAssistantCommands.getModConfigComponent());
         msg.appendSibling(new ChatComponentText(LanguageProvider.get("text.greeting3")));
         CrashAssistantCommands.sendClientMsg(msg);
+    }
+
+    public static void afterMinecraftInit() {
+        CrashAssistant.playerNickname = Minecraft.getMinecraft()
+                .getSession()
+                .getUsername();
+        ProcessSignalIO.postInfo("username", CrashAssistant.playerNickname);
+    }
+
+    public static void onMinecraftShutdown() {
+        ProcessSignalIO.post("normal_stop");
+    }
+
+    public static void onErrorScreenInit() {
+        ProcessSignalIO.post("loading_error_fml");
+    }
+
+    public static void onClientLoaded() {
+        if (CrashAssistant.clientLoaded) return;
+        CrashAssistant.clientLoaded = true;
+
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
+            if (CrashAssistantConfig.getModpackCreators()
+                    .isEmpty()) {
+                CrashAssistantConfig.addModpackCreator(CrashAssistant.playerNickname);
+            }
+            if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update")
+                    && CrashAssistantConfig.getModpackCreators()
+                    .contains(CrashAssistant.playerNickname)) {
+                ModListUtils.saveCurrentModList();
+            }
+        }
+
+        ProcessSignalIO.post("successful_launch");
     }
 }

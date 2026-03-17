@@ -48,7 +48,7 @@ subprojects { subproject ->
         if (subproject.name in ['forge_coremod']) {
             archivesName = "CrashAssistant-forge-1.19-1.20.1"
         } else {
-            archivesName = "CrashAssistant-$project.name-1.19-1.21.4"
+            archivesName = "CrashAssistant-$project.name-1.19-1.20.1"
         }
         archives_name = archivesName
     }

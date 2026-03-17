@@ -15,7 +15,7 @@ idea {
 
 
 task collectJars(type: Copy) {
-    dependsOn(":fabric:build", ":forge_coremod:build", ":neoforge_coremod:build")
+    dependsOn(":forge_coremod:build", ":neoforge_coremod:build")
 
     from("forge_coremod/build/libs") {
         include '*.jar'

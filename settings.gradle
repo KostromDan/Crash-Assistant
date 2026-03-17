@@ -10,8 +10,5 @@ pluginManagement {
 rootProject.name = 'crash_assistant'
 
 include 'common'
-include 'common_config'
-include 'fabric'
-include 'app'
 include 'neoforge'
 include 'neoforge_coremod'

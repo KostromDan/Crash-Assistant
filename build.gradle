@@ -16,8 +16,6 @@ idea {
 
 task collectJars(type: Copy) {
     dependsOn(
-//            ":fabric:build",
-//            ":forge_coremod:build",
             ":neoforge_coremod:build"
     )
 

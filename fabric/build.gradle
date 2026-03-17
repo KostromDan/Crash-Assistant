@@ -10,7 +10,6 @@ dependencies {
 
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
 
 base {
@@ -58,7 +57,7 @@ if (System.getenv("MODRINTH_TOKEN") != null) {
 		versionType = release_type
 		changelog = parsedChangelog
 		uploadFile = tasks.jar
-		gameVersions = ["26.1-pre-1"]
+		gameVersions = ["26.1-snapshot-11", "26.1-pre-1", "26.1-pre-2"]
 		loaders = ["fabric", "quilt"]
 	}
 }

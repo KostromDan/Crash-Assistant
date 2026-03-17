@@ -32,11 +32,7 @@
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",
-    "fabric-api": "*",
     "minecraft": "${fabric_minecraft_version_range}",
     "java": ">=25"
-  },
-  "suggests": {
-    "another-mod": "*"
   }
 }

@@ -10,8 +10,6 @@ pluginManagement {
 rootProject.name = 'crash_assistant'
 
 include 'common'
-include 'common_config'
 include 'fabric'
 include 'forge'
-include 'app'
 include 'forge_coremod'

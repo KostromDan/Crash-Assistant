@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    compileOnly project(path: ':common_config')
+    compileOnly files("${rootProject.projectDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
 }
 
 neoForge {

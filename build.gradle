@@ -1,8 +1,26 @@
 plugins {
     id 'java'
-    id 'dev.architectury.loom' version '1.7-SNAPSHOT' apply false
+    id 'dev.architectury.loom' version '1.13-SNAPSHOT' apply false
     id 'architectury-plugin' version '3.4-SNAPSHOT'
     id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
+}
+
+def commonConfigJar = file("${rootDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
+if (!commonConfigJar.exists()) {
+    def currentBranch = "git rev-parse --abbrev-ref HEAD".execute(null, rootDir).text.trim()
+    throw new GradleException(
+            "File not found: ${commonConfigJar.absolutePath}\n\n" +
+                    "To build it:\n" +
+                    "  1. Switch to the app-common-config branch\n" +
+                    "  2. Run the build\n" +
+                    "  3. Switch back to your current branch (${currentBranch})\n" +
+                    "  4. Try running the build again\n\n" +
+                    "Commands to copy-paste:\n\n" +
+                    "git checkout app-common-config\n" +
+                    ".\\gradlew.bat clean build\n" +
+                    "git checkout ${currentBranch}\n" +
+                    ".\\gradlew.bat clean build\n "
+    )
 }
 
 java {
@@ -21,43 +39,42 @@ allprojects {
 }
 
 subprojects { subproject ->
-    if (!(subproject.name in ['app', 'gpu_detection_java22_ffm'])) {
-        apply plugin: 'dev.architectury.loom'
-        apply plugin: 'architectury-plugin'
-        apply plugin: 'maven-publish'
+    apply plugin: 'dev.architectury.loom'
+    apply plugin: 'architectury-plugin'
+    apply plugin: 'maven-publish'
 
-        var archives_name
-        base {
-            if (subproject.name in ['forge_coremod']) {
-                archivesName = "CrashAssistant-forge-1.19-1.20.1"
-            } else {
-                archivesName = "CrashAssistant-$project.name-1.19-1.21.4"
-            }
-            archives_name = archivesName
+    var archives_name
+    base {
+        if (subproject.name in ['forge_coremod']) {
+            archivesName = "CrashAssistant-forge-1.19-1.20.1"
+        } else {
+            archivesName = "CrashAssistant-$project.name-1.19-1.21.4"
         }
+        archives_name = archivesName
+    }
 
-        repositories {
-        }
+    repositories {
+    }
 
-        loom {
-            silentMojangMappingsLicense()
-        }
+    loom {
+        silentMojangMappingsLicense()
+    }
 
-        dependencies {
-            minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
-            mappings loom.officialMojangMappings()
-        }
+    dependencies {
+        minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
+        mappings loom.officialMojangMappings()
+        implementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
+    }
 
-        java {
-            withSourcesJar()
+    java {
+        withSourcesJar()
 
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
-        }
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 
-        tasks.withType(JavaCompile).configureEach {
-            it.options.release = 17
-        }
+    tasks.withType(JavaCompile).configureEach {
+        it.options.release = 17
     }
 }
 

@@ -1,8 +1,14 @@
 1.11.3:
 
-- Fixed previous update broke 26.1 fabric.
+- Initial release for legacy-fabric 1.7.10, 1.8.9, 1.9.4, 1.10.2, 1.11.2, 1.12.2, 1.13.2.
+- Crash Assistant no longer requires fabric-api on all fabric 1.13.2 and higher versions.
+- Fixed CrashAssistant commands were not registered on fabric 1.14.4, 1.15.2.
+- Fixed 1.11.2 update broke 26.1 fabric.
 - Fixed some rare issues related with logs uploading.
 - Fixed `LauncherLogger` warnings may come with delay to original log.
+- Major refactor of a Crash Assistant build process.
+  Now every single mc version has the same code of `app` and `common_config` subprojects.
+- Small fixes.
 
 1.11.2:
 

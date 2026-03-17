@@ -17,11 +17,6 @@ configurations {
 
 dependencies {
     forge "net.minecraftforge:forge:$rootProject.forge_version"
-    implementation project(path: ':common_config')
-    shadowBundle project(path: ':common_config')
-    shadowBundle 'com.electronwill.night-config:toml:3.6.4'
-    shadowBundle 'com.electronwill.night-config:json:3.6.4'
-    shadowBundle 'org.apache.commons:commons-jexl3:3.6.2'
 }
 
 processResources {
@@ -35,13 +30,6 @@ processResources {
 shadowJar {
     archiveClassifier.set('dev-shadow')
     configurations = [project.configurations.shadowBundle]
-    relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
-    relocate 'org.apache.commons.jexl3', 'dev.kostromdan.mods.crash_assistant.commons.jexl3'
-    relocate 'org.apache.commons.logging', 'dev.kostromdan.mods.crash_assistant.commons.logging'
-
-    exclude "META-INF/maven/**"
-    exclude "META-INF/LICENSE.txt"
-    exclude "META-INF/NOTICE.txt"
 }
 
 tasks.withType(Jar).configureEach {
@@ -51,19 +39,9 @@ tasks.withType(Jar).configureEach {
 }
 
 remapJar {
-    dependsOn(':app:shadowJar', ':forge:build')
+    dependsOn(':forge:build')
 
-    from("$rootDir/LICENSE.md") {
-        rename { "CRASH_ASSISTANT_LICENSE.md" }
-        into ""
-    }
-    from("$rootDir/thirdparty") {
-        into "thirdparty"
-    }
-
-    from(project(':app').tasks.shadowJar) {
-        into 'META-INF/jarjar'
-    }
+    from zipTree("${rootProject.projectDir}/app_common-config_libs/common_config_1_17__1_18_1.jar")
     from(project(':forge').tasks.remapJar) {
         rename { String fileName ->
             "crash_assistant-forge.jar"

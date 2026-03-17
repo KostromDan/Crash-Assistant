@@ -1,10 +1,12 @@
 {
   "required": true,
-  "package": "dev.kostromdan.mods.crash_assistant.fabric.entrypoint",
+  "package": "dev.kostromdan.mods.crash_assistant.fabric.mixin",
   "compatibilityLevel": "JAVA_16",
   "minVersion": "0.8",
   "plugin": "dev.kostromdan.mods.crash_assistant.fabric.entrypoint.CrashAssistantIMixinPlugin",
   "client": [
+    "PlayerListMixin",
+    "IntegratedServerMixin"
   ],
   "mixins": [
   ],

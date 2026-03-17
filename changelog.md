@@ -6,6 +6,9 @@
 - Fixed 1.11.2 update broke 26.1 fabric.
 - Fixed some rare issues related with logs uploading.
 - Fixed `LauncherLogger` warnings may come with delay to original log.
+- Major refactor of a Crash Assistant build process.
+  Now every single mc version has the same code of `app` and `common_config` subprojects.
+- Small fixes.
 
 1.11.2:
 

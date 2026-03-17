@@ -84,7 +84,7 @@ dependencies {
 
     // Forge's hack fix
     implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
-    compileOnly project(path: ':common_config')
+    compileOnly files("${rootProject.projectDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
 }
 
 publishing {

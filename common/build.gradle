@@ -21,7 +21,7 @@ dependencies {
     // fabric and neoforge both bundle mixinextras, so it is safe to use it in common
     compileOnly group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
     annotationProcessor group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
-    compileOnly project(path: ':common_config')
+    compileOnly files("${rootProject.projectDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
 }
 
 configurations {

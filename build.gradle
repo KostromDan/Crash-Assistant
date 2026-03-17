@@ -6,6 +6,24 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.115' apply false
 }
 
+def commonConfigJar = file("${rootDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
+if (!commonConfigJar.exists()) {
+    def currentBranch = "git rev-parse --abbrev-ref HEAD".execute(null, rootDir).text.trim()
+    throw new GradleException(
+            "File not found: ${commonConfigJar.absolutePath}\n\n" +
+                    "To build it:\n" +
+                    "  1. Switch to the app-common-config branch\n" +
+                    "  2. Run the build\n" +
+                    "  3. Switch back to your current branch (${currentBranch})\n" +
+                    "  4. Try running the build again\n\n" +
+                    "Commands to copy-paste:\n\n" +
+                    "git checkout app-common-config\n" +
+                    ".\\gradlew.bat clean build\n" +
+                    "git checkout ${currentBranch}\n" +
+                    ".\\gradlew.bat clean build\n "
+    )
+}
+
 apply plugin: 'idea'
 idea {
     module {

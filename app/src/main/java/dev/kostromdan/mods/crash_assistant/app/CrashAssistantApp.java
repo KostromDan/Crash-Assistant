@@ -305,6 +305,7 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "MinecraftLauncher: launcher_log.txt", Paths.get("launcher_log.txt")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("logs", "launcher_log.txt")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "CurseForge: launcher_log.txt", Paths.get("../../Install", "launcher_log.txt")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "CurseForge: stdout-logs.txt", Paths.get("logs", "stdout-logs.txt")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../logs", "ftb-app-electron.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, Paths.get("../../../logs", "PrismLauncher-0.log")));
         LogsList.addIfExistsAndModified(new Log(LogType.LAUNCHER_LOG, "GDLauncher: main.log", Paths.get("../../../../", "main.log")));

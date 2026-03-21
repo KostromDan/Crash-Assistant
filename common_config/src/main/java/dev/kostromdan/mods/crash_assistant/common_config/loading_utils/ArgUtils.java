@@ -23,7 +23,6 @@ public class ArgUtils {
 
     public static String getSafeJvmArgs() {
         String args = String.join(", ", ManagementFactory.getRuntimeMXBean().getInputArguments());
-        if (args == null) return "null";
         return censor(args);
     }
 
@@ -46,18 +45,62 @@ public class ArgUtils {
     }
 
     protected static String censor(String input) {
+        return censor(input, System.getProperty("user.name"));
+    }
+
+    static String censor(String input, String osUser) {
         if (input == null) return null;
 
-        input = input.replaceAll("(--(accessToken|xuid)[\\s=:,]*)([^\\s,]+)", "$1????????");
+        input = input.replaceAll("(--(?:accessToken|xuid)[\\s=:,]*)([^\\s,]+)", "$1????????");
 
-        String osUser = System.getProperty("user.name");
-        if (osUser != null && osUser.length() > 2) {
-            String safeUser = Pattern.quote(osUser);
-            String regex = "(?<!username[\\s=:])(?<!username,\\s)" + safeUser;
-            input = input.replaceAll(regex, "<USER>");
+        if (osUser == null || osUser.isEmpty()) {
+            return input;
         }
 
-        return input;
+        return censorPathUser(input, osUser);
+    }
+
+    private static String censorPathUser(String input, String osUser) {
+        StringBuilder result = new StringBuilder(input.length());
+        int index = 0;
+        int userLength = osUser.length();
+
+        while (true) {
+            int found = input.indexOf(osUser, index);
+            if (found < 0) {
+                result.append(input, index, input.length());
+                return result.toString();
+            }
+
+            boolean leftOk = found > 0 && isPathSeparator(input.charAt(found - 1));
+            boolean rightOk = found + userLength == input.length()
+                    || isRightPathBoundary(input.charAt(found + userLength));
+
+            result.append(input, index, found);
+
+            if (leftOk && rightOk) {
+                result.append("<USER>");
+            } else {
+                result.append(osUser);
+            }
+
+            index = found + userLength;
+        }
+    }
+
+    private static boolean isPathSeparator(char c) {
+        return c == '/' || c == '\\';
+    }
+
+    private static boolean isRightPathBoundary(char c) {
+        return isPathSeparator(c)
+                || Character.isWhitespace(c)
+                || c == '"'
+                || c == '\''
+                || c == ','
+                || c == ';'
+                || c == ')'
+                || c == ']';
     }
 
     @NoJexl

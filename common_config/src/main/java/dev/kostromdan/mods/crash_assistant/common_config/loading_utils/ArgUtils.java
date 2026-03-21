@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.loading_utils;
 
 import org.apache.commons.jexl3.annotations.NoJexl;
 
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.regex.Pattern;
 
@@ -26,7 +27,25 @@ public class ArgUtils {
         return censor(args);
     }
 
-    private static String censor(String input) {
+    public static String getSafeClassPath() {
+        return censor(getUnsafeClassPath());
+    }
+
+    public static String[] getSafeClassPathList() {
+        return getSafeClassPath().split(Pattern.quote(File.pathSeparator));
+    }
+
+    @NoJexl
+    public static String getUnsafeClassPath() {
+        return System.getProperty("java.class.path");
+    }
+
+    @NoJexl
+    public static String[] getUnsafeClassPathList() {
+        return getUnsafeClassPath().split(Pattern.quote(File.pathSeparator));
+    }
+
+    protected static String censor(String input) {
         if (input == null) return null;
 
         input = input.replaceAll("(--(accessToken|xuid)[\\s=:,]*)([^\\s,]+)", "$1????????");

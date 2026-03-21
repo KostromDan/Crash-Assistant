@@ -40,6 +40,7 @@ public class Boot {
     public static List<String> APP_ARGS;
     public static String MINECRAFT_LAUNCH_COMMAND;
     public static String MINECRAFT_JVM_ARGS;
+    public static String MINECRAFT_CLASS_PATH;
 
 
     @NoJexl
@@ -81,6 +82,8 @@ public class Boot {
                     MINECRAFT_LAUNCH_COMMAND = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
                 } else if ("-minecraftJvmArgs".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
                     MINECRAFT_JVM_ARGS = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
+                } else if ("-minecraftClassPath".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {
+                    MINECRAFT_CLASS_PATH = new String(Base64.getDecoder().decode(effectiveArgs.get(i + 1)), StandardCharsets.UTF_8);
                 }else if ("-modLoadedWithConnector".equals(effectiveArgs.get(i))){
                     PlatformHelp.modLoadedWithConnector = true;
                 } else if ("-startupWarnings".equals(effectiveArgs.get(i)) && i + 1 < effectiveArgs.size()) {

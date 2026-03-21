@@ -1,12 +1,17 @@
 package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.ArgUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
 
 import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiPredicate;
 
 /**
  * Utility class for process management operations.
@@ -145,45 +150,51 @@ public class ProcessHelper {
         return java9orLater;
     }
 
-    private static Class<?> loadClass(String className) {
-        try {
-            return Class.forName(className);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Failed to load class: " + className, e);
+    public static List<BiPredicate<Path, String>> getAppPredicates() {
+        List<BiPredicate<Path, String>> predicates = new ArrayList<>();
+
+        predicates.add((path, fileName) -> fileName.startsWith("log4j-api-"));
+        predicates.add((path, fileName) -> fileName.startsWith("log4j-core-"));
+        predicates.add((path, fileName) -> fileName.startsWith("commons-io-"));
+
+        if (ModVersionsHelper.versionRange == ModVersionsHelper.VersionRange.V_1_18_2__MODERN) {
+            predicates.add((path, fileName) -> fileName.startsWith("gson-"));
         }
+
+        predicates.addAll(getJnaPredicates());
+
+        return predicates;
     }
 
-    public static List<Class<?>> getNeededForAppClasses() {
-        List<Class<?>> classes = new java.util.ArrayList<>();
-
-        classes.add(loadClass("org.apache.logging.log4j.LogManager"));
-        classes.add(loadClass("org.apache.commons.io.input.ReversedLinesFileReader"));
-
-        switch (ModVersionsHelper.versionRange) {
-            case V_1_18_2__MODERN:
-                classes.add(loadClass("org.apache.logging.log4j.core.Core"));
-                classes.add(loadClass("com.sun.jna.Memory"));
-                classes.add(loadClass("com.sun.jna.platform.win32.Tlhelp32"));
-                classes.add(loadClass("com.google.gson.Gson"));
-                break;
-            case V_1_17__1_18_1:
-            case V_1_13__1_16_5:
-            case V_1_12_2:
-                classes.add(loadClass("org.apache.logging.log4j.core.Core"));
-                classes.add(loadClass("com.sun.jna.Memory"));
-                classes.add(loadClass("com.sun.jna.platform.win32.Tlhelp32"));
-                break;
-            case V_1_8__1_11_2:
-                classes.add(loadClass("org.apache.logging.log4j.core.LoggerContext"));
-                classes.add(loadClass("com.sun.jna.Memory"));
-                classes.add(loadClass("com.sun.jna.platform.win32.Tlhelp32"));
-                break;
-            case V_1_7_10:
-                classes.add(loadClass("org.apache.logging.log4j.core.LoggerContext"));
-                break;
-
+    public static List<BiPredicate<Path, String>> getJnaPredicates() {
+        List<BiPredicate<Path, String>> predicates = new ArrayList<>();
+        if (ModVersionsHelper.versionRange != ModVersionsHelper.VersionRange.V_1_7_10) {
+            predicates.add((path, fileName) -> fileName.startsWith("jna-") && !fileName.startsWith("jna-platform-"));
+            predicates.add((path, fileName) -> fileName.startsWith("jna-platform-"));
+            predicates.add((path, fileName) -> fileName.startsWith("platform-"));
+            predicates.add((path, fileName) -> fileName.startsWith("oshi-core-"));
         }
-        return classes;
+        return predicates;
+    }
+
+    public static List<String> getPathsToNeededLibs(List<BiPredicate<Path, String>> predicates) {
+        List<String> classPathEntriesForAppProcess = new ArrayList<>();
+        for (String pathStr : ArgUtils.getUnsafeClassPathList()) {
+            if (!pathStr.endsWith(".jar")) {
+                continue;
+            }
+
+            Path path = Paths.get(pathStr);
+            String fileName = path.getFileName().toString().toLowerCase();
+
+            for (BiPredicate<Path, String> predicate : predicates) {
+                if (predicate.test(path, fileName)) {
+                    classPathEntriesForAppProcess.add(pathStr);
+                    break;
+                }
+            }
+        }
+        return classPathEntriesForAppProcess;
     }
 
     public static String getProcessorName() {

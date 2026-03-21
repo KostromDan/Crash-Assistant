@@ -21,6 +21,7 @@ import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -136,6 +137,8 @@ public class CrashAssistantApp {
 
         LOGGER.info("Minecraft JVM args: {}", Boot.MINECRAFT_JVM_ARGS);
         LOGGER.info("Minecraft Launch Command: {}", Boot.MINECRAFT_LAUNCH_COMMAND);
+
+        LOGGER.info("Minecraft classPath:\n\n\n{}\n\n", String.join("\n", Boot.MINECRAFT_CLASS_PATH.split(Pattern.quote(File.pathSeparator))));
 
 
         String currentProcessData = Objects.toString(Boot.parentPID) + "_" + Boot.parentStarted;

@@ -35,8 +35,8 @@ public class CrashAssistantLanguageAdapter implements LanguageAdapter {
 
         try {
             List<String> requiredPaths = ProcessHelper.getPathsToNeededLibs(ProcessHelper.getJnaPredicates());
-            LOGGER.info("Exposing libraries directly to KnotClassLoader:\n" + String.join("\n", requiredPaths));
-            exposeToKnotClassLoader(requiredPaths);
+
+            if (!requiredPaths.isEmpty()) exposeToKnotClassLoader(requiredPaths);
 
             SetupRunner runner = new SetupRunner();
             runner.run();

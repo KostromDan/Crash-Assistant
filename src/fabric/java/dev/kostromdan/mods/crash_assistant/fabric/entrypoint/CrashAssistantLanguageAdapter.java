@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarH
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.LanguageAdapter;
 import net.fabricmc.loader.api.LanguageAdapterException;
@@ -12,168 +13,118 @@ import net.fabricmc.loader.api.ModContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URL;
-import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.CodeSource;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class CrashAssistantLanguageAdapter implements LanguageAdapter {
     private static final Logger LOGGER = LogManager.getLogger("CrashAssistantLanguageAdapter");
 
-    /**
-     * CrashAssistantApp should be launched as soon as possible after game start
-     * to be able to help players even with LanguageAdapter/MixinConfigPlugin/mixin/hs_err crashes.
-     * So we launch it from the constructor of the LanguageAdapter,
-     * which is the first point we can launch it from in Fabric.
-     *
-     * <p>This block finds required libraries on the JVM's classpath,
-     * creates a dedicated "parent-last" class loader, and runs the setup logic with it.
-     * This is done to make libraries like Apache Commons IO available before
-     * Fabric's main class loader is fully configured.
-     */
     public CrashAssistantLanguageAdapter() {
         if (Boolean.getBoolean("dev.kostromdan.mods.crash_assistant.startedFlag")) return;
         System.setProperty("dev.kostromdan.mods.crash_assistant.startedFlag", "true");
 
-        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+        ArgUtils.setLaunchArgs(FabricLoader.getInstance().getLaunchArguments(false));
+        FabricLoader.getInstance().getModContainer("minecraft")
+                .ifPresent(container -> {
+                    PlatformHelp.minecraftVersion = container.getMetadata().getVersion().getFriendlyString();
+                });
 
         try {
-            // Find the required JARs from the system classpath.
-            List<URL> requiredJarUrls = findRequiredLibrariesOnClasspath();
+            List<String> requiredPaths = ProcessHelper.getPathsToNeededLibs(ProcessHelper.getJnaPredicates());
 
-            if (requiredJarUrls.isEmpty()) {
-                // This is a fatal error, as the setup cannot proceed.
-                throw new RuntimeException("Could not find required libraries (commons-io, oshi-core, jna) on the classpath.");
-            }
+            if (!requiredPaths.isEmpty()) exposeToKnotClassLoader(requiredPaths);
 
-            // Create a new parent-last class loader that includes the JARs we found.
-            ParentLastURLClassLoader customLoader = new ParentLastURLClassLoader(requiredJarUrls.toArray(new URL[0]), CrashAssistantLanguageAdapter.class.getClassLoader());
-            Thread.currentThread().setContextClassLoader(customLoader);
-
-            // Load and run our setup logic using the new, library-aware class loader.
-            Class<?> runnerClass = customLoader.loadClass(SetupRunner.class.getName());
-            Runnable runner = (Runnable) runnerClass.getConstructor().newInstance();
+            SetupRunner runner = new SetupRunner();
             runner.run();
 
         } catch (Throwable throwable) {
             LOGGER.error("A critical error occurred during Crash Assistant setup:", throwable);
             throw new RuntimeException(throwable);
-        } finally {
-            // ALWAYS restore the original class loader to prevent side effects.
-            Thread.currentThread().setContextClassLoader(originalClassLoader);
         }
     }
 
-    private static List<URL> findRequiredLibrariesOnClasspath() {
-        // Use a Set to automatically handle duplicate entries from the classpath.
-        Set<URL> foundUrls = new HashSet<>();
-        String classPath = System.getProperty("java.class.path");
-        String separator = File.pathSeparator;
+    private static void exposeToKnotClassLoader(List<String> libPaths) {
+        try {
+            ClassLoader knotLoader = Thread.currentThread().getContextClassLoader();
 
-        String[] paths = classPath.split(separator);
+            if (!knotLoader.getClass().getSimpleName().equals("KnotClassLoader") &&
+                    !knotLoader.getClass().getSimpleName().equals("KnotCompatibilityClassLoader")) {
+                LOGGER.warn("Not running in KnotClassLoader, skipping library exposure.");
+                return;
+            }
 
-        // Find all required dependencies from the classpath
-        for (String pathStr : paths) {
-            if (pathStr.contains("commons-io") || pathStr.contains("oshi-core") || pathStr.contains("jna-") || pathStr.contains("platform-")) {
-                try {
-                    URL url = Paths.get(pathStr).toUri().toURL();
-                    foundUrls.add(url);
-                } catch (Exception e) {
-                    // In a release version, we suppress this warning. If a JAR isn't found, the main check will fail.
+            Method addUrlMethod = getMethod(knotLoader.getClass(), "addUrlFwd", URL.class);
+            if (addUrlMethod == null) {
+                addUrlMethod = getMethod(knotLoader.getClass(), "addURL", URL.class);
+            }
+            Method addPathMethod = getMethod(knotLoader.getClass(), "addPath", Path.class);
+
+            if (addUrlMethod != null) addUrlMethod.setAccessible(true);
+            if (addPathMethod != null) addPathMethod.setAccessible(true);
+
+            Field delegateField = getField(knotLoader.getClass(), "delegate");
+            Object delegate = null;
+            Method setAllowedPrefixes = null;
+
+            if (delegateField != null) {
+                delegateField.setAccessible(true);
+                delegate = delegateField.get(knotLoader);
+                setAllowedPrefixes = getMethod(delegate.getClass(), "setAllowedPrefixes", Path.class, String[].class);
+                if (setAllowedPrefixes != null) {
+                    setAllowedPrefixes.setAccessible(true);
                 }
             }
-        }
 
-        // Reliably find our own mod's JAR file.
-        try {
-            CodeSource codeSource = CrashAssistantLanguageAdapter.class.getProtectionDomain().getCodeSource();
-            if (codeSource != null) {
-                URL modJarUrl = codeSource.getLocation();
-                foundUrls.add(modJarUrl);
+            for (String pathStr : libPaths) {
+                Path libPath = Paths.get(pathStr).toAbsolutePath().normalize();
+
+                if (addUrlMethod != null) {
+                    addUrlMethod.invoke(knotLoader, libPath.toUri().toURL());
+                } else if (addPathMethod != null) {
+                    addPathMethod.invoke(knotLoader, libPath);
+                } else {
+                    LOGGER.warn("Could not find a method to add URL/Path to KnotClassLoader!");
+                }
+
+                if (delegate != null && setAllowedPrefixes != null) {
+                    setAllowedPrefixes.invoke(delegate, libPath, new String[0]);
+                }
             }
         } catch (Exception e) {
-            LOGGER.error("Could not determine location of CrashAssistant JAR", e);
-        }
-
-        // Convert the Set back to a List for the URLClassLoader.
-        return new ArrayList<>(foundUrls);
-    }
-
-    /**
-     * A custom ClassLoader that follows a "parent-last" or "child-first" delegation model.
-     * It will attempt to load classes and resources from its own URLs before delegating to the parent.
-     * This is necessary to bypass restrictions and classpath issues in the parent (Fabric's KnotClassLoader) at early startup.
-     */
-    private static class ParentLastURLClassLoader extends URLClassLoader {
-        public ParentLastURLClassLoader(URL[] urls, ClassLoader parent) {
-            super(urls, parent);
-        }
-
-        @Override
-        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            synchronized (getClassLoadingLock(name)) {
-                // First, check if the class has already been loaded
-                Class<?> c = findLoadedClass(name);
-
-                if (c == null) {
-                    // Exception: PlatformHelp and other state classes are always loaded from parent
-                    if (name.startsWith("dev.kostromdan.mods.crash_assistant.common_config.platform")) {
-                        c = getParent().loadClass(name);
-                    } else {
-                        // Otherwise, try to load it from our own URLs first
-                        try {
-                            c = findClass(name);
-                        } catch (ClassNotFoundException e) {
-                            // If our loader can't find it, then delegate directly to the parent.
-                            c = getParent().loadClass(name);
-                        }
-                    }
-                }
-
-                if (resolve) {
-                    resolveClass(c);
-                }
-                return c;
-            }
-        }
-
-
-        @Override
-        public Enumeration<URL> getResources(String name) throws IOException {
-            // Search local URLs first.
-            Enumeration<URL> localResources = findResources(name);
-
-            // If we found any resources locally, return them without asking the parent.
-            // This prevents duplicate resources from being found, which solves the OSHI warning.
-            if (localResources.hasMoreElements()) {
-                return localResources;
-            }
-
-            // If we didn't find the resource locally, delegate to the parent.
-            return getParent().getResources(name);
+            LOGGER.error("Failed to expose libraries to Knot class loader via reflection", e);
         }
     }
 
-    /**
-     * A dedicated inner class to run the setup logic. This isolates the code
-     * so it can be loaded by our custom class loader.
-     */
+    private static Field getField(Class<?> clazz, String fieldName) {
+        while (clazz != null) {
+            try {
+                return clazz.getDeclaredField(fieldName);
+            } catch (NoSuchFieldException e) {
+                clazz = clazz.getSuperclass();
+            }
+        }
+        return null;
+    }
+
+    private static Method getMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
+        while (clazz != null) {
+            try {
+                return clazz.getDeclaredMethod(methodName, parameterTypes);
+            } catch (NoSuchMethodException e) {
+                clazz = clazz.getSuperclass();
+            }
+        }
+        return null;
+    }
+
     public static class SetupRunner implements Runnable {
         @Override
         public void run() {
             String launchTarget = FabricLoader.getInstance().getEnvironmentType().toString();
-            ArgUtils.setLaunchArgs(FabricLoader.getInstance().getLaunchArguments(false));
-            FabricLoader.getInstance().getModContainer("minecraft")
-                    .ifPresent(container -> {
-                        PlatformHelp.minecraftVersion = container.getMetadata().getVersion().getFriendlyString();
-                    });
             if (ClassExistenceChecker.classExists("org.sinytra.connector.loader.ConnectorEarlyLoader") ||
                     ClassExistenceChecker.classExists("org.sinytra.connector.ConnectorEarlyLoader")) {
                 PlatformHelp.modLoadedWithConnector = true;

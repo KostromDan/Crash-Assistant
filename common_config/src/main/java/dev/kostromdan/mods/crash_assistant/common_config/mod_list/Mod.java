@@ -138,14 +138,14 @@ public class Mod {
             maxJarLen = Math.max(maxJarLen, jarLen);
 
             /* mod-id column: 4 × indent + modId + optional “ (MCreator mod)” */
-            int modIdLen = indentLevel * 4 + modId.length();
+            int modIdLen = modId.length();
             if (Boolean.TRUE.equals(mod.IsMCreator())) {
                 modIdLen += " (MCreator mod)".length();
             }
             maxModIdLen = Math.max(maxModIdLen, modIdLen);
 
             /* name column: 4 × indent + name */
-            int nameLen = indentLevel * 4 + name.length();
+            int nameLen = name.length();
             maxNameLen = Math.max(maxNameLen, nameLen);
 
             /* recurse into nested mods, if any */

@@ -15,6 +15,7 @@ import java.util.*;
 public class Mod {
     private final String jarName;
     private final String modId;
+    private final String name;
     private final String version;
     private final Boolean isMCreator;
     private final HashSet<String> mixinConfigs;
@@ -32,14 +33,15 @@ public class Mod {
             .create();
 
     @NoJexl
-    public Mod(String jarName, String modId, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar) {
-        this(jarName, modId, version, isMCreator, mixinConfigs, jarJarMods, pathFromJarJar, null, null);
+    public Mod(String jarName, String modId, String name, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar) {
+        this(jarName, modId, name, version, isMCreator, mixinConfigs, jarJarMods, pathFromJarJar, null, null);
     }
 
     @NoJexl
-    public Mod(String jarName, String modId, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar, Long curseForgeHash, String modrinthHash) {
+    public Mod(String jarName, String modId, String name, String version, Boolean isMCreator, HashSet<String> mixinConfigs, List<Mod> jarJarMods, String pathFromJarJar, Long curseForgeHash, String modrinthHash) {
         this.jarName = jarName;
         this.modId = modId;
+        this.name = name;
         this.version = version;
         this.isMCreator = isMCreator;
         this.mixinConfigs = mixinConfigs;
@@ -55,6 +57,10 @@ public class Mod {
 
     public String getModId() {
         return modId;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getVersion() {
@@ -97,14 +103,20 @@ public class Mod {
         try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
             writer.write("Mods count: " + mods.size() + "\n \n");
 
-            Mod tableColumnNames = new Mod("jar name", "mod id (isMCreator)", null,null, new HashSet<String>(){{add("mixin configs");}},new ArrayList<>(),"");
-            List<Mod> finalMods = new ArrayList<Mod>(){{add(tableColumnNames);addAll(mods);}};
+            Mod tableColumnNames = new Mod("jar name", "mod id (isMCreator)", "mod name", null, null, new HashSet<String>() {{
+                add("mixin configs");
+            }}, new ArrayList<>(), "");
+            List<Mod> finalMods = new ArrayList<Mod>() {{
+                add(tableColumnNames);
+                addAll(mods);
+            }};
             int[] maxLens = computeMaxLengths(finalMods, 0);
             int maxJarNameLength = maxLens[0];
             int maxModIdLength = maxLens[1];
+            int maxNameLength = maxLens[2];
 
             for (Mod mod : finalMods) {
-                writeModWithFormatting(writer, mod, 0, maxJarNameLength, maxModIdLength);
+                writeModWithFormatting(writer, mod, 0, maxJarNameLength, maxModIdLength, maxNameLength);
             }
         }
     }
@@ -112,12 +124,14 @@ public class Mod {
     private static int[] computeMaxLengths(Collection<Mod> mods, int indentLevel) {
         int maxJarLen = 0;
         int maxModIdLen = 0;
+        int maxNameLen = 0;
 
         for (Mod mod : mods) {
             // ── protect against nulls ───────────────────────────────────────
             String jarName = mod.getJarName() != null ? mod.getJarName() : "";
             String pathFromJarJar = mod.getPathFromJarJar() != null ? mod.getPathFromJarJar() : "";
             String modId = mod.getModId() != null ? mod.getModId() : "";
+            String name = mod.getName() != null ? mod.getName() : "";
 
             /* jar column: 4 × indent + jarName + pathFromJarJar */
             int jarLen = indentLevel * 4 + jarName.length() + pathFromJarJar.length();
@@ -130,14 +144,19 @@ public class Mod {
             }
             maxModIdLen = Math.max(maxModIdLen, modIdLen);
 
+            /* name column: 4 × indent + name */
+            int nameLen = indentLevel * 4 + name.length();
+            maxNameLen = Math.max(maxNameLen, nameLen);
+
             /* recurse into nested mods, if any */
             if (mod.getJarJarMods() != null && !mod.getJarJarMods().isEmpty()) {
                 int[] childLens = computeMaxLengths(mod.getJarJarMods(), indentLevel + 1);
                 maxJarLen = Math.max(maxJarLen, childLens[0]);
                 maxModIdLen = Math.max(maxModIdLen, childLens[1]);
+                maxNameLen = Math.max(maxNameLen, childLens[2]);
             }
         }
-        return new int[]{maxJarLen, maxModIdLen};
+        return new int[]{maxJarLen, maxModIdLen, maxNameLen};
     }
 
     /**
@@ -149,7 +168,7 @@ public class Mod {
      * @param indentLevel The current indentation level (0 for top-level mods)
      * @throws IOException If an I/O error occurs
      */
-    private static void writeModWithFormatting(BufferedWriter writer, Mod mod, int indentLevel, int maxJarNameLength, int maxModIdLength) throws IOException {
+    private static void writeModWithFormatting(BufferedWriter writer, Mod mod, int indentLevel, int maxJarNameLength, int maxModIdLength, int maxNameLength) throws IOException {
         StringBuilder indentBuilder = new StringBuilder();
         for (int i = 0; i < indentLevel; i++) {
             indentBuilder.append("    ");
@@ -163,6 +182,8 @@ public class Mod {
 
         line.append(" | ").append(String.format("%-" + maxModIdLength + "s", (mod.getModId() == null ? "" : mod.getModId()) + mCreatorString));
 
+        line.append(" | ").append(String.format("%-" + maxNameLength + "s", (mod.getName() == null ? "" : mod.getName())));
+
         line.append(" | ").append(String.join(", ", mod.getMixinConfigs() == null ? new HashSet<>() : mod.getMixinConfigs()));
 
         writer.write(line.toString());
@@ -170,7 +191,7 @@ public class Mod {
 
         if (mod.getJarJarMods() != null && !mod.getJarJarMods().isEmpty()) {
             for (Mod jarJarMod : mod.getJarJarMods()) {
-                writeModWithFormatting(writer, jarJarMod, indentLevel + 1, maxJarNameLength, maxModIdLength);
+                writeModWithFormatting(writer, jarJarMod, indentLevel + 1, maxJarNameLength, maxModIdLength, maxNameLength);
             }
         }
     }
@@ -200,6 +221,7 @@ public class Mod {
         return "Mod{" +
                 "fileName='" + jarName + '\'' +
                 ", modId='" + modId + '\'' +
+                ", name='" + name + '\'' +
                 ", version='" + version + '\'' +
                 ", curseForgeHash='" + curseForgeHash + '\'' +
                 ", modrinthHash='" + modrinthHash + '\'' +
@@ -231,7 +253,7 @@ public class Mod {
             if (json.isJsonArray()) {
                 // Simple array format with just jar names
                 for (JsonElement element : json.getAsJsonArray()) {
-                    mods.add(new Mod(element.getAsString(), null, null, null, new HashSet<>(), new ArrayList<>(), null));
+                    mods.add(new Mod(element.getAsString(), null, null, null, null, new HashSet<>(), new ArrayList<>(), null));
                 }
             } else if (json.isJsonObject()) {
                 // Object format with detailed mod information
@@ -254,7 +276,7 @@ public class Mod {
         private Mod deserializeMod(JsonElement element) {
             if (element.isJsonPrimitive()) {
                 // Legacy format: just a string with jar name
-                return new Mod(element.getAsString(), null, null, null, new HashSet<>(), new ArrayList<>(), null);
+                return new Mod(element.getAsString(), null, null, null, null, new HashSet<>(), new ArrayList<>(), null);
             } else if (element.isJsonObject()) {
                 // Object format with full mod details
                 JsonObject modObj = element.getAsJsonObject();
@@ -263,7 +285,7 @@ public class Mod {
             }
 
             // Default case (shouldn't happen with well-formed JSON)
-            return new Mod("unknown", null, null, null, new HashSet<>(), new ArrayList<>(), null);
+            return new Mod("unknown", null, null, null, null, new HashSet<>(), new ArrayList<>(), null);
         }
 
         /**
@@ -274,6 +296,7 @@ public class Mod {
             // Extract basic properties
             String modId = modObj.has("modId") ? modObj.get("modId").getAsString() : null;
             String version = modObj.has("version") ? modObj.get("version").getAsString() : null;
+            String name = modObj.has("name") ? modObj.get("name").getAsString() : null;
             Long curseForgeHash = null;
             if (modObj.has("curseForgeHash") && !modObj.get("curseForgeHash").isJsonNull()) {
                 curseForgeHash = modObj.get("curseForgeHash").getAsLong();
@@ -282,7 +305,7 @@ public class Mod {
                     ? modObj.get("modrinthHash").getAsString()
                     : null;
 
-            return new Mod(jarName, modId, version, null, new HashSet<>(), new ArrayList<>(), null, curseForgeHash, modrinthHash);
+            return new Mod(jarName, modId, name, version, null, new HashSet<>(), new ArrayList<>(), null, curseForgeHash, modrinthHash);
         }
 
         @Override
@@ -312,6 +335,9 @@ public class Mod {
             // Add basic properties
             if (mod.getModId() != null) {
                 modObj.addProperty("modId", mod.getModId());
+            }
+            if (mod.getName() != null) {
+                modObj.addProperty("name", mod.getName());
             }
             if (mod.getVersion() != null) {
                 modObj.addProperty("version", mod.getVersion());

@@ -105,7 +105,7 @@ public class ModDataParser {
             return mod;
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed to parse " + jarPath.getFileName() + ": ", e);
-            return new Mod(jarPath.getFileName().toString(), null, null, null,
+            return new Mod(jarPath.getFileName().toString(), null, null, null, null,
                     new HashSet<>(), new ArrayList<>(), null,
                     getCurseForgeHash(fingerprints, null), getModrinthHash(fingerprints, null));
         }
@@ -192,7 +192,7 @@ public class ModDataParser {
             JarInJarHelper.LOGGER.warn("Failed while processing " + currentJarName, e);
         }
 
-        return new Mod(currentJarName, null, null,
+        return new Mod(currentJarName, null, null, null,
                 isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
                 getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
     }
@@ -272,14 +272,14 @@ public class ModDataParser {
             byte[] nestedBytes = byteSupplier.get();
             try (JarInputStream nestedJis = new JarInputStream(new ByteArrayInputStream(nestedBytes))) {
                 Mod nested = parseJarFile(nestedJis, nestedJarName, nestedJarPath);
-                nested = new Mod(nestedJarName, nested.getModId(), nested.getVersion(),
+                nested = new Mod(nestedJarName, nested.getModId(), nested.getName(), nested.getVersion(),
                         nested.IsMCreator(), nested.getMixinConfigs(),
                         nested.getJarJarMods(), nestedJarPath);
                 jarInJarMods.add(nested);
             }
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Error processing nested jar " + name + ": " + e.getMessage());
-            jarInJarMods.add(new Mod(nestedJarName, null, null, null,
+            jarInJarMods.add(new Mod(nestedJarName, null, null, null, null,
                     new HashSet<>(), new ArrayList<>(), nestedJarPath));
         }
     }
@@ -308,8 +308,12 @@ public class ModDataParser {
                     JarInJarHelper.LOGGER.warn("Failed to parse modId from " +
                             descriptorPath + " of " + currentJarName);
                 }
+                if (modInfo.name == null) {
+                    JarInJarHelper.LOGGER.warn("Failed to parse mod name from " +
+                            descriptorPath + " of " + currentJarName);
+                }
 
-                return new Mod(currentJarName, modInfo.modId, modInfo.version,
+                return new Mod(currentJarName, modInfo.modId, modInfo.name, modInfo.version,
                         isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
                         getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
             } catch (Exception e) {
@@ -320,23 +324,25 @@ public class ModDataParser {
 
         // Special-case Essential
         if (currentJarName.toLowerCase().contains("essential") && hasEssentialLoader) {
-            return new Mod(currentJarName, "essential-container", null,
+            return new Mod(currentJarName, "essential-container", "Essential", null,
                     isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
                     getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
         }
 
         // Nothing found
-        return new Mod(currentJarName, null, null,
+        return new Mod(currentJarName, null, null, null,
                 isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
                 getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
     }
 
     private static class ParsedModInfo {
         final String modId;
+        final String name;
         final String version;
 
-        ParsedModInfo(String modId, String version) {
+        ParsedModInfo(String modId, String name, String version) {
             this.modId = modId;
+            this.name = name;
             this.version = version;
         }
     }
@@ -344,6 +350,7 @@ public class ModDataParser {
     private static ParsedModInfo parseModConfig(Config cfg, String descriptorPath, ManifestProvider manifestProvider, HashSet<String> mixinConfigs) throws IOException {
         Config mods;
         String modId;
+        String mod_name;
         String version;
         ManifestParsingResult mp = null;
 
@@ -353,6 +360,7 @@ public class ModDataParser {
 
             mods = (Config) modsList.get(0);
             modId = mods.get("modId");
+            mod_name = mods.get("displayName");
 
             if ("META-INF/neoforge.mods.toml".equals(descriptorPath)) {
                 List<Object> mixinsList = cfg.get("mixins");
@@ -371,6 +379,7 @@ public class ModDataParser {
         } else if (descriptorPath.endsWith(".json")) {
             mods = cfg;
             modId = mods.get("id");
+            mod_name = mods.get("name");
 
             Object mixinsObj = mods.get("mixins");
             if (mixinsObj instanceof List) {
@@ -386,6 +395,7 @@ public class ModDataParser {
 
             mods = (Config) modsList.get(0);
             modId = mods.get("modid");
+            mod_name = mods.get("name");
         } else {
             throw new IllegalArgumentException("Unsupported descriptor file extension: " + descriptorPath);
         }
@@ -398,7 +408,7 @@ public class ModDataParser {
             version = null;
         }
 
-        return new ParsedModInfo(modId, version);
+        return new ParsedModInfo(modId, mod_name, version);
     }
 
     private static byte[] readEntryBytes(JarInputStream jis) throws Exception {
@@ -441,6 +451,7 @@ public class ModDataParser {
                 String content = new String(bytes, StandardCharsets.UTF_8);
 
                 String modId = null;
+                String name = null;
                 String version = null;
                 JsonElement root = new com.google.gson.JsonParser().parse(content);
 
@@ -465,6 +476,9 @@ public class ModDataParser {
                     if (obj.has("modid") && !obj.get("modid").isJsonNull()) {
                         modId = obj.get("modid").getAsString();
                     }
+                    if (obj.has("name") && !obj.get("name").isJsonNull()) {
+                        name = obj.get("name").getAsString();
+                    }
                     if (obj.has("version") && !obj.get("version").isJsonNull()) {
                         version = obj.get("version").getAsString();
                     }
@@ -474,6 +488,9 @@ public class ModDataParser {
                 List<String> needed = new ArrayList<>();
                 if (modId != null) {
                     needed.add("\"modid\": \"" + modId + "\"");
+                }
+                if (name != null) {
+                    needed.add("\"name\": \"" + name + "\"");
                 }
                 if (version != null) {
                     needed.add("\"version\": \"" + version + "\"");

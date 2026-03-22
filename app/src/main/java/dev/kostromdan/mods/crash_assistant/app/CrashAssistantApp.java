@@ -138,7 +138,9 @@ public class CrashAssistantApp {
         LOGGER.info("Minecraft JVM args: {}", Boot.MINECRAFT_JVM_ARGS);
         LOGGER.info("Minecraft Launch Command: {}", Boot.MINECRAFT_LAUNCH_COMMAND);
 
-        LOGGER.info("Minecraft classPath:\n\n\n{}\n\n", String.join("\n", Boot.MINECRAFT_CLASS_PATH.split(Pattern.quote(File.pathSeparator))));
+        if (Boot.MINECRAFT_CLASS_PATH != null) {
+            LOGGER.info("Minecraft classPath:\n\n\n{}\n\n", String.join("\n", Boot.MINECRAFT_CLASS_PATH.split(Pattern.quote(File.pathSeparator))));
+        }
 
 
         String currentProcessData = Objects.toString(Boot.parentPID) + "_" + Boot.parentStarted;

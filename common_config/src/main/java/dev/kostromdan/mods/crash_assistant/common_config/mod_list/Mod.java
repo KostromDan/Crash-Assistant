@@ -103,28 +103,31 @@ public class Mod {
         try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
             writer.write("Mods count: " + mods.size() + "\n \n");
 
-            Mod tableColumnNames = new Mod("jar name", "mod id (isMCreator)", "mod name", null, null, new HashSet<String>() {{
+            Mod tableColumnNames = new Mod("jar name", "mod id", "mod name", "mod version", null, new HashSet<String>() {{
                 add("mixin configs");
-            }}, new ArrayList<>(), "");
+            }}, new ArrayList<>(), "", null, "modrinth hash");
+
             List<Mod> finalMods = new ArrayList<Mod>() {{
                 add(tableColumnNames);
                 addAll(mods);
             }};
             int[] maxLens = computeMaxLengths(finalMods, 0);
-            int maxJarNameLength = maxLens[0];
-            int maxModIdLength = maxLens[1];
-            int maxNameLength = maxLens[2];
 
             for (Mod mod : finalMods) {
-                writeModWithFormatting(writer, mod, 0, maxJarNameLength, maxModIdLength, maxNameLength);
+                writeModWithFormatting(writer, mod, 0, maxLens);
             }
         }
     }
 
     private static int[] computeMaxLengths(Collection<Mod> mods, int indentLevel) {
         int maxJarLen = 0;
+        int maxIsMCreatorLen = 0;
         int maxModIdLen = 0;
         int maxNameLen = 0;
+        int maxVersionLen = 0;
+        int maxMixinConfigsLen = 0;
+        int maxModrinthHashLen = 0;
+        int maxCurseForgeHashLen = 0;
 
         for (Mod mod : mods) {
             // ── protect against nulls ───────────────────────────────────────
@@ -132,31 +135,42 @@ public class Mod {
             String pathFromJarJar = mod.getPathFromJarJar() != null ? mod.getPathFromJarJar() : "";
             String modId = mod.getModId() != null ? mod.getModId() : "";
             String name = mod.getName() != null ? mod.getName() : "";
+            String version = mod.getVersion() != null ? mod.getVersion() : "";
+            String mixinConfigs = String.join(", ", mod.getMixinConfigs() == null ? new HashSet<>() : mod.getMixinConfigs());
+            String modrinthHash = mod.getModrinthHash() != null ? mod.getModrinthHash() : "";
+            String curseForgeHash = mod.getCurseForgeHash() != null ? String.valueOf(mod.getCurseForgeHash()) : "";
+
+            if (jarName.equals("jar name")) {
+                curseForgeHash = "curseforge hash";
+            }
+
+            String isMCreatorStr = jarName.equals("jar name") ? "isMCreator" : (Boolean.TRUE.equals(mod.IsMCreator()) ? "MCreator mod" : "");
 
             /* jar column: 4 × indent + jarName + pathFromJarJar */
             int jarLen = indentLevel * 4 + jarName.length() + pathFromJarJar.length();
             maxJarLen = Math.max(maxJarLen, jarLen);
-
-            /* mod-id column: 4 × indent + modId + optional “ (MCreator mod)” */
-            int modIdLen = modId.length();
-            if (Boolean.TRUE.equals(mod.IsMCreator())) {
-                modIdLen += " (MCreator mod)".length();
-            }
-            maxModIdLen = Math.max(maxModIdLen, modIdLen);
-
-            /* name column: 4 × indent + name */
-            int nameLen = name.length();
-            maxNameLen = Math.max(maxNameLen, nameLen);
+            maxIsMCreatorLen = Math.max(maxIsMCreatorLen, isMCreatorStr.length());
+            maxModIdLen = Math.max(maxModIdLen, modId.length());
+            maxNameLen = Math.max(maxNameLen, name.length());
+            maxVersionLen = Math.max(maxVersionLen, version.length());
+            maxMixinConfigsLen = Math.max(maxMixinConfigsLen, mixinConfigs.length());
+            maxModrinthHashLen = Math.max(maxModrinthHashLen, modrinthHash.length());
+            maxCurseForgeHashLen = Math.max(maxCurseForgeHashLen, curseForgeHash.length());
 
             /* recurse into nested mods, if any */
             if (mod.getJarJarMods() != null && !mod.getJarJarMods().isEmpty()) {
                 int[] childLens = computeMaxLengths(mod.getJarJarMods(), indentLevel + 1);
                 maxJarLen = Math.max(maxJarLen, childLens[0]);
-                maxModIdLen = Math.max(maxModIdLen, childLens[1]);
-                maxNameLen = Math.max(maxNameLen, childLens[2]);
+                maxIsMCreatorLen = Math.max(maxIsMCreatorLen, childLens[1]);
+                maxModIdLen = Math.max(maxModIdLen, childLens[2]);
+                maxNameLen = Math.max(maxNameLen, childLens[3]);
+                maxVersionLen = Math.max(maxVersionLen, childLens[4]);
+                maxMixinConfigsLen = Math.max(maxMixinConfigsLen, childLens[5]);
+                maxModrinthHashLen = Math.max(maxModrinthHashLen, childLens[6]);
+                maxCurseForgeHashLen = Math.max(maxCurseForgeHashLen, childLens[7]);
             }
         }
-        return new int[]{maxJarLen, maxModIdLen, maxNameLen};
+        return new int[]{maxJarLen, maxIsMCreatorLen, maxModIdLen, maxNameLen, maxVersionLen, maxMixinConfigsLen, maxModrinthHashLen, maxCurseForgeHashLen};
     }
 
     /**
@@ -166,34 +180,68 @@ public class Mod {
      * @param writer      The BufferedWriter to write to
      * @param mod         The mod to write
      * @param indentLevel The current indentation level (0 for top-level mods)
+     * @param maxLens     The maximum lengths for each column
      * @throws IOException If an I/O error occurs
      */
-    private static void writeModWithFormatting(BufferedWriter writer, Mod mod, int indentLevel, int maxJarNameLength, int maxModIdLength, int maxNameLength) throws IOException {
+    private static void writeModWithFormatting(BufferedWriter writer, Mod mod, int indentLevel, int[] maxLens) throws IOException {
         StringBuilder indentBuilder = new StringBuilder();
         for (int i = 0; i < indentLevel; i++) {
             indentBuilder.append("    ");
         }
         String indent = indentBuilder.toString();
 
+        int maxJarNameLength = maxLens[0];
+        int maxIsMCreatorLength = maxLens[1];
+        int maxModIdLength = maxLens[2];
+        int maxNameLength = maxLens[3];
+        int maxVersionLength = maxLens[4];
+        int maxMixinConfigsLength = maxLens[5];
+        int maxModrinthHashLength = maxLens[6];
+        int maxCurseForgeHashLength = maxLens[7];
+
         StringBuilder line = new StringBuilder();
-        line.append(String.format("%-" + maxJarNameLength + "s", indent + (mod.getPathFromJarJar() != null ? mod.getPathFromJarJar() : "") + mod.getJarName()));
 
-        String mCreatorString = mod.IsMCreator() != null && mod.IsMCreator() ? " (MCreator mod)" : "";
+        String jarName = mod.getJarName() != null ? mod.getJarName() : "";
+        String curseForgeHash = mod.getCurseForgeHash() != null ? String.valueOf(mod.getCurseForgeHash()) : "";
+        if (jarName.equals("jar name")) {
+            curseForgeHash = "curseforge hash";
+        }
+        String isMCreator = jarName.equals("jar name") ? "isMCreator" : (Boolean.TRUE.equals(mod.IsMCreator()) ? "MCreator mod" : "");
 
-        line.append(" | ").append(String.format("%-" + maxModIdLength + "s", (mod.getModId() == null ? "" : mod.getModId()) + mCreatorString));
-
-        line.append(" | ").append(String.format("%-" + maxNameLength + "s", (mod.getName() == null ? "" : mod.getName())));
-
-        line.append(" | ").append(String.join(", ", mod.getMixinConfigs() == null ? new HashSet<>() : mod.getMixinConfigs()));
+        boolean isHeader = jarName.equals("jar name");
+        line.append(formatCell(indent + (mod.getPathFromJarJar() != null ? mod.getPathFromJarJar() : "") + jarName, maxJarNameLength, isHeader));
+        line.append(" | ").append(formatCell((mod.getModId() == null ? "" : mod.getModId()), maxModIdLength, isHeader));
+        line.append(" | ").append(formatCell((mod.getName() == null ? "" : mod.getName()), maxNameLength, isHeader));
+        line.append(" | ").append(formatCell((mod.getVersion() == null ? "" : mod.getVersion()), maxVersionLength, isHeader));
+        line.append(" | ").append(formatCell(isMCreator, maxIsMCreatorLength, isHeader));
+        line.append(" | ").append(formatCell(String.join(", ", mod.getMixinConfigs() == null ? new HashSet<>() : mod.getMixinConfigs()), maxMixinConfigsLength, isHeader));
+        line.append(" | ").append(formatCell((mod.getModrinthHash() == null ? "" : mod.getModrinthHash()), maxModrinthHashLength, isHeader));
+        line.append(" | ").append(formatCell(curseForgeHash, maxCurseForgeHashLength, isHeader));
 
         writer.write(line.toString());
         writer.newLine();
 
         if (mod.getJarJarMods() != null && !mod.getJarJarMods().isEmpty()) {
             for (Mod jarJarMod : mod.getJarJarMods()) {
-                writeModWithFormatting(writer, jarJarMod, indentLevel + 1, maxJarNameLength, maxModIdLength, maxNameLength);
+                writeModWithFormatting(writer, jarJarMod, indentLevel + 1, maxLens);
             }
         }
+    }
+
+    private static String formatCell(String text, int width, boolean center) {
+        if (text == null) text = "";
+        if (!center) {
+            return String.format("%-" + width + "s", text);
+        }
+        int textLength = text.length();
+        if (textLength >= width) return text;
+        int leftPadding = (width - textLength) / 2;
+        int rightPadding = width - textLength - leftPadding;
+        StringBuilder sb = new StringBuilder(width);
+        for (int i = 0; i < leftPadding; i++) sb.append(' ');
+        sb.append(text);
+        for (int i = 0; i < rightPadding; i++) sb.append(' ');
+        return sb.toString();
     }
 
     public boolean isModMessedUpWithVersion() {

@@ -106,6 +106,10 @@ public class CrashAssistantConfig {
                         "Since many launchers are not saving this info, which is extremely helpful for debugging some crashes.\n" +
                         "As only where crash reason is present. Keeps original stream untouched, just logs it to a file.",
                 true);
+        addOption("general.win_event_is_crash",
+                "If true, if we can find win_event file after minecraft closed, pop ups.\n" +
+                        "Can be false positive for some users, since they can have some unrelated spam in the windows event error log.",
+                false);
         addOption("general.logs_priority_overrides",
                 "Here you can change priority for logs.\n" +
                         "For example if you want crash report to be shown earlier than latest.log in the available logs list.\n" +

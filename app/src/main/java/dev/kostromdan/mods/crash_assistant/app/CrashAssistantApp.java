@@ -523,7 +523,7 @@ public class CrashAssistantApp {
                         LogsList.addIfExistsAndModified(new Log(LogType.WIN_EVENT, terminatedProcessesPath));
                     }
                     if (!GUIStartedLaunching) {
-                        onMinecraftCrashed();
+                        if (CrashAssistantConfig.getBoolean("general.win_event_is_crash")) onMinecraftCrashed();
                     } else {
                         waitGuiInitialisationFinished();
                         callUpdateLogsListInGUI();

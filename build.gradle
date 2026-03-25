@@ -1,9 +1,12 @@
 plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
 	id 'net.neoforged.moddev' version '2.0.140' apply false
+	id 'net.minecraftforge.gradle' version '[7.0.17,8)' apply false
 	id "com.modrinth.minotaur" version "2.+" apply false
 	id "net.darkhax.curseforgegradle" version "1.1.+" apply false
 }
+
+apply plugin: 'idea'
 
 def commonConfigJar = file("${rootDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
 if (!commonConfigJar.exists()) {
@@ -57,12 +60,16 @@ task collectJars(type: Copy) {
 	dependsOn(
 		":fabric:build",
 		":neoforge_coremod:build",
+		":forge_coremod:build",
 	)
 
 	from("fabric/build/libs") {
 		include '*.jar'
 	}
 	from("neoforge_coremod/build/libs") {
+		include '*.jar'
+	}
+	from("forge_coremod/build/libs") {
 		include '*.jar'
 	}
 
@@ -75,7 +82,8 @@ task publishUnified {
 	group = "upload"
 	dependsOn(
 			":fabric:publishUnified",
-			":neoforge_coremod:publishUnified"
+			":neoforge_coremod:publishUnified",
+			":forge_coremod:publishUnified"
 	)
 }
 
@@ -83,6 +91,14 @@ task publishUnifiedToLocal {
 	group = "upload"
 	dependsOn(
 			":fabric:publishUnifiedToLocal",
-			":neoforge_coremod:publishUnifiedToLocal"
+			":neoforge_coremod:publishUnifiedToLocal",
+			":forge_coremod:publishUnifiedToLocal"
 	)
+}
+
+idea {
+	module {
+		downloadSources = true
+		downloadJavadoc = true
+	}
 }

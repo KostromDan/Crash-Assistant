@@ -14,6 +14,7 @@ public enum LogType {
     KUBE_JS,
     CRAFT_TWEAKER,
     GROOVY,
+    BTW,
     REI,
     CRASH_ASSISTANT,
     STARTUP_SCRIPTS

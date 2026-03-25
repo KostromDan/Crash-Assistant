@@ -273,6 +273,10 @@ public class CrashAssistantApp {
         LogsList.addIfExistsAndModified(new Log(LogType.LOG, customLatestLogPath == null ? Paths.get("logs", "latest.log") : Paths.get(customLatestLogPath)));
         LogsList.addIfExistsAndModified(new Log(LogType.DEBUG_LOG, Paths.get("logs", "debug.log")));
 
+        LogsList.addIfExistsAndModified(new Log(LogType.LOG, Paths.get("output-client.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.LOG, Paths.get("output-server.log")));
+        LogsList.addIfExistsAndModified(new Log(LogType.BTW, Paths.get("BTWLog.txt")));
+
         locateAndAddHsErr();
 
         HashSet<Path> newCrashReports = CrashReportsHelper.getRelevantFiles(Paths.get("crash-reports"), path -> true);

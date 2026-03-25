@@ -23,6 +23,7 @@ public class LogComparator implements Comparator<Log> {
             LogType.CRAFT_TWEAKER,
             LogType.REI,
             LogType.GROOVY,
+            LogType.BTW,
             LogType.CRASH_ASSISTANT,
             LogType.MOD_LIST,
             LogType.STARTUP_SCRIPTS

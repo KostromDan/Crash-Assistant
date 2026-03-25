@@ -126,8 +126,8 @@ public class ProcessHelper {
      */
     public static void exitProcess(int status) {
         switch (ModVersionsHelper.versionRange) {
-            case V_1_7_10:
             case V_1_6_4:
+            case V_1_7_10:
             case V_1_8__1_11_2:
             case V_1_12_2:
                 ExitVMBypass.exit(status);

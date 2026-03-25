@@ -1,5 +1,16 @@
 apply plugin: 'net.fabricmc.fabric-loom'
 
+processResources {
+	def expandProps = [
+			"mod_name": project.mod_name
+	]
+	inputs.properties expandProps
+
+	filesMatching("pack.mcmeta") {
+		expand expandProps
+	}
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"

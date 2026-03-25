@@ -1,3 +1,16 @@
+1.11.4:
+
+- MinecraftForge 26.1 port.
+- Major refactor of fabric entrypoint for all fabric versions. Removed classloader workarounds.
+- Now Crash Assistant gets path to needed MC libs from classPath.
+- Add support for detecting CurseForge's `stdout-logs.txt`.
+- Fixed censoring of pc username was breaking mc username parsing if it contained a dot.
+- Now detection of win_event is not considered as a crash if no other signs of a crash to prevent false positives.
+- Major refactor of `modlist.txt` generation. Added mod name, version, some other params for upcoming functionality,
+  moved isMCreator to sep column.
+- Fixed memory allocation warnings were not localized.
+- Added classPath logging to CA log.
+
 1.11.3:
 
 - Initial release for legacy-fabric 1.7.10, 1.8.9, 1.9.4, 1.10.2, 1.11.2, 1.12.2, 1.13.2.

@@ -1,3 +1,8 @@
+1.11.5:
+
+- Legacy Fabric 1.6.4 port.
+- Fixed Integrated Gpu Warning didn't work on legacy fabric 1.7.10 up to 1.12.2.
+
 1.11.4:
 
 - MinecraftForge 26.1 port.

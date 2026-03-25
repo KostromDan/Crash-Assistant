@@ -10,6 +10,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.LanguageAdapter;
 import net.fabricmc.loader.api.LanguageAdapterException;
 import net.fabricmc.loader.api.ModContainer;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,6 +22,10 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class CrashAssistantLanguageAdapter implements LanguageAdapter {
+    static {
+        System.setProperty("log4j2.level", Level.INFO.name());
+        System.setProperty("org.apache.logging.log4j.level", Level.INFO.name());
+    }
     private static final Logger LOGGER = LogManager.getLogger("CrashAssistantLanguageAdapter");
 
     public CrashAssistantLanguageAdapter() {

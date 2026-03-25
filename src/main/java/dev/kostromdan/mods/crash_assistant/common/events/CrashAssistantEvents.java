@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common.events;
 
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import net.minecraft.client.Minecraft;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
@@ -60,6 +61,10 @@ public class CrashAssistantEvents {
     public static void onClientLoaded() {
         if (CrashAssistant.clientLoaded) return;
         CrashAssistant.clientLoaded = true;
+
+        if(PlatformHelp.platform == PlatformHelp.FABRIC){
+            CrashAssistant.init();
+        }
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             if (CrashAssistantConfig.getModpackCreators()

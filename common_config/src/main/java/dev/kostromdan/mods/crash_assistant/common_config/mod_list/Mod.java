@@ -210,10 +210,10 @@ public class Mod {
 
         boolean isHeader = jarName.equals("jar name");
         line.append(formatCell(indent + (mod.getPathFromJarJar() != null ? mod.getPathFromJarJar() : "") + jarName, maxJarNameLength, isHeader));
+        line.append(" | ").append(formatCell(isMCreator, maxIsMCreatorLength, isHeader));
         line.append(" | ").append(formatCell((mod.getModId() == null ? "" : mod.getModId()), maxModIdLength, isHeader));
         line.append(" | ").append(formatCell((mod.getName() == null ? "" : mod.getName()), maxNameLength, isHeader));
         line.append(" | ").append(formatCell((mod.getVersion() == null ? "" : mod.getVersion()), maxVersionLength, isHeader));
-        line.append(" | ").append(formatCell(isMCreator, maxIsMCreatorLength, isHeader));
         line.append(" | ").append(formatCell(String.join(", ", mod.getMixinConfigs() == null ? new HashSet<>() : mod.getMixinConfigs()), maxMixinConfigsLength, isHeader));
         line.append(" | ").append(formatCell((mod.getModrinthHash() == null ? "" : mod.getModrinthHash()), maxModrinthHashLength, isHeader));
         line.append(" | ").append(formatCell(curseForgeHash, maxCurseForgeHashLength, isHeader));

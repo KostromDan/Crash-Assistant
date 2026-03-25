@@ -100,10 +100,6 @@ unimined.minecraft(sourceSets.forge) {
 
 configurations {
     mainImplementation
-    fabricRuntime {
-        canBeResolved = true
-        extendsFrom fabricImplementation
-    }
     implementation {
         extendsFrom forgeImplementation
         extendsFrom fabricImplementation
@@ -123,6 +119,8 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-api:2.0-beta9'
     fabricImplementation 'org.apache.logging.log4j:log4j-core:2.0-beta9'
     fabricImplementation 'org.apache.logging.log4j:log4j-api:2.0-beta9'
+    fabricInclude('org.apache.logging.log4j:log4j-core:2.0-beta9')
+    fabricInclude('org.apache.logging.log4j:log4j-api:2.0-beta9')
     forgeImplementation 'org.apache.logging.log4j:log4j-core:2.0-beta9'
     forgeImplementation 'org.apache.logging.log4j:log4j-api:2.0-beta9'
     forgeImplementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_7_10.jar")
@@ -132,14 +130,6 @@ dependencies {
 [forgeJar, fabricJar].each { task ->
     task.configure {
         from zipTree("${rootProject.projectDir}/app_common-config_libs/common_config_1_7_10.jar")
-    }
-}
-
-fabricJar {
-    from(configurations.fabricRuntime) {
-        include 'log4j-api-2.0-beta9.jar'
-        include 'log4j-core-2.0-beta9.jar'
-        into 'META-INF/jars'
     }
 }
 

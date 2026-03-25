@@ -125,6 +125,7 @@ public class ProcessHelper {
     public static void exitProcess(int status) {
         switch (ModVersionsHelper.versionRange) {
             case V_1_7_10:
+            case V_1_6_4:
             case V_1_8__1_11_2:
             case V_1_12_2:
                 ExitVMBypass.exit(status);
@@ -153,8 +154,11 @@ public class ProcessHelper {
     public static List<BiPredicate<Path, String>> getAppPredicates() {
         List<BiPredicate<Path, String>> predicates = new ArrayList<>();
 
-        predicates.add((path, fileName) -> fileName.startsWith("log4j-api-"));
-        predicates.add((path, fileName) -> fileName.startsWith("log4j-core-"));
+        if (ModVersionsHelper.versionRange != ModVersionsHelper.VersionRange.V_1_6_4) {
+            predicates.add((path, fileName) -> fileName.startsWith("log4j-api-"));
+            predicates.add((path, fileName) -> fileName.startsWith("log4j-core-"));
+        }
+
         predicates.add((path, fileName) -> fileName.startsWith("commons-io-"));
 
         if (ModVersionsHelper.versionRange == ModVersionsHelper.VersionRange.V_1_18_2__MODERN) {
@@ -168,7 +172,7 @@ public class ProcessHelper {
 
     public static List<BiPredicate<Path, String>> getJnaPredicates() {
         List<BiPredicate<Path, String>> predicates = new ArrayList<>();
-        if (ModVersionsHelper.versionRange != ModVersionsHelper.VersionRange.V_1_7_10) {
+        if (ModVersionsHelper.versionRange != ModVersionsHelper.VersionRange.V_1_7_10 && ModVersionsHelper.versionRange != ModVersionsHelper.VersionRange.V_1_6_4) {
             predicates.add((path, fileName) -> fileName.startsWith("jna-") && !fileName.startsWith("jna-platform-"));
             predicates.add((path, fileName) -> fileName.startsWith("jna-platform-"));
             predicates.add((path, fileName) -> fileName.startsWith("platform-"));

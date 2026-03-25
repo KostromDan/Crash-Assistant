@@ -100,6 +100,10 @@ unimined.minecraft(sourceSets.forge) {
 
 configurations {
     mainImplementation
+    fabricRuntime {
+        canBeResolved = true
+        extendsFrom fabricImplementation
+    }
     implementation {
         extendsFrom forgeImplementation
         extendsFrom fabricImplementation
@@ -128,6 +132,14 @@ dependencies {
 [forgeJar, fabricJar].each { task ->
     task.configure {
         from zipTree("${rootProject.projectDir}/app_common-config_libs/common_config_1_7_10.jar")
+    }
+}
+
+fabricJar {
+    from(configurations.fabricRuntime) {
+        include 'log4j-api-2.0-beta9.jar'
+        include 'log4j-core-2.0-beta9.jar'
+        into 'META-INF/jars'
     }
 }
 

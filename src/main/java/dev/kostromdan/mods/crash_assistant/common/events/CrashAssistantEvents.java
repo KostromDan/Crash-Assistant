@@ -17,22 +17,6 @@ public class CrashAssistantEvents {
         }
         CrashAssistantConfig.set("greeting.shown_greeting", true);
         LanguageProvider.updateLang();
-//        ChatComponentText msg = new ChatComponentText(LanguageProvider.get("text.greeting1"));
-//
-//        ChatComponentText crashAssistantComponent = new ChatComponentText("Crash Assistant");
-//        ChatStyle style = new ChatStyle();
-//        style.setColor(EnumChatFormatting.LIGHT_PURPLE);
-//        style.setChatClickEvent(
-//            new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/KostromDan/Crash-Assistant"));
-//        style.setChatHoverEvent(
-//            new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(LanguageProvider.get("text.opens_url"))));
-//        crashAssistantComponent.setChatStyle(style);
-//
-//        msg.appendSibling(crashAssistantComponent);
-//        msg.appendSibling(new ChatComponentText(LanguageProvider.get("text.greeting2")));
-//        msg.appendSibling(CrashAssistantCommands.getModConfigComponent());
-//        msg.appendSibling(new ChatComponentText(LanguageProvider.get("text.greeting3")));
-//        CrashAssistantCommands.sendClientMsg(msg);
     }
 
     public static void afterMinecraftInit() {

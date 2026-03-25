@@ -165,7 +165,9 @@ public class ProcessHelper {
             predicates.add((path, fileName) -> fileName.startsWith("gson-"));
         }
 
-        predicates.addAll(getJnaPredicates());
+        if (ModVersionsHelper.versionRange != ModVersionsHelper.VersionRange.V_1_7_10 && ModVersionsHelper.versionRange != ModVersionsHelper.VersionRange.V_1_6_4) {
+            predicates.addAll(getJnaPredicates());
+        }
 
         return predicates;
     }
@@ -177,6 +179,9 @@ public class ProcessHelper {
             predicates.add((path, fileName) -> fileName.startsWith("jna-platform-"));
             predicates.add((path, fileName) -> fileName.startsWith("platform-"));
             predicates.add((path, fileName) -> fileName.startsWith("oshi-core-"));
+        }
+        if(ModVersionsHelper.versionRange == ModVersionsHelper.VersionRange.V_1_6_4){
+            predicates.add((path, fileName) -> fileName.startsWith("gson-"));
         }
         return predicates;
     }

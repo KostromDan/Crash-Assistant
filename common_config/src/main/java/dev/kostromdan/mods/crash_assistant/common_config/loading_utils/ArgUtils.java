@@ -51,7 +51,7 @@ public class ArgUtils {
     static String censor(String input, String osUser) {
         if (input == null) return null;
 
-        input = input.replaceAll("(--(?:accessToken|xuid)[\\s=:,]*)([^\\s,]+)", "$1????????");
+        input = input.replaceAll("(--(?:accessToken|xuid|session)[\\s=:,]*)([^\\s,]+)", "$1????????");
 
         if (osUser == null || osUser.isEmpty()) {
             return input;

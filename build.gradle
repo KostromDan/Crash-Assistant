@@ -195,17 +195,6 @@ if (System.getenv("MODRINTH_TOKEN") != null) {
         gameVersions = [project.minecraft_version]
     }
 
-    tasks.register("modrinthForge", com.modrinth.minotaur.TaskModrinthUpload) {
-        group = "upload"
-        dependsOn(tasks.named("remapForgeJar"))
-        doFirst {
-            modrinth.versionNumber.set("${project.version}")
-            modrinth.versionName.set(tasks.remapForgeJar.archiveFile.get().asFile.name)
-            modrinth.uploadFile.set(tasks.remapForgeJar)
-            modrinth.loaders.set(["forge"])
-        }
-    }
-
     tasks.register("modrinthFabric", com.modrinth.minotaur.TaskModrinthUpload) {
         group = "upload"
         dependsOn(tasks.named("remapFabricJar"))
@@ -223,14 +212,6 @@ if (System.getenv("CF_TOKEN") != null) {
         group = "upload"
         apiToken = System.getenv("CF_TOKEN")
 
-        def forgeFile = upload("1154099", tasks.remapForgeJar)
-        forgeFile.displayName = tasks.remapForgeJar.archiveFile.get().asFile.name
-        forgeFile.changelog = parsedChangelog
-        forgeFile.changelogType = "markdown"
-        forgeFile.releaseType = release_type
-        forgeFile.addGameVersion(project.minecraft_version)
-        forgeFile.addModLoader("Forge")
-
         def fabricFile = upload("1154099", tasks.remapFabricJar)
         fabricFile.displayName = tasks.remapFabricJar.archiveFile.get().asFile.name
         fabricFile.changelog = parsedChangelog
@@ -244,7 +225,7 @@ if (System.getenv("CF_TOKEN") != null) {
 task publishUnified {
     group = "upload"
     if (System.getenv("MODRINTH_TOKEN") != null) {
-        dependsOn(tasks.named("modrinthForge"), tasks.named("modrinthFabric"))
+        dependsOn(tasks.named("modrinthFabric"))
     }
     if (System.getenv("CF_TOKEN") != null) {
         dependsOn(tasks.named("publishCurseForge"))
@@ -253,9 +234,8 @@ task publishUnified {
 
 task publishUnifiedToLocal(type: Copy) {
     group = "upload"
-    dependsOn(tasks.named("remapForgeJar"), tasks.named("remapFabricJar"))
+    dependsOn(tasks.named("remapFabricJar"))
 
-    from(tasks.named("remapForgeJar").get().archiveFile)
     from(tasks.named("remapFabricJar").get().archiveFile)
     into("build/unified-local/project0")
 }

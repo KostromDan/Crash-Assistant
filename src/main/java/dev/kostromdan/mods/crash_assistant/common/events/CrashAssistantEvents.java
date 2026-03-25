@@ -6,6 +6,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSi
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
@@ -55,6 +56,10 @@ public class CrashAssistantEvents {
     public static void onClientLoaded() {
         if (CrashAssistant.clientLoaded) return;
         CrashAssistant.clientLoaded = true;
+
+        if(PlatformHelp.platform == PlatformHelp.FABRIC){
+            CrashAssistant.init();
+        }
 
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
             if (CrashAssistantConfig.getModpackCreators()

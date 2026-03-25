@@ -2,10 +2,12 @@ package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.ArgUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.LibrariesJarLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import net.minecraftforge.fml.crash_assistant.ExitVMBypass;
 
 import java.lang.reflect.Method;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -180,13 +182,13 @@ public class ProcessHelper {
             predicates.add((path, fileName) -> fileName.startsWith("platform-"));
             predicates.add((path, fileName) -> fileName.startsWith("oshi-core-"));
         }
-        if(ModVersionsHelper.versionRange == ModVersionsHelper.VersionRange.V_1_6_4){
+        if (ModVersionsHelper.versionRange == ModVersionsHelper.VersionRange.V_1_6_4) {
             predicates.add((path, fileName) -> fileName.startsWith("gson-"));
         }
         return predicates;
     }
 
-    public static List<String> getPathsToNeededLibs(List<BiPredicate<Path, String>> predicates) {
+    public static List<String> getPathsToNeededLibs(List<BiPredicate<Path, String>> predicates) throws URISyntaxException {
         List<String> classPathEntriesForAppProcess = new ArrayList<>();
         for (String pathStr : ArgUtils.getUnsafeClassPathList()) {
             if (!pathStr.endsWith(".jar")) {
@@ -202,6 +204,10 @@ public class ProcessHelper {
                     break;
                 }
             }
+        }
+        if (ModVersionsHelper.versionRange == ModVersionsHelper.VersionRange.V_1_6_4) {
+            classPathEntriesForAppProcess.add(LibrariesJarLocator.getLibraryJarPath(org.apache.logging.log4j.Logger.class));
+            classPathEntriesForAppProcess.add(LibrariesJarLocator.getLibraryJarPath(org.apache.logging.log4j.core.LoggerContext.class));
         }
         return classPathEntriesForAppProcess;
     }

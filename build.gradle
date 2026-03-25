@@ -115,9 +115,14 @@ sourceSets {
 
 dependencies {
     implementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_7_10.jar")
+    implementation 'org.apache.logging.log4j:log4j-core:2.0-beta9'
+    implementation 'org.apache.logging.log4j:log4j-api:2.0-beta9'
+    fabricImplementation 'org.apache.logging.log4j:log4j-core:2.0-beta9'
+    fabricImplementation 'org.apache.logging.log4j:log4j-api:2.0-beta9'
+    forgeImplementation 'org.apache.logging.log4j:log4j-core:2.0-beta9'
+    forgeImplementation 'org.apache.logging.log4j:log4j-api:2.0-beta9'
     forgeImplementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_7_10.jar")
     fabricImplementation files("${rootProject.projectDir}/app_common-config_libs/common_config_1_7_10.jar")
-    fabricModImplementation "net.legacyfabric.legacy-fabric-api:legacy-fabric-api:1.13.3+1.7.10"
 }
 
 [forgeJar, fabricJar].each { task ->

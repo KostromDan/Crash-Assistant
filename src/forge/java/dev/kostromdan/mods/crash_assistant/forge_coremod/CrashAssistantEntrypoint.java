@@ -26,13 +26,18 @@ public class CrashAssistantEntrypoint implements IFMLLoadingPlugin {
             .isClient() ? "client" : "server";
         PlatformHelp.platform = PlatformHelp.FORGE;
         PlatformHelp.platform.setPlatformDataFromOtherPlatform(PlatformHelp.LEGACY_MODDING);
-        PlatformHelp.minecraftVersion = Loader.MC_VERSION;
+        PlatformHelp.minecraftVersion = Loader.instance().getMCVersionString();
 
         ArgUtils.setLaunchArgs(((java.util.Map<String, String>) Launch.blackboard.get("launchArgs")).entrySet().stream().flatMap(e -> Stream.of(e.getKey(), e.getValue())).toArray(String[]::new));
 
         LibrariesJarLocator.setupLoaderJarName(FMLLaunchHandler.class);
         JarInJarHelper.launchCrashAssistantApp(launchTarget);
         JarInJarHelper.checkDuplicatedCrashAssistantMod(true);
+    }
+
+    @Override
+    public String[] getLibraryRequestClass() {
+        return new String[0];
     }
 
     public String[] getASMTransformerClass() {

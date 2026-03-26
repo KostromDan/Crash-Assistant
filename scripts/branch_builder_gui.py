@@ -46,6 +46,8 @@ class BranchBuildApp:
         ttk.Label(header_frame, text="Current branch: ", font=("Arial", 11)).pack(side=tk.LEFT)
         ttk.Label(header_frame, text=self.original_branch, font=("Arial", 11, "bold")).pack(side=tk.LEFT)
 
+        ttk.Button(header_frame, text="Open build/libs", command=self.open_build_libs).pack(side=tk.RIGHT)
+
         self.btn_container = ttk.LabelFrame(main_frame, text=" Select target branch for build ", padding=10)
         self.btn_container.pack(fill=tk.BOTH, expand=True, pady=5)
         
@@ -104,6 +106,18 @@ class BranchBuildApp:
         for c in range(num_cols):
             self.btn_container.columnconfigure(c, weight=1)
 
+    def open_build_libs(self):
+        libs_path = self.project_root / "build" / "libs"
+        if not libs_path.exists():
+            libs_path.mkdir(parents=True, exist_ok=True)
+        
+        if sys.platform == "win32":
+            os.startfile(libs_path)
+        elif sys.platform == "darwin":
+            subprocess.run(["open", str(libs_path)])
+        else:
+            subprocess.run(["xdg-open", str(libs_path)])
+
     def on_branch_btn_click(self, target_branch):
         if self.is_busy: return
         
@@ -122,7 +136,16 @@ class BranchBuildApp:
         for child in self.btn_container.winfo_children():
             child.configure(state=state)
 
+    def has_uncommitted_changes(self):
+        try:
+            res = subprocess.run(['git', 'status', '--porcelain'],
+                                capture_output=True, text=True, check=True, encoding='utf-8')
+            return bool(res.stdout.strip())
+        except Exception:
+            return False
+
     def run_process(self, target_branch):
+        stashed = False
         try:
             self.log(f"\n>>> STARTING PROCESS FOR: {target_branch}")
             
@@ -130,6 +153,14 @@ class BranchBuildApp:
             if not self.execute_cmd([GRADLEW_CMD, 'clean', 'build']):
                 self.log("ERROR: Failed to build current branch.")
                 return
+
+            if self.has_uncommitted_changes():
+                self.log("Found uncommitted changes. Stashing them...")
+                if self.execute_cmd(['git', 'stash', 'push', '-m', 'BranchBuildApp: temporary stash']):
+                    stashed = True
+                else:
+                    self.log("ERROR: Failed to stash changes.")
+                    return
 
             self.log(f"[2/4] Switching to branch: {target_branch}...")
             if not self.execute_cmd(['git', 'checkout', target_branch]):
@@ -146,6 +177,11 @@ class BranchBuildApp:
                 self.log(f"CRITICAL ERROR: Failed to return to {self.original_branch}!")
                 messagebox.showerror("Error", f"Critical error: failed to return to {self.original_branch}!")
                 return
+
+            if stashed:
+                self.log("Restoring uncommitted changes...")
+                if not self.execute_cmd(['git', 'stash', 'pop']):
+                    self.log("WARNING: Failed to pop stash. Your changes are still in 'git stash'.")
 
             self.log("Process completed.")
             if build_success:

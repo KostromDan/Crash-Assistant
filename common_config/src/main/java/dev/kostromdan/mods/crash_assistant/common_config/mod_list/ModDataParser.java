@@ -105,7 +105,7 @@ public class ModDataParser {
             return mod;
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed to parse " + jarPath.getFileName() + ": ", e);
-            return new Mod(jarPath.getFileName().toString(), null, null, null, null,
+            return new Mod(jarPath.getFileName().toString(), null, null, null, null, null,
                     new HashSet<>(), new ArrayList<>(), null,
                     getCurseForgeHash(fingerprints, null), getModrinthHash(fingerprints, null));
         }
@@ -130,6 +130,7 @@ public class ModDataParser {
 
     private static Mod parseJarFile(JarFile jarFile, String currentJarName, String jarJarPath, ModFingerprinter.IdentificationResult fingerprints) {
         Boolean isMCreator = null;
+        Boolean isLoadedByConnector = null;
         boolean hasEssentialLoader = false;
 
         HashSet<String> mixinConfigs = new HashSet<>();
@@ -185,15 +186,26 @@ public class ModDataParser {
                 JarInJarHelper.LOGGER.warn("No descriptors found in " + currentJarName);
             }
 
+            if (PlatformHelp.isForgeBased()) {
+                boolean hasFabricModJson = descriptorBytes.containsKey("fabric.mod.json");
+                boolean hasQuiltModJson = descriptorBytes.containsKey("quilt.mod.json");
+                boolean hasForgeModsToml = descriptorBytes.containsKey("META-INF/mods.toml");
+                boolean hasNeoForgeModsToml = descriptorBytes.containsKey("META-INF/neoforge.mods.toml");
+                isLoadedByConnector = (hasFabricModJson || hasQuiltModJson) && !hasForgeModsToml && !hasNeoForgeModsToml;
+                if (!isLoadedByConnector) {
+                    isLoadedByConnector = null;
+                }
+            }
+
             return parseDescriptorsAndBuildMod(descriptorBytes, manifestProvider, currentJarName,
-                    jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods, fingerprints);
+                    jarJarPath, isMCreator, isLoadedByConnector, hasEssentialLoader, mixinConfigs, jarInJarMods, fingerprints);
 
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed while processing " + currentJarName, e);
         }
 
         return new Mod(currentJarName, null, null, null,
-                isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
+                isMCreator, isLoadedByConnector, mixinConfigs, jarInJarMods, jarJarPath,
                 getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
     }
 
@@ -245,7 +257,7 @@ public class ModDataParser {
         ManifestProvider manifestProvider = () -> jis.getManifest();
 
         return parseDescriptorsAndBuildMod(descriptorBytes, manifestProvider, currentJarName,
-                jarJarPath, isMCreator, hasEssentialLoader, mixinConfigs, jarInJarMods, null);
+                jarJarPath, isMCreator, null, hasEssentialLoader, mixinConfigs, jarInJarMods, null);
     }
 
     // Functional interface for lazy byte loading
@@ -272,19 +284,16 @@ public class ModDataParser {
             byte[] nestedBytes = byteSupplier.get();
             try (JarInputStream nestedJis = new JarInputStream(new ByteArrayInputStream(nestedBytes))) {
                 Mod nested = parseJarFile(nestedJis, nestedJarName, nestedJarPath);
-                nested = new Mod(nestedJarName, nested.getModId(), nested.getName(), nested.getVersion(),
-                        nested.IsMCreator(), nested.getMixinConfigs(),
-                        nested.getJarJarMods(), nestedJarPath);
                 jarInJarMods.add(nested);
             }
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Error processing nested jar " + name + ": " + e.getMessage());
-            jarInJarMods.add(new Mod(nestedJarName, null, null, null, null,
-                    new HashSet<>(), new ArrayList<>(), nestedJarPath));
+            jarInJarMods.add(new Mod(nestedJarName, null, null, null, null, null,
+                    new HashSet<>(), new ArrayList<>(), nestedJarPath, null, null));
         }
     }
 
-    private static Mod parseDescriptorsAndBuildMod(Map<String, byte[]> descriptorBytes, ManifestProvider manifestProvider, String currentJarName, String jarJarPath, Boolean isMCreator, boolean hasEssentialLoader, HashSet<String> mixinConfigs, List<Mod> jarInJarMods, ModFingerprinter.IdentificationResult fingerprints) {
+    private static Mod parseDescriptorsAndBuildMod(Map<String, byte[]> descriptorBytes, ManifestProvider manifestProvider, String currentJarName, String jarJarPath, Boolean isMCreator, Boolean isLoadedByConnector, boolean hasEssentialLoader, HashSet<String> mixinConfigs, List<Mod> jarInJarMods, ModFingerprinter.IdentificationResult fingerprints) {
         for (String descriptorPath : inJarPaths) {
             byte[] bytes = descriptorBytes.get(descriptorPath);
             if (bytes == null) continue;
@@ -314,7 +323,7 @@ public class ModDataParser {
                 }
 
                 return new Mod(currentJarName, modInfo.modId, modInfo.name, modInfo.version,
-                        isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
+                        isMCreator, isLoadedByConnector, mixinConfigs, jarInJarMods, jarJarPath,
                         getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
             } catch (Exception e) {
                 JarInJarHelper.LOGGER.warn("Error parsing " + descriptorPath + " of " +
@@ -325,13 +334,13 @@ public class ModDataParser {
         // Special-case Essential
         if (currentJarName.toLowerCase().contains("essential") && hasEssentialLoader) {
             return new Mod(currentJarName, "essential-container", "Essential", null,
-                    isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
+                    isMCreator, isLoadedByConnector, mixinConfigs, jarInJarMods, jarJarPath,
                     getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
         }
 
         // Nothing found
         return new Mod(currentJarName, null, null, null,
-                isMCreator, mixinConfigs, jarInJarMods, jarJarPath,
+                isMCreator, isLoadedByConnector, mixinConfigs, jarInJarMods, jarJarPath,
                 getCurseForgeHash(fingerprints, jarJarPath), getModrinthHash(fingerprints, jarJarPath));
     }
 

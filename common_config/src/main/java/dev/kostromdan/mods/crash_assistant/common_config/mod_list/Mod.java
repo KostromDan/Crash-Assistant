@@ -117,33 +117,17 @@ public class Mod {
                 add(tableColumnNames);
                 addAll(mods);
             }};
-            boolean showConnectorColumn = containsConnector(mods);
-            int[] maxLens = computeMaxLengths(finalMods, 0, showConnectorColumn);
+            int[] maxLens = computeMaxLengths(finalMods, 0);
 
             for (Mod mod : finalMods) {
-                writeModWithFormatting(writer, mod, 0, maxLens, showConnectorColumn);
+                writeModWithFormatting(writer, mod, 0, maxLens);
             }
         }
     }
 
-    private static boolean containsConnector(Collection<Mod> mods) {
-        if (mods == null) return false;
-        for (Mod mod : mods) {
-            String modId = mod.getModId();
-            if ("connectormod".equals(modId) || "connector".equals(modId)) {
-                return true;
-            }
-            if (mod.getJarJarMods() != null && containsConnector(mod.getJarJarMods())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static int[] computeMaxLengths(Collection<Mod> mods, int indentLevel, boolean showConnectorColumn) {
+    private static int[] computeMaxLengths(Collection<Mod> mods, int indentLevel) {
         int maxJarLen = 0;
-        int maxIsMCreatorLen = 0;
-        int maxIsLoadedByConnectorLen = 0;
+        int maxNotesLen = 0;
         int maxModIdLen = 0;
         int maxNameLen = 0;
         int maxVersionLen = 0;
@@ -166,16 +150,20 @@ public class Mod {
                 curseForgeHash = "curseforge hash";
             }
 
-            String isMCreatorStr = jarName.equals("jar name") ? "isMCreator" : (Boolean.TRUE.equals(mod.IsMCreator()) ? "MCreator mod" : "");
-            String isLoadedByConnectorStr = jarName.equals("jar name") ? "isLoadedByConnector" : (Boolean.TRUE.equals(mod.getIsLoadedByConnector()) ? "Connector mod" : "");
+            String notes = "";
+            if (jarName.equals("jar name")) {
+                notes = "notes";
+            } else {
+                List<String> notesList = new ArrayList<>();
+                if (Boolean.TRUE.equals(mod.IsMCreator())) notesList.add("MCreator mod");
+                if (Boolean.TRUE.equals(mod.getIsLoadedByConnector())) notesList.add("via Connector");
+                notes = String.join(", ", notesList);
+            }
 
             /* jar column: 4 × indent + jarName + pathFromJarJar */
             int jarLen = indentLevel * 4 + jarName.length() + pathFromJarJar.length();
             maxJarLen = Math.max(maxJarLen, jarLen);
-            maxIsMCreatorLen = Math.max(maxIsMCreatorLen, isMCreatorStr.length());
-            if (showConnectorColumn) {
-                maxIsLoadedByConnectorLen = Math.max(maxIsLoadedByConnectorLen, isLoadedByConnectorStr.length());
-            }
+            maxNotesLen = Math.max(maxNotesLen, notes.length());
             maxModIdLen = Math.max(maxModIdLen, modId.length());
             maxNameLen = Math.max(maxNameLen, name.length());
             maxVersionLen = Math.max(maxVersionLen, version.length());
@@ -185,31 +173,18 @@ public class Mod {
 
             /* recurse into nested mods, if any */
             if (mod.getJarJarMods() != null && !mod.getJarJarMods().isEmpty()) {
-                int[] childLens = computeMaxLengths(mod.getJarJarMods(), indentLevel + 1, showConnectorColumn);
+                int[] childLens = computeMaxLengths(mod.getJarJarMods(), indentLevel + 1);
                 maxJarLen = Math.max(maxJarLen, childLens[0]);
-                maxIsMCreatorLen = Math.max(maxIsMCreatorLen, childLens[1]);
-                if (showConnectorColumn) {
-                    maxIsLoadedByConnectorLen = Math.max(maxIsLoadedByConnectorLen, childLens[2]);
-                    maxModIdLen = Math.max(maxModIdLen, childLens[3]);
-                    maxNameLen = Math.max(maxNameLen, childLens[4]);
-                    maxVersionLen = Math.max(maxVersionLen, childLens[5]);
-                    maxMixinConfigsLen = Math.max(maxMixinConfigsLen, childLens[6]);
-                    maxModrinthHashLen = Math.max(maxModrinthHashLen, childLens[7]);
-                    maxCurseForgeHashLen = Math.max(maxCurseForgeHashLen, childLens[8]);
-                } else {
-                    maxModIdLen = Math.max(maxModIdLen, childLens[2]);
-                    maxNameLen = Math.max(maxNameLen, childLens[3]);
-                    maxVersionLen = Math.max(maxVersionLen, childLens[4]);
-                    maxMixinConfigsLen = Math.max(maxMixinConfigsLen, childLens[5]);
-                    maxModrinthHashLen = Math.max(maxModrinthHashLen, childLens[6]);
-                    maxCurseForgeHashLen = Math.max(maxCurseForgeHashLen, childLens[7]);
-                }
+                maxNotesLen = Math.max(maxNotesLen, childLens[1]);
+                maxModIdLen = Math.max(maxModIdLen, childLens[2]);
+                maxNameLen = Math.max(maxNameLen, childLens[3]);
+                maxVersionLen = Math.max(maxVersionLen, childLens[4]);
+                maxMixinConfigsLen = Math.max(maxMixinConfigsLen, childLens[5]);
+                maxModrinthHashLen = Math.max(maxModrinthHashLen, childLens[6]);
+                maxCurseForgeHashLen = Math.max(maxCurseForgeHashLen, childLens[7]);
             }
         }
-        if (showConnectorColumn) {
-            return new int[]{maxJarLen, maxIsMCreatorLen, maxIsLoadedByConnectorLen, maxModIdLen, maxNameLen, maxVersionLen, maxMixinConfigsLen, maxModrinthHashLen, maxCurseForgeHashLen};
-        }
-        return new int[]{maxJarLen, maxIsMCreatorLen, maxModIdLen, maxNameLen, maxVersionLen, maxMixinConfigsLen, maxModrinthHashLen, maxCurseForgeHashLen};
+        return new int[]{maxJarLen, maxNotesLen, maxModIdLen, maxNameLen, maxVersionLen, maxMixinConfigsLen, maxModrinthHashLen, maxCurseForgeHashLen};
     }
 
     /**
@@ -222,7 +197,7 @@ public class Mod {
      * @param maxLens     The maximum lengths for each column
      * @throws IOException If an I/O error occurs
      */
-    private static void writeModWithFormatting(BufferedWriter writer, Mod mod, int indentLevel, int[] maxLens, boolean showConnectorColumn) throws IOException {
+    private static void writeModWithFormatting(BufferedWriter writer, Mod mod, int indentLevel, int[] maxLens) throws IOException {
         StringBuilder indentBuilder = new StringBuilder();
         for (int i = 0; i < indentLevel; i++) {
             indentBuilder.append("    ");
@@ -230,14 +205,13 @@ public class Mod {
         String indent = indentBuilder.toString();
 
         int maxJarNameLength = maxLens[0];
-        int maxIsMCreatorLength = maxLens[1];
-        int maxIsLoadedByConnectorLength = showConnectorColumn ? maxLens[2] : 0;
-        int maxModIdLength = showConnectorColumn ? maxLens[3] : maxLens[2];
-        int maxNameLength = showConnectorColumn ? maxLens[4] : maxLens[3];
-        int maxVersionLength = showConnectorColumn ? maxLens[5] : maxLens[4];
-        int maxMixinConfigsLength = showConnectorColumn ? maxLens[6] : maxLens[5];
-        int maxModrinthHashLength = showConnectorColumn ? maxLens[7] : maxLens[6];
-        int maxCurseForgeHashLength = showConnectorColumn ? maxLens[8] : maxLens[7];
+        int maxNotesLength = maxLens[1];
+        int maxModIdLength = maxLens[2];
+        int maxNameLength = maxLens[3];
+        int maxVersionLength = maxLens[4];
+        int maxMixinConfigsLength = maxLens[5];
+        int maxModrinthHashLength = maxLens[6];
+        int maxCurseForgeHashLength = maxLens[7];
 
         StringBuilder line = new StringBuilder();
 
@@ -246,15 +220,19 @@ public class Mod {
         if (jarName.equals("jar name")) {
             curseForgeHash = "curseforge hash";
         }
-        String isMCreator = jarName.equals("jar name") ? "isMCreator" : (Boolean.TRUE.equals(mod.IsMCreator()) ? "MCreator mod" : "");
-        String isLoadedByConnector = jarName.equals("jar name") ? "isLoadedByConnector" : (Boolean.TRUE.equals(mod.getIsLoadedByConnector()) ? "Connector mod" : "");
-
+        String notes = "";
         boolean isHeader = jarName.equals("jar name");
-        line.append(formatCell(indent + (mod.getPathFromJarJar() != null ? mod.getPathFromJarJar() : "") + jarName, maxJarNameLength, isHeader));
-        line.append(" | ").append(formatCell(isMCreator, maxIsMCreatorLength, isHeader));
-        if (showConnectorColumn) {
-            line.append(" | ").append(formatCell(isLoadedByConnector, maxIsLoadedByConnectorLength, isHeader));
+        if (isHeader) {
+            notes = "notes";
+        } else {
+            List<String> notesList = new ArrayList<>();
+            if (Boolean.TRUE.equals(mod.IsMCreator())) notesList.add("MCreator mod");
+            if (Boolean.TRUE.equals(mod.getIsLoadedByConnector())) notesList.add("via Connector");
+            notes = String.join(", ", notesList);
         }
+
+        line.append(formatCell(indent + (mod.getPathFromJarJar() != null ? mod.getPathFromJarJar() : "") + jarName, maxJarNameLength, isHeader));
+        line.append(" | ").append(formatCell(notes, maxNotesLength, isHeader));
         line.append(" | ").append(formatCell((mod.getModId() == null ? "" : mod.getModId()), maxModIdLength, isHeader));
         line.append(" | ").append(formatCell((mod.getName() == null ? "" : mod.getName()), maxNameLength, isHeader));
         line.append(" | ").append(formatCell((mod.getVersion() == null ? "" : mod.getVersion()), maxVersionLength, isHeader));
@@ -267,7 +245,7 @@ public class Mod {
 
         if (mod.getJarJarMods() != null && !mod.getJarJarMods().isEmpty()) {
             for (Mod jarJarMod : mod.getJarJarMods()) {
-                writeModWithFormatting(writer, jarJarMod, indentLevel + 1, maxLens, showConnectorColumn);
+                writeModWithFormatting(writer, jarJarMod, indentLevel + 1, maxLens);
             }
         }
     }

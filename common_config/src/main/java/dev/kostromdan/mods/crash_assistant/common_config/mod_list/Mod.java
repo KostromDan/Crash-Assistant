@@ -119,10 +119,27 @@ public class Mod {
             }};
             int[] maxLens = computeMaxLengths(finalMods, 0);
 
-            for (Mod mod : finalMods) {
-                writeModWithFormatting(writer, mod, 0, maxLens);
+            for (int i = 0; i < finalMods.size(); i++) {
+                writeModWithFormatting(writer, finalMods.get(i), 0, maxLens);
+                if (i == 0) {
+                    writeSeparator(writer, maxLens);
+                }
             }
         }
+    }
+
+    private static void writeSeparator(BufferedWriter writer, int[] maxLens) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < maxLens.length; i++) {
+            for (int j = 0; j < maxLens[i]; j++) {
+                sb.append('-');
+            }
+            if (i < maxLens.length - 1) {
+                sb.append("-+-");
+            }
+        }
+        writer.write(sb.toString());
+        writer.newLine();
     }
 
     private static int[] computeMaxLengths(Collection<Mod> mods, int indentLevel) {

@@ -75,6 +75,7 @@ public class ConnectorModDetectorGUI extends AnalysisGUIBase {
     private boolean isConnectorRelated(Mod mod, boolean recursive) {
         if (Boolean.TRUE.equals(mod.getIsLoadedByConnector())
                 || "fabric_api".equals(mod.getModId())
+                || "connectorextras".equals(mod.getModId())
                 || "connectormod".equals(mod.getModId())
                 || "connector".equals(mod.getModId())) {
             return true;

@@ -81,7 +81,6 @@ public class CorruptedConfigFinderGUI extends AnalysisGUIBase {
 
     private static final Path WORKSPACE_ROOT = Paths.get("").toAbsolutePath().normalize();
     private static final Set<String> TOML_EXTENSIONS = new LinkedHashSet<>(Arrays.asList("toml"));
-    private static final Set<String> JSON_EXTENSIONS = new LinkedHashSet<>(Arrays.asList("json", "json5"));
     private static final Set<String> SUPPORTED_EXTENSIONS = ConfigCheckerRegistry.getSupportedExtensions();
 
     private final Map<String, Path> configsForRemoval = new LinkedHashMap<>();

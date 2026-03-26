@@ -17,7 +17,9 @@ public final class ConfigCheckerRegistry {
     private static final List<ConfigChecker> CHECKERS = Arrays.asList(
             new TomlNightConfigChecker(),
             new NightConfigJsonChecker(),
-            new GsonJsonChecker()
+            new GsonJsonChecker(),
+            new QuiltJson5Checker(),
+            new QuiltJsoncChecker()
     );
 
     private static final Map<String, List<ConfigChecker>> CHECKERS_BY_EXTENSION;

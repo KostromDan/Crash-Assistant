@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public final class NightConfigJsonChecker implements ConfigChecker {
 
-    private static final Set<String> EXTENSIONS = new LinkedHashSet<>(Arrays.asList("json", "json5"));
+    private static final Set<String> EXTENSIONS = new LinkedHashSet<>(Arrays.asList("json"));
 
     @Override
     public Set<String> supportedExtensions() {

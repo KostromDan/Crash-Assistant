@@ -9,6 +9,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.AzureLi
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.EpicFightDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDependenciesAnalysisGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.ConnectorModDetectorGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 import dev.kostromdan.mods.crash_assistant.app.gui.scripts_ide.ScriptsIDE;
@@ -583,12 +584,11 @@ public class CrashAssistantGUI {
                 analysisMenu.add(mcreatorDetectorItem);
             }
 
-            // Mods loaded by Sinytra Connector analysis tool, not finished yet, will be in the next update.
-//            if (!disabledByConfigTools.contains("SinytraConnectorModsAnalysisGUI")) {
-//                JMenuItem sinytraConnectorItem = makeMenuItem.apply("gui.menu.analysis.sinytra_connector_mods", "gui.analysis.sinytra_connector_mods.header");
-//                sinytraConnectorItem.addActionListener(e -> SinytraConnectorModsAnalysisGUI.showSinytraConnectorModsDialog(frame));
-//                analysisMenu.add(sinytraConnectorItem);
-//            }
+            if (!disabledByConfigTools.contains("ConnectorModDetectorGUI") && PlatformHelp.isForgeBased()) {
+                JMenuItem connectorDetectorItem = makeMenuItem.apply("gui.menu.analysis.connector_mod_detector", "gui.analysis.connector_detector.header");
+                connectorDetectorItem.addActionListener(e -> ConnectorModDetectorGUI.showConnectorModDetectorDialog(frame));
+                analysisMenu.add(connectorDetectorItem);
+            }
 
             if (!disabledByConfigTools.contains("PackageFinderGUI")) {
                 JMenuItem packageFinderItem = makeMenuItem.apply("gui.menu.analysis.package_class_finder", "gui.analysis.package_finder.header");
@@ -784,7 +784,8 @@ public class CrashAssistantGUI {
                         for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessages()) {
                             if (crashReasonMessage.isShownWarn()) continue;
                             KnownCrashReason crashReason = crashReasonMessage.getReason();
-                            if (CrashAssistantConfig.getBlacklistedAnalysis().contains(crashReason.getClass().getSimpleName())) continue;
+                            if (CrashAssistantConfig.getBlacklistedAnalysis().contains(crashReason.getClass().getSimpleName()))
+                                continue;
                             if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason)) continue;
                             HashSet<String> conflictingReasons = crashReason.getConflictingReasons();
                             if (!conflictingReasons.isEmpty() &&

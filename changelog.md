@@ -1,7 +1,8 @@
 1.11.6:
 
 - New GUI analysis tool `ConnectorModDetectorGUI`. Detects fabric mods loaded by connector mod.
-- Now `modlist.txt` has `notes` column. Will have `via Connector` or `MCreator mod` notes there aplicable.
+- Now `modlist.txt` has `notes` column (renamed from `isMCreator`).
+  Will have `via Connector` or `MCreator mod` notes there aplicable.
 - Add separator row to `modlist.txt` formatting for improved readability.
 - Fixed blacklisting `CodexMessage` crash reason didn't work.
 

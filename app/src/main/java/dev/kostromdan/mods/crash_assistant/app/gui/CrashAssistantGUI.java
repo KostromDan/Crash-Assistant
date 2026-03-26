@@ -784,6 +784,7 @@ public class CrashAssistantGUI {
                         for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessages()) {
                             if (crashReasonMessage.isShownWarn()) continue;
                             KnownCrashReason crashReason = crashReasonMessage.getReason();
+                            if (CrashAssistantConfig.getBlacklistedAnalysis().contains(crashReason.getClass().getSimpleName())) continue;
                             if (KnownCrashReason.shownKnownCrashReasons.contains(crashReason)) continue;
                             HashSet<String> conflictingReasons = crashReason.getConflictingReasons();
                             if (!conflictingReasons.isEmpty() &&
@@ -930,7 +931,7 @@ public class CrashAssistantGUI {
                                     okButton.setEnabled(false);
                                     if (dontShowBoxRef != null) dontShowBoxRef.setEnabled(false);
                                     dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-                                    
+
                                     final int[] secondsLeft = {delay};
                                     final int initialDelay = delay;
                                     okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");

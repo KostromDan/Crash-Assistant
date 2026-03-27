@@ -5,6 +5,7 @@
   Will have `via Connector` or `MCreator mod` notes there aplicable.
 - Add separator row to `modlist.txt` formatting for improved readability.
 - Fixed blacklisting `CodexMessage` crash reason didn't work.
+- `CorruptedConfigFinder` now correctly parsing `json5`. Also added support of `jsonc`, `properties` formats.
 
 1.11.5:
 

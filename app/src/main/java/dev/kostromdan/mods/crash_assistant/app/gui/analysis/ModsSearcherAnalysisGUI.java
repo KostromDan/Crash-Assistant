@@ -42,7 +42,10 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
-    private static final Charset SEARCH_CHARSET = StandardCharsets.ISO_8859_1;
+    private static final List<Charset> SEARCH_CHARSETS = Collections.unmodifiableList(Arrays.asList(
+            StandardCharsets.ISO_8859_1,
+            StandardCharsets.UTF_8
+    ));
     private static final Path WORKSPACE_ROOT = Paths.get("").toAbsolutePath().normalize();
     private static final Path TEMP_ROOT = Paths.get("local", "crash_assistant", "mods_searcher_tmp");
     private static final String CONFIG_PATTERNS = "analysis.mods_searcher.patterns";
@@ -326,7 +329,12 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
 
     private boolean matchesContent(byte[] data) {
         if (data.length == 0) return false;
-        return options.matcher.matches(new String(data, SEARCH_CHARSET));
+        for (Charset charset : SEARCH_CHARSETS) {
+            if (options.matcher.matches(new String(data, charset))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<FoundResult> getSortedResults() {

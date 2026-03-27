@@ -127,7 +127,10 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
         }
 
         List<Path> filesToScan = discoverFiles(rootPath);
-        SwingUtilities.invokeLater(() -> progressBar.setMaximum(Math.max(1, filesToScan.size())));
+        SwingUtilities.invokeLater(() -> {
+            progressBar.setMaximum(Math.max(1, filesToScan.size()));
+            renderStreamingHeader();
+        });
 
         if (filesToScan.isEmpty()) {
             SwingUtilities.invokeLater(() -> appendStyledText(
@@ -152,6 +155,8 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                     List<FoundResult> matches = scanFile(file, display);
                     if (!matches.isEmpty()) {
                         foundResults.addAll(matches);
+                        List<FoundResult> batch = new ArrayList<>(matches);
+                        SwingUtilities.invokeLater(() -> appendPartialResults(batch));
                     }
                 } catch (Exception ex) {
                     CrashAssistantApp.LOGGER.warn("[ModsSearcher] Failed to scan {}: {}", file, ex.getMessage());
@@ -178,7 +183,10 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
         }
 
         List<FoundResult> sortedResults = getSortedResults();
-        SwingUtilities.invokeLater(() -> renderResults(sortedResults));
+        SwingUtilities.invokeLater(() -> {
+            textPane.setText("");
+            renderResults(sortedResults);
+        });
     }
 
     @Override
@@ -373,6 +381,44 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
         copy.sort(Comparator.comparing((FoundResult r) -> r.rootDisplayPath)
                 .thenComparing(r -> r.fullDisplayPath));
         return copy;
+    }
+
+    private void renderStreamingHeader() {
+        appendStyledText(
+                LanguageProvider.get("gui.analysis.mods_searcher.selected_root")
+                        .replace("$PATH$", options.rootPath.toString()) + "\n",
+                NORMAL_COLOR
+        );
+        appendStyledText(
+                LanguageProvider.get("gui.analysis.mods_searcher.search_terms")
+                        .replace("$TERMS$", String.join(", ", options.searchTerms)) + "\n",
+                NORMAL_COLOR
+        );
+    }
+
+    private void appendPartialResults(List<FoundResult> resultsBatch) {
+        if (resultsBatch.isEmpty()) {
+            return;
+        }
+
+        resultsBatch.sort(Comparator.comparing((FoundResult r) -> r.rootDisplayPath)
+                .thenComparing(r -> r.fullDisplayPath));
+
+        appendStyledText("\n", NORMAL_COLOR);
+
+        String currentRoot = null;
+        for (FoundResult result : resultsBatch) {
+            if (!result.rootDisplayPath.equals(currentRoot)) {
+                if (currentRoot != null) {
+                    appendStyledText("\n", NORMAL_COLOR);
+                }
+                currentRoot = result.rootDisplayPath;
+                appendStyledText(result.rootDisplayPath + "\n", MOD_COLOR);
+            }
+
+            appendStyledText("  - " + result.getDisplayInsideRoot() + " ", NORMAL_COLOR);
+            appendStyledText("(" + result.getMatchKindsDisplay() + ")\n", ERROR_COLOR);
+        }
     }
 
     private void renderResults(List<FoundResult> sortedResults) {

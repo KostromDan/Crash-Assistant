@@ -17,6 +17,7 @@
 - Fixed analysis results in generated message filenames may be duplicated.
 - `CorruptedConfigFinder` now correctly analysing `json5`. Also added support of `jsonc`, `properties` formats.
 - Prevented Java 25 warnings on some launchers about JNA lib using native methods in CA log.
+- Improved generation of example scripts.
 
 1.11.5:
 

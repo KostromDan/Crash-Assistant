@@ -184,6 +184,9 @@ public class JarInJarHelper {
 
     public static void setupScripts() {
         if (CrashAssistantConfig.getBoolean("scripts.enabled") && CrashAssistantConfig.getBoolean("scripts.generate_scripts_folder_with_example")) {
+            if (Files.isDirectory(Paths.get("config", "crash_assistant", "scripts"))) {
+                return;
+            }
             setupScriptDirectory(
                     Paths.get("config", "crash_assistant", "scripts", "log_analysis"),
                     "/META-INF/scripts/log_analysis/example.jexl",

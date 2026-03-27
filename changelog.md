@@ -11,6 +11,7 @@
     - Minecraft main class name.
 - Add separator row to `modlist.txt` formatting for improved readability.
 - Now `startup_scripts.log` added to logs list only if has errors. If no, its contents will be logged to CA log instead.
+- Added ability to customize colors of Yes/No in privacy policy acceptance.
 - Fixed blacklisting `CodexMessage` crash reason didn't work.
 - Fixed missing/corrupted mixins config analysis sometimes didn't work. Added a button to find which mod provided it if
   we can't say immediately.

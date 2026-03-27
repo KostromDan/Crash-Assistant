@@ -589,6 +589,7 @@ public class ControlPanel {
                 analysis_sb.append(entry.getKey().getClass().getSimpleName(), "blue", false);
                 analysis_sb.append(LanguageProvider.getMsgLang("msg.found_analysis_in") + entry.getValue().stream()
                         .map(Log::getFileName)
+                        .distinct()
                         .collect(Collectors.joining(", ")));
                 if (entry.getKey() instanceof OutOfMemoryError) {
                     analysis_sb.append(LanguageProvider.getMsgLang("warnings_common.memory_args").replace("$CURRENT_MEMORY_ARGS$", ""), false);

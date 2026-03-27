@@ -94,6 +94,30 @@ public final class MemoryUtils {
         return rootPath != null ? rootPath.toString() : currentPath.toString();
     }
 
+    /**
+     * Returns the main class name from {@code sun.java.command}.
+     *
+     * @return main class name, or {@code UNDEFINED} if unavailable
+     */
+    public static String getMainClassName() {
+        String command = System.getProperty("sun.java.command");
+        if (command == null) {
+            return "UNDEFINED";
+        }
+
+        command = command.trim();
+        if (command.isEmpty()) {
+            return "UNDEFINED";
+        }
+
+        int firstSpace = command.indexOf(' ');
+        if (firstSpace < 0) {
+            return command;
+        }
+
+        return firstSpace == 0 ? "UNDEFINED" : command.substring(0, firstSpace);
+    }
+
     private static Path getCurrentDiskPath() {
         return Paths.get("").toAbsolutePath().normalize();
     }
@@ -303,6 +327,7 @@ public final class MemoryUtils {
     @NoJexl
     public static void main(String[] args) {
         System.out.println("JNA Supported (Windows check): " + (PlatformHelp.isWindows() ? WindowsSwapHelper.isSupported() : "N/A (Not Windows)"));
+        System.out.println("getMainClassName(): " + getMainClassName());
 
         System.out.println("--- JVM Memory ---");
         long jvmInit = getJvmInitialHeapBytes();

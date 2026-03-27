@@ -6,12 +6,16 @@
   coming from.
 - Now `modlist.txt` has `notes` column (renamed from `isMCreator`). Will have `via Connector` or `MCreator mod` notes
   there aplicable.
+- `crash_assistant_app.log` now has:
+    - disk spase: total, free (at launch moment, at crash moment).
+    - Minecraft main class name.
 - Add separator row to `modlist.txt` formatting for improved readability.
 - Fixed blacklisting `CodexMessage` crash reason didn't work.
 - Fixed missing/corrupted mixins config analysis sometimes didn't work. Added a button to find which mod provided it if
   we can't say immediately.
 - Fixed analysis results in generated message filenames may be duplicated.
 - `CorruptedConfigFinder` now correctly analysing `json5`. Also added support of `jsonc`, `properties` formats.
+- Prevented Java 25 warnings on some launchers about JNA lib using native methods in CA log.
 
 1.11.5:
 

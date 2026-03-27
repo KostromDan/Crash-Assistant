@@ -49,7 +49,7 @@ public class CrashAssistantApp {
     public static String systemSwapSpace = null;
     public static String systemUsedSwapSpaceAtMinecraftLaunchMoment = null;
     public static String systemDiskFreeSpaceAtMinecraftLaunchMoment = null;
-    public static String mainClass = null;
+    public static String minecraftSunJavaCommand = null;
     public static String processor = null;
     public static boolean crashed = false;
     public static boolean crashed_with_report = false;
@@ -102,8 +102,8 @@ public class CrashAssistantApp {
             } else if ("-processor".equals(args[i]) && i + 1 < args.length) {
                 processor = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
                 LOGGER.info("processor: {}", processor);
-            } else if ("-mainClass".equals(args[i]) && i + 1 < args.length) {
-                mainClass = args[i + 1];
+            } else if ("-minecraftSunJavaCommand".equals(args[i]) && i + 1 < args.length) {
+                minecraftSunJavaCommand = args[i + 1];
             } else if ("-platform".equals(args[i]) && i + 1 < args.length) {
                 PlatformHelp.platform = Enum.valueOf(PlatformHelp.class, args[i + 1]);
                 LOGGER.info("Platform: {}", PlatformHelp.platform);
@@ -144,7 +144,7 @@ public class CrashAssistantApp {
         LOGGER.info("Java path: {}", JavaBinaryLocator.getJavaBinary());
         LOGGER.info("Java version: {}", PlatformHelp.javaVersion);
 
-        LOGGER.info("Minecraft Main Class: {}", mainClass);
+        LOGGER.info("Minecraft Main Class: {}", minecraftSunJavaCommand);
         LOGGER.info("Minecraft JVM args: {}", Boot.MINECRAFT_JVM_ARGS);
         LOGGER.info("Minecraft Launch Command: {}", Boot.MINECRAFT_LAUNCH_COMMAND);
 

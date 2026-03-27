@@ -591,16 +591,16 @@ public class CrashAssistantGUI {
                 analysisMenu.add(connectorDetectorItem);
             }
 
-            if (!disabledByConfigTools.contains("PackageFinderGUI")) {
-                JMenuItem packageFinderItem = makeMenuItem.apply("gui.menu.analysis.package_class_finder", "gui.analysis.package_finder.header");
-                packageFinderItem.addActionListener(e -> PackageFinderGUI.showPackageFinderDialog(frame));
-                analysisMenu.add(packageFinderItem);
-            }
-
             if (!disabledByConfigTools.contains("ModsSearcherAnalysisGUI")) {
                 JMenuItem modsSearcherItem = makeMenuItem.apply("gui.menu.analysis.mods_searcher", "gui.menu.analysis.mods_searcher.desc");
                 modsSearcherItem.addActionListener(e -> ModsSearcherAnalysisGUI.showDialog(frame));
                 analysisMenu.add(modsSearcherItem);
+            }
+
+            if (!disabledByConfigTools.contains("PackageFinderGUI")) {
+                JMenuItem packageFinderItem = makeMenuItem.apply("gui.menu.analysis.package_class_finder", "gui.analysis.package_finder.header");
+                packageFinderItem.addActionListener(e -> PackageFinderGUI.showPackageFinderDialog(frame));
+                analysisMenu.add(packageFinderItem);
             }
 
             if (!disabledByConfigTools.contains("JdepsDependenciesAnalysisGUI")) {

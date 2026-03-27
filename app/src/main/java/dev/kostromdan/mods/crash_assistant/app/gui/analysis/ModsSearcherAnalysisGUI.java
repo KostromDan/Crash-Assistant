@@ -860,8 +860,19 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
             content.add(patternsScroll);
             content.add(Box.createVerticalStrut(8));
 
+            JPanel settingsRow = new JPanel(new GridLayout(1, 2, 10, 0));
+            settingsRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            JPanel optionsGroupPanel = new JPanel(new BorderLayout(0, 8));
+            optionsGroupPanel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createEtchedBorder(),
+                    BorderFactory.createEmptyBorder(8, 8, 8, 8)
+            ));
+
+            JLabel optionsLabel = new JLabel(LanguageProvider.get("gui.analysis.mods_searcher.options.search_options"));
+            optionsGroupPanel.add(optionsLabel, BorderLayout.NORTH);
+
             JPanel optionsPanel = new JPanel(new GridLayout(0, 1, 0, 4));
-            optionsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
             includeJarInJarCheckbox = new JCheckBox(
                     LanguageProvider.get("gui.analysis.mods_searcher.option.include_jar_in_jar"),
                     getStoredBoolean(CONFIG_INCLUDE_JAR_IN_JAR, true)
@@ -882,17 +893,25 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                     LanguageProvider.get("gui.analysis.mods_searcher.option.search_inside_archives"),
                     getStoredBoolean(CONFIG_SEARCH_INSIDE_ARCHIVES, true)
             );
-            optionsPanel.add(includeJarInJarCheckbox);
             optionsPanel.add(caseInsensitiveCheckbox);
             optionsPanel.add(regexCheckbox);
             optionsPanel.add(checkFileNamesCheckbox);
             optionsPanel.add(searchInsideArchivesCheckbox);
-            content.add(optionsPanel);
-            content.add(Box.createVerticalStrut(8));
+            optionsPanel.add(includeJarInJarCheckbox);
+            optionsGroupPanel.add(optionsPanel, BorderLayout.CENTER);
+            settingsRow.add(optionsGroupPanel);
+
+            JPanel scopeGroupPanel = new JPanel();
+            scopeGroupPanel.setLayout(new BoxLayout(scopeGroupPanel, BoxLayout.Y_AXIS));
+            scopeGroupPanel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createEtchedBorder(),
+                    BorderFactory.createEmptyBorder(8, 8, 8, 8)
+            ));
 
             JLabel scopeLabel = new JLabel(LanguageProvider.get("gui.analysis.mods_searcher.options.scope"));
             scopeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            content.add(scopeLabel);
+            scopeGroupPanel.add(scopeLabel);
+            scopeGroupPanel.add(Box.createVerticalStrut(8));
 
             rootRadio = new JRadioButton(SearchScope.ROOT.getLabel(), initialScope == SearchScope.ROOT);
             modsRadio = new JRadioButton(SearchScope.MODS.getLabel(), initialScope == SearchScope.MODS);
@@ -911,8 +930,8 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
             scopePanel.add(modsRadio);
             scopePanel.add(configRadio);
             scopePanel.add(customRadio);
-            content.add(scopePanel);
-            content.add(Box.createVerticalStrut(8));
+            scopeGroupPanel.add(scopePanel);
+            scopeGroupPanel.add(Box.createVerticalStrut(8));
 
             customPathField = new JTextField(initialCustomPath, 45);
             JButton browseButton = new JButton(LanguageProvider.get("gui.analysis.mods_searcher.options.browse"));
@@ -920,9 +939,13 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
 
             customPathPanel = new JPanel(new BorderLayout(8, 0));
             customPathPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            customPathPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, customPathField.getPreferredSize().height));
             customPathPanel.add(customPathField, BorderLayout.CENTER);
             customPathPanel.add(browseButton, BorderLayout.EAST);
-            content.add(customPathPanel);
+            scopeGroupPanel.add(customPathPanel);
+            settingsRow.add(scopeGroupPanel);
+
+            content.add(settingsRow);
 
             rootRadio.addActionListener(e -> updateCustomPathPanel());
             modsRadio.addActionListener(e -> updateCustomPathPanel());

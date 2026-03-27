@@ -18,6 +18,7 @@ def registerAppMainRunTask = { String taskName, String mainClassName ->
                 appProject.sourceSets.main.output +
                 appProject.sourceSets.java9.output
         mainClass = mainClassName
+        maxHeapSize = '512m'
         workingDir = rootDir
     }
 }

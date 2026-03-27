@@ -1,11 +1,16 @@
 1.11.6:
 
 - New GUI analysis tool `ConnectorModDetectorGUI`. Detects fabric mods loaded by connector mod.
-- Now `modlist.txt` has `notes` column (renamed from `isMCreator`).
-  Will have `via Connector` or `MCreator mod` notes there aplicable.
+- New GUI analysis tool `ModsSearcherAnalysisGUI`. Searches for user-entered String/Regex names inside of mod
+  files/Minecraft folder. Good for finding problematic mods/configs when it isn't clear where a problem/resource is
+  coming from.
+- Now `modlist.txt` has `notes` column (renamed from `isMCreator`). Will have `via Connector` or `MCreator mod` notes
+  there aplicable.
 - Add separator row to `modlist.txt` formatting for improved readability.
 - Fixed blacklisting `CodexMessage` crash reason didn't work.
-- `CorruptedConfigFinder` now correctly parsing `json5`. Also added support of `jsonc`, `properties` formats.
+- Fixed missing/corrupted mixins config analysis sometimes didn't work. Added a button to find which mod provided it if
+  we can't say immediately.
+- `CorruptedConfigFinder` now correctly analysing `json5`. Also added support of `jsonc`, `properties` formats.
 
 1.11.5:
 

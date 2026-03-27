@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CorruptedConfigFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CorruptedJarFinderGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.ModsSearcherAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.PackageFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.AzureLibDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateDependenciesAnalysisGUI;
@@ -594,6 +595,12 @@ public class CrashAssistantGUI {
                 JMenuItem packageFinderItem = makeMenuItem.apply("gui.menu.analysis.package_class_finder", "gui.analysis.package_finder.header");
                 packageFinderItem.addActionListener(e -> PackageFinderGUI.showPackageFinderDialog(frame));
                 analysisMenu.add(packageFinderItem);
+            }
+
+            if (!disabledByConfigTools.contains("ModsSearcherAnalysisGUI")) {
+                JMenuItem modsSearcherItem = makeMenuItem.apply("gui.menu.analysis.mods_searcher", "gui.menu.analysis.mods_searcher.desc");
+                modsSearcherItem.addActionListener(e -> ModsSearcherAnalysisGUI.showDialog(frame));
+                analysisMenu.add(modsSearcherItem);
             }
 
             if (!disabledByConfigTools.contains("JdepsDependenciesAnalysisGUI")) {

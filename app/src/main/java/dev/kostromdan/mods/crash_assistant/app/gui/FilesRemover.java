@@ -47,12 +47,42 @@ public class FilesRemover extends JDialog {
      */
     public enum Mode {JAR, CONFIG}
 
+    @FunctionalInterface
+    public interface CustomAction {
+        void execute(FilesRemover dialog) throws Exception;
+    }
+
+    @FunctionalInterface
+    public interface CustomDeleteAction {
+        boolean execute(FilesRemover dialog) throws Exception;
+    }
+
+    public static class CustomEntry {
+        private final Path path;
+        private final String displayName;
+        private final CustomAction openAction;
+        private final CustomDeleteAction deleteAction;
+        private final CustomAction revealAction;
+
+        public CustomEntry(Path path,
+                           String displayName,
+                           CustomAction openAction,
+                           CustomDeleteAction deleteAction,
+                           CustomAction revealAction) {
+            this.path = path;
+            this.displayName = displayName;
+            this.openAction = openAction;
+            this.deleteAction = deleteAction;
+            this.revealAction = revealAction;
+        }
+    }
+
     /**
      * Open the dialog with display names derived from file names.
      */
     public static void showDialog(Window parent, List<Path> paths, Mode mode) {
         List<Row> rows = paths.stream().map(p -> new Row(p, displayNameFrom(p), mode)).collect(Collectors.toList());
-        FilesRemover dlg = new FilesRemover(parent, rows, mode);
+        FilesRemover dlg = new FilesRemover(parent, rows, mode, null);
         dlg.setVisible(true);
     }
 
@@ -63,7 +93,18 @@ public class FilesRemover extends JDialog {
         List<Row> rows = displayNameToPath.entrySet().stream()
                 .map(e -> new Row(e.getValue(), e.getKey(), mode))
                 .collect(Collectors.toList());
-        FilesRemover dlg = new FilesRemover(parent, rows, mode);
+        FilesRemover dlg = new FilesRemover(parent, rows, mode, null);
+        dlg.setVisible(true);
+    }
+
+    /**
+     * Open the dialog with custom actions for open/remove/reveal.
+     */
+    public static void showDialog(Window parent, List<CustomEntry> entries, Mode mode, String descriptionText) {
+        List<Row> rows = entries.stream()
+                .map(e -> new Row(e.path, e.displayName, mode, e.openAction, e.deleteAction, e.revealAction))
+                .collect(Collectors.toList());
+        FilesRemover dlg = new FilesRemover(parent, rows, mode, descriptionText);
         dlg.setVisible(true);
     }
 
@@ -77,11 +118,26 @@ public class FilesRemover extends JDialog {
         Path path;                 // may change (Disable/Enable renames)
         String displayName;        // shown in the table; must END WITH the actual file name
         final Mode mode;
+        final CustomAction openAction;
+        final CustomDeleteAction deleteAction;
+        final CustomAction revealAction;
 
         Row(Path p, String displayName, Mode m) {
+            this(p, displayName, m, null, null, null);
+        }
+
+        Row(Path p,
+            String displayName,
+            Mode m,
+            CustomAction openAction,
+            CustomDeleteAction deleteAction,
+            CustomAction revealAction) {
             this.path = p;
             this.displayName = displayName;
             this.mode = m;
+            this.openAction = openAction;
+            this.deleteAction = deleteAction;
+            this.revealAction = revealAction;
         }
 
         boolean isDisabledJar() {
@@ -337,6 +393,44 @@ public class FilesRemover extends JDialog {
         return fn == null ? p.toString() : fn.toString();
     }
 
+    private boolean executeCustomOpen(Row row) {
+        if (row.openAction == null) return false;
+        try {
+            row.openAction.execute(this);
+            return true;
+        } catch (Exception ex) {
+            showError(LanguageProvider.get("gui.files_remover.error.open_title"),
+                    String.format(LanguageProvider.get("gui.files_remover.error.open_msg"), row.path),
+                    ex);
+            return false;
+        }
+    }
+
+    private boolean executeCustomDelete(Row row) {
+        if (row.deleteAction == null) return false;
+        try {
+            return row.deleteAction.execute(this);
+        } catch (Exception ex) {
+            showError(LanguageProvider.get("gui.files_remover.error.delete_title"),
+                    String.format(LanguageProvider.get("gui.files_remover.error.delete_msg"), row.path),
+                    ex);
+            return false;
+        }
+    }
+
+    private boolean executeCustomReveal(Row row) {
+        if (row.revealAction == null) return false;
+        try {
+            row.revealAction.execute(this);
+            return true;
+        } catch (Exception ex) {
+            showError(LanguageProvider.get("gui.files_remover.error.reveal_title"),
+                    String.format(LanguageProvider.get("gui.files_remover.error.reveal_msg"), row.path),
+                    ex);
+            return false;
+        }
+    }
+
     /**
      * Sync the trailing file-name portion of a display label after a rename.
      * Assumption (guaranteed by the caller): displayName ENDS WITH the actual file name prior to rename.
@@ -363,7 +457,7 @@ public class FilesRemover extends JDialog {
     // Make the global "Disable/Open Selected" button available to inner listeners.
     private JButton btnDisableOrOpen;
 
-    private FilesRemover(Window parent, List<Row> rows, Mode mode) {
+    private FilesRemover(Window parent, List<Row> rows, Mode mode, String descriptionText) {
         super(parent, LanguageProvider.get("gui.files_remover.title"), ModalityType.APPLICATION_MODAL);
         this.mode = mode;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -394,12 +488,13 @@ public class FilesRemover extends JDialog {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF); // we control widths
 
-        JTextArea desc = new JTextArea(
-                LanguageProvider.get("gui.files_remover.desc.intro") + "\n" +
-                        (mode == Mode.JAR
-                                ? LanguageProvider.get("gui.files_remover.desc.jar")
-                                : LanguageProvider.get("gui.files_remover.desc.config"))
-        );
+        String effectiveDescription = (descriptionText != null && !descriptionText.trim().isEmpty())
+                ? descriptionText
+                : LanguageProvider.get("gui.files_remover.desc.intro") + "\n" +
+                (mode == Mode.JAR
+                        ? LanguageProvider.get("gui.files_remover.desc.jar")
+                        : LanguageProvider.get("gui.files_remover.desc.config"));
+        JTextArea desc = new JTextArea(effectiveDescription);
         desc.setEditable(false);
         desc.setBackground(UIManager.getColor("Panel.background"));
         desc.setBorder(new EmptyBorder(10, 10, 6, 10));
@@ -420,7 +515,10 @@ public class FilesRemover extends JDialog {
             protected void onClick(int viewRow, int col) {
                 int r = table.convertRowIndexToModel(viewRow);
                 Row row = model.rows.get(r);
-                if (row.mode == Mode.JAR) {
+                if (row.openAction != null) {
+                    executeCustomOpen(row);
+                    // no-op
+                } else if (row.mode == Mode.JAR) {
                     String oldName = getFileName(row.path);
                     if (row.isDisabledJar()) {
                         Path t = withoutDisabledSuffix(row.path);
@@ -452,7 +550,7 @@ public class FilesRemover extends JDialog {
             protected void onClick(int viewRow, int col) {
                 int r = table.convertRowIndexToModel(viewRow);
                 Row row = model.rows.get(r);
-                if (tryDelete(row.path)) {
+                if ((row.deleteAction != null ? executeCustomDelete(row) : tryDelete(row.path))) {
                     model.removeRow(r);
                     layoutColumns();
                     updateHeaderCheck();
@@ -465,7 +563,11 @@ public class FilesRemover extends JDialog {
             protected void onClick(int viewRow, int col) {
                 int r = table.convertRowIndexToModel(viewRow);
                 Row row = model.rows.get(r);
-                tryReveal(row.path);
+                if (row.revealAction != null) {
+                    executeCustomReveal(row);
+                } else {
+                    tryReveal(row.path);
+                }
             }
         });
 
@@ -540,7 +642,9 @@ public class FilesRemover extends JDialog {
                 for (int i = idxs.size() - 1; i >= 0; i--) {
                     int r = idxs.get(i);
                     Row row = model.rows.get(r);
-                    if (enableMode) {
+                    if (row.openAction != null) {
+                        if (!executeCustomOpen(row)) failures.add(row.displayName);
+                    } else if (enableMode) {
                         if (row.isDisabledJar()) {
                             String oldName = getFileName(row.path);
                             Path t = withoutDisabledSuffix(row.path);
@@ -572,7 +676,12 @@ public class FilesRemover extends JDialog {
             } else {
                 for (int i = idxs.size() - 1; i >= 0; i--) {
                     int r = idxs.get(i);
-                    tryOpen(model.rows.get(r).path);
+                    Row row = model.rows.get(r);
+                    if (row.openAction != null) {
+                        executeCustomOpen(row);
+                    } else {
+                        tryOpen(row.path);
+                    }
                 }
             }
             layoutColumns();
@@ -592,7 +701,8 @@ public class FilesRemover extends JDialog {
             for (int i = idxs.size() - 1; i >= 0; i--) {
                 int r = idxs.get(i);
                 Row row = model.rows.get(r);
-                if (tryDelete(row.path)) model.removeRow(r);
+                boolean deleted = row.deleteAction != null ? executeCustomDelete(row) : tryDelete(row.path);
+                if (deleted) model.removeRow(r);
                 else failures.add(row.displayName);
             }
             if (!failures.isEmpty()) {

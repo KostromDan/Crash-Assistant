@@ -111,6 +111,8 @@ public class JarInJarHelper {
             argsList.add(formatMemorySize((getSystemUsedSwapBytes())));
             argsList.add("-systemDiskFreeSpaceAtMinecraftLaunchMoment");
             argsList.add(formatMemorySize((getDiskFreeSpaceBytes())));
+            argsList.add("-mainClass");
+            argsList.add(MemoryUtils.getMainClassName());
             argsList.add("-processor");
             argsList.add(Base64.getEncoder().encodeToString(ProcessHelper.getProcessorName().getBytes(StandardCharsets.UTF_8)));
             if (PlatformHelp.modLoadedWithConnector) {

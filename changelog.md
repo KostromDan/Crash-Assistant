@@ -1,3 +1,25 @@
+1.11.6:
+
+- New GUI analysis tool `ConnectorModDetectorGUI`. Detects fabric mods loaded by connector mod.
+- New GUI analysis tool `ModsSearcherAnalysisGUI`. Searches for user-entered String/Regex names inside of mod
+  files/Minecraft folder. Good for finding problematic mods/configs when it isn't clear where a problem/resource is
+  coming from.
+- Now `modlist.txt` has `notes` column (renamed from `isMCreator`). Will have `via Connector` or `MCreator mod` notes
+  there aplicable.
+- `crash_assistant_app.log` now has:
+    - disk spase: total, free (at launch moment, at crash moment).
+    - Minecraft main class name.
+- Add separator row to `modlist.txt` formatting for improved readability.
+- Now `startup_scripts.log` added to logs list only if has errors. If no, its contents will be logged to CA log instead.
+- Added ability to customize colors of Yes/No in privacy policy acceptance.
+- Fixed blacklisting `CodexMessage` crash reason didn't work.
+- Fixed missing/corrupted mixins config analysis sometimes didn't work. Added a button to find which mod provided it if
+  we can't say immediately.
+- Fixed analysis results in generated message filenames may be duplicated.
+- `CorruptedConfigFinder` now correctly analysing `json5`. Also added support of `jsonc`, `properties` formats.
+- Prevented Java 25 warnings on some launchers about JNA lib using native methods in CA log.
+- Improved generation of example scripts.
+
 1.11.5:
 
 - Legacy Fabric 1.6.4 port.

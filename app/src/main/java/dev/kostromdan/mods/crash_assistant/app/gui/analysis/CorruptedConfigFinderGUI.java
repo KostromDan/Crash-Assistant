@@ -41,6 +41,7 @@ public class CorruptedConfigFinderGUI extends AnalysisGUIBase {
         EMPTY("gui.analysis.corrupted_config_finder.reason.empty", false),
         INVALID_TOML("gui.analysis.corrupted_config_finder.reason.invalid_toml", true),
         INVALID_JSON("gui.analysis.corrupted_config_finder.reason.invalid_json", true),
+        INVALID_PROPERTIES("gui.analysis.corrupted_config_finder.reason.invalid_properties", true),
         IO_ERROR("gui.analysis.corrupted_config_finder.reason.io_error", true);
 
         private final String langKey;
@@ -81,6 +82,7 @@ public class CorruptedConfigFinderGUI extends AnalysisGUIBase {
 
     private static final Path WORKSPACE_ROOT = Paths.get("").toAbsolutePath().normalize();
     private static final Set<String> TOML_EXTENSIONS = new LinkedHashSet<>(Arrays.asList("toml"));
+    private static final Set<String> PROPERTIES_EXTENSIONS = new LinkedHashSet<>(Arrays.asList("properties"));
     private static final Set<String> SUPPORTED_EXTENSIONS = ConfigCheckerRegistry.getSupportedExtensions();
 
     private final Map<String, Path> configsForRemoval = new LinkedHashMap<>();
@@ -288,9 +290,14 @@ public class CorruptedConfigFinderGUI extends AnalysisGUIBase {
         }
 
         String detail = parsingErrors.isEmpty() ? null : String.join("\n  - ", parsingErrors);
-        CorruptionReason reason = TOML_EXTENSIONS.contains(extension)
-                ? CorruptionReason.INVALID_TOML
-                : CorruptionReason.INVALID_JSON;
+        CorruptionReason reason;
+        if (TOML_EXTENSIONS.contains(extension)) {
+            reason = CorruptionReason.INVALID_TOML;
+        } else if (PROPERTIES_EXTENSIONS.contains(extension)) {
+            reason = CorruptionReason.INVALID_PROPERTIES;
+        } else {
+            reason = CorruptionReason.INVALID_JSON;
+        }
 
         return new CorruptionRecord(path, displayName, reason, detail);
     }

@@ -37,6 +37,7 @@
   "gui.analysis.corrupted_config_finder.no_issues": "No corrupted configuration files were found.\n",
   "gui.analysis.corrupted_config_finder.reason.empty": "File is empty (0 bytes).",
   "gui.analysis.corrupted_config_finder.reason.invalid_json": "Invalid JSON format: $ERROR$",
+  "gui.analysis.corrupted_config_finder.reason.invalid_properties": "Invalid Properties format: $ERROR$",
   "gui.analysis.corrupted_config_finder.reason.invalid_toml": "Invalid TOML format: $ERROR$",
   "gui.analysis.corrupted_config_finder.reason.io_error": "Unable to read configuration file: $ERROR$",
   "gui.analysis.corrupted_config_finder.remover_button": "Manage Detected Configs",

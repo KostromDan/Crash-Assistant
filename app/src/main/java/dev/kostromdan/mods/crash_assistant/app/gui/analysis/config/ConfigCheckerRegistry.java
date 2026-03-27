@@ -19,7 +19,8 @@ public final class ConfigCheckerRegistry {
             new NightConfigJsonChecker(),
             new GsonJsonChecker(),
             new QuiltJson5Checker(),
-            new QuiltJsoncChecker()
+            new QuiltJsoncChecker(),
+            new PropertiesConfigChecker()
     );
 
     private static final Map<String, List<ConfigChecker>> CHECKERS_BY_EXTENSION;

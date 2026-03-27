@@ -10,6 +10,7 @@
 - Fixed blacklisting `CodexMessage` crash reason didn't work.
 - Fixed missing/corrupted mixins config analysis sometimes didn't work. Added a button to find which mod provided it if
   we can't say immediately.
+- Fixed analysis results in generated message filenames may be duplicated.
 - `CorruptedConfigFinder` now correctly analysing `json5`. Also added support of `jsonc`, `properties` formats.
 
 1.11.5:

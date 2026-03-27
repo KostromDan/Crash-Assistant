@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConnectorModDetectorGUI extends AnalysisGUIBase {
 
@@ -24,48 +23,44 @@ public class ConnectorModDetectorGUI extends AnalysisGUIBase {
     protected void performAnalysis() {
         LinkedHashSet<Mod> modsToAnalyze = ModListUtils.getCurrentModList(true);
         int totalMods = modsToAnalyze.size();
-        AtomicInteger completedTasks = new AtomicInteger(0);
+        executor.shutdown();
         SwingUtilities.invokeLater(() -> progressBar.setMaximum(totalMods));
 
-        List<Mod> connectorMods = new java.util.ArrayList<>();
+        List<String> connectorModJarNames = new java.util.ArrayList<>();
+        int completedTasks = 0;
 
         for (Mod mod : modsToAnalyze) {
-            executor.submit(() -> {
-                if (isCancelled) return;
+            if (isCancelled) {
+                return;
+            }
 
-                SwingUtilities.invokeLater(() -> currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + mod.getJarName()));
+            String jarName = mod.getJarName();
+            SwingUtilities.invokeLater(() -> currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + jarName));
 
-                if (isConnectorRelated(mod, false)) {
-                    connectorMods.add(mod);
-                    registerDetectedModJar(mod.getJarName());
+            if (isConnectorRelated(mod, false)) {
+                connectorModJarNames.add(jarName);
+                registerDetectedModJar(jarName);
+            }
+
+            completedTasks++;
+            int completed = completedTasks;
+            SwingUtilities.invokeLater(() -> {
+                if (!isCancelled) {
+                    progressBar.setValue(completed);
                 }
-
-                int completed = completedTasks.incrementAndGet();
-                SwingUtilities.invokeLater(() -> {
-                    if (!isCancelled) {
-                        progressBar.setValue(completed);
-                    }
-                });
             });
-        }
-
-        executor.shutdown();
-        try {
-            executor.awaitTermination(Long.MAX_VALUE, java.util.concurrent.TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
         }
 
         if (!isCancelled) {
             SwingUtilities.invokeLater(() -> {
-                if (connectorMods.isEmpty()) {
+                if (connectorModJarNames.isEmpty()) {
                     appendStyledText(LanguageProvider.get("gui.analysis.connector_detector.no_mods"), NORMAL_COLOR);
                 } else {
                     String msg = LanguageProvider.get("gui.analysis.connector_detector.found")
-                            .replace("$COUNT$", String.valueOf(connectorMods.size()));
+                            .replace("$COUNT$", String.valueOf(connectorModJarNames.size()));
                     appendStyledText(msg, NORMAL_COLOR);
-                    for (Mod mod : connectorMods) {
-                        appendStyledText(mod.getJarName() + "\n", MOD_COLOR);
+                    for (String jarName : connectorModJarNames) {
+                        appendStyledText(jarName + "\n", MOD_COLOR);
                     }
                 }
             });
@@ -81,7 +76,11 @@ public class ConnectorModDetectorGUI extends AnalysisGUIBase {
             return true;
         }
         if (recursive) return false;
-        for (Mod nestedMod : mod.getJarJarMods()) {
+        List<Mod> nestedMods = mod.getJarJarMods();
+        if (nestedMods == null || nestedMods.isEmpty()) {
+            return false;
+        }
+        for (Mod nestedMod : nestedMods) {
             if (isConnectorRelated(nestedMod, true)) {
                 return true;
             }

@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class MCreatorModDetectorGUI extends AnalysisGUIBase {
 
@@ -24,48 +23,44 @@ public class MCreatorModDetectorGUI extends AnalysisGUIBase {
     protected void performAnalysis() {
         LinkedHashSet<Mod> modsToAnalyze = ModListUtils.getCurrentModList(true);
         int totalMods = modsToAnalyze.size();
-        AtomicInteger completedTasks = new AtomicInteger(0);
+        executor.shutdown();
         SwingUtilities.invokeLater(() -> progressBar.setMaximum(totalMods));
 
-        List<Mod> mcreatorMods = new java.util.ArrayList<>();
+        List<String> mcreatorModJarNames = new java.util.ArrayList<>();
+        int completedTasks = 0;
 
         for (Mod mod : modsToAnalyze) {
-            executor.submit(() -> {
-                if (isCancelled) return;
+            if (isCancelled) {
+                return;
+            }
 
-                SwingUtilities.invokeLater(() -> currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + mod.getJarName()));
+            String jarName = mod.getJarName();
+            SwingUtilities.invokeLater(() -> currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + jarName));
 
-                if (Boolean.TRUE.equals(mod.IsMCreator())) {
-                    mcreatorMods.add(mod);
-                    registerDetectedModJar(mod.getJarName());
+            if (Boolean.TRUE.equals(mod.IsMCreator())) {
+                mcreatorModJarNames.add(jarName);
+                registerDetectedModJar(jarName);
+            }
+
+            completedTasks++;
+            int completed = completedTasks;
+            SwingUtilities.invokeLater(() -> {
+                if (!isCancelled) {
+                    progressBar.setValue(completed);
                 }
-
-                int completed = completedTasks.incrementAndGet();
-                SwingUtilities.invokeLater(() -> {
-                    if (!isCancelled) {
-                        progressBar.setValue(completed);
-                    }
-                });
             });
-        }
-
-        executor.shutdown();
-        try {
-            executor.awaitTermination(Long.MAX_VALUE, java.util.concurrent.TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
         }
 
         if (!isCancelled) {
             SwingUtilities.invokeLater(() -> {
-                if (mcreatorMods.isEmpty()) {
+                if (mcreatorModJarNames.isEmpty()) {
                     appendStyledText(LanguageProvider.get("gui.analysis.mcreator_detector.no_mods"), NORMAL_COLOR);
                 } else {
                     String msg = LanguageProvider.get("gui.analysis.mcreator_detector.found")
-                            .replace("$COUNT$", String.valueOf(mcreatorMods.size()));
+                            .replace("$COUNT$", String.valueOf(mcreatorModJarNames.size()));
                     appendStyledText(msg, NORMAL_COLOR);
-                    for (Mod mod : mcreatorMods) {
-                        appendStyledText(mod.getJarName() + "\n", MOD_COLOR);
+                    for (String jarName : mcreatorModJarNames) {
+                        appendStyledText(jarName + "\n", MOD_COLOR);
                     }
                 }
             });

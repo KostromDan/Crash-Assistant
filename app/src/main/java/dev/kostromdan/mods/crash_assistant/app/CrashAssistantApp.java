@@ -408,8 +408,8 @@ public class CrashAssistantApp {
         }
 
 
+        handleStartupScriptsLog();
         LogsList.addIfExistsAndModified(new Log(LogType.CRASH_ASSISTANT, Paths.get("logs", "crash_assistant", "crash_assistant_app.log")));
-        LogsList.addIfExistsAndModified(new Log(LogType.STARTUP_SCRIPTS, Paths.get("logs", "crash_assistant", "startup_scripts.log")));
 
 
         gameLaunchedSuccessfully = ProcessSignalIO.exists("successful_launch", Boot.parentPID);
@@ -458,6 +458,45 @@ public class CrashAssistantApp {
 
     private static void onMinecraftCrashed() {
         startApp();
+    }
+
+    private static void handleStartupScriptsLog() {
+        Log startupScriptsLog = new Log(LogType.STARTUP_SCRIPTS, Paths.get("logs", "crash_assistant", "startup_scripts.log"));
+        Path startupLogPath = startupScriptsLog.getPath();
+
+        if (!Files.isRegularFile(startupLogPath) || startupLogPath.toFile().lastModified() <= Boot.parentStarted) {
+            return;
+        }
+
+        if (startupScriptsLog.getFile().length() == 0) {
+            LOGGER.info("startup_scripts.log is empty, skipping.");
+            return;
+        }
+
+        if (!CrashAssistantConfig.getBoolean("scripts.attach_startup_scripts_log_only_on_error")
+                || CrashAssistantConfig.getBoolean("general.prevent_generating_crash_assistant_app_logs")) {
+            LogsList.addIfExistsAndModified(startupScriptsLog);
+            return;
+        }
+
+        startupScriptsLog.getReader().readLogFileSafe();
+        String logContents = startupScriptsLog.getReader().getAllLinesString();
+
+        if (logContents == null || logContents.trim().isEmpty()) {
+            LOGGER.info("startup_scripts.log has no readable contents, skipping.");
+            return;
+        }
+
+        boolean hasErrors = Pattern.compile("^.*\\[ERROR\\].*$", Pattern.MULTILINE)
+                .matcher(logContents)
+                .find();
+        if (hasErrors) {
+            LogsList.addIfExistsAndModified(startupScriptsLog);
+            return;
+        }
+
+        LOGGER.info("startup_scripts.log has no errors, logging its contents into crash_assistant_app.log instead of attaching it as a separate log.");
+        LOGGER.info("startup_scripts.log contents:\n{}", logContents);
     }
 
 

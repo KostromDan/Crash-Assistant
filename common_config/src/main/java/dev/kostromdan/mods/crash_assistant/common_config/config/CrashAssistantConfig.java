@@ -391,6 +391,11 @@ public class CrashAssistantConfig {
         addOption("scripts.generate_scripts_folder_with_example",
                 "By changing this value you can disable creating \"scripts\" folder and placing example scripts there.",
                 true);
+        addOption("scripts.attach_startup_scripts_log_only_on_error",
+                "If enabled, \"logs/crash_assistant/startup_scripts.log\" is added to the logs list only when it contains [ERROR].\n" +
+                        "If it has no errors, its contents are written into \"crash_assistant_app.log\" instead.\n" +
+                        "If app logging is disabled, the startup scripts log is kept as a separate log file.",
+                true);
 
         config.setComment("gui_customisation", "You can customise GUI with this options.");
         addOption("gui_customisation.theme_file_name",

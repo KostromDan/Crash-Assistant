@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 public class ModDataParser {
     public static final List<String> inJarPaths = PlatformHelp.getOrderedInJarPaths();
-    private static final Path CACHE_FOLDER = Paths.get("local", "crash_assistant", "mod_data_cache_v3");
+    private static final Path CACHE_FOLDER = Paths.get("local", "crash_assistant", "mod_data_cache_v4");
     private static final Gson GSON = new Gson();
 
     static {

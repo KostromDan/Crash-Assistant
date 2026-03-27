@@ -2,14 +2,14 @@ package dev.kostromdan.mods.crash_assistant.common_config.utils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Locale;
 
 import com.sun.management.OperatingSystemMXBean;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import org.apache.commons.jexl3.annotations.NoJexl;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public final class MemoryUtils {
     public static final long BYTES_IN_MEGABYTE = 1024L * 1024L;
@@ -81,6 +81,61 @@ public final class MemoryUtils {
      */
     public static long getSystemFreeMemoryBytes() {
         return OS_BEAN.getFreePhysicalMemorySize();
+    }
+
+    /**
+     * Returns the root disk of the current working path.
+     *
+     * @return disk name/path, for example {@code C:\}
+     */
+    public static String getDiskName() {
+        Path currentPath = Paths.get("").toAbsolutePath().normalize();
+        Path rootPath = currentPath.getRoot();
+        return rootPath != null ? rootPath.toString() : currentPath.toString();
+    }
+
+    private static Path getCurrentDiskPath() {
+        return Paths.get("").toAbsolutePath().normalize();
+    }
+
+    /**
+     * Returns total disk space of the current path (Paths.get("")) in bytes.
+     * This represents the total capacity of the partition.
+     *
+     * @return total disk space in bytes
+     */
+    public static long getDiskTotalSpaceBytes() {
+        return getCurrentDiskPath().toFile().getTotalSpace();
+    }
+
+    /**
+     * Returns free disk space of the current path (Paths.get("")) in bytes.
+     * This represents the total number of unallocated bytes on the partition.
+     *
+     * @return free disk space in bytes
+     */
+    public static long getDiskFreeSpaceBytes() {
+        return getCurrentDiskPath().toFile().getFreeSpace();
+    }
+
+    /**
+     * Returns usable disk space of the current path (Paths.get("")) in bytes.
+     * This represents the number of bytes available to this virtual machine on the partition.
+     *
+     * @return usable disk space in bytes
+     */
+    public static long getDiskUsableSpaceBytes() {
+        return getCurrentDiskPath().toFile().getUsableSpace();
+    }
+
+    /**
+     * Returns used disk space of the current path (Paths.get("")) in bytes.
+     * Calculated as total space minus free space.
+     *
+     * @return used disk space in bytes
+     */
+    public static long getDiskUsedSpaceBytes() {
+        return getDiskTotalSpaceBytes() - getDiskFreeSpaceBytes();
     }
 
     /**
@@ -247,40 +302,54 @@ public final class MemoryUtils {
 
     @NoJexl
     public static void main(String[] args) {
-        Logger logger = LogManager.getLogger(MemoryUtils.class);
+        System.out.println("JNA Supported (Windows check): " + (PlatformHelp.isWindows() ? WindowsSwapHelper.isSupported() : "N/A (Not Windows)"));
 
-        logger.info("JNA Supported (Windows check): {}", PlatformHelp.isWindows() ? WindowsSwapHelper.isSupported() : "N/A (Not Windows)");
-
-        logger.info("--- JVM Memory ---");
+        System.out.println("--- JVM Memory ---");
         long jvmInit = getJvmInitialHeapBytes();
-        logger.info("getJvmInitialHeapBytes(): {} bytes ({})", jvmInit, formatMemorySize(jvmInit));
+        System.out.println("getJvmInitialHeapBytes(): " + jvmInit + " bytes (" + formatMemorySize(jvmInit) + ")");
 
         long jvmMax = getJvmMaxHeapBytes();
-        logger.info("getJvmMaxHeapBytes(): {} bytes ({})", jvmMax, formatMemorySize(jvmMax));
+        System.out.println("getJvmMaxHeapBytes(): " + jvmMax + " bytes (" + formatMemorySize(jvmMax) + ")");
 
         long jvmAllocated = getJvmAllocatedMemoryBytes();
-        logger.info("getJvmAllocatedMemoryBytes(): {} bytes ({})", jvmAllocated, formatMemorySize(jvmAllocated));
+        System.out.println("getJvmAllocatedMemoryBytes(): " + jvmAllocated + " bytes (" + formatMemorySize(jvmAllocated) + ")");
 
-        logger.info("--- System RAM ---");
+        System.out.println("--- System RAM ---");
         long sysTotalMem = getSystemTotalMemoryBytes();
-        logger.info("getSystemTotalMemoryBytes(): {} bytes ({})", sysTotalMem, formatMemorySize(sysTotalMem));
+        System.out.println("getSystemTotalMemoryBytes(): " + sysTotalMem + " bytes (" + formatMemorySize(sysTotalMem) + ")");
 
         long sysUsedMem = getSystemUsedMemoryBytes();
-        logger.info("getSystemUsedMemoryBytes(): {} bytes ({})", sysUsedMem, formatMemorySize(sysUsedMem));
+        System.out.println("getSystemUsedMemoryBytes(): " + sysUsedMem + " bytes (" + formatMemorySize(sysUsedMem) + ")");
 
         long sysFreeMem = getSystemFreeMemoryBytes();
-        logger.info("getSystemFreeMemoryBytes(): {} bytes ({})", sysFreeMem, formatMemorySize(sysFreeMem));
+        System.out.println("getSystemFreeMemoryBytes(): " + sysFreeMem + " bytes (" + formatMemorySize(sysFreeMem) + ")");
 
-        logger.info("--- Swap/Pagefile ---");
+        System.out.println("--- Disk Space ---");
+        String diskName = getDiskName();
+        System.out.println("getDiskName(): " + diskName);
+
+        long diskTotal = getDiskTotalSpaceBytes();
+        System.out.println("getDiskTotalSpaceBytes(): " + diskTotal + " bytes (" + formatMemorySize(diskTotal) + ")");
+
+        long diskFree = getDiskFreeSpaceBytes();
+        System.out.println("getDiskFreeSpaceBytes(): " + diskFree + " bytes (" + formatMemorySize(diskFree) + ")");
+
+        long diskUsable = getDiskUsableSpaceBytes();
+        System.out.println("getDiskUsableSpaceBytes(): " + diskUsable + " bytes (" + formatMemorySize(diskUsable) + ")");
+
+        long diskUsed = getDiskUsedSpaceBytes();
+        System.out.println("getDiskUsedSpaceBytes(): " + diskUsed + " bytes (" + formatMemorySize(diskUsed) + ")");
+
+        System.out.println("--- Swap/Pagefile ---");
         long sysTotalSwap = getSystemTotalSwapBytes();
-        logger.info("getSystemTotalSwapBytes(): {} bytes ({})", sysTotalSwap, formatMemorySize(sysTotalSwap));
+        System.out.println("getSystemTotalSwapBytes(): " + sysTotalSwap + " bytes (" + formatMemorySize(sysTotalSwap) + ")");
 
         long sysUsedSwap = getSystemUsedSwapBytes();
-        logger.info("getSystemUsedSwapBytes(): {} bytes ({})", sysUsedSwap, formatMemorySize(sysUsedSwap));
+        System.out.println("getSystemUsedSwapBytes(): " + sysUsedSwap + " bytes (" + formatMemorySize(sysUsedSwap) + ")");
 
         long sysFreeSwap = getSystemFreeSwapBytes();
-        logger.info("getSystemFreeSwapBytes(): {} bytes ({})", sysFreeSwap, formatMemorySize(sysFreeSwap));
+        System.out.println("getSystemFreeSwapBytes(): " + sysFreeSwap + " bytes (" + formatMemorySize(sysFreeSwap) + ")");
 
-        logger.info("=== Check finished ===");
+        System.out.println("=== Check finished ===");
     }
 }

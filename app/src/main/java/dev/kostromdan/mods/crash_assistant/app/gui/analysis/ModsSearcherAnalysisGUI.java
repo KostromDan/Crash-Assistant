@@ -84,8 +84,34 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
     public static void showDialog(JFrame parent) {
         SearchOptions options = SearchOptionsDialog.showDialog(parent);
         if (options != null) {
-            new ModsSearcherAnalysisGUI(parent, options).start();
+            startAnalysis(parent, options);
         }
+    }
+
+    public static void startImmediateSearch(JFrame parent,
+                                            String rawPatterns,
+                                            boolean includeJarInJar,
+                                            boolean caseInsensitive,
+                                            boolean regex,
+                                            boolean checkFileNames,
+                                            boolean searchInsideArchives,
+                                            String scopeId,
+                                            String customPathText) {
+        SearchOptions options = SearchOptions.create(
+                rawPatterns,
+                includeJarInJar,
+                caseInsensitive,
+                regex,
+                checkFileNames,
+                searchInsideArchives,
+                SearchScope.fromStored(scopeId),
+                customPathText
+        );
+        startAnalysis(parent, options);
+    }
+
+    private static void startAnalysis(JFrame parent, SearchOptions options) {
+        new ModsSearcherAnalysisGUI(parent, options).start();
     }
 
     @Override

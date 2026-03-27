@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 public final class ModsSearcherStandaloneProcess {
@@ -22,6 +23,15 @@ public final class ModsSearcherStandaloneProcess {
     private static final Object PROCESS_LOCK = new Object();
     private static final Path WORKSPACE_ROOT = Paths.get("").toAbsolutePath().normalize();
     private static final String ARG_MODS_FOLDER = "--mods-folder";
+    private static final String ARG_AUTO_START = "--auto-start";
+    private static final String ARG_PATTERNS_BASE64 = "--patterns-base64";
+    private static final String ARG_INCLUDE_JAR_IN_JAR = "--include-jar-in-jar";
+    private static final String ARG_CASE_INSENSITIVE = "--case-insensitive";
+    private static final String ARG_REGEX = "--regex";
+    private static final String ARG_CHECK_FILE_NAMES = "--check-file-names";
+    private static final String ARG_SEARCH_INSIDE_ARCHIVES = "--search-inside-archives";
+    private static final String ARG_SCOPE = "--scope";
+    private static final String ARG_CUSTOM_PATH_BASE64 = "--custom-path-base64";
     private static final String CHILD_LOG_PREFIX = "[ModsSearcherChild]";
     private static final String ERROR_DIALOG_TITLE = "Mods Searcher Process Error";
     private static final String ALREADY_RUNNING_MESSAGE = "Mods Searcher is already running in a separate process.";
@@ -42,6 +52,10 @@ public final class ModsSearcherStandaloneProcess {
     }
 
     public static void launch(JFrame parent) {
+        launch(parent, null);
+    }
+
+    public static void launch(JFrame parent, SearchRequest searchRequest) {
         synchronized (PROCESS_LOCK) {
             if (runningProcess != null && runningProcess.isAlive()) {
                 showMessageDialog(parent,
@@ -61,6 +75,25 @@ public final class ModsSearcherStandaloneProcess {
             command.add(ModsSearcherStandaloneProcess.class.getName());
             command.add(ARG_MODS_FOLDER);
             command.add(ModListUtils.MODS_FOLDER.toAbsolutePath().normalize().toString());
+            if (searchRequest != null) {
+                command.add(ARG_AUTO_START);
+                command.add(ARG_PATTERNS_BASE64);
+                command.add(encodeBase64(searchRequest.rawPatterns));
+                command.add(ARG_INCLUDE_JAR_IN_JAR);
+                command.add(String.valueOf(searchRequest.includeJarInJar));
+                command.add(ARG_CASE_INSENSITIVE);
+                command.add(String.valueOf(searchRequest.caseInsensitive));
+                command.add(ARG_REGEX);
+                command.add(String.valueOf(searchRequest.regex));
+                command.add(ARG_CHECK_FILE_NAMES);
+                command.add(String.valueOf(searchRequest.checkFileNames));
+                command.add(ARG_SEARCH_INSIDE_ARCHIVES);
+                command.add(String.valueOf(searchRequest.searchInsideArchives));
+                command.add(ARG_SCOPE);
+                command.add(searchRequest.scopeId);
+                command.add(ARG_CUSTOM_PATH_BASE64);
+                command.add(encodeBase64(searchRequest.customPathText));
+            }
 
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(WORKSPACE_ROOT.toFile());
@@ -89,9 +122,25 @@ public final class ModsSearcherStandaloneProcess {
         );
 
         try {
-            applyArguments(args);
+            ChildLaunchArguments launchArguments = parseArguments(args);
             ThemeUtils.ensureThemesApplied();
-            SwingUtilities.invokeAndWait(() -> ModsSearcherAnalysisGUI.showDialog(null));
+            SwingUtilities.invokeAndWait(() -> {
+                if (launchArguments.searchRequest != null) {
+                    ModsSearcherAnalysisGUI.startImmediateSearch(
+                            null,
+                            launchArguments.searchRequest.rawPatterns,
+                            launchArguments.searchRequest.includeJarInJar,
+                            launchArguments.searchRequest.caseInsensitive,
+                            launchArguments.searchRequest.regex,
+                            launchArguments.searchRequest.checkFileNames,
+                            launchArguments.searchRequest.searchInsideArchives,
+                            launchArguments.searchRequest.scopeId,
+                            launchArguments.searchRequest.customPathText
+                    );
+                } else {
+                    ModsSearcherAnalysisGUI.showDialog(null);
+                }
+            });
             System.exit(0);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause() == null ? e : e.getCause();
@@ -107,15 +156,72 @@ public final class ModsSearcherStandaloneProcess {
         }
     }
 
-    private static void applyArguments(String[] args) {
+    private static ChildLaunchArguments parseArguments(String[] args) {
+        SearchRequest searchRequest = null;
+        boolean autoStart = false;
+        String rawPatterns = "";
+        boolean includeJarInJar = true;
+        boolean caseInsensitive = false;
+        boolean regex = false;
+        boolean checkFileNames = true;
+        boolean searchInsideArchives = true;
+        String scopeId = "root";
+        String customPathText = "";
+
         for (int i = 0; i < args.length; i++) {
             if (ARG_MODS_FOLDER.equals(args[i]) && i + 1 < args.length) {
                 ModListUtils.MODS_FOLDER = Paths.get(args[i + 1]).toAbsolutePath().normalize();
                 i++;
+            } else if (ARG_AUTO_START.equals(args[i])) {
+                autoStart = true;
+            } else if (ARG_PATTERNS_BASE64.equals(args[i]) && i + 1 < args.length) {
+                rawPatterns = decodeBase64(args[i + 1]);
+                i++;
+            } else if (ARG_INCLUDE_JAR_IN_JAR.equals(args[i]) && i + 1 < args.length) {
+                includeJarInJar = Boolean.parseBoolean(args[i + 1]);
+                i++;
+            } else if (ARG_CASE_INSENSITIVE.equals(args[i]) && i + 1 < args.length) {
+                caseInsensitive = Boolean.parseBoolean(args[i + 1]);
+                i++;
+            } else if (ARG_REGEX.equals(args[i]) && i + 1 < args.length) {
+                regex = Boolean.parseBoolean(args[i + 1]);
+                i++;
+            } else if (ARG_CHECK_FILE_NAMES.equals(args[i]) && i + 1 < args.length) {
+                checkFileNames = Boolean.parseBoolean(args[i + 1]);
+                i++;
+            } else if (ARG_SEARCH_INSIDE_ARCHIVES.equals(args[i]) && i + 1 < args.length) {
+                searchInsideArchives = Boolean.parseBoolean(args[i + 1]);
+                i++;
+            } else if (ARG_SCOPE.equals(args[i]) && i + 1 < args.length) {
+                scopeId = args[i + 1];
+                i++;
+            } else if (ARG_CUSTOM_PATH_BASE64.equals(args[i]) && i + 1 < args.length) {
+                customPathText = decodeBase64(args[i + 1]);
+                i++;
             }
         }
+
+        if (autoStart) {
+            searchRequest = new SearchRequest(
+                    rawPatterns,
+                    includeJarInJar,
+                    caseInsensitive,
+                    regex,
+                    checkFileNames,
+                    searchInsideArchives,
+                    scopeId,
+                    customPathText
+            );
+        }
+
         LOGGER.info("Standalone Mods Searcher mods folder: {}", ModListUtils.MODS_FOLDER.toAbsolutePath().normalize());
         LOGGER.info("Standalone Mods Searcher working directory: {}", WORKSPACE_ROOT);
+        if (searchRequest != null) {
+            LOGGER.info("Standalone Mods Searcher auto-start request: patterns={}, scope={}",
+                    searchRequest.rawPatterns.replace("\n", "\\n"),
+                    searchRequest.scopeId);
+        }
+        return new ChildLaunchArguments(searchRequest);
     }
 
     private static void startOutputForwarder(Process process) {
@@ -196,6 +302,56 @@ public final class ModsSearcherStandaloneProcess {
             JOptionPane.showMessageDialog(parent, message, title, messageType);
         } else {
             SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(parent, message, title, messageType));
+        }
+    }
+
+    private static String encodeBase64(String value) {
+        String safeValue = value == null ? "" : value;
+        return Base64.getEncoder().encodeToString(safeValue.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String decodeBase64(String value) {
+        return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
+    }
+
+    private static class ChildLaunchArguments {
+        private final SearchRequest searchRequest;
+
+        private ChildLaunchArguments(SearchRequest searchRequest) {
+            this.searchRequest = searchRequest;
+        }
+    }
+
+    public static class SearchRequest {
+        private final String rawPatterns;
+        private final boolean includeJarInJar;
+        private final boolean caseInsensitive;
+        private final boolean regex;
+        private final boolean checkFileNames;
+        private final boolean searchInsideArchives;
+        private final String scopeId;
+        private final String customPathText;
+
+        public SearchRequest(String rawPatterns,
+                             boolean includeJarInJar,
+                             boolean caseInsensitive,
+                             boolean regex,
+                             boolean checkFileNames,
+                             boolean searchInsideArchives,
+                             String scopeId,
+                             String customPathText) {
+            this.rawPatterns = rawPatterns == null ? "" : rawPatterns;
+            this.includeJarInJar = includeJarInJar;
+            this.caseInsensitive = caseInsensitive;
+            this.regex = regex;
+            this.checkFileNames = checkFileNames;
+            this.searchInsideArchives = searchInsideArchives;
+            this.scopeId = scopeId == null ? "root" : scopeId;
+            this.customPathText = customPathText == null ? "" : customPathText;
+        }
+
+        public static SearchRequest modsStringMatch(String rawPatterns) {
+            return new SearchRequest(rawPatterns, true, false, false, true, true, "mods", "");
         }
     }
 }

@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.advanced;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.ModsSearcherStandaloneProcess;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.JdepsDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
@@ -14,7 +15,6 @@ import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,6 +68,10 @@ public class MixinApply extends KnownCrashReason {
 
                 String mixinConfig = result.getMixinConfig();
                 String jarName = configToJarMap.get(mixinConfig);
+                boolean jarNameUnknown = jarName == null;
+                if (jarNameUnknown) {
+                    jarName = "Unknown";
+                }
                 String conflictingJarName = null;
                 String conflictingMixin = null;
                 if (result.getRequiredJavaVersion() != null) {
@@ -76,6 +80,19 @@ public class MixinApply extends KnownCrashReason {
                     message = message.replace("$CURRENT_JAVA_VERSION$", "<strong style='color: red;'>JAVA_" + getMajorJavaVersion() + "</strong>");
                 } else if (result.isMissingOrCorruptedMixinConfig()) {
                     message += LanguageProvider.get("warnings.mixin_config_missing_or_corrupted");
+                    if (jarNameUnknown) {
+                        autoFixButtons.put(
+                                LanguageProvider.get("warnings.mixin_config_missing_or_corrupted_auto_fix"),
+                                dialog -> {
+                                    JFrame parentFrame = dialog.getOwner() instanceof JFrame ? (JFrame) dialog.getOwner() : null;
+                                    dialog.dispose();
+                                    ModsSearcherStandaloneProcess.launch(
+                                            parentFrame,
+                                            ModsSearcherStandaloneProcess.SearchRequest.modsStringMatch(mixinConfig)
+                                    );
+                                }
+                        );
+                    }
                 } else {
                     if (result.getConflictingJarName() != null) {
                         conflictingJarName = result.getConflictingJarName();
@@ -123,13 +140,9 @@ public class MixinApply extends KnownCrashReason {
         List<String> lines = log.getType() == LogType.CRASH_REPORT ? log.getReader().getAllLinesList() : log.getReader().getLastNLines(1000);
         for (int i = lines.size() - 1; i >= 0; i--) {
             String line = lines.get(i);
-            if (line.contains("org.spongepowered.asm.")) {
-                if (!line.contains("Caused by:") && line.contains("org.spongepowered.asm.launch.MixinInitialisationError: Error initialising mixin config ")) {
-                    HashSet<String> configs = extractFromLineMixinConfigs(line, configToJarMap);
-                    if (configs.size() != 1) {
-                        continue;
-                    }
-                    String config = configs.iterator().next();
+                if (line.contains("org.spongepowered.asm.")) {
+                    if (!line.contains("Caused by:") && line.contains("org.spongepowered.asm.launch.MixinInitialisationError: Error initialising mixin config ")) {
+                    String config = line.split("Error initialising mixin config ")[1].trim();
 
                     for (int j = i + 1; j < lines.size(); j++) {
                         String nextLine = lines.get(j);

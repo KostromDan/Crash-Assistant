@@ -147,6 +147,7 @@ public class JarInJarHelper {
             jvmArgs.add("-XX:MaxHeapFreeRatio=30");
             jvmArgs.add("-XX:MinHeapFreeRatio=10");
             jvmArgs.add("-XX:MaxGCPauseMillis=10000");
+            jvmArgs.add("--enable-native-access=ALL-UNNAMED");
             jvmArgs.add("-Xms8m");
             jvmArgs.add("-Xmx512m");
             if (CrashAssistantConfig.getBoolean("general.prevent_generating_crash_assistant_app_logs")) {

@@ -69,6 +69,7 @@ public final class ModsSearcherStandaloneProcess {
             command.add(JavaBinaryLocator.getJavaBinary());
             command.add("-Xms128m");
             command.add("-Xmx4g");
+            command.add("--enable-native-access=ALL-UNNAMED");
             command.add("-Dlog4j2.configurationFile=log4j2-console.xml");
             command.add("-cp");
             command.add(System.getProperty("java.class.path"));

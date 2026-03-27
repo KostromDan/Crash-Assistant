@@ -74,11 +74,15 @@ public class PrivacyPolicyDialog {
 
         // Create the Accept and Decline buttons
         JButton acceptButton = new JButton(LanguageProvider.get("gui.privacy.logs_upload_accept"));
-        acceptButton.setForeground(Color.GREEN.darker());
+        acceptButton.setForeground(ControlPanel.deserializeColor(
+                CrashAssistantConfig.get("gui_customisation.privacy_policy_yes_button_foreground_color"),
+                Color.GREEN.darker()));
         acceptButton.setFont(acceptButton.getFont().deriveFont(Font.BOLD));
         
         JButton declineButton = new JButton(LanguageProvider.get("gui.privacy.logs_upload_decline"));
-        declineButton.setForeground(Color.RED);
+        declineButton.setForeground(ControlPanel.deserializeColor(
+                CrashAssistantConfig.get("gui_customisation.privacy_policy_no_button_foreground_color"),
+                Color.RED));
         declineButton.setFont(declineButton.getFont().deriveFont(Font.BOLD));
 
         // Create a panel for the buttons and checkbox (now on the same level)

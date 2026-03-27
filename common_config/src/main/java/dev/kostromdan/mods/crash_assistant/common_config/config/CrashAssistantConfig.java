@@ -445,6 +445,14 @@ public class CrashAssistantConfig {
                 "Same as upload_all_button_foreground_color, but for Auto-Fix button (in integrated GPU warning).\n" +
                         "Default for this button is \"0_178_0\" (dark green color).",
                 "0_178_0");
+        addOption("gui_customisation.privacy_policy_yes_button_foreground_color",
+                "Same as upload_all_button_foreground_color, but for the Yes button in the privacy policy acceptance dialog.\n" +
+                        "Default for this button is \"0_178_0\" (dark green color).",
+                "0_178_0");
+        addOption("gui_customisation.privacy_policy_no_button_foreground_color",
+                "Same as upload_all_button_foreground_color, but for the No button in the privacy policy acceptance dialog.\n" +
+                        "Default for this button is \"255_0_0\" (red color).",
+                "255_0_0");
         addOption("gui_customisation.screenshot_of_gui_notice_animated_border_color",
                 "Color of the animated border for the screenshot notice.\n" +
                         "format is \"R_G_B\", range is 0-255, for example \"255_0_0\" is red color.\n" +

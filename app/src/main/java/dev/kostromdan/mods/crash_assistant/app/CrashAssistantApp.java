@@ -48,6 +48,7 @@ public class CrashAssistantApp {
     public static String systemUsedRAMAtMinecraftLaunchMoment = null;
     public static String systemSwapSpace = null;
     public static String systemUsedSwapSpaceAtMinecraftLaunchMoment = null;
+    public static String systemDiskFreeSpaceAtMinecraftLaunchMoment = null;
     public static String processor = null;
     public static boolean crashed = false;
     public static boolean crashed_with_report = false;
@@ -93,6 +94,10 @@ public class CrashAssistantApp {
             } else if ("-systemUsedSwapSpaceAtMinecraftLaunchMoment".equals(args[i]) && i + 1 < args.length) {
                 systemUsedSwapSpaceAtMinecraftLaunchMoment = args[i + 1];
                 LOGGER.info("systemUsedSwapSpaceAtMinecraftLaunchMoment: {}", systemUsedSwapSpaceAtMinecraftLaunchMoment);
+            } else if ("-systemDiskFreeSpaceAtMinecraftLaunchMoment".equals(args[i]) && i + 1 < args.length) {
+                systemDiskFreeSpaceAtMinecraftLaunchMoment = args[i + 1];
+                LOGGER.info("systemDiskTotalSpace ({}): {}", getDiskName(), formatMemorySize(getDiskTotalSpaceBytes()));
+                LOGGER.info("systemDiskFreeSpaceAtMinecraftLaunchMoment ({}): {}", getDiskName(), systemDiskFreeSpaceAtMinecraftLaunchMoment);
             } else if ("-processor".equals(args[i]) && i + 1 < args.length) {
                 processor = new String(Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8);
                 LOGGER.info("processor: {}", processor);
@@ -265,6 +270,7 @@ public class CrashAssistantApp {
 
         LOGGER.info("System used RAM after Minecraft process finish moment: {}", formatMemorySize(getSystemUsedMemoryBytes()));
         LOGGER.info("System used Swap Space after Minecraft process finish moment: {}", formatMemorySize(getSystemUsedSwapBytes()));
+        LOGGER.info("System free Disk ({}) Space after Minecraft process finish moment: {}", getDiskName(), formatMemorySize(getDiskFreeSpaceBytes()));
 
         if (customLatestLogPath != null) {
             ModListUtils.MODS_FOLDER = Paths.get(customLatestLogPath).getParent().getParent().resolve("mods").resolve("fabric-" + PlatformHelp.minecraftVersion);

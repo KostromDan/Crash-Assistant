@@ -4,7 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CorruptedConfigFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.CorruptedJarFinderGUI;
-import dev.kostromdan.mods.crash_assistant.app.gui.analysis.ModsSearcherAnalysisGUI;
+import dev.kostromdan.mods.crash_assistant.app.gui.analysis.ModsSearcherStandaloneProcess;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.PackageFinderGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.AzureLibDependenciesAnalysisGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.analysis.dependencies.CreateDependenciesAnalysisGUI;
@@ -593,7 +593,7 @@ public class CrashAssistantGUI {
 
             if (!disabledByConfigTools.contains("ModsSearcherAnalysisGUI")) {
                 JMenuItem modsSearcherItem = makeMenuItem.apply("gui.menu.analysis.mods_searcher", "gui.menu.analysis.mods_searcher.desc");
-                modsSearcherItem.addActionListener(e -> ModsSearcherAnalysisGUI.showDialog(frame));
+                modsSearcherItem.addActionListener(e -> ModsSearcherStandaloneProcess.launch(frame));
                 analysisMenu.add(modsSearcherItem);
             }
 

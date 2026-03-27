@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.FilesRemover;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -42,6 +43,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
+    // Idea from https://github.com/CurseForgeCommunity/Script-Tools
     private static final List<Charset> SEARCH_CHARSETS = Collections.unmodifiableList(Arrays.asList(
             StandardCharsets.ISO_8859_1,
             StandardCharsets.UTF_8
@@ -823,7 +825,8 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
         private final JTextArea patternsArea;
         private final JCheckBox includeJarInJarCheckbox;
         private final JCheckBox caseInsensitiveCheckbox;
-        private final JCheckBox regexCheckbox;
+        private final JRadioButton stringMatchRadio;
+        private final JRadioButton regexMatchRadio;
         private final JCheckBox checkFileNamesCheckbox;
         private final JCheckBox searchInsideArchivesCheckbox;
         private final JRadioButton rootRadio;
@@ -836,6 +839,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
         private SearchOptionsDialog(JFrame parent) {
             super(parent, LanguageProvider.get("gui.analysis.mods_searcher.options.title"), true);
             setLayout(new BorderLayout(10, 10));
+            CrashAssistantGUI.setUpIcon(this);
 
             SearchScope initialScope = SearchScope.fromStored(getStoredString(CONFIG_SCOPE, SearchScope.ROOT.id));
             String initialPatterns = getStoredString(CONFIG_PATTERNS, "");
@@ -881,10 +885,18 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                     LanguageProvider.get("gui.analysis.mods_searcher.option.case_insensitive"),
                     getStoredBoolean(CONFIG_CASE_INSENSITIVE, false)
             );
-            regexCheckbox = new JCheckBox(
-                    LanguageProvider.get("gui.analysis.mods_searcher.option.regex"),
-                    getStoredBoolean(CONFIG_REGEX, false)
+            boolean regexSelected = getStoredBoolean(CONFIG_REGEX, false);
+            stringMatchRadio = new JRadioButton(
+                    LanguageProvider.get("gui.analysis.mods_searcher.match_mode.string"),
+                    !regexSelected
             );
+            regexMatchRadio = new JRadioButton(
+                    LanguageProvider.get("gui.analysis.mods_searcher.match_mode.regex"),
+                    regexSelected
+            );
+            ButtonGroup matchModeGroup = new ButtonGroup();
+            matchModeGroup.add(stringMatchRadio);
+            matchModeGroup.add(regexMatchRadio);
             checkFileNamesCheckbox = new JCheckBox(
                     LanguageProvider.get("gui.analysis.mods_searcher.option.check_file_names"),
                     getStoredBoolean(CONFIG_CHECK_FILE_NAMES, true)
@@ -893,8 +905,15 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                     LanguageProvider.get("gui.analysis.mods_searcher.option.search_inside_archives"),
                     getStoredBoolean(CONFIG_SEARCH_INSIDE_ARCHIVES, true)
             );
+
+            JPanel matchModePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            matchModePanel.add(new JLabel(LanguageProvider.get("gui.analysis.mods_searcher.options.match_by") + " "));
+            matchModePanel.add(stringMatchRadio);
+            matchModePanel.add(Box.createHorizontalStrut(12));
+            matchModePanel.add(regexMatchRadio);
+
             optionsPanel.add(caseInsensitiveCheckbox);
-            optionsPanel.add(regexCheckbox);
+            optionsPanel.add(matchModePanel);
             optionsPanel.add(checkFileNamesCheckbox);
             optionsPanel.add(searchInsideArchivesCheckbox);
             optionsPanel.add(includeJarInJarCheckbox);
@@ -1005,7 +1024,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                         patternsArea.getText(),
                         includeJarInJarCheckbox.isSelected(),
                         caseInsensitiveCheckbox.isSelected(),
-                        regexCheckbox.isSelected(),
+                        regexMatchRadio.isSelected(),
                         checkFileNamesCheckbox.isSelected(),
                         searchInsideArchivesCheckbox.isSelected(),
                         scope,

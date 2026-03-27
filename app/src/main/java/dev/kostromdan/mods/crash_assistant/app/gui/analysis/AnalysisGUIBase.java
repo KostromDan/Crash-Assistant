@@ -37,6 +37,7 @@ public abstract class AnalysisGUIBase {
     public AnalysisGUIBase(JFrame parent, String title, String headerText) {
         dialog = new JDialog(parent, title + " (" + LanguageProvider.get("gui.window_name") + ")", true);
         dialog.setLayout(new BorderLayout());
+        CrashAssistantGUI.setUpIcon(dialog);
 
         JLabel headerLabel = new JLabel("<html>" + headerText.replaceAll("\n", "<br>") + "<br>&nbsp;</html>");
         headerLabel.setHorizontalAlignment(SwingConstants.LEFT);

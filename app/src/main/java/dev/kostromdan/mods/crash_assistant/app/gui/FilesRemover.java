@@ -462,6 +462,7 @@ public class FilesRemover extends JDialog {
         this.mode = mode;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setResizable(true);
+        CrashAssistantGUI.setUpIcon(this);
 
         this.model = new Model(rows, mode);
 

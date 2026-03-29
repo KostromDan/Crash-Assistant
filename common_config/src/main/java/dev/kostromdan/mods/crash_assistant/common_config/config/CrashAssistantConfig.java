@@ -107,7 +107,7 @@ public class CrashAssistantConfig {
                         "As only where crash reason is present. Keeps original stream untouched, just logs it to a file.",
                 true);
         addOption("general.win_event_is_crash",
-                "If true, if we can find win_event file after minecraft closed, pop ups.\n" +
+                "If true, Crash Assistant will pop up even if the presence of win_event log is the only sign of a crash.\n" +
                         "Can be false positive for some users, since they can have some unrelated spam in the windows event error log.",
                 false);
         addOption("general.logs_priority_overrides",

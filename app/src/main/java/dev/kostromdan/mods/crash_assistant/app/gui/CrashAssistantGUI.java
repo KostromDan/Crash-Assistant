@@ -64,6 +64,32 @@ public class CrashAssistantGUI {
     private static boolean hideModListInSimpleMode;
     private static final Map<JComponent, OriginalState> highlightedComponents = new ConcurrentHashMap<>();
 
+    public static void bumpWindowToFront(Window window) {
+        SwingUtilities.invokeLater(() -> {
+            Window currentWindow = window;
+            if (currentWindow == null || !currentWindow.isDisplayable() || !currentWindow.isVisible()) return;
+
+            boolean wasAlwaysOnTop = currentWindow.isAlwaysOnTop();
+            currentWindow.setAlwaysOnTop(true);
+            currentWindow.toFront();
+            currentWindow.requestFocus();
+
+            if (!wasAlwaysOnTop) {
+                javax.swing.Timer resetAlwaysOnTopTimer = new javax.swing.Timer(1000, e -> {
+                    if (currentWindow.isDisplayable()) {
+                        currentWindow.setAlwaysOnTop(false);
+                    }
+                });
+                resetAlwaysOnTopTimer.setRepeats(false);
+                resetAlwaysOnTopTimer.start();
+            }
+        });
+    }
+
+    public static void bumpMainWindowToFront() {
+        bumpWindowToFront(frame);
+    }
+
     private static class OriginalState {
         final Color originalBackground;
         final Object originalStyle;

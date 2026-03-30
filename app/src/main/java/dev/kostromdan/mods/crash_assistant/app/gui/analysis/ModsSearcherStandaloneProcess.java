@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 
 import dev.kostromdan.mods.crash_assistant.app.utils.ThemeUtils;
+import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import org.apache.logging.log4j.LogManager;
@@ -294,8 +295,7 @@ public final class ModsSearcherStandaloneProcess {
             return;
         }
         parent.setVisible(true);
-        parent.toFront();
-        parent.requestFocus();
+        CrashAssistantGUI.bumpWindowToFront(parent);
     }
 
     private static void showMessageDialog(JFrame parent, String message, String title, int messageType) {

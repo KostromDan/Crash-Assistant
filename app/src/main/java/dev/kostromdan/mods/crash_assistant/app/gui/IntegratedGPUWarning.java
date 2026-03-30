@@ -167,6 +167,7 @@ public class IntegratedGPUWarning extends JFrame {
                 @Override
                 public void windowClosed(WindowEvent e) {
                     CrashAssistantApp.LOGGER.warn("Shown IntegratedGPUWarning."); // Log after frame is closed.
+                    CrashAssistantGUI.bumpMainWindowToFront();
                     isCurrentlyDisplayed = false;
                 }
             });

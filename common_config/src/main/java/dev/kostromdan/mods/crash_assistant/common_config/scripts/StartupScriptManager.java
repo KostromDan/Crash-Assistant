@@ -15,8 +15,13 @@ public class StartupScriptManager extends AbstractScriptManager {
 
     private static final StartupScriptManager INSTANCE = new StartupScriptManager();
     private static final String MIGRATED_PROBLEMATIC_MODS_SCRIPT_NAME = "00_migrated_problematic_mods.jexl";
+    private static final String EXAMPLE_STARTUP_SCRIPT_NAME = "example.jexl";
     private static final String LEGACY_MODS_MAP_LINE = "var mods = allMods.stream().toMap(m -> m.modId, m -> m);";
     private static final String FIXED_MODS_MAP_LINE = "var mods = ModListUtils.getCurrentModListMappedToModId();";
+    private static final String LEGACY_HIGH_SYSTEM_LOAD_IF =
+            "if (!exceedsTotalSystemCapacity && xmxBytes > 0 && stillNeeded > 0 && systemAvailable < stillNeeded) {";
+    private static final String WINDOWS_ONLY_HIGH_SYSTEM_LOAD_IF =
+            "if (PlatformHelp.isWindows() && !exceedsTotalSystemCapacity && xmxBytes > 0 && stillNeeded > 0 && systemAvailable < stillNeeded) {";
 
     @Override
     protected Path getScriptsDir() {
@@ -31,6 +36,7 @@ public class StartupScriptManager extends AbstractScriptManager {
     public static void runStartupSequence(Path appJarPath, Path modJarPath) {
         migrateProblematicModsConfig();
         patchLegacyMigratedProblematicModsScript();
+        patchLegacyExampleStartupScript();
         INSTANCE.runScripts();
     }
 
@@ -122,6 +128,26 @@ public class StartupScriptManager extends AbstractScriptManager {
             JarInJarHelper.LOGGER.info("Patched legacy problematic mods migration script at {}", scriptPath);
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed to patch legacy problematic mods migration script at {}", scriptPath, e);
+        }
+    }
+
+    private static void patchLegacyExampleStartupScript() {
+        Path scriptPath = INSTANCE.getScriptsDir().resolve(EXAMPLE_STARTUP_SCRIPT_NAME);
+        if (!Files.exists(scriptPath)) {
+            return;
+        }
+
+        try {
+            String script = new String(Files.readAllBytes(scriptPath), StandardCharsets.UTF_8);
+            String patchedScript = script.replace(LEGACY_HIGH_SYSTEM_LOAD_IF, WINDOWS_ONLY_HIGH_SYSTEM_LOAD_IF);
+            if (patchedScript.equals(script)) {
+                return;
+            }
+
+            Files.write(scriptPath, patchedScript.getBytes(StandardCharsets.UTF_8));
+            JarInJarHelper.LOGGER.info("Patched legacy startup example script at {}", scriptPath);
+        } catch (Exception e) {
+            JarInJarHelper.LOGGER.warn("Failed to patch legacy startup example script at {}", scriptPath, e);
         }
     }
 }

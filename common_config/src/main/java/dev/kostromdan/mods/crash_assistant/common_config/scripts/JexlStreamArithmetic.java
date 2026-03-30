@@ -216,10 +216,10 @@ public class JexlStreamArithmetic extends JexlArithmetic {
         Map<Object, Object> result = new LinkedHashMap<>();
         stream.forEach(item -> {
             Object key = keyMapper.execute(ctx, item);
-            Object value = valueMapper.execute(ctx, item);
+            Object value = Objects.requireNonNull(valueMapper.execute(ctx, item));
             Object old = result.putIfAbsent(key, value);
             if (old != null) {
-                throw new IllegalStateException("Duplicate key: " + key);
+                throw duplicateKeyException(key, old, value);
             }
         });
         return result;
@@ -230,7 +230,7 @@ public class JexlStreamArithmetic extends JexlArithmetic {
         Map<Object, Object> result = new LinkedHashMap<>();
         stream.forEach(item -> {
             Object key = keyMapper.execute(ctx, item);
-            Object value = valueMapper.execute(ctx, item);
+            Object value = Objects.requireNonNull(valueMapper.execute(ctx, item));
             result.merge(key, value, (v1, v2) -> mergeFunction.execute(ctx, v1, v2));
         });
         return result;
@@ -281,5 +281,10 @@ public class JexlStreamArithmetic extends JexlArithmetic {
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize((Iterator<Object>) object, Spliterator.ORDERED), false);
         }
         return Stream.of(object);
+    }
+
+    private IllegalStateException duplicateKeyException(Object key, Object oldValue, Object newValue) {
+        return new IllegalStateException("Duplicate key " + key
+                + " (attempted merging values " + oldValue + " and " + newValue + ")");
     }
 }

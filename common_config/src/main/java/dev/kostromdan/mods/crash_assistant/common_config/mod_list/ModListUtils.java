@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 public class ModListUtils {
     public static final Logger LOGGER = LogManager.getLogger();
@@ -88,6 +89,25 @@ public class ModListUtils {
         return new LinkedHashSet<>();
     }
 
+    public static Map<String, Mod> getCurrentModListMappedToModId() {
+        return getCurrentModListMappedToModId(false);
+    }
+
+    public static Map<String, Mod> getCurrentModListMappedToModId(boolean includeJarInJarEntries) {
+        LinkedHashMap<String, Mod> modsById = new LinkedHashMap<>();
+        LinkedHashSet<Mod> currentMods = getCurrentModList(true);
+
+        if (includeJarInJarEntries) {
+            forEachModRecursive(currentMods, mod -> putIfAbsentByModId(modsById, mod));
+        } else {
+            for (Mod mod : currentMods) {
+                putIfAbsentByModId(modsById, mod);
+            }
+        }
+
+        return modsById;
+    }
+
     public static LinkedHashSet<Mod> getSavedModList() {
         try {
             if (Files.exists(JSON_FILE)) {
@@ -100,6 +120,16 @@ public class ModListUtils {
 
         }
         return new LinkedHashSet<>();
+    }
+
+    @NoJexl
+    public static void forEachModRecursive(Collection<Mod> mods, Consumer<Mod> consumer) {
+        if (mods == null || consumer == null) {
+            return;
+        }
+        for (Mod mod : mods) {
+            forEachModRecursive(mod, consumer);
+        }
     }
 
     @NoJexl
@@ -122,5 +152,30 @@ public class ModListUtils {
             x.ifPresent(s -> currentUsername = s);
         }
         return currentUsername;
+    }
+
+    @NoJexl
+    private static void forEachModRecursive(Mod mod, Consumer<Mod> consumer) {
+        if (mod == null) {
+            return;
+        }
+
+        consumer.accept(mod);
+        List<Mod> children = mod.getJarJarMods();
+        if (children == null || children.isEmpty()) {
+            return;
+        }
+
+        for (Mod child : children) {
+            forEachModRecursive(child, consumer);
+        }
+    }
+
+    @NoJexl
+    private static void putIfAbsentByModId(Map<String, Mod> modsById, Mod mod) {
+        if (mod == null || mod.getModId() == null) {
+            return;
+        }
+        modsById.putIfAbsent(mod.getModId(), mod);
     }
 }

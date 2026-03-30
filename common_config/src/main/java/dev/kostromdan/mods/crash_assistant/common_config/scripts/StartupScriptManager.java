@@ -14,6 +14,9 @@ import java.util.Map;
 public class StartupScriptManager extends AbstractScriptManager {
 
     private static final StartupScriptManager INSTANCE = new StartupScriptManager();
+    private static final String MIGRATED_PROBLEMATIC_MODS_SCRIPT_NAME = "00_migrated_problematic_mods.jexl";
+    private static final String LEGACY_MODS_MAP_LINE = "var mods = allMods.stream().toMap(m -> m.modId, m -> m);";
+    private static final String FIXED_MODS_MAP_LINE = "var mods = ModListUtils.getCurrentModListMappedToModId();";
 
     @Override
     protected Path getScriptsDir() {
@@ -27,6 +30,7 @@ public class StartupScriptManager extends AbstractScriptManager {
 
     public static void runStartupSequence(Path appJarPath, Path modJarPath) {
         migrateProblematicModsConfig();
+        patchLegacyMigratedProblematicModsScript();
         INSTANCE.runScripts();
     }
 
@@ -48,8 +52,7 @@ public class StartupScriptManager extends AbstractScriptManager {
             }
 
             StringBuilder script = new StringBuilder();
-            script.append("var allMods = ModListUtils.getCurrentModList(true);\n");
-            script.append("var mods = allMods.stream().toMap(m -> m.modId, m -> m);\n\n");
+            script.append(FIXED_MODS_MAP_LINE).append("\n\n");
 
             boolean scriptAdded = false;
             for (Map.Entry<String, Object> entry : config.valueMap().entrySet()) {
@@ -86,7 +89,7 @@ public class StartupScriptManager extends AbstractScriptManager {
             if (scriptAdded) {
                 Path scriptsDir = INSTANCE.getScriptsDir();
                 Files.createDirectories(scriptsDir);
-                Path scriptPath = scriptsDir.resolve("00_migrated_problematic_mods.jexl");
+                Path scriptPath = scriptsDir.resolve(MIGRATED_PROBLEMATIC_MODS_SCRIPT_NAME);
                 Files.write(scriptPath, script.toString().getBytes(StandardCharsets.UTF_8));
                 JarInJarHelper.LOGGER.info("Migrated problematic_mods_config.json to {}", scriptPath);
             }
@@ -98,6 +101,27 @@ public class StartupScriptManager extends AbstractScriptManager {
                 configPath.toFile().renameTo(configPath.getParent().resolve("problematic_mods_config.json.bak").toFile());
             } catch (Exception ignored) {
             }
+        }
+    }
+
+    private static void patchLegacyMigratedProblematicModsScript() {
+        Path scriptPath = INSTANCE.getScriptsDir().resolve(MIGRATED_PROBLEMATIC_MODS_SCRIPT_NAME);
+        if (!Files.exists(scriptPath)) {
+            return;
+        }
+
+        try {
+            String script = new String(Files.readAllBytes(scriptPath), StandardCharsets.UTF_8);
+            String patchedScript = script
+                    .replace(LEGACY_MODS_MAP_LINE, FIXED_MODS_MAP_LINE);
+            if (patchedScript.equals(script)) {
+                return;
+            }
+
+            Files.write(scriptPath, patchedScript.getBytes(StandardCharsets.UTF_8));
+            JarInJarHelper.LOGGER.info("Patched legacy problematic mods migration script at {}", scriptPath);
+        } catch (Exception e) {
+            JarInJarHelper.LOGGER.warn("Failed to patch legacy problematic mods migration script at {}", scriptPath, e);
         }
     }
 }

@@ -1,3 +1,9 @@
+1.11.7:
+
+- Fixed during window switching main gui may be lost under other windows.
+- Fixed High Ram Load Check on MacOS and Linux sometimes worked a little incorrect.
+- Clarified config option descriptions. Thanks `Madis0` for making PR!
+
 1.11.6:
 
 - New GUI analysis tool `ConnectorModDetectorGUI`. Detects fabric mods loaded by connector mod.

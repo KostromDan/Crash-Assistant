@@ -73,12 +73,12 @@ public class FilePanel {
 
         fullButtonWidth = calculateMaxButtonWidth();
         Dimension dim = new Dimension(fullButtonWidth, uploadButton.getPreferredSize().height);
-        
+
         // Ensure browser button has same height as upload button to prevent resizing
         Dimension browserDim = new Dimension(browserButton.getPreferredSize().width, dim.height);
         browserButton.setPreferredSize(browserDim);
         browserButton.setMinimumSize(browserDim);
-        
+
         uploadButton.setPreferredSize(dim);
         uploadButton.setMinimumSize(dim);
 
@@ -417,9 +417,12 @@ public class FilePanel {
         List<String> tooBigReasons = new ArrayList<>();
         if (size > 10 * 1024 * 1024)
             tooBigReasons.add("~" + size / (1024 * 1024) + langFunc.apply("msg.mb"));
-        if (log.getReader().getCountedLines() > 25000)
-            tooBigReasons.add((log.getReader().isLineCountInterrupted() ? langFunc.apply("msg.over") + " " : "~") +
-                    log.getReader().getCountedLines() / 1000 + langFunc.apply("msg.k_lines"));
+        if (log.getReader().getCountedLines() > 25000){
+            boolean lineCountInterrupted = true;
+            tooBigReasons.add((lineCountInterrupted ? langFunc.apply("msg.over") + " " : "~") +
+                    log.getReader().getCountedLines() / 1000 + langFunc.apply("msg.k_lines") +
+                    (lineCountInterrupted ? langFunc.apply("msg.over_end") : ""));
+        }
         return tooBigReasons.isEmpty() ? "" : "(" + String.join(" & ", tooBigReasons) + ")";
     }
 

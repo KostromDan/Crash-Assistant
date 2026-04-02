@@ -418,7 +418,7 @@ public class FilePanel {
         if (size > 10 * 1024 * 1024)
             tooBigReasons.add("~" + size / (1024 * 1024) + langFunc.apply("msg.mb"));
         if (log.getReader().getCountedLines() > 25000){
-            boolean lineCountInterrupted = true;
+            boolean lineCountInterrupted = log.getReader().isLineCountInterrupted();
             tooBigReasons.add((lineCountInterrupted ? langFunc.apply("msg.over") + " " : "~") +
                     log.getReader().getCountedLines() / 1000 + langFunc.apply("msg.k_lines") +
                     (lineCountInterrupted ? langFunc.apply("msg.over_end") : ""));

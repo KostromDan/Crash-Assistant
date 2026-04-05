@@ -15,6 +15,7 @@ public class IrlandaCoreBackDoor extends KnownCrashReason {
                 LogType.LOG,
                 LanguageProvider.get("warnings.irlanda_core_backdoor")
         );
+        this.setDontShowAgainKey("warnings.irlanda_core_backdoor");
     }
 
     @Override

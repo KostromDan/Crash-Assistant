@@ -18,6 +18,7 @@ public class CtovWithoutLithostitched extends KnownCrashReason {
                     put("$LINK.LITHOSTITCHED$", "Lithostitched");
                 }})
         );
+        this.setDontShowAgainKey("warnings.ctov_without_lithostitched");
     }
 
     @Override

@@ -19,6 +19,7 @@ public class GeckoLibOculusCompat extends KnownCrashReason {
                 LogType.LOG,
                 LanguageProvider.get("warnings.geckolib_oculus_compat")
         );
+        this.setDontShowAgainKey("warnings.geckolib_oculus_compat");
     }
 
     @Override

@@ -239,6 +239,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                             appendStyledText(jarDisplay, ERROR_COLOR);
                             appendStyledText(LanguageProvider.get("gui.analysis.dependencies.missing_from_current"), NORMAL_COLOR);
                             appendStyledText(targetJarName, MOD_COLOR);
+                            appendStyledText(LanguageProvider.get("gui.analysis.dependencies.missing_msg_suffix"), NORMAL_COLOR);
                             appendStyledText("\n", NORMAL_COLOR);
 
                             String logMessage = String.format(
@@ -275,6 +276,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
                                     .replace("$MOD$", getModName()),
                             NORMAL_COLOR);
                     appendStyledText(targetJarName, MOD_COLOR);
+                    appendStyledText(LanguageProvider.get("gui.analysis.dependencies.none_missing_start_suffix"), NORMAL_COLOR);
                     appendStyledText("\n", NORMAL_COLOR);
 
                     String logMessage = String.format(

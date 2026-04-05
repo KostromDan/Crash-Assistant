@@ -1,4 +1,4 @@
-﻿{
+{
   "commands.add_to_creator_list_msg": " を Modpack 作成者リストに追加しました。対象：",
   "commands.crash_command_1": "本当に ",
   "commands.crash_command_2": "をクラッシュさせたいなら、",
@@ -481,8 +481,8 @@
   "warnings.mixin_apply_java_version": "$MOD$ mod の Mixin 設定 $CONFIG$ を適用できませんでした。\nこれは、$REQUIRED_JAVA_VERSION$ 向けにコンパイルされているのに対し、現在の実行環境は $CURRENT_JAVA_VERSION$ であるためです。\n\n$REQUIRED_JAVA_VERSION$ 以降で Minecraft を実行するか、mod を削除してください。",
   "warnings.mixin_apply_missing_class": "必要なクラスが欠落しているため、Mixin 設定を適用できませんでした。$MISSING_CLASS$\n$LANG.warnings.missing_class_common$",
   "warnings.mixin_apply_missing_class_auto_fix": "この欠落しているクラスに依存している mod を検索する",
-  "warnings.mixin_config_missing_or_corrupted_auto_fix": "この Mixin 設定を提供した mod を検索",
   "warnings.mixin_config_missing_or_corrupted": "$MOD$ mod から読み込まれた Mixin 設定 $CONFIG$ が、破損しているか存在しないため適用できませんでした。\n通常、これは mod または最近のアップデートに不具合があるか、mod ファイルが破損していることを意味します。\nMod を再インストールしても解決しない場合は、mod の削除を検討してください。",
+  "warnings.mixin_config_missing_or_corrupted_auto_fix": "この Mixin 設定を提供した mod を検索",
   "warnings.modern_intel_driver_issue": "<strong>$LOG_FILENAME$</strong> 内の <strong>$PROBLEMATIC_FRAME$</strong>「Problematic frame」は、GPU 用 <strong>Intel</strong> ドライバーの一部です。\n$LINK.INTEL_DRIVERS$ からドライバーを再インストールしてみてください。\n<strong>もし</strong> <strong>Intel GPU</strong> をお使いでない場合は、以下の手順に従って、Intel CPU の内蔵 GPU ではなく使用したい GPU を使うようにシステムを設定する必要があります。\n\n$LINK.HOW_FORCE_APP_USE_DISCRETE_GPU$\n\n<strong style=green>2026 年 1 月時点の Intel の最新アップデートにより、この問題が発生することが確認されています。\nドライバーを最新版に更新しても解決しない場合は、以下のバージョンをインストールしてみてください。\n<code>32.0.101.6737</code>（内蔵 GPU 用）\n<code>32.0.101.8247</code>（Arc GPU 用）</strong>",
   "warnings.modernifx_watchdog": "<strong>$LOG_FILENAME$</strong> の最後に、IntegratedWatchdog から、サーバーのティックが通常よりもはるかに長くかかっているというメッセージが検出されました。\n<strong>$LINE_FROM_LOG$</strong>\nWorldEdit を使って数兆個ものブロックを変更するといった、極めて負荷の高い操作を行ってなかったのであれば、\nこれはおそらく、統合サーバーが <strong>デッドロック</strong> 状態にあることを意味します。\n<strong>デッドロック</strong> は、ゲームの各部分が互いに待機し合い、何も進行できなくなる状態で発生します。\nこれは、すべての車が互いに道を塞いでいる交通渋滞のようなものです。\nこのクラッシュを修正するには、ログの末尾にある <strong>スレッドダンプ</strong> を確認してください。そこには、ゲームのどの部分が互いに待機していたかが示されています。\n技術的な知識がないと、これを理解するのは難しいかもしれません。\n高度な推論機能を備えた LLM を試して <strong>スレッドダンプ</strong>を分析してみると、問題の原因となっている mod を特定するのに役立つかもしれません。\nもしこれが未改変の Modpack で発生した場合は、開発者に報告してください。このような現象は本来起こらないはずです。",
   "warnings.module_find": "<strong>$LOG_FILENAME$</strong> に、パッケージ不足に関するエラーが検出されました。\n<strong>$LINE_FROM_LOG$</strong>\n\nこのエラーは、mod の依存先のパッケージが欠落しているか、異なるバージョンの依存先が必要であるか、あるいは単に破損していることを示しています。\nまた、jarInJar 内で 2 つの mod が同じ依存関係の異なるバージョンを必要としていることが原因である可能性もあり、その場合は mod 間の互換性がないことを意味します。\n\n<strong>このクラッシュを修正</strong>するには、いくつかの方法があります。\n\n1) Mod ページにアクセスし、必要な依存先を確認してください。それらを<strong>インストールまたは更新</strong>してみてください。\n\n2) その mod 単体では動作する場合、他の mod との競合が原因である可能性が高いです。\n\n3) それでも解決しない場合は、<strong>mod を削除</strong>してください。\n\n該当するパッケージを含む mod：\n$JARS$",

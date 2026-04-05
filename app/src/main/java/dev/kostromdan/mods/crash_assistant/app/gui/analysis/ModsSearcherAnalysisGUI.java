@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.app.gui.FilesRemover;
+import dev.kostromdan.mods.crash_assistant.app.utils.MinecraftClassPathHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
@@ -32,6 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -56,6 +58,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
     private static final String CONFIG_REGEX = "analysis.mods_searcher.regex";
     private static final String CONFIG_CHECK_FILE_NAMES = "analysis.mods_searcher.check_file_names";
     private static final String CONFIG_SEARCH_INSIDE_ARCHIVES = "analysis.mods_searcher.search_inside_archives";
+    private static final String CONFIG_INCLUDE_MINECRAFT_CLASSPATH_LIBRARIES = "analysis.mods_searcher.include_minecraft_classpath_libraries";
     private static final String CONFIG_SCOPE = "analysis.mods_searcher.scope";
     private static final String CONFIG_CUSTOM_PATH = "analysis.mods_searcher.custom_path";
     private static final LinkedHashSet<String> ARCHIVE_EXTENSIONS = new LinkedHashSet<>(Arrays.asList(".jar", ".zip"));
@@ -63,6 +66,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
     private final SearchOptions options;
     private final TempExtractionManager tempExtractionManager = new TempExtractionManager();
     private final List<FoundResult> foundResults = Collections.synchronizedList(new ArrayList<>());
+    private volatile Set<String> classPathDisplayKeys = Collections.emptySet();
 
     public ModsSearcherAnalysisGUI(JFrame parent, SearchOptions options) {
         super(
@@ -95,6 +99,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                                             boolean regex,
                                             boolean checkFileNames,
                                             boolean searchInsideArchives,
+                                            boolean includeMinecraftClassPathLibraries,
                                             String scopeId,
                                             String customPathText) {
         SearchOptions options = SearchOptions.create(
@@ -104,6 +109,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                 regex,
                 checkFileNames,
                 searchInsideArchives,
+                includeMinecraftClassPathLibraries,
                 SearchScope.fromStored(scopeId),
                 customPathText
         );
@@ -117,13 +123,16 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
     @Override
     protected void performAnalysis() {
         Path rootPath = options.rootPath;
-        if (!Files.isDirectory(rootPath)) {
+        boolean rootExists = Files.isDirectory(rootPath);
+        if (!rootExists) {
             SwingUtilities.invokeLater(() -> appendStyledText(
                     LanguageProvider.get("gui.analysis.mods_searcher.folder_not_found")
                             .replace("$PATH$", rootPath.toString()) + "\n",
                     ERROR_COLOR
             ));
-            return;
+            if (!options.includeMinecraftClassPathLibraries) {
+                return;
+            }
         }
 
         List<Path> filesToScan = discoverFiles(rootPath);
@@ -236,16 +245,50 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
     }
 
     private List<Path> discoverFiles(Path rootPath) {
-        try (Stream<Path> stream = Files.walk(rootPath)) {
-            return stream
-                    .filter(Files::isRegularFile)
-                    .filter(path -> !isDisabledPath(path))
-                    .sorted()
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            CrashAssistantApp.LOGGER.error("[ModsSearcher] Failed to enumerate {}", rootPath, e);
-            return Collections.emptyList();
+        LinkedHashSet<Path> files = new LinkedHashSet<>();
+        int rootFilesCount = 0;
+        int classPathArchivesCount = 0;
+        Set<String> discoveredClassPathKeys = Collections.emptySet();
+        if (Files.isDirectory(rootPath)) {
+            try (Stream<Path> stream = Files.walk(rootPath)) {
+                stream
+                        .filter(Files::isRegularFile)
+                        .filter(path -> !isDisabledPath(path))
+                        .forEach(files::add);
+            } catch (IOException e) {
+                CrashAssistantApp.LOGGER.error("[ModsSearcher] Failed to enumerate {}", rootPath, e);
+            }
         }
+        rootFilesCount = files.size();
+
+        if (options.includeMinecraftClassPathLibraries) {
+            List<Path> classPathArchives = MinecraftClassPathHelper.streamCurrentClassPathArchives()
+                    .filter(path -> !isDisabledPath(path))
+                    .collect(Collectors.toList());
+            classPathArchivesCount = classPathArchives.size();
+            classPathArchives.forEach(files::add);
+            discoveredClassPathKeys = classPathArchives.stream()
+                    .map(ModsSearcherAnalysisGUI::toDisplayKey)
+                    .collect(Collectors.toSet());
+        }
+        classPathDisplayKeys = discoveredClassPathKeys;
+
+        List<Path> sorted = new ArrayList<>(files);
+        sorted.sort(Comparator.naturalOrder());
+        CrashAssistantApp.LOGGER.info(
+                "[ModsSearcher] Files discovered. rootFiles={}, classPathArchives={}, total={}, scope={}, includeClassPathLibraries={}, checkFileNames={}, searchInsideArchives={}, includeJarInJar={}, caseInsensitive={}, regex={}",
+                rootFilesCount,
+                classPathArchivesCount,
+                sorted.size(),
+                options.scope.id,
+                options.includeMinecraftClassPathLibraries,
+                options.checkFileNames,
+                options.searchInsideArchives,
+                options.includeJarInJar,
+                options.caseInsensitive,
+                options.regex
+        );
+        return sorted;
     }
 
     private List<FoundResult> scanFile(Path file, String display) {
@@ -509,13 +552,20 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
         }
     }
 
-    private static String toDisplayPath(Path path) {
-        Path absolute = path.toAbsolutePath().normalize();
+    private String toDisplayPath(Path path) {
+        Path absolute = path.toAbsolutePath();
+        if (classPathDisplayKeys.contains(toDisplayKey(absolute))) {
+            return absolute.toString().replace('\\', '/');
+        }
         try {
             return WORKSPACE_ROOT.relativize(absolute).toString().replace('\\', '/');
         } catch (IllegalArgumentException ignored) {
             return absolute.toString().replace('\\', '/');
         }
+    }
+
+    private static String toDisplayKey(Path path) {
+        return path.toAbsolutePath().toString().replace('\\', '/').toLowerCase(Locale.ROOT);
     }
 
     private static boolean isArchiveFile(Path path) {
@@ -749,6 +799,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
         private final boolean regex;
         private final boolean checkFileNames;
         private final boolean searchInsideArchives;
+        private final boolean includeMinecraftClassPathLibraries;
         private final SearchScope scope;
         private final Path rootPath;
         private final String customPathText;
@@ -761,6 +812,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                               boolean regex,
                               boolean checkFileNames,
                               boolean searchInsideArchives,
+                              boolean includeMinecraftClassPathLibraries,
                               SearchScope scope,
                               String customPathText) {
             this.rawPatterns = rawPatterns;
@@ -770,6 +822,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
             this.regex = regex;
             this.checkFileNames = checkFileNames;
             this.searchInsideArchives = searchInsideArchives;
+            this.includeMinecraftClassPathLibraries = includeMinecraftClassPathLibraries;
             this.scope = scope;
             this.customPathText = customPathText == null ? "" : customPathText.trim();
             this.rootPath = resolveRoot(scope, this.customPathText);
@@ -782,6 +835,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                                             boolean regex,
                                             boolean checkFileNames,
                                             boolean searchInsideArchives,
+                                            boolean includeMinecraftClassPathLibraries,
                                             SearchScope scope,
                                             String customPathText) {
             String normalizedPatterns = rawPatterns == null ? "" : rawPatterns.replace("\r\n", "\n").trim();
@@ -824,6 +878,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                         regex,
                         checkFileNames,
                         searchInsideArchives,
+                        includeMinecraftClassPathLibraries,
                         scope,
                         customPathText
                 );
@@ -901,6 +956,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
         private final JRadioButton regexMatchRadio;
         private final JCheckBox checkFileNamesCheckbox;
         private final JCheckBox searchInsideArchivesCheckbox;
+        private final JCheckBox includeMinecraftClassPathLibrariesCheckbox;
         private final JRadioButton rootRadio;
         private final JRadioButton modsRadio;
         private final JRadioButton configRadio;
@@ -977,6 +1033,10 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                     LanguageProvider.get("gui.analysis.mods_searcher.option.search_inside_archives"),
                     getStoredBoolean(CONFIG_SEARCH_INSIDE_ARCHIVES, true)
             );
+            includeMinecraftClassPathLibrariesCheckbox = new JCheckBox(
+                    LanguageProvider.get("gui.analysis.mods_searcher.option.include_minecraft_classpath_libraries"),
+                    getStoredBoolean(CONFIG_INCLUDE_MINECRAFT_CLASSPATH_LIBRARIES, true)
+            );
 
             JPanel matchModePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             matchModePanel.add(new JLabel(LanguageProvider.get("gui.analysis.mods_searcher.options.match_by") + " "));
@@ -1034,6 +1094,9 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
             customPathPanel.add(customPathField, BorderLayout.CENTER);
             customPathPanel.add(browseButton, BorderLayout.EAST);
             scopeGroupPanel.add(customPathPanel);
+            scopeGroupPanel.add(Box.createVerticalStrut(8));
+            includeMinecraftClassPathLibrariesCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+            scopeGroupPanel.add(includeMinecraftClassPathLibrariesCheckbox);
             settingsRow.add(scopeGroupPanel);
 
             content.add(settingsRow);
@@ -1099,6 +1162,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
                         regexMatchRadio.isSelected(),
                         checkFileNamesCheckbox.isSelected(),
                         searchInsideArchivesCheckbox.isSelected(),
+                        includeMinecraftClassPathLibrariesCheckbox.isSelected(),
                         scope,
                         customPathField.getText()
                 );
@@ -1139,6 +1203,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
             CrashAssistantLocalConfig.set(CONFIG_REGEX, options.regex);
             CrashAssistantLocalConfig.set(CONFIG_CHECK_FILE_NAMES, options.checkFileNames);
             CrashAssistantLocalConfig.set(CONFIG_SEARCH_INSIDE_ARCHIVES, options.searchInsideArchives);
+            CrashAssistantLocalConfig.set(CONFIG_INCLUDE_MINECRAFT_CLASSPATH_LIBRARIES, options.includeMinecraftClassPathLibraries);
             CrashAssistantLocalConfig.set(CONFIG_SCOPE, options.scope.id);
             CrashAssistantLocalConfig.set(CONFIG_CUSTOM_PATH, options.customPathText);
         }

@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 
+import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
 import dev.kostromdan.mods.crash_assistant.app.utils.ThemeUtils;
 import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
@@ -31,6 +32,8 @@ public final class ModsSearcherStandaloneProcess {
     private static final String ARG_REGEX = "--regex";
     private static final String ARG_CHECK_FILE_NAMES = "--check-file-names";
     private static final String ARG_SEARCH_INSIDE_ARCHIVES = "--search-inside-archives";
+    private static final String ARG_INCLUDE_MINECRAFT_CLASSPATH_LIBRARIES = "--include-minecraft-classpath-libraries";
+    private static final String ARG_MINECRAFT_CLASSPATH_BASE64 = "--minecraft-classpath-base64";
     private static final String ARG_SCOPE = "--scope";
     private static final String ARG_CUSTOM_PATH_BASE64 = "--custom-path-base64";
     private static final String CHILD_LOG_PREFIX = "[ModsSearcherChild]";
@@ -77,6 +80,8 @@ public final class ModsSearcherStandaloneProcess {
             command.add(ModsSearcherStandaloneProcess.class.getName());
             command.add(ARG_MODS_FOLDER);
             command.add(ModListUtils.MODS_FOLDER.toAbsolutePath().normalize().toString());
+            command.add(ARG_MINECRAFT_CLASSPATH_BASE64);
+            command.add(encodeBase64(Boot.MINECRAFT_CLASS_PATH));
             if (searchRequest != null) {
                 command.add(ARG_AUTO_START);
                 command.add(ARG_PATTERNS_BASE64);
@@ -91,6 +96,8 @@ public final class ModsSearcherStandaloneProcess {
                 command.add(String.valueOf(searchRequest.checkFileNames));
                 command.add(ARG_SEARCH_INSIDE_ARCHIVES);
                 command.add(String.valueOf(searchRequest.searchInsideArchives));
+                command.add(ARG_INCLUDE_MINECRAFT_CLASSPATH_LIBRARIES);
+                command.add(String.valueOf(searchRequest.includeMinecraftClassPathLibraries));
                 command.add(ARG_SCOPE);
                 command.add(searchRequest.scopeId);
                 command.add(ARG_CUSTOM_PATH_BASE64);
@@ -136,6 +143,7 @@ public final class ModsSearcherStandaloneProcess {
                             launchArguments.searchRequest.regex,
                             launchArguments.searchRequest.checkFileNames,
                             launchArguments.searchRequest.searchInsideArchives,
+                            launchArguments.searchRequest.includeMinecraftClassPathLibraries,
                             launchArguments.searchRequest.scopeId,
                             launchArguments.searchRequest.customPathText
                     );
@@ -167,12 +175,17 @@ public final class ModsSearcherStandaloneProcess {
         boolean regex = false;
         boolean checkFileNames = true;
         boolean searchInsideArchives = true;
+        boolean includeMinecraftClassPathLibraries = true;
+        String minecraftClassPath = "";
         String scopeId = "root";
         String customPathText = "";
 
         for (int i = 0; i < args.length; i++) {
             if (ARG_MODS_FOLDER.equals(args[i]) && i + 1 < args.length) {
                 ModListUtils.MODS_FOLDER = Paths.get(args[i + 1]).toAbsolutePath().normalize();
+                i++;
+            } else if (ARG_MINECRAFT_CLASSPATH_BASE64.equals(args[i]) && i + 1 < args.length) {
+                minecraftClassPath = decodeBase64(args[i + 1]);
                 i++;
             } else if (ARG_AUTO_START.equals(args[i])) {
                 autoStart = true;
@@ -194,6 +207,9 @@ public final class ModsSearcherStandaloneProcess {
             } else if (ARG_SEARCH_INSIDE_ARCHIVES.equals(args[i]) && i + 1 < args.length) {
                 searchInsideArchives = Boolean.parseBoolean(args[i + 1]);
                 i++;
+            } else if (ARG_INCLUDE_MINECRAFT_CLASSPATH_LIBRARIES.equals(args[i]) && i + 1 < args.length) {
+                includeMinecraftClassPathLibraries = Boolean.parseBoolean(args[i + 1]);
+                i++;
             } else if (ARG_SCOPE.equals(args[i]) && i + 1 < args.length) {
                 scopeId = args[i + 1];
                 i++;
@@ -211,10 +227,13 @@ public final class ModsSearcherStandaloneProcess {
                     regex,
                     checkFileNames,
                     searchInsideArchives,
+                    includeMinecraftClassPathLibraries,
                     scopeId,
                     customPathText
             );
         }
+
+        Boot.MINECRAFT_CLASS_PATH = minecraftClassPath == null ? null : minecraftClassPath.trim();
 
         LOGGER.info("Standalone Mods Searcher mods folder: {}", ModListUtils.MODS_FOLDER.toAbsolutePath().normalize());
         LOGGER.info("Standalone Mods Searcher working directory: {}", WORKSPACE_ROOT);
@@ -330,6 +349,7 @@ public final class ModsSearcherStandaloneProcess {
         private final boolean regex;
         private final boolean checkFileNames;
         private final boolean searchInsideArchives;
+        private final boolean includeMinecraftClassPathLibraries;
         private final String scopeId;
         private final String customPathText;
 
@@ -339,6 +359,7 @@ public final class ModsSearcherStandaloneProcess {
                              boolean regex,
                              boolean checkFileNames,
                              boolean searchInsideArchives,
+                             boolean includeMinecraftClassPathLibraries,
                              String scopeId,
                              String customPathText) {
             this.rawPatterns = rawPatterns == null ? "" : rawPatterns;
@@ -347,12 +368,13 @@ public final class ModsSearcherStandaloneProcess {
             this.regex = regex;
             this.checkFileNames = checkFileNames;
             this.searchInsideArchives = searchInsideArchives;
+            this.includeMinecraftClassPathLibraries = includeMinecraftClassPathLibraries;
             this.scopeId = scopeId == null ? "root" : scopeId;
             this.customPathText = customPathText == null ? "" : customPathText;
         }
 
         public static SearchRequest modsStringMatch(String rawPatterns) {
-            return new SearchRequest(rawPatterns, true, false, false, true, true, "mods", "");
+            return new SearchRequest(rawPatterns, true, false, false, true, true, false, "mods", "");
         }
     }
 }

@@ -134,6 +134,7 @@
   "gui.analysis.mods_searcher.option.case_insensitive": "Case insensitive",
   "gui.analysis.mods_searcher.option.check_file_names": "Check file names",
   "gui.analysis.mods_searcher.option.include_jar_in_jar": "Include jar in jar",
+  "gui.analysis.mods_searcher.option.include_minecraft_classpath_libraries": "Also search Minecraft classpath libraries",
   "gui.analysis.mods_searcher.option.search_inside_archives": "Search inside archives",
   "gui.analysis.mods_searcher.options.browse": "Browse...",
   "gui.analysis.mods_searcher.options.choose_folder": "Choose folder",

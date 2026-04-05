@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.utils.MinecraftClassPathHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
@@ -12,15 +13,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -29,6 +32,9 @@ import java.util.zip.ZipException;
 public class CorruptedJarFinderGUI extends AnalysisGUIBase {
 
     private static final String ERROR_PLACEHOLDER = "$ERROR$";
+    private static final Path WORKSPACE_ROOT = Paths.get("").toAbsolutePath();
+    private final Map<String, Path> detectedArchivesForRemoval = Collections.synchronizedMap(new LinkedHashMap<>());
+    private volatile Set<String> classPathDisplayKeys = Collections.emptySet();
 
     private enum CorruptionReason {
         MISSING("gui.analysis.corrupted_jar_finder.reason.missing", false),
@@ -97,7 +103,7 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
             executor.submit(() -> {
                 if (isCancelled) return;
 
-                String topId = toModsRelative(jarPath);
+                String topId = toArchiveDisplayId(jarPath);
 
                 SwingUtilities.invokeLater(() ->
                         currentJarLabel.setText(LanguageProvider.get("gui.analysis.current_mod") + " " + topId)
@@ -106,9 +112,7 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
                 List<CorruptionRecord> records = inspectJarAndNested(jarPath, topId);
 
                 if (!records.isEmpty()) {
-                    if (Files.exists(jarPath)) {
-                        registerDetectedModJar(topId);
-                    }
+                    registerDetectedArchive(topId, jarPath);
                     anyCorruptionFound.set(true);
                     logCorruptions(records);
 
@@ -140,21 +144,41 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
         }
     }
 
-    private static List<Path> discoverArchives() {
+    @Override
+    protected Map<String, Path> buildDetectedModsMap() {
+        synchronized (detectedArchivesForRemoval) {
+            return new LinkedHashMap<>(detectedArchivesForRemoval);
+        }
+    }
+
+    private List<Path> discoverArchives() {
+        LinkedHashSet<Path> archives = new LinkedHashSet<>();
+        Set<String> classPathKeys = new LinkedHashSet<>();
+
         Path modsFolder = ModListUtils.MODS_FOLDER;
-        if (!Files.isDirectory(modsFolder)) {
-            return Collections.emptyList();
+        if (Files.isDirectory(modsFolder)) {
+            try (Stream<Path> stream = Files.walk(modsFolder)) {
+                stream
+                        .filter(Files::isRegularFile)
+                        .filter(path -> isArchive(path.getFileName().toString()))
+                        .map(Path::toAbsolutePath)
+                        .forEach(archives::add);
+            } catch (IOException e) {
+                CrashAssistantApp.LOGGER.error("Failed to enumerate mods folder for CorruptedJarFinder", e);
+            }
         }
-        try (Stream<Path> stream = Files.walk(modsFolder)) {
-            return stream
-                    .filter(Files::isRegularFile)
-                    .filter(path -> isArchive(path.getFileName().toString()))
-                    .sorted()
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            CrashAssistantApp.LOGGER.error("Failed to enumerate mods folder for CorruptedJarFinder", e);
-            return Collections.emptyList();
-        }
+
+        MinecraftClassPathHelper.streamCurrentClassPathArchives()
+                .map(Path::toAbsolutePath)
+                .forEach(path -> {
+                    archives.add(path);
+                    classPathKeys.add(toDisplayKey(path));
+                });
+        classPathDisplayKeys = classPathKeys;
+
+        List<Path> sorted = new ArrayList<>(archives);
+        Collections.sort(sorted);
+        return sorted;
     }
 
     private static boolean isArchive(String name) {
@@ -167,15 +191,50 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
         return lower.endsWith(".jar") || lower.endsWith(".zip");
     }
 
+    private String toArchiveDisplayId(Path jarPath) {
+        Path absolute = jarPath.toAbsolutePath();
+        if (classPathDisplayKeys.contains(toDisplayKey(absolute))) {
+            return absolute.toString().replace('\\', '/');
+        }
+
+        String modsRelative = toModsRelative(absolute);
+        if (modsRelative != null) {
+            return modsRelative;
+        }
+        try {
+            Path relative = WORKSPACE_ROOT.relativize(absolute);
+            return relative.toString().replace('\\', '/');
+        } catch (IllegalArgumentException ignored) {
+            return absolute.toString().replace('\\', '/');
+        }
+    }
+
     private static String toModsRelative(Path jarPath) {
-        Path modsFolder = ModListUtils.MODS_FOLDER.toAbsolutePath().normalize();
-        Path normalized = jarPath.toAbsolutePath().normalize();
-        if (normalized.startsWith(modsFolder)) {
-            Path relative = modsFolder.relativize(normalized);
+        Path modsFolder = ModListUtils.MODS_FOLDER.toAbsolutePath();
+        Path absolute = jarPath.toAbsolutePath();
+        if (absolute.startsWith(modsFolder)) {
+            Path relative = modsFolder.relativize(absolute);
             return relative.toString().replace('\\', '/');
         }
-        Path name = normalized.getFileName();
-        return name != null ? name.toString() : normalized.toString();
+        return null;
+    }
+
+    private void registerDetectedArchive(String displayName, Path archivePath) {
+        if (archivePath == null) {
+            return;
+        }
+        Path absolute = archivePath.toAbsolutePath();
+        if (!Files.exists(absolute)) {
+            return;
+        }
+        synchronized (detectedArchivesForRemoval) {
+            detectedArchivesForRemoval.putIfAbsent(displayName, absolute);
+        }
+        registerDetectedModJar(displayName);
+    }
+
+    private static String toDisplayKey(Path path) {
+        return path.toAbsolutePath().toString().replace('\\', '/').toLowerCase(Locale.ROOT);
     }
 
     private void appendResultsForMod(String jarName, List<CorruptionRecord> records, boolean isFirst) {

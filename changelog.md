@@ -4,6 +4,7 @@
 - Fixed High Ram Load Check on MacOS and Linux sometimes worked a little incorrect.
 - Fixed startup scripts modlist getting didn't work if some mods were without modids.
 - Fixed mods searcher icon not displayed at the taskbar, so window may be lost under other windows.
+- Fixed rarely corrupted cursforge minecraft installation crash reason displayed as corrupted mod.
 - Added detailed upload error handling with a visual guide for network failures and updated language localizations.
 - Added Japanese translation. Thanks `looksky49` for making PR!
 - Improved duplicated Crash Assistant mod on Forge Check. Added one-click autofix button which will remove duplicates.

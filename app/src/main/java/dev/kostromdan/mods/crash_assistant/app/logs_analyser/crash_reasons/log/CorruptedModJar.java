@@ -49,8 +49,7 @@ public class CorruptedModJar extends KnownCrashReason {
                 if (lineToSearch.contains("Failed to create secure jar for")) found = true;
             }
             if (found) {
-                String allLines = log.getReader().getAllLinesString();
-                if (FileUtils.isCurseForgeEnv() && allLines.contains("net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator.lambda$scanMods")) {
+                if (FileUtils.isCurseForgeEnv() && hasMinecraftLocatorStackTrace(lines)) {
                     message = LanguageProvider.get("warnings.curseforge_corrupted", new HashMap<String, String>() {{
                         put("$LINK.ATL$", "ATLauncher");
                     }});
@@ -58,6 +57,15 @@ public class CorruptedModJar extends KnownCrashReason {
                 }
                 return true;
             }
+        }
+        return false;
+    }
+
+    public static boolean hasMinecraftLocatorStackTrace(List<String> lines) {
+        for (String line : lines) {
+            if (!line.contains("at ")) continue;
+            if (!line.contains("net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator.")) continue;
+            return true;
         }
         return false;
     }

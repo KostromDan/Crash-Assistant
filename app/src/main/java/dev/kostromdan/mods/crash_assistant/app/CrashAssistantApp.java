@@ -62,7 +62,7 @@ public class CrashAssistantApp {
 
     @NoJexl
     public static void main(String[] args) {
-        PlatformHelp.platform=PlatformHelp.FORGE;
+//        PlatformHelp.platform=PlatformHelp.FORGE;
 //        PlatformHelp.platform=PlatformHelp.FABRIC;
 //        PlatformHelp.platform=PlatformHelp.NEOFORGE;
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {

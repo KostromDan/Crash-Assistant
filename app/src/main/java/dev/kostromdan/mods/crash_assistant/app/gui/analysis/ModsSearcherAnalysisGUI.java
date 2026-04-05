@@ -72,7 +72,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
         super(
                 parent,
                 LanguageProvider.get("gui.menu.analysis.mods_searcher"),
-                LanguageProvider.get("gui.analysis.mods_searcher.header")
+                LanguageProvider.get("gui.menu.analysis.mods_searcher.desc")
         );
         this.options = options;
         statusLabel.setText(LanguageProvider.get("gui.analysis.mods_searcher.status"));

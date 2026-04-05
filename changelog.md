@@ -3,6 +3,7 @@
 - Fixed during window switching main gui may be lost under other windows.
 - Fixed High Ram Load Check on MacOS and Linux sometimes worked a little incorrect.
 - Fixed startup scripts modlist getting didn't work if some mods were without modids.
+- Added Japanese translation. Thanks `looksky49` for making PR!
 - Clarified config option descriptions. Thanks `Madis0` for making PR!
 
 1.11.6:

@@ -909,7 +909,7 @@ public class ModsSearcherAnalysisGUI extends AnalysisGUIBase {
         private final JTextField customPathField;
 
         private SearchOptionsDialog(JFrame parent) {
-            super(parent, LanguageProvider.get("gui.analysis.mods_searcher.options.title"), true);
+            super((Window) parent, LanguageProvider.get("gui.analysis.mods_searcher.options.title"), Dialog.ModalityType.APPLICATION_MODAL);
             setLayout(new BorderLayout(10, 10));
             CrashAssistantGUI.setUpIcon(this);
 

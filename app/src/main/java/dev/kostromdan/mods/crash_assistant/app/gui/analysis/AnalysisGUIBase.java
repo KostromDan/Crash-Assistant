@@ -1,9 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.app.gui.FilesRemover;
 import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
+import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
 import javax.swing.*;
@@ -35,7 +35,7 @@ public abstract class AnalysisGUIBase {
     protected final java.util.LinkedHashSet<String> detectedModJarsForRemoval = new java.util.LinkedHashSet<>();
 
     public AnalysisGUIBase(JFrame parent, String title, String headerText) {
-        dialog = new JDialog(parent, title + " (" + LanguageProvider.get("gui.window_name") + ")", true);
+        dialog = new JDialog((Window) parent, title + " (" + LanguageProvider.get("gui.window_name") + ")", Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setLayout(new BorderLayout());
         CrashAssistantGUI.setUpIcon(dialog);
 

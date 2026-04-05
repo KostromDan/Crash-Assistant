@@ -393,6 +393,8 @@
   "gui.upload_all_comment": "Alle hochladen…",
   "gui.upload_all_finished_button": "Eine Nachricht für den Support kopieren",
   "gui.upload_and_copy_link_button": "Hochladen und Link kopieren",
+  "gui.upload_network_error_gif_failed": "GIF konnte nicht geladen werden",
+  "gui.upload_network_error_message": "Das Log $LOG_NAME$ konnte aufgrund eines Netzwerkfehlers nicht hochgeladen werden.<br>Fehlermeldung: $ERROR_MESSAGE$<br>Bitte versuche es erneut.<br>Wenn der Fehler weiterhin auftritt, lade die Logs per Drag-and-Drop hoch.<br><br>1. Ziehe einen einzelnen Log-Eintrag oder \"$LANG.gui.file_list_label$\", um alle verfugbaren Logs auf einmal zu erfassen.<br>2. Ziehe es in den Discord-Chat oder auf GitHub.",
   "gui.uploading": "Hochladen…",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "Hinzugefügte Mods:",

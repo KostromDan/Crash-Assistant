@@ -393,6 +393,8 @@
   "gui.upload_all_comment": "Enviar todos...",
   "gui.upload_all_finished_button": "Copiar uma mensagem para suporte",
   "gui.upload_and_copy_link_button": "Enviar e copiar link",
+  "gui.upload_network_error_gif_failed": "Falha ao carregar o GIF",
+  "gui.upload_network_error_message": "Falha ao enviar o log $LOG_NAME$ devido a um erro de rede.<br>Mensagem de erro: $ERROR_MESSAGE$<br>Tente novamente.<br>Se o erro persistir, envie os logs usando arrastar e soltar.<br><br>1. Arraste uma unica entrada de log ou \"$LANG.gui.file_list_label$\" para incluir todos os logs disponiveis de uma vez.<br>2. Solte no chat do Discord ou no GitHub.",
   "gui.uploading": "Enviando...",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "Mods adicionados:",

@@ -297,6 +297,9 @@ public class FilePanel {
                             CrashAssistantApp.LOGGER.info("{} last lines uploaded successfully: {}", log.getName(), finalLink);
                             log.setLinkToUploadedLastLines(finalLink);
                         } else {
+                            if (responseLastLines.isNetworkError()) {
+                                throw UploadException.network("An error occurred when uploading file: " + responseLastLines.getError());
+                            }
                             throw new UploadException("An error occurred when uploading file: " + responseLastLines.getError());
                         }
                     }
@@ -316,6 +319,9 @@ public class FilePanel {
                         }
                         log.setLinkToUploadedFirstLines(finalLink);
                     } else {
+                        if (responseFirstLines.isNetworkError()) {
+                            throw UploadException.network("An error occurred when uploading file: " + responseFirstLines.getError());
+                        }
                         throw new UploadException("An error occurred when uploading file: " + responseFirstLines.getError());
                     }
                 } catch (Exception e) {
@@ -326,13 +332,17 @@ public class FilePanel {
                         CrashAssistantGUI.highlightButton(uploadButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_error_color"), new Color(255, 100, 100)), 2800);
                         if (fromButton && !(e instanceof DeclinedException)) {
                             synchronized (uploadErrorDialogLock) {
-                                String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e;
-                                JOptionPane.showMessageDialog(
-                                        panel,
-                                        message,
-                                        LanguageProvider.get("gui.failed_to_upload_file") + "!",
-                                        JOptionPane.ERROR_MESSAGE
-                                );
+                                if (UploadErrorDialog.isNetworkUploadError(e)) {
+                                    UploadErrorDialog.show(panel, log, UploadErrorDialog.formatErrorMessage(e));
+                                } else {
+                                    String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e;
+                                    JOptionPane.showMessageDialog(
+                                            panel,
+                                            message,
+                                            LanguageProvider.get("gui.failed_to_upload_file") + "!",
+                                            JOptionPane.ERROR_MESSAGE
+                                    );
+                                }
                             }
                         }
                         new Timer().schedule(

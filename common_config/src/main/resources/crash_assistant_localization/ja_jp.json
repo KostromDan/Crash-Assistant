@@ -393,6 +393,8 @@
   "gui.upload_all_comment": "すべてアップロード...",
   "gui.upload_all_finished_button": "サポートへのメッセージをコピー",
   "gui.upload_and_copy_link_button": "アップロードしてリンクをコピー",
+  "gui.upload_network_error_gif_failed": "GIFを読み込めませんでした",
+  "gui.upload_network_error_message": "ネットワークエラーのため、ログ $LOG_NAME$ をアップロードできませんでした。<br>エラーメッセージ: $ERROR_MESSAGE$<br>もう一度お試しください。<br>問題が続く場合は、ドラッグ＆ドロップでログをアップロードしてください。<br><br>1. 単一のログ項目、または \"$LANG.gui.file_list_label$\" をドラッグして、利用可能なすべてのログを一度に取得します。<br>2. Discord のチャットまたは GitHub にドロップしてください。",
   "gui.uploading": "アップロード中...",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "追加された mod：",

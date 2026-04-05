@@ -393,6 +393,8 @@
   "gui.upload_all_comment": "Carica tutto...",
   "gui.upload_all_finished_button": "Copia un messaggio per il supporto",
   "gui.upload_and_copy_link_button": "Carica e copia link",
+  "gui.upload_network_error_gif_failed": "Impossibile caricare la GIF",
+  "gui.upload_network_error_message": "Impossibile caricare il log $LOG_NAME$ a causa di un errore di rete.<br>Messaggio di errore: $ERROR_MESSAGE$<br>Riprova.<br>Se l'errore persiste, carica i log usando il trascinamento.<br><br>1. Trascina una singola voce di log oppure \"$LANG.gui.file_list_label$\" per includere tutti i log disponibili in una volta.<br>2. Rilascialo nella chat di Discord o su GitHub.",
   "gui.uploading": "Caricamento...",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "Mod aggiunte:",

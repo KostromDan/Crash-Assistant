@@ -393,6 +393,8 @@
   "gui.upload_all_comment": "上传全部...",
   "gui.upload_all_finished_button": "复制支持信息",
   "gui.upload_and_copy_link_button": "上传并复制链接",
+  "gui.upload_network_error_gif_failed": "无法加载 GIF",
+  "gui.upload_network_error_message": "由于网络错误，无法上传日志 $LOG_NAME$。<br>错误信息：$ERROR_MESSAGE$<br>请再试一次。<br>如果错误持续出现，请使用拖放方式上传日志。<br><br>1. 拖动单个日志条目，或拖动“$LANG.gui.file_list_label$”以一次性包含所有可用日志。<br>2. 将其拖放到 Discord 聊天或 GitHub 中。",
   "gui.uploading": "上传中...",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "新增模组：",

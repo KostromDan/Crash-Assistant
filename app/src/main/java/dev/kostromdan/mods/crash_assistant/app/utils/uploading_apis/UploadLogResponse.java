@@ -10,6 +10,7 @@ public class UploadLogResponse {
     private String error;
     private String id;
     private LogAnalysisResponse analysisResponse;
+    private boolean networkError;
 
     /**
      * Creates a new successful UploadLogResponse
@@ -33,8 +34,13 @@ public class UploadLogResponse {
      * @param error The error message
      */
     public UploadLogResponse(String error) {
+        this(error, false);
+    }
+
+    public UploadLogResponse(String error, boolean networkError) {
         this.success = false;
         this.error = error;
+        this.networkError = networkError;
     }
 
     /**
@@ -71,6 +77,10 @@ public class UploadLogResponse {
      */
     public String getError() {
         return error;
+    }
+
+    public boolean isNetworkError() {
+        return networkError;
     }
 
     /**

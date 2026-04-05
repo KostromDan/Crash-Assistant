@@ -393,6 +393,8 @@
   "gui.upload_all_comment": "Загрузить все...",
   "gui.upload_all_finished_button": "Скопировать сообщение для поддержки",
   "gui.upload_and_copy_link_button": "Загрузить и скопировать ссылку",
+  "gui.upload_network_error_gif_failed": "Не удалось загрузить GIF",
+  "gui.upload_network_error_message": "Не удалось загрузить лог $LOG_NAME$ из-за ошибки сети.<br>Сообщение об ошибке: $ERROR_MESSAGE$<br>Попробуйте еще раз.<br>Если ошибка повторяется, загрузите логи при помощи drag and drop.<br><br>1. Перетащите одну запись лога или \"$LANG.gui.file_list_label$\", чтобы сразу захватить все доступные логи.<br>2. Перетащите это в чат Discord или на GitHub.",
   "gui.uploading": "Загружаем...",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "Добавленные моды:",

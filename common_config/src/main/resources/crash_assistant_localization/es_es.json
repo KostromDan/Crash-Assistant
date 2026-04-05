@@ -393,6 +393,8 @@
   "gui.upload_all_comment": "Subir todo...",
   "gui.upload_all_finished_button": "Copiar un mensaje para soporte",
   "gui.upload_and_copy_link_button": "Subir y copiar enlace",
+  "gui.upload_network_error_gif_failed": "No se pudo cargar el GIF",
+  "gui.upload_network_error_message": "No se pudo subir el log $LOG_NAME$ debido a un error de red.<br>Mensaje de error: $ERROR_MESSAGE$<br>Intentalo de nuevo.<br>Si el error persiste, sube los logs usando arrastrar y soltar.<br><br>1. Arrastra una sola entrada de log o \"$LANG.gui.file_list_label$\" para incluir todos los logs disponibles de una vez.<br>2. Sueltalo en el chat de Discord o en GitHub.",
   "gui.uploading": "Subiendo...",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "Mods añadidos:",

@@ -393,6 +393,8 @@
   "gui.upload_all_comment": "Muat naik semua...",
   "gui.upload_all_finished_button": "Salin mesej untuk sokongan",
   "gui.upload_and_copy_link_button": "Muat naik dan salin pautan",
+  "gui.upload_network_error_gif_failed": "Gagal memuatkan GIF",
+  "gui.upload_network_error_message": "Gagal memuat naik log $LOG_NAME$ disebabkan ralat rangkaian.<br>Mesej ralat: $ERROR_MESSAGE$<br>Sila cuba lagi.<br>Jika ralat ini berterusan, muat naik log menggunakan seret dan lepas.<br><br>1. Seret satu entri log atau \"$LANG.gui.file_list_label$\" untuk mengambil semua log yang tersedia sekali gus.<br>2. Lepaskannya ke dalam sembang Discord atau GitHub.",
   "gui.uploading": "Sedang memuat naik...",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "Mod yang ditambah:",

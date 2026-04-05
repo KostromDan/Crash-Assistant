@@ -7,8 +7,12 @@ import dev.kostromdan.mods.crash_assistant.app.utils.UploadedLog;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.SSLException;
 
 /**
  * Implementation of the UploadingApi interface for mclo.gs
@@ -44,6 +49,21 @@ public class McLogsApi implements UploadingApi {
      */
     public McLogsApi(String userAgent) {
         this.userAgent = userAgent;
+    }
+
+    private static boolean isNetworkError(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof UnknownHostException ||
+                    current instanceof NoRouteToHostException ||
+                    current instanceof SocketTimeoutException ||
+                    current instanceof SSLException ||
+                    current instanceof IOException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     @Override
@@ -232,10 +252,10 @@ public class McLogsApi implements UploadingApi {
                         return new UploadLogResponse(error);
                     }
                 } else {
-                    return new UploadLogResponse("HTTP error: " + responseCode);
+                    return new UploadLogResponse("HTTP error: " + responseCode, responseCode >= 500);
                 }
             } catch (Exception e) {
-                return new UploadLogResponse("Error while uploading log to mclo.gs:\n" + ErrorUtils.getErrorMessageAndStackTrace(e));
+                return new UploadLogResponse("Error while uploading log to mclo.gs:\n" + ErrorUtils.getErrorMessageAndStackTrace(e), isNetworkError(e));
             } finally {
                 uploadSemaphore.release();
             }

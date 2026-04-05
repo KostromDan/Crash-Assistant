@@ -393,6 +393,8 @@
   "gui.upload_all_comment": "Upload all...",
   "gui.upload_all_finished_button": "Copy a message for support",
   "gui.upload_and_copy_link_button": "Upload and copy link",
+  "gui.upload_network_error_gif_failed": "Failed to load GIF",
+  "gui.upload_network_error_message": "Failed to upload the log $LOG_NAME$ because of a network error.<br>Error message: $ERROR_MESSAGE$<br>Please try again.<br>If the error persists, upload the logs using drag and drop.<br><br>1. Drag a single log entry or \"$LANG.gui.file_list_label$\" to capture all available logs at once.<br>2. Drop it into Discord chat or GitHub.",
   "gui.uploading": "Uploading...",
   "gui.window_name": "Crash Assistant",
   "msg.added_mods": "Added mods:",

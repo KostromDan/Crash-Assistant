@@ -387,13 +387,17 @@ public class ControlPanel {
                                 !(filePanel.getLastError() instanceof UploadException && filePanel.getLastError().getMessage().startsWith("Crash Assistant log"))) {
                             if (!(filePanel.getLastError() instanceof DeclinedException)) {
                                 synchronized (FilePanel.uploadErrorDialogLock) {
-                                    String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError();
-                                    JOptionPane.showMessageDialog(
-                                            panel,
-                                            message,
-                                            LanguageProvider.get("gui.failed_to_upload_file") + "!",
-                                            JOptionPane.ERROR_MESSAGE
-                                    );
+                                    if (UploadErrorDialog.isNetworkUploadError(filePanel.getLastError())) {
+                                        UploadErrorDialog.show(panel, log, UploadErrorDialog.formatErrorMessage(filePanel.getLastError()));
+                                    } else {
+                                        String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError();
+                                        JOptionPane.showMessageDialog(
+                                                panel,
+                                                message,
+                                                LanguageProvider.get("gui.failed_to_upload_file") + "!",
+                                                JOptionPane.ERROR_MESSAGE
+                                        );
+                                    }
                                 }
                             }
                             uploadAllButton.setText(LanguageProvider.get("gui.error"));
@@ -732,6 +736,9 @@ public class ControlPanel {
                 CrashAssistantApp.LOGGER.info("Modlist diff uploaded successfully: " + finalLink);
                 return finalLink;
             } else {
+                if (response.isNetworkError()) {
+                    throw UploadException.network("An error occurred when uploading modlist diff: " + response.getError());
+                }
                 throw new UploadException("An error occurred when uploading modlist diff: " + response.getError());
             }
         }));

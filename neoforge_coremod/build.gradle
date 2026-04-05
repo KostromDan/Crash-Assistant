@@ -64,7 +64,7 @@ if (System.getenv("MODRINTH_TOKEN") != null) {
 		versionType = release_type
 		changelog = parsedChangelog
 		uploadFile = tasks.jar
-		gameVersions = ["26.1-snapshot-11", "26.1-pre-1", "26.1-pre-2", "26.1-pre-3", "26.1-rc-1", "26.1-rc-2", "26.1-rc-3", "26.1"]
+		gameVersions = ["26.1-snapshot-11", "26.1-pre-1", "26.1-pre-2", "26.1-pre-3", "26.1-rc-1", "26.1-rc-2", "26.1-rc-3", "26.1", "26.1.1"]
 		loaders = ["neoforge"]
 	}
 }

@@ -6,6 +6,7 @@
 - Fixed mods searcher icon not displayed at the taskbar, so window may be lost under other windows.
 - Added detailed upload error handling with a visual guide for network failures and updated language localizations.
 - Added Japanese translation. Thanks `looksky49` for making PR!
+- Improved duplicated Crash Assistant mod on Forge Check. Added one-click autofix button which will remove duplicates.
 - Clarified config option descriptions. Thanks `Madis0` for making PR!
 
 1.11.6:

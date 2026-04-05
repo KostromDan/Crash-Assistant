@@ -15,6 +15,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.analysis.MCreatorModDetectorG
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 import dev.kostromdan.mods.crash_assistant.app.gui.scripts_ide.ScriptsIDE;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.*;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.DuplicatedCrashAssistantMod;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ScriptedAnalysis;
 import dev.kostromdan.mods.crash_assistant.app.utils.*;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
@@ -1011,30 +1012,23 @@ public class CrashAssistantGUI {
     }
 
     public static void showCrashAssistantDuplicatedWarning() {
-        synchronized (KnownCrashReasonMessage.class) {
-            try {
-                if (PlatformHelp.platform != PlatformHelp.FORGE &&
-                        PlatformHelp.platform != PlatformHelp.NEOFORGE) return;
-                List<Mod> mods = JarInJarHelper.checkDuplicatedCrashAssistantMod(false);
-                if (mods.size() < 2) return;
-                ControlPanel.stopMovingToTop = true;
-                SwingUtilities.invokeAndWait(() -> {
-                    JOptionPane optionPane = new JOptionPane(
-                            CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.duplicated_mod_warn")
-                                            .replace("$MODS$", String.join("\n", mods.stream().map(Mod::getJarName).collect(Collectors.toList()))),
-                                    false),
-                            JOptionPane.WARNING_MESSAGE,
-                            JOptionPane.DEFAULT_OPTION
-                    );
-                    JDialog dialog = optionPane.createDialog(
-                            frame,
-                            LanguageProvider.get("gui.duplicated_mod")
-                    );
-                    dialog.setVisible(true);
-                });
-            } catch (Exception e) {
-                CrashAssistantApp.LOGGER.error("Error while showing crash assistant duplicated warning: ", e);
+        try {
+            if (PlatformHelp.platform != PlatformHelp.FORGE &&
+                    PlatformHelp.platform != PlatformHelp.NEOFORGE) return;
+            List<Mod> mods = JarInJarHelper.checkDuplicatedCrashAssistantMod(false);
+            if (mods.size() < 2) return;
+
+            synchronized (KnownCrashReasonMessage.class) {
+                KnownCrashReasonMessage.addCrashReasonMessage(
+                        new KnownCrashReasonMessage(
+                                null,
+                                new DuplicatedCrashAssistantMod(mods)
+                        )
+                );
             }
+            showKnownCrashReasonsWarnings();
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error while showing crash assistant duplicated warning: ", e);
         }
     }
 

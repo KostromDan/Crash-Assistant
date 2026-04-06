@@ -42,7 +42,7 @@ public class ControlPanel {
     public static JDialog dialog;
     private final FileListPanel fileListPanel;
     public final UploadAllButton uploadAllButton;
-    public final JButton requestHelpButton;
+    public static JButton requestHelpButton = new JButton();
     private JButton showLogsToggleButton;
     private final boolean modListInitiallyVisible;
     private JPanel modListContainer;
@@ -156,7 +156,7 @@ public class ControlPanel {
 
         String formulationType = CrashAssistantConfig.get("general.formulation_type");
         String suffix = formulationType.equalsIgnoreCase("GITHUB") ? ".github" : "";
-        requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button" + suffix));
+        requestHelpButton.setText(LanguageProvider.get("gui.request_help_button" + suffix));
         customizeButton(requestHelpButton, "request_help");
         requestHelpButton.addActionListener(e -> requestHelp());
         requestHelpButton.setToolTipText(PlatformHelp.getActualHelpLink());

@@ -60,8 +60,10 @@ public class CrashAssistantGUI {
     public static FileListPanel fileListPanel = null;
     private static ControlPanel controlPanel;
     private static JPanel labelPanel;
+    private static JEditorPane commentPane;
     private static JScrollPane fileListScrollPane;
     private static boolean simpleModeActive;
+    private static boolean simpleModeWasDisabled = false;
     private static boolean hideModListInSimpleMode;
     private static final Map<JComponent, OriginalState> highlightedComponents = new ConcurrentHashMap<>();
 
@@ -286,20 +288,7 @@ public class CrashAssistantGUI {
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         titleLabel.setFont(titleLabel.getFont().deriveFont(16f));
 
-        HashMap<String, String> hrefOptions = new HashMap<String, String>() {{
-            put("$CONFIG.text.support_name$", null);
-            put("$LANG.gui.upload_all_comment$", null);
-        }};
-
-        String formulationType = CrashAssistantConfig.get("general.formulation_type");
-        String suffix = formulationType.equalsIgnoreCase("GITHUB") ? ".github" : "";
-
-        String firstLinesOfComment = PlatformHelp.isLinkDefault() ?
-                LanguageProvider.get("gui.comment_under_title_cant_resolve" + suffix, hrefOptions) :
-                LanguageProvider.get("gui.comment_under_title_pls_report" + suffix, hrefOptions);
-
-        String commentText = "<div style='margin-left: 5px;'>" + firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title" + suffix, hrefOptions) + "</div>";
-        JEditorPane commentPane = getEditorPaneNoMargins(commentText, false);
+        String commentText = updateCommentText();
 
         String screenshotNoticeText = LanguageProvider.get("gui.comment_under_title_screenshot_notice");
         Color textColor = ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.screenshot_of_gui_notice_text_color"), Color.RED);
@@ -436,7 +425,7 @@ public class CrashAssistantGUI {
         fileListScrollPane = fileListPanel.getScrollPane();
         frame.add(fileListScrollPane, BorderLayout.CENTER);
 
-        simpleModeActive = simpleModeAllowed && !alwaysShowLogs;
+        simpleModeActive = simpleModeAllowed && !alwaysShowLogs && !simpleModeWasDisabled;
         controlPanel = new ControlPanel(fileListPanel, simpleModeActive, CrashAssistantGUI::handleShowLogsButtonClick);
         frame.add(controlPanel.getPanel(), BorderLayout.SOUTH);
         updateSimpleModeVisibility();
@@ -501,6 +490,35 @@ public class CrashAssistantGUI {
         }
     }
 
+    public static String updateCommentText() {
+        HashMap<String, String> hrefOptions = new HashMap<String, String>() {{
+            put("$CONFIG.text.support_name$", null);
+            put("$LANG.gui.upload_all_comment$", null);
+            put("$LANG.gui.dragging_and_dropping$", null);
+        }};
+        String formulationType = CrashAssistantConfig.get("general.formulation_type");
+        String suffix = formulationType.equalsIgnoreCase("GITHUB") ? ".github" : "";
+        boolean isPiracy = UUIDUtils.status == UUIDCheckStatus.PIRACY_OR_OFFLINE && (PlatformHelp.isLinkDefault() || CrashAssistantConfig.getBoolean("piracy.enabled"));
+        if (isPiracy) {
+            suffix = ".piracy";
+        }
+
+        String firstLinesOfComment = PlatformHelp.isLinkDefault() || isPiracy ?
+                LanguageProvider.get("gui.comment_under_title_cant_resolve" + suffix, hrefOptions) :
+                LanguageProvider.get("gui.comment_under_title_pls_report" + suffix, hrefOptions);
+
+        String commentText = "<div style='margin-left: 5px;'>" + firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title" + suffix, hrefOptions) + "</div>";
+        JEditorPane pane = getEditorPaneNoMargins(commentText, false);
+        if (commentPane == null) {
+            commentPane = pane;
+        } else {
+            commentPane.setText(pane.getText());
+            commentPane.revalidate();
+            commentPane.repaint();
+        }
+        return commentText;
+    }
+
     private static void addFileMenu() {
 
         // Helper to build HTML-based menu items with title and description
@@ -511,9 +529,9 @@ public class CrashAssistantGUI {
             // Support multiline descriptions and basic HTML escaping
             java.util.function.Function<String, String> esc = s -> s == null ? "" :
                     s.replace("&", "&amp;")
-                            .replace("<", "&lt;")
-                            .replace(">", "&gt;")
-                            .replace("\n", "<br>");
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace("\n", "<br>");
 
             String html = "<html><b>" + esc.apply(title) + "</b><br>" +
                     "<span style='color:gray; font-size:10px;'>" + esc.apply(desc) + "</span></html>";
@@ -692,8 +710,9 @@ public class CrashAssistantGUI {
         resize();
     }
 
-    private static void showLogsAndDisableSimpleMode() {
+    public static void showLogsAndDisableSimpleMode() {
         simpleModeActive = false;
+        simpleModeWasDisabled = true;
         updateSimpleModeVisibility();
     }
 
@@ -1033,9 +1052,7 @@ public class CrashAssistantGUI {
     }
 
     private void showPiracyWarning() {
-        boolean shouldShow = (PlatformHelp.isLinkDefault()) || CrashAssistantConfig.getBoolean("piracy.enabled");
-        if (!shouldShow) return;
-        if (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.CLEANROOM) return;
+        if (!CrashAssistantConfig.getBoolean("piracy.enabled")) return;
         if (Objects.equals(CrashAssistantLocalConfig.get("piracy.dont_show_again"), true)) return;
 
         UUIDCheckStatus result = UUIDUtils.waitAndGetStatus();
@@ -1373,8 +1390,11 @@ public class CrashAssistantGUI {
                     if (ControlPanel.dialog != null) {
                         ControlPanel.dialog.dispose();
                     }
+                } else if ("LANG.gui.dragging_and_dropping".equals(description)) {
+                    UploadErrorDialog.show(frame, new Log(LogType.LOG, Paths.get("logs/latest.log")), "", true);
+                    return;
                 } else if ("CONFIG.text.support_name".equals(description)) {
-                    componentToHighlight = controlPanel.requestHelpButton;
+                    componentToHighlight = ControlPanel.requestHelpButton;
                 } else if ("PRIVACY_POLICY".equals(description)) {
                     showLogsPrivacyInfo();
                     return;

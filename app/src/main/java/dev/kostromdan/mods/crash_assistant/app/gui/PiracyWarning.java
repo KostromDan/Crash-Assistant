@@ -10,7 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Objects;
+import java.util.HashMap;
 
 public class PiracyWarning extends JDialog {
 
@@ -19,8 +19,9 @@ public class PiracyWarning extends JDialog {
     public PiracyWarning(Frame parent) {
         super(parent, LanguageProvider.get("gui.piracy_warning"), true);
 
-        String content = LanguageProvider.get("warnings.piracy")
-                .replace("$HELP_NAME$", PlatformHelp.getActualHelpName());
+        String content = LanguageProvider.get("warnings.piracy", new HashMap<String, String>() {{
+            put("$LINK.PRISM$", "Prism Launcher");
+        }}).replace("$HELP_NAME$", PlatformHelp.getActualHelpName());
 
         JEditorPane editorPane = CrashAssistantGUI.getEditorPane(content, false);
 
@@ -63,7 +64,7 @@ public class PiracyWarning extends JDialog {
             okButton.setEnabled(false);
             dontShowAgainCheck.setEnabled(false);
             setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-            
+
             final int[] secondsLeft = {delay};
             final int initialDelay = delay;
             okButton.setText(LanguageProvider.get("gui.ok") + " (" + secondsLeft[0] + ")");

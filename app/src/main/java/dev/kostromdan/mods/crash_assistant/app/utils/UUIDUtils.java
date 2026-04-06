@@ -4,7 +4,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+import dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel;
+import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
+import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -67,6 +72,14 @@ public class UUIDUtils {
                 if (currentResult == UUIDCheckStatus.LICENSED || currentResult == UUIDCheckStatus.PIRACY_OR_OFFLINE) {
                     status = currentResult;
                     CrashAssistantApp.LOGGER.info("UUID({}) verification result: {}", uuid, status);
+                    if (CrashAssistantConfig.getBoolean("piracy.enabled") || PlatformHelp.isLinkDefault()) {
+                        if (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.CLEANROOM) return;
+                        SwingUtilities.invokeLater(() -> {
+                            ControlPanel.requestHelpButton.setVisible(false);
+                            CrashAssistantGUI.updateCommentText();
+                            CrashAssistantGUI.showLogsAndDisableSimpleMode();
+                        });
+                    }
                     return;
                 }
             }

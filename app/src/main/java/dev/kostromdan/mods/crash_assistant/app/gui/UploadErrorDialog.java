@@ -43,8 +43,12 @@ public final class UploadErrorDialog {
     }
 
     public static void show(Component parent, Log log, String errorMessage) {
+        show(parent, log, errorMessage, false);
+    }
+
+    public static void show(Component parent, Log log, String errorMessage, boolean justGuide) {
         ControlPanel.stopMovingToTop = true;
-        JDialog dialog = new JDialog((Frame) null, LanguageProvider.get("gui.failed_to_upload_file") + "!", true);
+        JDialog dialog = new JDialog((Frame) null, justGuide ? LanguageProvider.get("gui.drag_drop_guide") : LanguageProvider.get("gui.failed_to_upload_file") + "!", true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
@@ -53,9 +57,10 @@ public final class UploadErrorDialog {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(3, 3, 3, 3);
 
-        String message = LanguageProvider.get("gui.upload_network_error_message")
-                .replace("$LOG_NAME$", "<strong>" + escapeHtml(log.getName()) + "</strong>")
-                .replace("$ERROR_MESSAGE$", "<strong>" + escapeHtml(errorMessage) + "</strong>");
+        String message = justGuide ? "" : LanguageProvider.get("gui.upload_network_error_message")
+                                          .replace("$LOG_NAME$", "<strong>" + escapeHtml(log.getName()) + "</strong>")
+                                          .replace("$ERROR_MESSAGE$", "<strong>" + escapeHtml(errorMessage) + "</strong>");
+        message = message + LanguageProvider.get("gui.drag_drop_message");
 
         JEditorPane textPane = CrashAssistantGUI.getEditorPane(message, true, 600);
 

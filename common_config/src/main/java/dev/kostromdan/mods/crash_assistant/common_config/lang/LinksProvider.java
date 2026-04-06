@@ -16,6 +16,7 @@ public enum LinksProvider {
     GLFW_DOWNLOAD(() -> "https://github.com/Frontear/glfw-libs/releases"),
     C6A(() -> "https://modrinth.com/collection/uSfTuDgc"),
     ATL(() -> "https://atlauncher.com/downloads"),
+    PRISM(() -> "https://prismlauncher.org/download"),
     ADOPTIUM_JDK(() -> "https://adoptium.net/temurin/releases/?package=jdk"),
     OPTIFINE_ALTERNATIVES(() -> "https://prismlauncher.org/wiki/getting-started/install-of-alternatives/"),
     RESULTS_OF_MEMORY_DIAGNOSTICS(() -> "https://answers.microsoft.com/en-us/windows/forum/all/how-do-i-see-the-results-of-memory-diagnostic-i/36f9d014-256a-4757-927a-d85ade3b0c09"),

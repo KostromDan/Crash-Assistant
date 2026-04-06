@@ -33,10 +33,8 @@ import java.util.zip.ZipException;
 public class CorruptedJarFinderGUI extends AnalysisGUIBase {
 
     private static final String ERROR_PLACEHOLDER = "$ERROR$";
-    private static final Path WORKSPACE_ROOT = Paths.get("").toAbsolutePath();
     private static final Path CURSEFORGE_INSTALL_FOLDER = Paths.get("..", "..", "Install").toAbsolutePath();
     private final Map<String, Path> detectedArchivesForRemoval = Collections.synchronizedMap(new LinkedHashMap<>());
-    private volatile Set<String> classPathDisplayKeys = Collections.emptySet();
 
     private enum CorruptionReason {
         MISSING("gui.analysis.corrupted_jar_finder.reason.missing", false),
@@ -155,7 +153,6 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
 
     private List<Path> discoverArchives() {
         LinkedHashSet<Path> archives = new LinkedHashSet<>();
-        Set<String> classPathKeys = new LinkedHashSet<>();
 
         if (FileUtils.isCurseForgeEnv() && Files.isDirectory(CURSEFORGE_INSTALL_FOLDER)) {
             try (Stream<Path> stream = Files.walk(CURSEFORGE_INSTALL_FOLDER)) {
@@ -184,11 +181,7 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
 
         MinecraftClassPathHelper.streamCurrentClassPathArchives()
                 .map(CorruptedJarFinderGUI::normalizeArchivePath)
-                .forEach(path -> {
-                    archives.add(path);
-                    classPathKeys.add(toDisplayKey(path));
-                });
-        classPathDisplayKeys = classPathKeys;
+                .forEach(archives::add);
 
         List<Path> sorted = new ArrayList<>(archives);
         Collections.sort(sorted);
@@ -210,21 +203,12 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
     }
 
     private String toArchiveDisplayId(Path jarPath) {
-        Path absolute = jarPath.toAbsolutePath();
-        if (classPathDisplayKeys.contains(toDisplayKey(absolute))) {
-            return absolute.toString().replace('\\', '/');
-        }
-
+        Path absolute = jarPath.toAbsolutePath().normalize();
         String modsRelative = toModsRelative(absolute);
         if (modsRelative != null) {
             return modsRelative;
         }
-        try {
-            Path relative = WORKSPACE_ROOT.relativize(absolute);
-            return relative.toString().replace('\\', '/');
-        } catch (IllegalArgumentException ignored) {
-            return absolute.toString().replace('\\', '/');
-        }
+        return absolute.toString().replace('\\', '/');
     }
 
     private static String toModsRelative(Path jarPath) {
@@ -249,10 +233,6 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
             detectedArchivesForRemoval.putIfAbsent(displayName, absolute);
         }
         registerDetectedModJar(displayName);
-    }
-
-    private static String toDisplayKey(Path path) {
-        return path.toAbsolutePath().toString().replace('\\', '/').toLowerCase(Locale.ROOT);
     }
 
     private void appendResultsForMod(String jarName, List<CorruptionRecord> records, boolean isFirst) {

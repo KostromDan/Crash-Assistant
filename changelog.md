@@ -8,6 +8,8 @@
 - Added detailed upload error handling with a visual guide for network failures and updated language localizations.
 - Added Japanese translation. Thanks `looksky49` for making PR!
 - Improved duplicated Crash Assistant mod on Forge Check. Added one-click autofix button which will remove duplicates.
+- Added don't show again checkbox to many warnings there it's applicable.
+- Added autofix button to `CurseforgeCorrupted`, which will find jar which is corrupted.
 - Clarified config option descriptions. Thanks `Madis0` for making PR!
 
 1.11.6:

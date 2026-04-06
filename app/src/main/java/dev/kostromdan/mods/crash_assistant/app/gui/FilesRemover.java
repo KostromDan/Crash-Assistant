@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import dev.kostromdan.mods.crash_assistant.app.utils.ThemeUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -360,17 +361,26 @@ public class FilesRemover extends JDialog {
      */
     private void tryReveal(Path p) {
         try {
-            if (!Files.exists(p)) return;
-            String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
-            if (os.contains("win"))
-                new ProcessBuilder("explorer.exe", "/select,", p.toAbsolutePath().toString()).start();
-            else if (os.contains("mac")) new ProcessBuilder("open", "-R", p.toAbsolutePath().toString()).start();
-            else {
-                Path dir = Files.isDirectory(p) ? p : p.getParent();
-                if (dir != null) new ProcessBuilder("xdg-open", dir.toAbsolutePath().toString()).start();
-            }
+            revealInFileManager(p);
         } catch (Exception ex) {
             showError(LanguageProvider.get("gui.files_remover.error.reveal_title"), String.format(LanguageProvider.get("gui.files_remover.error.reveal_msg"), p), ex);
+        }
+    }
+
+    /**
+     * Reuseable reveal helper used by multiple UI flows:
+     * - Windows/macOS: reveal/select in file manager
+     * - Linux: open containing directory
+     */
+    public static void revealInFileManager(Path p) throws Exception {
+        if (!Files.exists(p)) return;
+        if (PlatformHelp.isWindows()) {
+            new ProcessBuilder("explorer.exe", "/select,", p.toAbsolutePath().toString()).start();
+        } else if (PlatformHelp.isMacOS()) {
+            new ProcessBuilder("open", "-R", p.toAbsolutePath().toString()).start();
+        } else {
+            Path dir = Files.isDirectory(p) ? p : p.getParent();
+            if (dir != null) new ProcessBuilder("xdg-open", dir.toAbsolutePath().toString()).start();
         }
     }
 
@@ -492,9 +502,9 @@ public class FilesRemover extends JDialog {
         String effectiveDescription = (descriptionText != null && !descriptionText.trim().isEmpty())
                 ? descriptionText
                 : LanguageProvider.get("gui.files_remover.desc.intro") + "\n" +
-                (mode == Mode.JAR
-                        ? LanguageProvider.get("gui.files_remover.desc.jar")
-                        : LanguageProvider.get("gui.files_remover.desc.config"));
+                  (mode == Mode.JAR
+                   ? LanguageProvider.get("gui.files_remover.desc.jar")
+                   : LanguageProvider.get("gui.files_remover.desc.config"));
         JTextArea desc = new JTextArea(effectiveDescription);
         desc.setEditable(false);
         desc.setBackground(UIManager.getColor("Panel.background"));

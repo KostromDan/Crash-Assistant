@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.utils.FileUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.MinecraftClassPathHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
@@ -33,6 +34,7 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
 
     private static final String ERROR_PLACEHOLDER = "$ERROR$";
     private static final Path WORKSPACE_ROOT = Paths.get("").toAbsolutePath();
+    private static final Path CURSEFORGE_INSTALL_FOLDER = Paths.get("..", "..", "Install").toAbsolutePath();
     private final Map<String, Path> detectedArchivesForRemoval = Collections.synchronizedMap(new LinkedHashMap<>());
     private volatile Set<String> classPathDisplayKeys = Collections.emptySet();
 
@@ -155,13 +157,25 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
         LinkedHashSet<Path> archives = new LinkedHashSet<>();
         Set<String> classPathKeys = new LinkedHashSet<>();
 
+        if (FileUtils.isCurseForgeEnv() && Files.isDirectory(CURSEFORGE_INSTALL_FOLDER)) {
+            try (Stream<Path> stream = Files.walk(CURSEFORGE_INSTALL_FOLDER)) {
+                stream
+                        .filter(Files::isRegularFile)
+                        .filter(path -> isArchive(path.getFileName().toString()))
+                        .map(CorruptedJarFinderGUI::normalizeArchivePath)
+                        .forEach(archives::add);
+            } catch (IOException e) {
+                CrashAssistantApp.LOGGER.error("Failed to enumerate CurseForge Install folder for CorruptedJarFinder", e);
+            }
+        }
+
         Path modsFolder = ModListUtils.MODS_FOLDER;
         if (Files.isDirectory(modsFolder)) {
             try (Stream<Path> stream = Files.walk(modsFolder)) {
                 stream
                         .filter(Files::isRegularFile)
                         .filter(path -> isArchive(path.getFileName().toString()))
-                        .map(Path::toAbsolutePath)
+                        .map(CorruptedJarFinderGUI::normalizeArchivePath)
                         .forEach(archives::add);
             } catch (IOException e) {
                 CrashAssistantApp.LOGGER.error("Failed to enumerate mods folder for CorruptedJarFinder", e);
@@ -169,7 +183,7 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
         }
 
         MinecraftClassPathHelper.streamCurrentClassPathArchives()
-                .map(Path::toAbsolutePath)
+                .map(CorruptedJarFinderGUI::normalizeArchivePath)
                 .forEach(path -> {
                     archives.add(path);
                     classPathKeys.add(toDisplayKey(path));
@@ -179,6 +193,10 @@ public class CorruptedJarFinderGUI extends AnalysisGUIBase {
         List<Path> sorted = new ArrayList<>(archives);
         Collections.sort(sorted);
         return sorted;
+    }
+
+    private static Path normalizeArchivePath(Path path) {
+        return path.toAbsolutePath().normalize();
     }
 
     private static boolean isArchive(String name) {

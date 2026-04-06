@@ -50,10 +50,9 @@ public class CorruptedModJar extends KnownCrashReason {
             }
             if (found) {
                 if (FileUtils.isCurseForgeEnv() && hasMinecraftLocatorStackTrace(lines)) {
-                    message = LanguageProvider.get("warnings.curseforge_corrupted", new HashMap<String, String>() {{
-                        put("$LINK.ATL$", "ATLauncher");
-                    }});
+                    message = LanguageProvider.get("warnings.curseforge_corrupted");
                     autoFixButtons.clear();
+                    CurseForgeCorrupted.addAutoFixButtons(autoFixButtons);
                 }
                 return true;
             }

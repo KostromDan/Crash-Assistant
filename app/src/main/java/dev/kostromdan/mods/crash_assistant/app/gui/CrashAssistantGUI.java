@@ -871,7 +871,7 @@ public class CrashAssistantGUI {
                                 CrashAssistantApp.LOGGER.info("Skipping KnownCrashReason: {}, due to dontShowAgainKey: {}", crashReason.getClass().getSimpleName(), dontShowAgainKey);
                                 continue;
                             }
-                            boolean alreadyShown = Objects.equals(CrashAssistantLocalConfig.get(configKey), true);
+                            boolean alreadyShown = !isFromScripts && Objects.equals(CrashAssistantLocalConfig.get(configKey), true);
 
                             JDialog dialog;
                             JCheckBox dontShowBoxRef = null;

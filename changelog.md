@@ -1,16 +1,22 @@
 1.11.7:
 
-- Fixed during window switching main gui may be lost under other windows.
-- Fixed High Ram Load Check on MacOS and Linux sometimes worked a little incorrect.
-- Fixed startup scripts modlist getting didn't work if some mods were without modids.
-- Fixed mods searcher icon not displayed at the taskbar, so window may be lost under other windows.
-- Fixed rarely corrupted cursforge minecraft installation crash reason displayed as corrupted mod.
-- Added detailed upload error handling with a visual guide for network failures and updated language localizations.
 - Added Japanese translation. Thanks `looksky49` for making PR!
 - Improved duplicated Crash Assistant mod on Forge Check. Added one-click autofix button which will remove duplicates.
 - Added don't show again checkbox to many warnings there it's applicable.
 - Added autofix button to `CurseforgeCorrupted`, which will find jar which is corrupted.
 - Clarified config option descriptions. Thanks `Madis0` for making PR!
+- Added detailed upload error handling with a visual guide for network failures and updated language localizations.
+- Piracy Warning redesign:
+    - For non-modpacks: removed warning, button to join Forge/Fabric/Neo communities will be hidden, top text of
+      gui will be changed to remove instructions about how to join Forge/Fabric/Neo discord.
+    - For modpacks (only if piracy warning is enabled): warning was rephrased, button to join modpack discord will be
+      hidden, top text of gui will be changed to remove instructions about how to join your modpack discord.
+- Added missing localization keys to other languages.
+- Fixed during window switching main gui may be lost under other windows.
+- Fixed High Ram Load Check on MacOS and Linux sometimes worked a little incorrectly.
+- Fixed startup scripts modlist getting didn't work if some mods were without modids.
+- Fixed mods searcher icon not displayed at the taskbar, so the window may be lost under other windows.
+- Fixed rarely corrupted cursforge minecraft installation crash reason displayed as corrupted mod.
 
 1.11.6:
 

@@ -53,6 +53,7 @@ public class MixinApply extends KnownCrashReason {
         logs.add(latestLog);
         HashMap<String, String> configToJarMap = getMixinConfigToJarMapping(ModListUtils.getCurrentModList(true));
         for (Log log : logs) {
+            String logName = log.getName();
             MixinParsingResult result = parseLatestMixinError(log, configToJarMap);
             if (result != null) {
                 if (result.isMissingClass()) {
@@ -62,6 +63,7 @@ public class MixinApply extends KnownCrashReason {
                     autoFixButtons.put(LanguageProvider.get("warnings.mixin_apply_missing_class_auto_fix"), (dialog) -> {
                         new JdepsDependenciesAnalysisGUI((JFrame) dialog.getOwner(), result.getMissingClass()).start();
                     });
+                    applyCorrectLogName(logName);
 
                     return true;
                 }
@@ -117,6 +119,8 @@ public class MixinApply extends KnownCrashReason {
                     message = message.replace("$MOD_2$", "<strong style='color: red;'>" + conflictingJarName + "</strong>");
                 }
 
+                applyCorrectLogName(logName);
+
                 if (!shouldTriggerOnOriginalModpackMods) {
                     if (isOriginalModpackMod(jarName) || isOriginalModpackMod(conflictingJarName)) {
                         CrashAssistantApp.LOGGER.warn("Skipping crash reason due to crash caused by mod which was in original modpack:\n" + message);
@@ -136,12 +140,16 @@ public class MixinApply extends KnownCrashReason {
         return status == ModpackStatus.UNCHANGED;
     }
 
+    private void applyCorrectLogName(String logName) {
+        message = message.replace("$LOG_FILENAME$", logName);
+    }
+
     private static MixinParsingResult parseLatestMixinError(Log log, HashMap<String, String> configToJarMap) {
         List<String> lines = log.getType() == LogType.CRASH_REPORT ? log.getReader().getAllLinesList() : log.getReader().getLastNLines(1000);
         for (int i = lines.size() - 1; i >= 0; i--) {
             String line = lines.get(i);
-                if (line.contains("org.spongepowered.asm.")) {
-                    if (!line.contains("Caused by:") && line.contains("org.spongepowered.asm.launch.MixinInitialisationError: Error initialising mixin config ")) {
+            if (line.contains("org.spongepowered.asm.")) {
+                if (!line.contains("Caused by:") && line.contains("org.spongepowered.asm.launch.MixinInitialisationError: Error initialising mixin config ")) {
                     String config = line.split("Error initialising mixin config ")[1].trim();
 
                     for (int j = i + 1; j < lines.size(); j++) {

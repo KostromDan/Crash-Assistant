@@ -17,6 +17,8 @@
 - Fixed startup scripts modlist getting didn't work if some mods were without modids.
 - Fixed mods searcher icon not displayed at the taskbar, so the window may be lost under other windows.
 - Fixed rarely corrupted cursforge minecraft installation crash reason displayed as corrupted mod.
+- Fixed MixinApply analysis was always saying it found the problem in latest.log, even if the problem is in a different
+  log.
 
 1.11.6:
 

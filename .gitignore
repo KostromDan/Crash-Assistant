@@ -38,3 +38,4 @@ launcher_log.txt
 hs_err_pid-1.log
 /.architectury-transformer/*
 git_porter_config.json
+scripts/vt_verify.log

@@ -50,9 +50,9 @@ shadowJar {
     }
 
 
-    relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
-    relocate 'org.apache.commons.jexl3', 'dev.kostromdan.mods.crash_assistant.commons.jexl3'
-    relocate 'org.apache.commons.logging', 'dev.kostromdan.mods.crash_assistant.commons.logging'
+    relocate 'com.electronwill.nightconfig', 'crash_assistant_relocated_libs.nightconfig'
+    relocate 'org.apache.commons.jexl3', 'crash_assistant_relocated_libs.jexl3'
+    relocate 'org.apache.commons.logging', 'crash_assistant_relocated_libs.logging'
 
     dependencies {
         exclude(dependency('org.apache.logging.log4j:.*'))

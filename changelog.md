@@ -19,6 +19,7 @@
 - Fixed rarely corrupted cursforge minecraft installation crash reason displayed as corrupted mod.
 - Fixed MixinApply analysis was always saying it found the problem in latest.log, even if the problem is in a different
   log.
+- Changed relocation path of `jexl3` to prevent false detection by `ZoneAlarm by Check Point` and `Google`.
 
 1.11.6:
 

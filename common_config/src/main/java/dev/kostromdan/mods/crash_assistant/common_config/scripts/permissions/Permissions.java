@@ -78,9 +78,9 @@ public class Permissions {
                 while ((line = reader.readLine()) != null) {
                     String trimmed = line.trim();
                     if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
-                    if (isDevEnvironment && trimmed.startsWith("dev.kostromdan.mods.crash_assistant.commons.")) {
+                    if (isRelocatedCommonsPackageInDevEnv(trimmed)) {
                         // Revert relocating package. In dev runs classes are not relocated yet.
-                        trimmed = trimmed.replace("dev.kostromdan.mods.crash_assistant.commons.", "org.apache.commons.");
+                        trimmed = trimmed.replace("crash_assistant_relocated_libs.", "org.apache.commons.");
                     }
 
                     try {
@@ -124,9 +124,9 @@ public class Permissions {
         Map<String, String> registeredShortNames = new HashMap<>();
 
         for (String className : classes) {
-            if (isDevEnvironment && className.startsWith("dev.kostromdan.mods.crash_assistant.commons.")) {
+            if (isRelocatedCommonsPackageInDevEnv(className)) {
                 // Revert relocating package. In dev runs classes are not relocated yet.
-                className = className.replace("dev.kostromdan.mods.crash_assistant.commons.", "org.apache.commons.");
+                className = className.replace("crash_assistant_relocated_libs.", "org.apache.commons.");
             }
             try {
                 Class<?> clazz = Class.forName(className);
@@ -148,5 +148,9 @@ public class Permissions {
         }
 
         Files.write(path, classes, StandardCharsets.UTF_8);
+    }
+
+    public static boolean isRelocatedCommonsPackageInDevEnv(String className) {
+        return isDevEnvironment && (className.startsWith("crash_assistant_relocated_libs.logging.") || className.startsWith("crash_assistant_relocated_libs.jexl3."));
     }
 }

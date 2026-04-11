@@ -48,7 +48,7 @@ shadowJar {
         }
     }
 
-    relocate 'com.electronwill.nightconfig', 'dev.kostromdan.mods.crash_assistant.nightconfig'
+    relocate 'com.electronwill.nightconfig', 'crash_assistant_relocated_libs.nightconfig'
 }
 
 build.finalizedBy(shadowJar)

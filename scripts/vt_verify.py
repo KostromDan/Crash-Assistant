@@ -39,8 +39,6 @@ RESULTS_WAIT_TIMEOUT_SECONDS: int | None = 1800
 BLACKLIST_REASONS: set[str] = set()
 BLACKLIST_REASONS_ENV_VAR = "VT_WARNING_BLACKLIST"
 DETECTION_DETAIL_BLOCKLIST: set[str] = {
-    "ZoneAlarm [malicious] -> Mal/JavaFuo-A",
-    "Google [malicious] -> Detected",
     "Panda [malicious] -> Vulnerability/Log4J",
 }
 

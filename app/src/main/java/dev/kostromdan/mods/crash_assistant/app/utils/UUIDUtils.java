@@ -20,8 +20,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static dev.kostromdan.mods.crash_assistant.app.utils.UUIDCheckStatus.*;
+
 public class UUIDUtils {
-    public static volatile UUIDCheckStatus status = UUIDCheckStatus.UNDEFINED;
+    public static volatile UUIDCheckStatus status = UNDEFINED;
     private static volatile long checkStartTime = 0;
     private static final AtomicBoolean isStarted = new AtomicBoolean(false);
 
@@ -52,13 +54,13 @@ public class UUIDUtils {
         }
 
         checkStartTime = System.currentTimeMillis();
-        status = UUIDCheckStatus.PROCESSING;
+        status = PROCESSING;
 
         new Thread(() -> {
             String uuid = getUUID();
 
             if (uuid == null) {
-                status = UUIDCheckStatus.FAILED;
+                status = FAILED;
                 return;
             }
 
@@ -69,10 +71,10 @@ public class UUIDUtils {
 
                 UUIDCheckStatus currentResult = verifyUUID(uuid);
 
-                if (currentResult == UUIDCheckStatus.LICENSED || currentResult == UUIDCheckStatus.PIRACY_OR_OFFLINE) {
+                if (currentResult == LICENSED || currentResult == PIRACY_OR_OFFLINE) {
                     status = currentResult;
                     CrashAssistantApp.LOGGER.info("UUID({}) verification result: {}", uuid, status);
-                    if (CrashAssistantConfig.getBoolean("piracy.enabled") || PlatformHelp.isLinkDefault()) {
+                    if (currentResult == PIRACY_OR_OFFLINE && (CrashAssistantConfig.getBoolean("piracy.enabled") || PlatformHelp.isLinkDefault())) {
                         if (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.CLEANROOM) return;
                         SwingUtilities.invokeLater(() -> {
                             ControlPanel.requestHelpButton.setVisible(false);
@@ -83,7 +85,7 @@ public class UUIDUtils {
                     return;
                 }
             }
-            status = UUIDCheckStatus.FAILED;
+            status = FAILED;
         }).start();
     }
 
@@ -95,7 +97,7 @@ public class UUIDUtils {
         long totalTimeout = 6000;
         long deadline = checkStartTime + totalTimeout;
 
-        while (status == UUIDCheckStatus.PROCESSING || status == UUIDCheckStatus.UNDEFINED) {
+        while (status == PROCESSING || status == UNDEFINED) {
             if (System.currentTimeMillis() >= deadline) {
                 break;
             }
@@ -107,8 +109,8 @@ public class UUIDUtils {
             }
         }
 
-        if (status == UUIDCheckStatus.PROCESSING || status == UUIDCheckStatus.UNDEFINED) {
-            return UUIDCheckStatus.FAILED;
+        if (status == PROCESSING || status == UNDEFINED) {
+            return FAILED;
         }
 
         return status;
@@ -116,16 +118,16 @@ public class UUIDUtils {
 
     public static UUIDCheckStatus verifyUUID(String uuid) {
         if (uuid == null || uuid.isEmpty()) {
-            return UUIDCheckStatus.FAILED;
+            return FAILED;
         }
 
         if (!uuid.matches("^[\\w-]+$")) {
-            return UUIDCheckStatus.FAILED;
+            return FAILED;
         }
 
         String cleanUuid = uuid.replace("-", "");
         if (cleanUuid.length() != 32) {
-            return UUIDCheckStatus.FAILED;
+            return FAILED;
         }
 
         try {
@@ -155,22 +157,22 @@ public class UUIDUtils {
                             CrashAssistantApp.LOGGER.warn("UUID mismatch! mojang: {}, local: {}; assuming recent username change.", serverName, actualName);
                             // Prism is using random UUIDs in case of offline mod. But it is extremely unlikely what random UUID will be a valid one.
                             // But most cases here will be licensed players which recently changed username, and launcher haven't for whatever reason yet updated it.
-                            return UUIDCheckStatus.FAILED;
+                            return FAILED;
                         }
                     }
                 } catch (Exception e) {
                     CrashAssistantApp.LOGGER.error("JSON parsing failed, defaulting to LICENSED", e);
                 }
 
-                return UUIDCheckStatus.LICENSED;
+                return LICENSED;
             } else if (responseCode == 204 || responseCode == 404) {
-                return UUIDCheckStatus.PIRACY_OR_OFFLINE;
+                return PIRACY_OR_OFFLINE;
             } else {
-                return UUIDCheckStatus.FAILED;
+                return FAILED;
             }
         } catch (IOException e) {
             CrashAssistantApp.LOGGER.error("Failed to verify UUID: ", e);
-            return UUIDCheckStatus.FAILED;
+            return FAILED;
         }
     }
 }

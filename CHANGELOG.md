@@ -12,6 +12,8 @@
     - For modpacks (only if piracy warning is enabled): warning was rephrased, button to join modpack discord will be
       hidden, top text of gui will be changed to remove instructions about how to join your modpack discord.
 - Added missing localization keys to other languages.
+- Now Mods Searcher can by checkbox also search in Minecraft classpath libraries.
+- Corrupted JAR Finder now also scans Minecraft libraries and installation archives.
 - Fixed during window switching main gui may be lost under other windows.
 - Fixed High Ram Load Check on MacOS and Linux sometimes worked a little incorrectly.
 - Fixed startup scripts modlist getting didn't work if some mods were without modids.

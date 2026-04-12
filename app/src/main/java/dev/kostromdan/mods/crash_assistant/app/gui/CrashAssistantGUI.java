@@ -491,6 +491,7 @@ public class CrashAssistantGUI {
     }
 
     public static String updateCommentText() {
+        if (frame == null) return null;
         HashMap<String, String> hrefOptions = new HashMap<String, String>() {{
             put("$CONFIG.text.support_name$", null);
             put("$LANG.gui.upload_all_comment$", null);

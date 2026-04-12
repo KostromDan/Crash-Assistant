@@ -77,7 +77,8 @@ public class UUIDUtils {
                     if (currentResult == PIRACY_OR_OFFLINE && (CrashAssistantConfig.getBoolean("piracy.enabled") || PlatformHelp.isLinkDefault())) {
                         if (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.CLEANROOM) return;
                         SwingUtilities.invokeLater(() -> {
-                            ControlPanel.requestHelpButton.setVisible(false);
+                            ControlPanel.hideRequestHelpButton = true;
+                            ControlPanel.hideReportButtonIfNeeded();
                             CrashAssistantGUI.updateCommentText();
                             CrashAssistantGUI.showLogsAndDisableSimpleMode();
                         });

@@ -42,7 +42,8 @@ public class ControlPanel {
     public static JDialog dialog;
     private final FileListPanel fileListPanel;
     public final UploadAllButton uploadAllButton;
-    public static JButton requestHelpButton = new JButton();
+    public static JButton requestHelpButton;
+    public static boolean hideRequestHelpButton = false;
     private JButton showLogsToggleButton;
     private final boolean modListInitiallyVisible;
     private JPanel modListContainer;
@@ -156,10 +157,11 @@ public class ControlPanel {
 
         String formulationType = CrashAssistantConfig.get("general.formulation_type");
         String suffix = formulationType.equalsIgnoreCase("GITHUB") ? ".github" : "";
-        requestHelpButton.setText(LanguageProvider.get("gui.request_help_button" + suffix));
+        requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button" + suffix));
         customizeButton(requestHelpButton, "request_help");
         requestHelpButton.addActionListener(e -> requestHelp());
         requestHelpButton.setToolTipText(PlatformHelp.getActualHelpLink());
+        hideReportButtonIfNeeded();
         gbc.gridy = 1;
         gbc.insets = new Insets(5, 0, 0, 0);
         bottomPanel.add(requestHelpButton, gbc);
@@ -802,5 +804,9 @@ public class ControlPanel {
             // Replace the chosen space with <br> for HTML rendering
             return text.substring(0, bestSpace) + "<br>" + text.substring(bestSpace + 1);
         }
+    }
+
+    public static void hideReportButtonIfNeeded() {
+        if (requestHelpButton != null && hideRequestHelpButton) requestHelpButton.setVisible(false);
     }
 }

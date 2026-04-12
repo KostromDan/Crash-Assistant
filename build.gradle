@@ -6,10 +6,10 @@ apply plugin: 'idea'
 
 def appProject = project(':app')
 def appRunLauncher = javaToolchains.launcherFor {
-    languageVersion = org.gradle.jvm.toolchain.JavaLanguageVersion.of(8)
+    languageVersion = JavaLanguageVersion.of(8)
 }
 
-def registerAppMainRunTask = { String taskName, String mainClassName ->
+def registerAppMainRunTask = { String taskName, String mainClassName, Map<String, String> systemProperties = [:] ->
     tasks.register(taskName, JavaExec) {
         group = 'application'
         description = "Runs ${mainClassName}"
@@ -24,10 +24,24 @@ def registerAppMainRunTask = { String taskName, String mainClassName ->
         javaLauncher = appRunLauncher
         maxHeapSize = '512m'
         workingDir = rootDir
+        if (!systemProperties.isEmpty()) {
+            systemProperties.each { key, value ->
+                systemProperty(key, value)
+            }
+        }
     }
 }
 
-registerAppMainRunTask('runCrashAssistantApp', 'dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp')
+registerAppMainRunTask(
+        'runCrashAssistantAppLicensed',
+        'dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp',
+        ['minecraft.launch.arguments': '--username KostromDan --uuid a23d9d090e254763aa13f7e8e8715812']
+)
+registerAppMainRunTask(
+        'runCrashAssistantAppOfflineMode',
+        'dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp',
+        ['minecraft.launch.arguments': '--username KostromDan --uuid a23d9d090e254763aa13f7e8e8715813']
+)
 registerAppMainRunTask('runIntegratedGPUWarning', 'dev.kostromdan.mods.crash_assistant.app.gui.IntegratedGPUWarning')
 registerAppMainRunTask('runIntelChipBugWarning', 'dev.kostromdan.mods.crash_assistant.app.gui.IntelChipBugWarning')
 

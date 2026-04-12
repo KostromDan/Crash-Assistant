@@ -17,7 +17,7 @@ For localization go [crash_assistant_localization](common_config/src/main/resour
 
 ### Testing Crash Assistant GUI:
 
-Run gradle `application/runCrashAssistantApp` task. After compilation, GUI will be launched.
+Run gradle `application/runCrashAssistantAppLicensed` or `application/runCrashAssistantAppOfflineMode` task. After compilation, GUI will be launched.
 
 ### Compiling and testing mod for specific Minecraft version(s):
 

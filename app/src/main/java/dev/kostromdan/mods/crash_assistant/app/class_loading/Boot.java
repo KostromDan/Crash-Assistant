@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.permissions.Permissions;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
@@ -41,6 +42,12 @@ public class Boot {
     public static String MINECRAFT_LAUNCH_COMMAND;
     public static String MINECRAFT_JVM_ARGS;
     public static String MINECRAFT_CLASS_PATH;
+
+    static {
+        if (Permissions.isDevEnvironment()) {
+            MINECRAFT_LAUNCH_COMMAND = System.getProperty("minecraft.launch.arguments");
+        }
+    }
 
 
     @NoJexl

@@ -153,4 +153,8 @@ public class Permissions {
     public static boolean isRelocatedCommonsPackageInDevEnv(String className) {
         return isDevEnvironment && (className.startsWith("crash_assistant_relocated_libs.logging.") || className.startsWith("crash_assistant_relocated_libs.jexl3."));
     }
+
+    public static boolean isDevEnvironment() {
+        return isDevEnvironment;
+    }
 }

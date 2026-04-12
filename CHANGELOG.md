@@ -1,3 +1,8 @@
+1.11.8:
+
+- Hotfix: Fixed the previous update with the piracy warning redesign was hiding the Join Discord button even for
+  licensed players.
+
 1.11.7:
 
 - Added Japanese translation. Thanks `looksky49` for making PR!

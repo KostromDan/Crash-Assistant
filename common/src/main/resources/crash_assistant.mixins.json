@@ -6,7 +6,8 @@
   "mixins": [],
   "client": [
     "MinecraftMixin",
-    "TitleScreenMixin"
+    "TitleScreenMixin",
+    "CrashReportCategoryMixin"
   ],
   "server": [],
   "injectors": {

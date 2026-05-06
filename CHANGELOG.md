@@ -1,3 +1,10 @@
+1.11.9:
+
+- Fixed race condition during crash assistant gui start.
+- 1.19+: Patched vanilla issue MC-307905, which from recent times often started to prevent crash report from generation.
+    - You can disable this patch in the config. Enabled by default, as it semantically equal, just without a rare crash
+      during crash report generation.
+
 1.11.8:
 
 - Hotfix: Fixed the previous update with the piracy warning redesign was hiding the Join Discord button even for

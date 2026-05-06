@@ -512,6 +512,13 @@ public class CrashAssistantConfig {
                 "Debug option to crash immediately after Crash Assistant launched its process to conveniently debug it, configure it without need to manually crash.",
                 false);
 
+        config.setComment("patches", "Options to configure patches made by Crash Assistant.");
+        addOption("patches.MC307905",
+                "Fixes vanilla crash MC-307905 during crash report generation when StackTraceElement#getFileName() returns null.\n" +
+                        "Without this fix, crash report generation itself crashes under some rare conditions, preventing the original crash report from being created.\n" +
+                        "This patch does not change the report contents; it only allows the crash report to be generated successfully.",
+                true);
+
         HashSet<String> toRemove = new HashSet<>();
         config.valueMap().forEach((key, value) -> {
             if (value instanceof AbstractCommentedConfig) {

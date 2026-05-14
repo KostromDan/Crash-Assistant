@@ -9,7 +9,9 @@ public interface CurrentGPUDetector {
     static void writeCurrentGPU() {
         try {
             // Vulkan always selects correct GPU, so this not needed.
-            if (ClassExistenceChecker.classExists("net.vulkanmod.Initializer") || ClassExistenceChecker.classExists("org.lwjgl.vulkan.VK")) {
+            if (ClassExistenceChecker.classExists("net.vulkanmod.Initializer") ||
+                    ClassExistenceChecker.classExists("org.lwjgl.vulkan.VK") ||
+                    ClassExistenceChecker.classExists("com.radiance.Radiance")) {
                 return;
             }
 

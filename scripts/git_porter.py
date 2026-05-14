@@ -200,6 +200,14 @@ class GitPortingApp:
         )
         self.sync_changelog_button.pack(side=tk.LEFT, padx=5)
 
+        self.vt_verify_button = ttk.Button(
+            actions_frame,
+            text="Run VT Verify",
+            style="Sync.TButton",
+            command=self.run_vt_verify_wrapper
+        )
+        self.vt_verify_button.pack(side=tk.LEFT, padx=5)
+
         push_checkbox = ttk.Checkbutton(actions_frame, text="Push before checkout", variable=self.push_before_checkout)
         push_checkbox.pack(side=tk.LEFT, padx=15)
 
@@ -423,6 +431,25 @@ class GitPortingApp:
 
         thread = threading.Thread(target=self.sync_changelog_logic, daemon=True)
         thread.start()
+
+    def run_vt_verify_wrapper(self):
+        script_path = Path("scripts") / "vt_verify.py"
+        if not script_path.exists():
+            messagebox.showerror("Missing script", f"Script not found:\n{script_path}")
+            return
+
+        if sys.platform == "win32":
+            try:
+                subprocess.Popen([
+                    "cmd.exe", "/c", "start", "cmd.exe", "/k",
+                    sys.executable, str(script_path)
+                ])
+                self.log("Launched vt_verify.py in a new console window.")
+            except Exception as e:
+                messagebox.showerror("Launch Error", f"Failed to launch vt_verify.py:\n{e}")
+            return
+
+        messagebox.showinfo("Unsupported platform", "This launcher is currently available only on Windows.")
 
     def sync_changelog_logic(self):
         """Logic for synchronizing the file between branches."""

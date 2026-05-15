@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.common_config.lang;
 
+import com.electronwill.nightconfig.core.AbstractConfig;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import com.electronwill.nightconfig.json.JsonFormat;
 import com.electronwill.nightconfig.toml.TomlFormat;
@@ -54,7 +55,7 @@ public class Lang {
 
     public String get(String key, HashMap<String, String> placeHoldersSurroundedWithHref) {
         String value = lang.getOrDefault(key, LanguageProvider.languages.get("en_us").lang.get(key));
-        if(value == null){
+        if (value == null) {
             throw new NullPointerException("Seems like key '" + key + "' is missing in language files");
         }
         return applyPlaceHolders(value, placeHoldersSurroundedWithHref);
@@ -105,19 +106,26 @@ public class Lang {
     }
 
     public static String getBCCValue(String key) {
+        Path BCCConfigNewPath = Paths.get("config", "bcc-common.json");
         Path BCCConfigForgePath = Paths.get("config", "bcc-common.toml");
         Path BCCConfigFabricPath = Paths.get("config", "bcc.json");
         try {
             if (BCCConfig == null) {
-                if (!Files.exists(BCCConfigForgePath) && !Files.exists(BCCConfigFabricPath)) {
+                if (!Files.exists(BCCConfigForgePath) &&
+                        !Files.exists(BCCConfigFabricPath) &&
+                        !Files.exists(BCCConfigNewPath)) {
                     JarInJarHelper.LOGGER.error("BCC config file not found");
                     return "<BCC config file not found>";
                 }
-                boolean forge = BCCConfigForgePath.toFile().exists();
-                BCCConfig = FileConfig.builder(
-                        forge ? BCCConfigForgePath : BCCConfigFabricPath,
-                        forge ? TomlFormat.instance() : JsonFormat.fancyInstance()
-                ).build();
+                boolean newExists = BCCConfigNewPath.toFile().exists();
+                boolean forgeExists = BCCConfigForgePath.toFile().exists();
+                if (newExists) {
+                    BCCConfig = FileConfig.builder(BCCConfigNewPath, JsonFormat.fancyInstance()).build();
+                } else if (forgeExists) {
+                    BCCConfig = FileConfig.builder(BCCConfigForgePath, TomlFormat.instance()).build();
+                } else {
+                    BCCConfig = FileConfig.builder(BCCConfigFabricPath, JsonFormat.fancyInstance()).build();
+                }
                 BCCConfig.load();
             }
         } catch (Exception e) {
@@ -126,21 +134,24 @@ public class Lang {
             return "<BCC config parsing error>";
         }
         key = BCCConfigForgePath.toFile().exists() ? "general." + key : key;
-        String value = BCCConfig.get(key);
+        Object value = BCCConfig.get(key);
+        if (value instanceof AbstractConfig) {
+            value = ((AbstractConfig) value).get("value");
+        }
         if (value == null) {
             return "<" + key + " not found in BCC config>";
         }
-        return value;
+        return (String) value;
     }
 
     /**
      * Applies all registered text transforms to the input string. A transform is triggered by
      * an opening tag &lt;TAG&gt; and the corresponding closing tag &lt;/TAG&gt;. If the closing tag
      * is missing, the transform applies from the end of the opening tag to the end of the string.
-     *
+     * <p>
      * Only tags that are explicitly registered via {@link #registerTextTransform(String, Function)} are recognized.
      * Regular HTML tags (e.g., &lt;a&gt;, &lt;b&gt;) are ignored unless registered, preventing conflicts.
-     *
+     * <p>
      * The tag markers themselves are removed from the output; only the transformed inner text remains.
      */
     private static String applyTextTransforms(String input) {

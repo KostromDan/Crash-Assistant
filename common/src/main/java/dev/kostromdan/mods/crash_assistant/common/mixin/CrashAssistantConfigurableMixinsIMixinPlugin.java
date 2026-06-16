@@ -31,9 +31,9 @@ public class CrashAssistantConfigurableMixinsIMixinPlugin implements IMixinConfi
     @Override
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
-        if (CrashAssistantConfig.getBoolean("patches.MC307905")) {
-            mixins.add("CrashReportCategoryMixin");
-        }
+//        if (CrashAssistantConfig.getBoolean("patches.MC307905")) {
+//            mixins.add("CrashReportCategoryMixin");
+//        }
         return mixins;
     }
 

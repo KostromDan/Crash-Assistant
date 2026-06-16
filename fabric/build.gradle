@@ -14,7 +14,7 @@ dependencies {
 }
 
 base {
-	archivesName = "CrashAssistant-${project.name}-26.1"
+	archivesName = "CrashAssistant-${project.name}-26.2"
 }
 
 processResources {
@@ -58,7 +58,7 @@ if (System.getenv("MODRINTH_TOKEN") != null) {
 		versionType = release_type
 		changelog = parsedChangelog
 		uploadFile = tasks.jar
-		gameVersions = ["26.1-snapshot-11", "26.1-pre-1", "26.1-pre-2", "26.1-pre-3", "26.1-rc-1", "26.1-rc-2", "26.1-rc-3", "26.1", "26.1.1", "26.1.2"]
+		gameVersions = ["26.2"]
 		loaders = ["fabric", "quilt"]
 	}
 }
@@ -74,7 +74,7 @@ if (System.getenv("CF_TOKEN") != null) {
 		mainFile.changelogType = "markdown"
 		mainFile.releaseType = release_type
 
-		mainFile.addGameVersion("26.1", "26.1.1", "26.1.2")
+		mainFile.addGameVersion("26.2")
 		mainFile.addModLoader("Fabric", "Quilt")
 	}
 }

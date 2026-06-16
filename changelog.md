@@ -1,3 +1,10 @@
+1.11.10:
+
+- Ported mod to 26.2 for NeoForge and Fabric.
+- Fixed better compatibility checker (BCC mod), new config format.
+- Fixed compatiblity with Radiance mod. Also must fix compatibility with any other mod which is replacing OpenGL API
+  with Vulkan.
+
 1.11.9:
 
 - Fixed race condition during crash assistant gui start.

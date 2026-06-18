@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+base {
+    archivesName = "CrashAssistant-${project.name}-26.2"
+}
+
+minecraft {
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}")
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.1'
+
+    compileOnly project(':common').sourceSets.main.output
+}
+
+jar {
+    from project(':common').sourceSets.main.output
+    manifest {
+        attributes([
+                "MixinConfigs": "crash_assistant.mixins.json,crash_assistant.forge.mixins.json"
+        ])
+    }
+}
+
+processResources {
+    def expandProps = [
+            "version"                     : project.version,
+            "mod_id"                      : project.mod_id,
+            "mod_name"                    : project.mod_name,
+            "mod_description"             : project.mod_description,
+            "mod_author"                  : project.mod_author,
+            "license"                     : project.license,
+            "credits"                     : project.credits,
+            "issues_url"                  : project.issues_url,
+            "forge_loader_version_range"  : project.forge_loader_version_range,
+            "forge_version_range"         : project.forge_version_range,
+            "forge_minecraft_version_range" : project.forge_minecraft_version_range,
+    ]
+    inputs.properties expandProps
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand expandProps
+    }
+}

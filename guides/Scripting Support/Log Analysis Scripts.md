@@ -68,7 +68,7 @@ The object returned by `Analysis.addWarning(…)` allows method chaining to conf
   * Provides static `info(...)`, `warn(...)`, and `error(...)` methods with common Log4j overloads.
 
 ### Environment Evaluation
-* `PlatformHelp.isWindows()`, `PlatformHelp.isMac()`, `PlatformHelp.isLinux()`: Evaluates the operating system in use.
+* `PlatformHelp.isWindows()`, `PlatformHelp.isMacOS()`, `PlatformHelp.isLinux()`: Evaluates the operating system in use.
 
 > [!WARNING]
 > `ArgUtils` and `MemoryUtils` within the Log Analysis context return settings for the **Crash Assistant** process. To access Minecraft's environment settings, use:

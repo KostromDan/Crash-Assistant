@@ -61,7 +61,7 @@ Both classes provide static `info(...)`, `warn(...)`, and `error(...)` methods w
 * `VersionUtils.inRange(String version, String minVersion, String maxVersion)`: Returns `true` if `version` falls inside the bounds.
 
 ### Environment Evaluation
-* `PlatformHelp.isWindows()`, `PlatformHelp.isMac()`, `PlatformHelp.isLinux()`: Evaluates the operating system in use.
+* `PlatformHelp.isWindows()`, `PlatformHelp.isMacOS()`, `PlatformHelp.isLinux()`: Evaluates the operating system in use.
 * `ArgUtils.getSafeJvmArgs()`: Resolves the JVM configuration arguments assigned to the launch instance. Returns `String`.
 * `ArgUtils.getSafeLaunchArgs()`: Resolves the Minecraft program arguments assigned to the instance. Returns `String`. Some sensitive params like access-token are already censored.
 

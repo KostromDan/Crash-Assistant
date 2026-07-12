@@ -21,6 +21,9 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public abstract class AbstractScriptManager {
+    private static final class ScriptContext extends MapContext implements JexlContext.ThreadLocal {
+    }
+
     protected static final Set<String> executedScripts = Collections.synchronizedSet(new HashSet<>());
 
     public static void clearExecutedScripts() {
@@ -43,7 +46,7 @@ public abstract class AbstractScriptManager {
     protected abstract JexlContext createContext();
 
     protected JexlContext createBaseContext() {
-        JexlContext context = new MapContext();
+        JexlContext context = new ScriptContext();
 
         // Inject whitelist classes into the context.
         Map<String, Class<?>> allowedClasses = Permissions.getClassMap();

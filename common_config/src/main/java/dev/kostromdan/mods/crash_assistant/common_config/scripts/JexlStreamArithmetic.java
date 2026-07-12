@@ -1,6 +1,8 @@
 package dev.kostromdan.mods.crash_assistant.common_config.scripts;
 
 import org.apache.commons.jexl3.JexlArithmetic;
+import org.apache.commons.jexl3.JexlContext;
+import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.JexlScript;
 import org.apache.commons.jexl3.MapContext;
 
@@ -29,82 +31,97 @@ public class JexlStreamArithmetic extends JexlArithmetic {
     // --- Stream Actions (Lazy, Return Stream) ---
 
     public Stream<?> filter(Stream<?> stream, JexlScript predicate) {
-        return stream.filter(item -> toBoolean(predicate.execute(EMPTY_CONTEXT, item)));
+        JexlContext context = currentContext();
+        return stream.filter(item -> toBoolean(predicate.execute(context, item)));
     }
 
     public Stream<?> map(Stream<?> stream, JexlScript mapper) {
-        return stream.map(item -> mapper.execute(EMPTY_CONTEXT, item));
+        JexlContext context = currentContext();
+        return stream.map(item -> mapper.execute(context, item));
     }
 
     public Stream<?> flatMap(Stream<?> stream, JexlScript mapper) {
+        JexlContext context = currentContext();
         return stream.flatMap(item -> {
-            Object mapped = mapper.execute(EMPTY_CONTEXT, item);
+            Object mapped = mapper.execute(context, item);
             return toStream(mapped);
         });
     }
 
 
     public Stream<?> sorted(Stream<?> stream, JexlScript comparator) {
+        JexlContext context = currentContext();
         return stream.sorted((o1, o2) -> {
-            Object res = comparator.execute(EMPTY_CONTEXT, o1, o2);
+            Object res = comparator.execute(context, o1, o2);
             return ((Number) res).intValue();
         });
     }
 
 
     public Stream<?> peek(Stream<?> stream, JexlScript action) {
-        return stream.peek(item -> action.execute(EMPTY_CONTEXT, item));
+        JexlContext context = currentContext();
+        return stream.peek(item -> action.execute(context, item));
     }
 
     // --- Terminal Actions for Streams (Delegates) ---
 
     public void forEach(Stream<?> stream, JexlScript action) {
-        stream.forEach(item -> action.execute(EMPTY_CONTEXT, item));
+        JexlContext context = currentContext();
+        stream.forEach(item -> action.execute(context, item));
     }
 
     public void forEachOrdered(Stream<?> stream, JexlScript action) {
-        stream.forEachOrdered(item -> action.execute(EMPTY_CONTEXT, item));
+        JexlContext context = currentContext();
+        stream.forEachOrdered(item -> action.execute(context, item));
     }
 
     public boolean anyMatch(Stream<?> stream, JexlScript predicate) {
-        return stream.anyMatch(item -> toBoolean(predicate.execute(EMPTY_CONTEXT, item)));
+        JexlContext context = currentContext();
+        return stream.anyMatch(item -> toBoolean(predicate.execute(context, item)));
     }
 
     public boolean allMatch(Stream<?> stream, JexlScript predicate) {
-        return stream.allMatch(item -> toBoolean(predicate.execute(EMPTY_CONTEXT, item)));
+        JexlContext context = currentContext();
+        return stream.allMatch(item -> toBoolean(predicate.execute(context, item)));
     }
 
     public boolean noneMatch(Stream<?> stream, JexlScript predicate) {
-        return stream.noneMatch(item -> toBoolean(predicate.execute(EMPTY_CONTEXT, item)));
+        JexlContext context = currentContext();
+        return stream.noneMatch(item -> toBoolean(predicate.execute(context, item)));
     }
 
     public Object reduce(Stream<?> stream, Object identity, JexlScript accumulator) {
-        return ((Stream<Object>) stream).reduce(identity, (acc, item) -> accumulator.execute(EMPTY_CONTEXT, acc, item));
+        JexlContext context = currentContext();
+        return ((Stream<Object>) stream).reduce(identity, (acc, item) -> accumulator.execute(context, acc, item));
     }
 
     public Object reduce(Stream<?> stream, JexlScript accumulator) {
-        return ((Stream<Object>) stream).reduce((acc, item) -> accumulator.execute(EMPTY_CONTEXT, acc, item));
+        JexlContext context = currentContext();
+        return ((Stream<Object>) stream).reduce((acc, item) -> accumulator.execute(context, acc, item));
     }
 
     public Object collect(Stream<?> stream, JexlScript supplier, JexlScript accumulator, JexlScript combiner) {
+        JexlContext context = currentContext();
         return ((Stream<Object>) stream).collect(
-                () -> supplier.execute(EMPTY_CONTEXT),
-                (acc, item) -> accumulator.execute(EMPTY_CONTEXT, acc, item),
-                (acc1, acc2) -> combiner.execute(EMPTY_CONTEXT, acc1, acc2)
+                () -> supplier.execute(context),
+                (acc, item) -> accumulator.execute(context, acc, item),
+                (acc1, acc2) -> combiner.execute(context, acc1, acc2)
         );
     }
 
 
     public Object min(Stream<?> stream, JexlScript comparator) {
+        JexlContext context = currentContext();
         return stream.min((o1, o2) -> {
-            Object res = comparator.execute(EMPTY_CONTEXT, o1, o2);
+            Object res = comparator.execute(context, o1, o2);
             return ((Number) res).intValue();
         }).orElse(null);
     }
 
     public Object max(Stream<?> stream, JexlScript comparator) {
+        JexlContext context = currentContext();
         return stream.max((o1, o2) -> {
-            Object res = comparator.execute(EMPTY_CONTEXT, o1, o2);
+            Object res = comparator.execute(context, o1, o2);
             return ((Number) res).intValue();
         }).orElse(null);
     }
@@ -113,72 +130,84 @@ public class JexlStreamArithmetic extends JexlArithmetic {
     // --- Collection Actions (List, Set) ---
 
     public boolean removeIf(Collection<?> collection, JexlScript filter) {
-        return collection.removeIf(item -> toBoolean(filter.execute(EMPTY_CONTEXT, item)));
+        JexlContext context = currentContext();
+        return collection.removeIf(item -> toBoolean(filter.execute(context, item)));
     }
 
     public void replaceAll(List<Object> list, JexlScript operator) {
-        list.replaceAll(item -> operator.execute(EMPTY_CONTEXT, item));
+        JexlContext context = currentContext();
+        list.replaceAll(item -> operator.execute(context, item));
     }
 
     public void sort(List<Object> list, JexlScript comparator) {
+        JexlContext context = currentContext();
         list.sort((o1, o2) -> {
-            Object res = comparator.execute(EMPTY_CONTEXT, o1, o2);
+            Object res = comparator.execute(context, o1, o2);
             return ((Number) res).intValue();
         });
     }
 
     public void forEach(Iterable<?> iterable, JexlScript action) {
-        iterable.forEach(item -> action.execute(EMPTY_CONTEXT, item));
+        JexlContext context = currentContext();
+        iterable.forEach(item -> action.execute(context, item));
     }
 
     // --- Map Actions ---
 
     public void forEach(Map<?, ?> map, JexlScript action) {
-        map.forEach((k, v) -> action.execute(EMPTY_CONTEXT, k, v));
+        JexlContext context = currentContext();
+        map.forEach((k, v) -> action.execute(context, k, v));
     }
 
     public void replaceAll(Map<Object, Object> map, JexlScript function) {
-        map.replaceAll((k, v) -> function.execute(EMPTY_CONTEXT, k, v));
+        JexlContext context = currentContext();
+        map.replaceAll((k, v) -> function.execute(context, k, v));
     }
 
     public Object computeIfAbsent(Map<Object, Object> map, Object key, JexlScript mappingFunction) {
-        return map.computeIfAbsent(key, k -> mappingFunction.execute(EMPTY_CONTEXT, k));
+        JexlContext context = currentContext();
+        return map.computeIfAbsent(key, k -> mappingFunction.execute(context, k));
     }
 
     public Object computeIfPresent(Map<Object, Object> map, Object key, JexlScript remappingFunction) {
-        return map.computeIfPresent(key, (k, v) -> remappingFunction.execute(EMPTY_CONTEXT, k, v));
+        JexlContext context = currentContext();
+        return map.computeIfPresent(key, (k, v) -> remappingFunction.execute(context, k, v));
     }
 
     public Object merge(Map<Object, Object> map, Object key, Object value, JexlScript remappingFunction) {
-        return map.merge(key, value, (v1, v2) -> remappingFunction.execute(EMPTY_CONTEXT, v1, v2));
+        JexlContext context = currentContext();
+        return map.merge(key, value, (v1, v2) -> remappingFunction.execute(context, v1, v2));
     }
 
     // --- Optional Actions ---
 
     public void ifPresent(Optional<?> optional, JexlScript consumer) {
-        optional.ifPresent(val -> consumer.execute(EMPTY_CONTEXT, val));
+        JexlContext context = currentContext();
+        optional.ifPresent(val -> consumer.execute(context, val));
     }
 
     public Optional<?> map(Optional<?> optional, JexlScript mapper) {
-        return optional.map(val -> mapper.execute(EMPTY_CONTEXT, val));
+        JexlContext context = currentContext();
+        return optional.map(val -> mapper.execute(context, val));
     }
 
     public Optional<?> filter(Optional<?> optional, JexlScript predicate) {
-        return optional.filter(val -> toBoolean(predicate.execute(EMPTY_CONTEXT, val)));
+        JexlContext context = currentContext();
+        return optional.filter(val -> toBoolean(predicate.execute(context, val)));
     }
 
     public Object orElseGet(Optional<?> optional, JexlScript supplier) {
         if (optional.isPresent()) {
             return optional.get();
         }
-        return supplier.execute(EMPTY_CONTEXT);
+        return supplier.execute(currentContext());
     }
 
     public Object orElseThrow(Optional<?> optional, JexlScript exceptionSupplier) {
         if (optional.isPresent()) {
             return optional.get();
         }
-        Object ex = exceptionSupplier.execute(EMPTY_CONTEXT);
+        Object ex = exceptionSupplier.execute(currentContext());
         if (ex instanceof Throwable) {
             throw new RuntimeException((Throwable) ex);
         }
@@ -189,7 +218,7 @@ public class JexlStreamArithmetic extends JexlArithmetic {
     // --- Collectors Shortcuts (GroupBy, ToMap, simplify usage) ---
 
     public Map<?, List<Object>> groupBy(Stream<?> stream, JexlScript classifier) {
-        MapContext ctx = EMPTY_CONTEXT;
+        JexlContext ctx = currentContext();
         // Manual implementation to avoid dealing with Collectors.groupingBy generics issues
         Map<Object, List<Object>> result = new LinkedHashMap<>();
         stream.forEach(item -> {
@@ -200,7 +229,7 @@ public class JexlStreamArithmetic extends JexlArithmetic {
     }
 
     public Map<Boolean, List<Object>> partitioningBy(Stream<?> stream, JexlScript predicate) {
-        MapContext ctx = EMPTY_CONTEXT;
+        JexlContext ctx = currentContext();
         Map<Boolean, List<Object>> result = new LinkedHashMap<>();
         result.put(true, new ArrayList<>());
         result.put(false, new ArrayList<>());
@@ -212,7 +241,7 @@ public class JexlStreamArithmetic extends JexlArithmetic {
     }
 
     public Map<?, ?> toMap(Stream<?> stream, JexlScript keyMapper, JexlScript valueMapper) {
-        MapContext ctx = EMPTY_CONTEXT;
+        JexlContext ctx = currentContext();
         Map<Object, Object> result = new LinkedHashMap<>();
         stream.forEach(item -> {
             Object key = keyMapper.execute(ctx, item);
@@ -226,7 +255,7 @@ public class JexlStreamArithmetic extends JexlArithmetic {
     }
 
     public Map<?, ?> toMap(Stream<?> stream, JexlScript keyMapper, JexlScript valueMapper, JexlScript mergeFunction) {
-        MapContext ctx = EMPTY_CONTEXT;
+        JexlContext ctx = currentContext();
         Map<Object, Object> result = new LinkedHashMap<>();
         stream.forEach(item -> {
             Object key = keyMapper.execute(ctx, item);
@@ -249,6 +278,11 @@ public class JexlStreamArithmetic extends JexlArithmetic {
     }
 
     // --- Helpers ---
+
+    private JexlContext currentContext() {
+        JexlContext.ThreadLocal context = JexlEngine.getThreadContext();
+        return context != null ? context : EMPTY_CONTEXT;
+    }
 
     /**
      * Helper to convert JEXL result to Stream if needed for flatMap internal logic only.

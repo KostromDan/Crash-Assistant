@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 
 public class ModListUtils {
     public static final Logger LOGGER = LogManager.getLogger();
+    @NoJexl
     public static Path MODS_FOLDER = Paths.get("mods");
     private static final Path RESOURCEPACKS_FOLDER = Paths.get("resourcepacks");
     private static final Path DATAPACKS_FOLDER = Paths.get("datapacks");

@@ -284,6 +284,7 @@ java.util.Calendar
 java.util.Calendar$Builder
 java.util.Collection
 java.util.Collections
+java.util.Collections$1
 java.util.Comparator
 java.util.ConcurrentModificationException
 java.util.Currency
@@ -305,6 +306,7 @@ java.util.HashSet
 java.util.Hashtable
 java.util.HexFormat
 java.util.IdentityHashMap
+java.util.ImmutableCollections
 java.util.IllegalFormatCodePointException
 java.util.IllegalFormatConversionException
 java.util.IllegalFormatException
@@ -463,20 +465,13 @@ java.util.regex.Pattern
 java.util.regex.PatternSyntaxException
 java.util.stream.BaseStream
 java.util.stream.Collector
-java.util.stream.Collector$Characteristics
 java.util.stream.Collectors
 java.util.stream.DoubleStream
-java.util.stream.DoubleStream$Builder
-java.util.stream.DoubleStream$DoubleMapMultiConsumer
 java.util.stream.IntStream
-java.util.stream.IntStream$Builder
-java.util.stream.IntStream$IntMapMultiConsumer
 java.util.stream.LongStream
-java.util.stream.LongStream$Builder
-java.util.stream.LongStream$LongMapMultiConsumer
 java.util.stream.Stream
-java.util.stream.Stream$Builder
 java.util.stream.StreamSupport
+java.util.stream.*
 java.util.zip.DataFormatException
 java.util.zip.Deflater
 java.util.zip.DeflaterOutputStream

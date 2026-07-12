@@ -31,10 +31,12 @@ public class Log {
         return name;
     }
 
+    @NoJexl
     public Path getPath() {
         return path;
     }
 
+    @NoJexl
     public File getFile() {
         return path.toFile();
     }

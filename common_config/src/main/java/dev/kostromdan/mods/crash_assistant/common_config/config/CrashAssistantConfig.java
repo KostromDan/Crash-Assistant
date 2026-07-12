@@ -591,6 +591,7 @@ public class CrashAssistantConfig {
         set("modpack_modlist.modpack_creators", currentModpackCreators);
     }
 
+    @NoJexl
     public static Path getConfigPath() {
         return CONFIG_PATH;
     }

@@ -286,6 +286,7 @@ java.util.Collection
 java.util.Collections
 java.util.Collections$1
 java.util.Comparator
+java.util.Comparators
 java.util.ConcurrentModificationException
 java.util.Currency
 java.util.Date
@@ -318,6 +319,8 @@ java.util.InputMismatchException
 java.util.IntSummaryStatistics
 java.util.InvalidPropertiesFormatException
 java.util.Iterator
+java.util.JumboEnumSet
+java.util.KeyValueHolder
 java.util.LinkedHashMap
 java.util.LinkedHashSet
 java.util.LinkedList
@@ -352,6 +355,7 @@ java.util.Properties
 java.util.Queue
 java.util.Random
 java.util.RandomAccess
+java.util.RegularEnumSet
 java.util.Scanner
 java.util.ServiceConfigurationError
 java.util.Set

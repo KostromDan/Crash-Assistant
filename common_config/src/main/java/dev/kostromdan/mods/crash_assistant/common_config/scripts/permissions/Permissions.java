@@ -135,6 +135,7 @@ public class Permissions {
         boolean isCollectionType = java.util.Collection.class.isAssignableFrom(clazz)
                 || java.util.Map.class.isAssignableFrom(clazz);
         boolean isCollectionFactory = className.equals("java.util.Arrays")
+                || className.equals("java.util.Comparators")
                 || className.equals("java.util.Collections")
                 || className.equals("java.util.ImmutableCollections")
                 || className.equals("java.util.Spliterators");

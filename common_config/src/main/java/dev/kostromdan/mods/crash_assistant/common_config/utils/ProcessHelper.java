@@ -239,6 +239,13 @@ public class ProcessHelper {
                         .getMethod("getProcessors")
                         .invoke(hardware);
                 return String.format("%s", processors[0]).replaceAll("\\s+", " ");
+            } catch (ClassNotFoundException ex) {
+                Class<?> systemInfoCls = Class.forName("oshi.ffm.SystemInfo");
+                Object systemInfo = systemInfoCls.getDeclaredConstructor().newInstance();
+                Object hardware = systemInfoCls.getMethod("getHardware").invoke(systemInfo);
+                Object processor = hardware.getClass().getMethod("getProcessor").invoke(hardware);
+                Object identifier = processor.getClass().getMethod("getProcessorIdentifier").invoke(processor);
+                return (String) identifier.getClass().getMethod("getName").invoke(identifier);
             }
         } catch (Throwable e) {
             String errorMessage = e.getMessage();

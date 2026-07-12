@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 IGNORED_BRANCHES = ["pages", "app-common-config"]
-GRADLEW_CMD = "gradlew.bat" if sys.platform == "win32" else "./gradlew"
+GRADLEW_CMD = ["gradlew.bat"] if sys.platform == "win32" else ["sh", "./gradlew"]
 
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower() for text in re.split(r'([0-9]+)', s)]
@@ -150,7 +150,7 @@ class BranchBuildApp:
             self.log(f"\n>>> STARTING PROCESS FOR: {target_branch}")
             
             self.log(f"[1/4] Building current branch: {self.original_branch}...")
-            if not self.execute_cmd([GRADLEW_CMD, 'clean', 'build']):
+            if not self.execute_cmd(GRADLEW_CMD + ['clean', 'build']):
                 self.log("ERROR: Failed to build current branch.")
                 return
 
@@ -168,7 +168,7 @@ class BranchBuildApp:
                 return
 
             self.log(f"[3/4] Building target branch: {target_branch}...")
-            build_success = self.execute_cmd([GRADLEW_CMD, 'clean', 'build'])
+            build_success = self.execute_cmd(GRADLEW_CMD + ['clean', 'build'])
             if not build_success:
                 self.log(f"WARNING: Build on {target_branch} failed.")
 

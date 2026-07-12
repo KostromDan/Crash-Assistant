@@ -25,7 +25,7 @@ os.chdir(Path(__file__).resolve().parent.parent)
 CONFIG_FILE = "git_porter_config.json"
 DESKTOP_PATH = Path.home() / "Desktop"
 JAR_OUTPUT_DIR = DESKTOP_PATH / "jar_releases"
-GRADLEW_CMD = "gradlew.bat" if sys.platform == "win32" else "./gradlew"
+GRADLEW_CMD = ["gradlew.bat"] if sys.platform == "win32" else ["sh", "./gradlew"]
 IGNORED_BRANCHES = ["pages", "vulkan-addon-3.3.1"]
 VERSION_COMMIT_REGEX = re.compile(r'^\d+\.\d+\.\d+(\.\d+)?$')
 GRADLE_PROPERTIES_FILE = "gradle.properties"
@@ -228,6 +228,8 @@ class GitPortingApp:
                 self.branch_canvas.yview_scroll(-1, "units")
             elif event.num == 5:
                 self.branch_canvas.yview_scroll(1, "units")
+        elif sys.platform == "darwin":
+            self.branch_canvas.yview_scroll(-1 if event.delta > 0 else 1, "units")
         else:
             self.branch_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
@@ -449,7 +451,24 @@ class GitPortingApp:
                 messagebox.showerror("Launch Error", f"Failed to launch vt_verify.py:\n{e}")
             return
 
-        messagebox.showinfo("Unsupported platform", "This launcher is currently available only on Windows.")
+        if sys.platform == "darwin":
+            try:
+                command = shlex.join([sys.executable, str(script_path.resolve())])
+                subprocess.Popen([
+                    "osascript",
+                    "-e", f'tell application "Terminal" to do script {json.dumps(command)}',
+                    "-e", 'tell application "Terminal" to activate'
+                ])
+                self.log("Launched vt_verify.py in a new Terminal window.")
+            except Exception as e:
+                messagebox.showerror("Launch Error", f"Failed to launch vt_verify.py:\n{e}")
+            return
+
+        try:
+            subprocess.Popen([sys.executable, str(script_path.resolve())])
+            self.log("Launched vt_verify.py.")
+        except Exception as e:
+            messagebox.showerror("Launch Error", f"Failed to launch vt_verify.py:\n{e}")
 
     def sync_changelog_logic(self):
         """Logic for synchronizing the file between branches."""
@@ -694,7 +713,7 @@ class GitPortingApp:
                     if publish_opt != "nothing": tasks_to_run.append(publish_opt)
 
                     if tasks_to_run:
-                        gradle_command = [GRADLEW_CMD] + tasks_to_run
+                        gradle_command = GRADLEW_CMD + tasks_to_run
                         if not self.run_process_in_thread(gradle_command):
                             self.log(f"Gradle tasks failed on branch {branch}. Process stopped.", "ERROR")
                             all_success = False; break

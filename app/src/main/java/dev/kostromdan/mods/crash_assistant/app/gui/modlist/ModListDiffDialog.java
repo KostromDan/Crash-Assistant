@@ -1468,6 +1468,7 @@ public class ModListDiffDialog extends JFrame {
         java.net.HttpURLConnection httpConn = conn instanceof java.net.HttpURLConnection ? (java.net.HttpURLConnection) conn : null;
 
         if (httpConn != null) {
+            CurseForge.authenticateDownload(httpConn);
             httpConn.setConnectTimeout(15000);
             httpConn.setReadTimeout(15000);
             this.activeDownloadConnection = httpConn; // Track explicitly

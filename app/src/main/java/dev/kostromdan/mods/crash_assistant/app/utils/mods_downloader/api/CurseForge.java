@@ -28,6 +28,7 @@ public class CurseForge {
     private static final String API_KEY = "$2a$10$mUzm1tGasW4kVV7Yw1zjBO9AmFcJClNyjLUsgIZv5E.h/zEcrAlpG";
 
     private static final String BASE_URL = "https://api.curseforge.com/v1";
+    private static final String DOWNLOAD_HOST = "edge.forgecdn.net";
     private static final Gson GSON = new Gson();
     private static final ConcurrentHashMap<Long, SlugInfo> SLUG_CACHE = new ConcurrentHashMap<Long, SlugInfo>();
 
@@ -58,6 +59,12 @@ public class CurseForge {
         public SlugInfo(String slug, String websiteUrl) {
             this.slug = slug;
             this.websiteUrl = websiteUrl;
+        }
+    }
+
+    public static void authenticateDownload(HttpURLConnection connection) {
+        if (connection != null && DOWNLOAD_HOST.equalsIgnoreCase(connection.getURL().getHost())) {
+            connection.setRequestProperty("x-api-key", API_KEY);
         }
     }
 

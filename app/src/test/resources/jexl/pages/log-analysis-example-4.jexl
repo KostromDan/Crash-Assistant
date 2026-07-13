@@ -1,0 +1,27 @@
+// Fetch both logs required for analysis
+var latest_logs = LogsList.getLogs(LOG);
+var hs_err_logs = LogsList.getLogs(HS_ERR);
+
+var driver_version = null;
+
+// [16:03:03] [EarlyDisplay/INFO]: GL info: NVIDIA GeForce RTX 5090 ... GL version 4.6.0 NVIDIA 576.65, NVIDIA Corporation
+var pattern = Pattern.compile("GL version .* NVIDIA (\\d+\\.\\d+),");
+
+for (log : latest_logs) {
+    var matcher = pattern.matcher(log.getReader().getAllLinesString());
+    if (matcher.find()) {
+        driver_version = matcher.group(1).trim();
+        break;
+    }
+}
+
+// Proceed only if the driver version was extracted AND it is strictly older than a version containing a theoretical fix
+if (driver_version != null && VersionUtils.isLower(driver_version, "577.00")) {
+    for (err_log : hs_err_logs) {
+         // Cross-reference the Java crash log using semantic HsErr parsing utility
+         if (HsErrParser.hsErrContainsOneOfFrames(err_log, "nvoglv64.dll", "nvwgf2umx.dll")) {
+             var warn = Analysis.addWarning(err_log, "Crash caused by outdated NVIDIA Graphics driver (Version " + driver_version + "). Please update to 577.00+.");
+             warn.withPriority(15000);
+         }
+    }
+}

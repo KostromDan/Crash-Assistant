@@ -1,0 +1,101 @@
+// Credits: Thermonuclear_minecraft_engineer, Invader, Icarus, ACGaming
+// Map of problematic mods
+// Format: modId -> [message, maxVersionExclusive (null = always flag)]
+var problematicMods = {
+    "aiimprovements":    ["AI Improvements has been rewritten and merged into Universal Tweaks.", null],
+    "appleskin":         ["Outdated. BareBones replaces it with LemonSkin.", null],
+    "astatine":          ["Astatine has no performance gain and may even reduce performance for some users.", null],
+    "attributefix":      ["Attribute Fix has been rewritten and merged into Universal Tweaks.", null],
+    "bannerpatch":       ["Banner Patch has been merged into Universal Tweaks.", null],
+    "bedpatch":          ["Bed Patch's fix already exists within Forge / Cleanroom and doesn't do anything when installed.", null],
+    "betterfps":         ["BetterFPS is known to cause crashes with little to no performance gain. Many of the improvements are already included in other mods.", null],
+    "betterplacement":   ["Better Placement has been rewritten and merged into Universal Tweaks.", null],
+    "biggerchathistory": ["Bigger Chat History has been rewritten and merged into Universal Tweaks.", null],
+    "biggerpacketsplz":  ["Bigger Packets Please has been merged into Universal Tweaks.", null],
+    "blockdispenser":    ["Block Dispenser has been merged into Universal Tweaks.", null],
+    "blockoverlayfix":   ["Block Overlay Fix has been rewritten and merged into Universal Tweaks.", null],
+    "bowinfinityfix":    ["Bow Infinity Fix has been rewritten and merged into Universal Tweaks.", null],
+    "clumps":            ["Clumps is superseded by Fixeroo, which is included in BareBones.", null],
+    "customspawner":     ["Custom Mob Spawner is very outdated and WILL screw up mob spawns in many mods. If you are using Mo' Creatures, it is highly recommended to use Mo' Creatures Extended instead which removes the dependency.", null],
+    "damagetilt":        ["Damage Tilt has been merged into Universal Tweaks.", null],
+    "defaultlanport":    ["Default LAN Port has been rewritten and merged into Universal Tweaks.", null],
+    "deuf":              ["Duplicate Entity UUID Fix has been rewritten and merged into Universal Tweaks.", null],
+    "diethopper":        ["Diet Hoppers has been rewritten and merged into Universal Tweaks.", null],
+    "drawerfps":         ["DrawerFPS has been merged into Universal Tweaks.", null],
+    "dupefixproject":    ["DupeFix Project is not compatible with MixinBooter. Universal Tweaks includes it already.", null],
+    "enablecheats":      ["Enable Cheats has been merged into Universal Tweaks.", null],
+    "entity_desync_fix": ["Entity Desync Fix has been rewritten and merged into Universal Tweaks.", null],
+    "erebusfix":         ["Erebus Fix has been rewritten and merged into Universal Tweaks.", null],
+    "essential":         ["Essential Mod has questionable implementation that makes it incompatible with several mods including CensoredASM and Forgelin-Continuous. It is recommended to use e4mc Retro (Proxy) or Lan UPNP (Non-Proxy) instead.<p>If you're not sure how Essential Mod got installed, a mod you downloaded may be potentially installing it.", null],
+    "experiencebugfix":  ["Fix Experience Bug has been merged into Universal Tweaks.", null],
+    "eyltrafix":         ["Elytra-Fix has been rewritten and merged into Universal Tweaks.", null],
+    "fastleafdecay":     ["Fast Leaf Decay has been rewritten and merged into Universal Tweaks.", null],
+    "fencejumper":       ["Fence Jumper has been rewritten and merged into Universal Tweaks.", null],
+    "foamfix":           ["FoamFix is superseded by VintageFix, which uses a better and more compatible implementation.", null],
+    "foodfix":           ["Food Fix has been rewritten and merged into Universal Tweaks.", null],
+    "fpsboostremake":    ["FPS Boost has little to no performance gain.", null],
+    "fpsoptimizer":      ["FPS Optimizer has little to no performance gain.", null],
+    "framevoidpatch":    ["Frame Void Patch has been merged into Universal Tweaks.", null],
+    "frustumculling":    ["Frustum Culling (More FPS) will cause incompatibilities with no performance gain. Universal Tweaks already has its own Frustum Culling tweak.", null],
+    "givemebackmyhp":    ["Give Me Back My HP has been rewritten and merged into Universal Tweaks.", null],
+    "gpu_tape":          ["GPUTape has little to no performance gain.", null],
+    "helpfixer":         ["HelpFixer has been merged into Universal Tweaks.", null],
+    "horsestandstill":   ["Stupid Horse Stand Still has been rewritten and merged into Universal Tweaks.", null],
+    "keydescfix":        ["Keybind Description Fix has been merged into Universal Tweaks.", null],
+    "laglessmod":        ["Lagless Mod Lite will cause incompatibilities with no performance gain.", null],
+    "leafdecay":         ["Leaf Decay Accelerator has been rewritten and merged into Universal Tweaks.", null],
+    "loginhpfix":        ["Login HP Fix has been rewritten and merged into Universal Tweaks.", null],
+    "maxhealthfixer":    ["Max Health Fixer has been rewritten and merged into Universal Tweaks.", null],
+    "movingquickly":     ["MovingQuickly has been rewritten and merged into Universal Tweaks.", null],
+    "multithreadednoise":["Multithreaded Noise is known to cause crashes and is outdated.", null],
+    "mup":               ["Eigencraft Unofficial Patch / MUP is known to cause crashes and is outdated. Universal Tweaks already has most of its fixes and Alfheim already has lighting optimizations.", null],
+    "nanfix":            ["Entity NaN Health Fix has been rewritten and merged into Universal Tweaks.", null],
+    "netherportalfix":   ["NetherPortalFix has been rewritten and merged into Universal Tweaks.", null],
+    "nopotionshift":     ["No Potion Shift has been rewritten and merged into Universal Tweaks.", null],
+    "pathundergates":    ["Path Under Gates has been rewritten and merged into Universal Tweaks.", null],
+    "performant":        ["Performant is an empty mod jar. All code in the mod has been commented out.", null],
+    "phosphor-lighting": ["Phosphor can cause a lot of crashes, and is deprecated.", null],
+    "pigium1_12_2":      ["Pigium is a placebo and not an actual performance mod. It was originally made for a YouTube video.", null],
+    "portaldupebegone":  ["PortalDupeBegone has been rewritten and merged into Universal Tweaks.", null],
+    "quickleafdecay":    ["Quick Leaf Decay has been rewritten and merged into Universal Tweaks.", null],
+    "redirectionor":     ["Redirectionor has little to no performance gain.", null],
+    "savemystronghold":  ["Save My Stronghold! has been merged into Universal Tweaks.", null],
+    "seedcopy":          ["SeedCopy has been rewritten and merged into Universal Tweaks.", null],
+    "spark":             ["Spark is superseded by Flare, which has more features included.", null],
+    "steamworldpatcher": ["SteamWorldPatcher has been merged into Universal Tweaks.", null],
+    "stg":               ["SwingThroughGrass has been rewritten and merged into Universal Tweaks.", null],
+    "surge":             ["Surge uses deprecated methods and has no performance gain. Salvaged features have been merged into Universal Tweaks.", null],
+    "texfix":            ["TexFix has been rewritten and merged into Universal Tweaks in CensoredASM.", null],
+    "tinkersoredictcache":["Tinkers OreDict Cache has been merged into Universal Tweaks and Tinkers' Antique.", null],
+    "unloader":          ["Unloader has been rewritten and merged into Universal Tweaks.", null],
+    "vanillafix":        ["VanillaFix has been rewritten and merged into CensoredASM.", null],
+    "villagermantlefix": ["Villager Mantle Fix has been merged into Universal Tweaks.", null],
+    "vintagium":         ["Vintagium and its forks are known to cause crashes and are outdated. Celeritas serves as the continuation with better compatibility.", null],
+    // Version-gated: only flag if version is BELOW this threshold
+    "jei":               ["JEI 1.12 is outdated and incompatible. BareBones already includes .", "4.16.1.1014"],
+    "jeid":              ["This version of JEID/REID is outdated. You need to update to the latest version of REID", "2.3.0"],
+    "mousetweaks":       ["BareBones already includes a newer version of MouseTweaks", "3.1.5"]
+};
+
+// Loop
+var allMods = ModListUtils.getCurrentModList(true);
+
+for (currentMod : allMods) {
+    var id = currentMod.getModId();
+    if (id == null || !problematicMods.containsKey(id)) {
+        continue;
+    }
+
+    var entry = problematicMods.get(id);
+    var message = entry[0];
+    var maxVersion = entry[1];
+
+    // If a maxVersion is set, only flag if the installed version is strictly below it
+    if (maxVersion != null && !VersionUtils.isLower(currentMod.getVersion(), maxVersion)) {
+        continue;
+    }
+
+    var warn = Startup.addCrashWarning(message + "<p>Fix: Delete " + currentMod.getJarName() + " from the mods folder.");
+    warn.withModActions(currentMod);
+    Startup.markForCrash();
+}

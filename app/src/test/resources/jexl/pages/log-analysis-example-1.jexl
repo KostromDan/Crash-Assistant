@@ -1,0 +1,16 @@
+// Request crash reports from the gathered logs
+var requested_logs = LogsList.getLogs(CRASH_REPORT);
+
+for (log : requested_logs) {
+    // Check if the log contains either of the provided strings/regex
+    if (RegexChecker.logContainsOneOfPatterns(log, "Description: Manually triggered debug crash", "Caused by: java\\.lang\\.Throwable: Manually triggered debug crash")) {
+        // Create a warning using a localized string and attach it to the current log
+        var warn = Analysis.addWarning(log, LanguageProvider.get("custom.manual_crash"));
+        
+        // Add a "Don't show again" option
+        warn.withDontShowAgain("manual_crash_warning");
+        
+        // Ensure this warning is displayed at the top by increasing priority
+        warn.withPriority(10001);
+    }
+}

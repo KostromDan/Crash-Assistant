@@ -162,6 +162,9 @@ public class Permissions {
             for (String className : entry.getValue()) {
                 rules.append(" +").append(className).append("{}");
             }
+            if ("java.lang".equals(entry.getKey())) {
+                rules.append(" +Class { getName(); getSimpleName(); }");
+            }
             rules.append(" }\n");
         }
         for (String packageName : WHITELISTED_PACKAGES) {

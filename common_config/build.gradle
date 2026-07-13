@@ -71,3 +71,15 @@ shadowJar {
 }
 
 build.finalizedBy(shadowJar)
+
+tasks.register('startupDocumentationTest', JavaExec) {
+    group = 'verification'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.common_config.scripts.StartupDocumentationCompatibilityTest'
+    def testWorkDir = layout.buildDirectory.dir('startup-documentation-test-workdir').get().asFile
+    doFirst { testWorkDir.mkdirs() }
+    workingDir testWorkDir
+}
+
+check.dependsOn startupDocumentationTest

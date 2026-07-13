@@ -1,0 +1,19 @@
+var allMods = ModListUtils.getCurrentModList(true);
+var mods = allMods.stream().toMap(m -> m.modId, m -> m);
+
+var badMod = mods.get("problematic_mod_id");
+
+if (badMod != null) {
+    var bypassKey = "problematic_mod_bypass_key";
+    var isBypassed = Objects.equals(CrashAssistantLocalConfig.get(bypassKey), true);
+    
+    var warn = Startup.addCrashWarning(badMod.jarName + " will corrupt your worlds!");
+    
+    warn.withModActions(badMod)
+        .withDontShowAgain(bypassKey)
+        .withCustomDontShowAgainCheckboxText("I accept the risks of corruption, let me play")
+        .withOkDelay(15);
+    if (!isBypassed) {
+        Startup.markForCrash();
+    }
+}

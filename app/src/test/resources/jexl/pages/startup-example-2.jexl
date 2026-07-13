@@ -1,0 +1,8 @@
+var xmxGB = MemoryUtils.bytesToGigabytes(MemoryUtils.getJvmMaxHeapBytes());
+var jvmArgs = ArgUtils.getSafeJvmArgs();
+
+if (xmxGB > 12.0 && !jvmArgs.contains("-XX:+UseZGC")) {
+    var warn = Startup.addBootWarning("For heap sizes over 12GB, we heavily advise adding -XX:+UseZGC to JVM arguments.");
+    warn.withDontShowAgain("zgc_recommend");
+    warn.withJvmArgsGuide();
+}

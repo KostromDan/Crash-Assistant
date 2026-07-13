@@ -136,3 +136,15 @@ shadowJar {
 }
 
 build.finalizedBy(shadowJar)
+
+tasks.register('securityRegressionTest', JavaExec) {
+    group = 'verification'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.app.scripts.SecurityRegressionTest'
+    def testWorkDir = layout.buildDirectory.dir('security-test-workdir').get().asFile
+    doFirst { testWorkDir.mkdirs() }
+    workingDir testWorkDir
+}
+
+check.dependsOn securityRegressionTest

@@ -1,0 +1,95 @@
+// Format: modId -> [message, canBypass, modPacksWhiteList]
+// modPacksWhiteList: if empty, rule applies to all modpacks.
+// If not empty, rule applies only when current modpack name exactly matches one of values from the list.
+// $JAR$ placeholder is replaced automatically with current mod jar name.
+var problematicMods = {
+    "essential-container": [
+        "<strong>Essential Mod Not Supported</strong>\n\nWe strongly recommend against using Essential (<strong>$JAR$</strong>) with this modpack. <strong>A free world-sharing alternative is already built-in</strong> using e4mc - click <strong>Share World</strong> in the game menu.\n\n<strong>Why we don't support Essential:</strong>\n- <strong>Technical issues:</strong> We've received multiple user reports of problems when combining Essential with our modpacks, including reports of world corruption. While there is no conclusive evidence of Essential as the definite cause, we do not have the development or support capacity to resolve issues potentially caused by it.\n\n- <strong>Security concerns:</strong> Essential's auto-updater introduces potential security risks that are outside of our control.\n\n- <strong>Ethics:</strong> We object to Essential's inclusion of in-game currency and microtransactions in an otherwise free modding environment.\n\n<strong>If you choose to use Essential anyway</strong>, continue at your own risk by checking the checkbox below. You will not be eligible for support from our team.",
+        true,
+        []
+    ],
+    "e4mc": [
+        "<strong>Duplicate e4mc Mod Detected</strong>\n\nYou have manually added the <strong>e4mc</strong> mod (<strong>$JAR$</strong>) to the modpack. This is not needed, as <strong>all Luna Pixel Studios modpacks already include our custom fork of e4mc by default</strong> with built-in world sharing functionality.\n\n<strong>Why this causes issues:</strong>\n- Having both versions installed can cause conflicts and unexpected behavior\n- Our custom fork includes optimizations and fixes specific to our modpacks\n\n<strong>Recommended action:</strong> Remove the manually added e4mc mod from your mods folder.\n\n<strong>Alternative:</strong> If you are having issues with our built-in world sharing, hosting a server on your own PC via the serverpack is easy. Learn more here: https://github.com/chorbintime/LPS-readme/wiki\n\n<strong>If you still want to proceed with the duplicate mod</strong>, continue at your own risk by checking the checkbox below. You will not be eligible for support from our team.",
+        true,
+        ["Better MC 3"]
+    ],
+    "tlskincape": [
+        "It appears that you are using <strong>TLauncher</strong>, a launcher likely to be infected with spyware that could steal your passwords and monitor your computer activity. <strong>TLauncher</strong> also does not install modpacks correctly, which results in many missing files that will potentially break the modpack. It is heavily encouraged to delete all traces of TLauncher off of your computer, do an antivirus scan, and buy Minecraft so you can use a better launcher, such as https://atlauncher.com/downloads.",
+        false,
+        []
+    ],
+    "despawn_tweaker": [
+        "If you are seeing this, you have manually added the <strong>Despawn Tweaker</strong> mod to the modpack. The <strong>Despawn Tweaker</strong> mod is not needed, as a better mod with similar functionality (<strong>Despawn Tweaks</strong>) is already present in the modpack.",
+        false,
+        []
+    ],
+    "doespotatotick": [
+        "If you are seeing this, you have manually added the <strong>DoesPotatoTick</strong> mod to the modpack. The <strong>DoesPotatoTick</strong> mod is not needed, as a better mod with similar functionality (<strong>Does It Tick</strong>) is already present in the modpack.",
+        false,
+        []
+    ],
+    "dynamiclights": [
+        "If you are seeing this, you have manually added the <strong>Dynamic Lights mod</strong> to the modpack. The <strong>Dynamic Lights</strong> mod is not needed, as a better mod with similar functionality (either <strong>Sodium/Embeddium Dynamic Lights</strong> or <strong>LambDynamicLights</strong>) is already present in the modpack.",
+        false,
+        []
+    ],
+    "epicfight": [
+        "<strong>Epic Fight Mod Not Supported</strong>\n\nYou have manually added the <strong>Epic Fight</strong> mod (<strong>$JAR$</strong>) to the modpack. We strongly recommend against using this mod.\n\n<strong>Why we don't support Epic Fight:</strong>\n- <strong>Stability issues:</strong> Epic Fight is known to cause frequent crashes and game-breaking bugs\n- <strong>Compatibility problems:</strong> Epic Fight has widespread incompatibilities with many mods commonly found in modpacks\n- <strong>Support limitations:</strong> We do not have the development capacity to troubleshoot issues caused by Epic Fight's extensive modifications\n\n<strong>Recommended alternative:</strong> If you would like a more stable combat overhaul, consider using the <strong>Better Combat</strong> mod instead.\n\n<strong>If you choose to use Epic Fight anyway</strong>, continue at your own risk by checking the checkbox below. You will not be eligible for support from our team.",
+        true,
+        []
+    ],
+    "valkyrienskies": [
+        "<strong>Valkyrien Skies Not Supported</strong>\n\nYou have manually added the <strong>Valkyrien Skies</strong> mod (<strong>$JAR$</strong>) to the modpack. We strongly recommend against using this mod with pre-existing modpacks.\n\n<strong>Why we don't support Valkyrien Skies:</strong>\n- <strong>Compatibility issues:</strong> Valkyrien Skies makes fundamental changes to physics and world handling that conflict with many other mods\n- <strong>Integration requirements:</strong> Valkyrien Skies requires careful modpack design and testing from the ground up to work properly\n- <strong>Technical limitations:</strong> Adding Valkyrien Skies to an existing modpack that wasn't designed for it typically results in crashes, world corruption, and unpredictable behavior\n\n<strong>If you choose to use Valkyrien Skies anyway</strong>, continue at your own risk by checking the checkbox below. You will not be eligible for support from our team.",
+        true,
+        []
+    ],
+    "optifine": [
+        "<strong>OptiFine Not Compatible</strong>\n\nYou have manually added the <strong>OptiFine</strong> mod (<strong>$JAR$</strong>) to the modpack.\n\n<strong>Why OptiFine doesn't work with this pack:</strong>\n- <strong>Compatibility issues:</strong> OptiFine is closed-source and makes extensive, undocumented changes to Minecraft's rendering code, causing conflicts with many mods in this pack\n- <strong>Better alternatives included:</strong> Modern optimization and shader mods (Sodium/Xenon and Iris/Oculus) are already present in this modpack and provide superior performance with full mod compatibility\n\n<strong>Recommended action:</strong> Remove OptiFine from your mods folder.",
+        false,
+        []
+    ]
+};
+
+var allMods = ModListUtils.getCurrentModList(true);
+var modPackName = CrashAssistantConfig.get("text.modpack_name").split(" - ")[0].trim();
+
+
+for (currentMod : allMods) {
+    var id = currentMod.getModId();
+    if (id == null || !problematicMods.containsKey(id)) {
+        continue;
+    }
+
+    var entry = problematicMods.get(id);
+    var message = entry[0].replace("$JAR$", currentMod.jarName);
+    var canBypass = entry[1] == true;
+    var modPacksWhiteList = entry[2];
+
+    var isAllowedModPack = true;
+    for (name : modPacksWhiteList) {
+        isAllowedModPack = false;
+        if (name == modPackName) {
+            isAllowedModPack = true;
+            break;
+        }
+    }
+    if (!isAllowedModPack) {
+        continue;
+    }
+    var bypassKey = "problematic_mod_bypass_" + id;
+
+    if (canBypass && CrashAssistantLocalConfig.get(bypassKey) == true) {
+        continue;
+    }
+
+    var warn = Startup.addCrashWarning(message);
+    warn.withModActions(currentMod);
+    warn.withOkDelay(20);
+
+    if (canBypass) {
+        warn.withDontShowAgain(bypassKey)
+            .withCustomDontShowAgainCheckboxText("I have read everything, fully understand the consequences and the loss of support. Allow me to launch the game.");
+    }
+
+    Startup.markForCrash();
+}

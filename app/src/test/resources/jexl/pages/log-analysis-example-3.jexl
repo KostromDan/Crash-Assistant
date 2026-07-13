@@ -1,0 +1,28 @@
+var crash_logs = LogsList.getLogs(CRASH_REPORT);
+
+for (log : crash_logs) {
+    var lines = log.getReader().getAllLinesList();
+    
+    // Iterate line by line using an index so we can look ahead
+    for (var i = 0; i < lines.size(); i++) {
+        var line = lines.get(i);
+        
+        // Find the start of a config loading exception
+        if (line.contains("ConfigLoadingException: Failed loading config file ") &&
+            line.contains(".toml of type SERVER for modid ")) {
+            
+            // We found the error header. Extract the Mod ID and Config path by splitting the string.
+            var modId = line.split("\\.toml of type SERVER for modid ")[1];
+            var configPath = line.split(": Failed loading config file ")[1].split(" of type SERVER for modid ")[0];
+
+            // Look ahead in the following lines to confirm the actual parsing exception
+            for (var j = i + 1; j < lines.size(); j++) {
+                if (lines.get(j).contains("Caused by: com.electronwill.nightconfig.core.io.ParsingException: ")) {
+                    Analysis.addWarning(log, "Server config " + configPath + " for mod " + modId + " is corrupted. Please delete it.");
+                    break;
+                }
+            }
+            break; // Stop parsing lines once the issue is found and handled
+        }
+    }
+}

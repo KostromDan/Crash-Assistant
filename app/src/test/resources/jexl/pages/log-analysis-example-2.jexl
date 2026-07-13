@@ -1,0 +1,12 @@
+var logs = LogsList.getLogs(LOG);
+
+var pattern = Pattern.compile("Fabric loader version: (\\d+\\.\\d+\\.\\d+)");
+
+for (log : logs) {
+    var matcher = pattern.matcher(log.getReader().getAllLinesString());
+    
+    // If pattern found, extract the exact version group and emit warning
+    if (matcher.find()) {
+        Analysis.addWarning(log, "Detected Fabric loader version: " + matcher.group(1));
+    }
+}

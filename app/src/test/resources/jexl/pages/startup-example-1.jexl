@@ -1,0 +1,12 @@
+var xmxBytes = MemoryUtils.getJvmMaxHeapBytes();
+var totalSystemCapacity = MemoryUtils.getSystemTotalMemoryBytes() + MemoryUtils.getSystemTotalSwapBytes();
+
+if (xmxBytes > totalSystemCapacity) {
+    var msg = "You've allocated " + MemoryUtils.formatMemorySize(xmxBytes) + 
+              ", but your system only has " + 
+              MemoryUtils.formatMemorySize(totalSystemCapacity) + " available!";
+    
+    var warn = Startup.addBootWarning(msg);
+    warn.withDontShowAgain("ram_over_allocation");
+    warn.withMemoryAllocationGuide();
+}

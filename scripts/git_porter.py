@@ -802,6 +802,49 @@ class GitPortingApp:
                         changed_files[filepath] = status[0]
         return changed_files
 
+    def get_git_file_mode(self, branch, filepath):
+        """Returns the Git mode for a path (for example, 100644 or 100755)."""
+        output = self.run_git_command(
+            ['git', 'ls-tree', branch, '--', filepath],
+            suppress_error_popup=True
+        )
+        if not output:
+            return None
+
+        metadata, _, _ = output.partition('\t')
+        parts = metadata.split()
+        return parts[0] if parts else None
+
+    def restore_executable_bits_in_index(self, file_modes):
+        """Preserves executable bits even on systems where core.fileMode is false."""
+        for filepath, mode in file_modes.items():
+            if mode not in ('100644', '100755'):
+                self.log(f"  Unsupported Git mode {mode} for {filepath}; leaving it unchanged.", "WARNING")
+                continue
+
+            chmod_flag = '+x' if mode == '100755' else '-x'
+            if not self.run_process_in_thread(
+                ['git', 'update-index', f'--chmod={chmod_flag}', '--', filepath]
+            ):
+                self.log(f"Failed to preserve Git mode {mode} for {filepath}.", "ERROR")
+                return False
+
+            # Keep the POSIX working tree consistent with the index. Without
+            # this, a file recreated with open(..., 'wb') remains 0644 and the
+            # branch is dirty immediately after committing mode 100755.
+            if os.name != 'nt':
+                target_path = Path(filepath)
+                try:
+                    current_mode = target_path.stat().st_mode
+                    if mode == '100755':
+                        target_path.chmod(current_mode | 0o111)
+                    else:
+                        target_path.chmod(current_mode & ~0o111)
+                except OSError as e:
+                    self.log(f"Failed to apply mode {mode} to {filepath}: {e}", "ERROR")
+                    return False
+        return True
+
     def force_apply_logic(self):
         """Force apply logic: overwrite/delete files from selected commits across branches."""
         all_success = True
@@ -818,6 +861,7 @@ class GitPortingApp:
 
             # 2. Read current content of modified/added files from original branch
             file_contents = {}
+            file_modes = {}
             for filepath, status in changed_files.items():
                 if status in ('M', 'A'):
                     try:
@@ -827,6 +871,9 @@ class GitPortingApp:
                         )
                         if content is not None:
                             file_contents[filepath] = content
+                            mode = self.get_git_file_mode(self.original_branch, filepath)
+                            if mode is not None:
+                                file_modes[filepath] = mode
                         else:
                             self.log(f"Warning: Could not read {filepath} from {self.original_branch}", "WARNING")
                     except Exception as e:
@@ -879,7 +926,17 @@ class GitPortingApp:
 
                 if files_changed:
                     # Stage and commit
-                    self.run_process_in_thread(['git', 'add', '-A'])
+                    if not self.run_process_in_thread(['git', 'add', '-A']):
+                        self.log(f"Failed to stage force-applied files on branch {branch}.", "ERROR")
+                        all_success = False
+                        break
+                    modes_to_restore = {
+                        filepath: mode for filepath, mode in file_modes.items()
+                        if filepath in file_contents
+                    }
+                    if not self.restore_executable_bits_in_index(modes_to_restore):
+                        all_success = False
+                        break
                     commit_subjects = []
                     for h in self.selected_commit_hashes:
                         subj = self.get_commit_subject(h)

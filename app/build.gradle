@@ -142,8 +142,16 @@ tasks.register('securityRegressionTest', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'dev.kostromdan.mods.crash_assistant.app.scripts.SecurityRegressionTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
     def testWorkDir = layout.buildDirectory.dir('security-test-workdir').get().asFile
-    doFirst { testWorkDir.mkdirs() }
+    doFirst {
+        testWorkDir.mkdirs()
+        def devMarker = new File(testWorkDir, 'app/src/main/java/dev/kostromdan/mods/crash_assistant/app/CrashAssistantApp.java')
+        devMarker.parentFile.mkdirs()
+        devMarker.createNewFile()
+    }
     workingDir testWorkDir
 }
 

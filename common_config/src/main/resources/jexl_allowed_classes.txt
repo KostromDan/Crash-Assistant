@@ -213,6 +213,7 @@ java.time.Year
 java.time.YearMonth
 java.time.ZoneId
 java.time.ZoneOffset
+java.time.ZoneRegion
 java.time.ZonedDateTime
 java.time.chrono.AbstractChronology
 java.time.chrono.ChronoLocalDate

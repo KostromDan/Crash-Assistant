@@ -15,18 +15,24 @@ import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.MapContext;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
-import java.nio.file.Paths;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarOutputStream;
 
 public final class SecurityRegressionTest {
     private static final String VERSION_GATE_SCRIPT =
@@ -61,6 +67,8 @@ public final class SecurityRegressionTest {
         testPrimitiveStreamVarargsCompatibility();
         testStartupScriptFixturesWithSyntheticMods();
         testBundledExamplesCompile();
+        testUpstreamJexlSecurityCases();
+        testLambdaSandboxing();
         testFileAndNetworkAccess();
         System.out.println("Security regression tests passed.");
     }
@@ -89,9 +97,14 @@ public final class SecurityRegressionTest {
         context.set("syncSet", java.util.Collections.synchronizedSet(new HashSet<String>()));
         context.set("arraysList", java.util.Arrays.asList("a", "b"));
         context.set("singletonMap", java.util.Collections.singletonMap("key", "value"));
+        context.set("forbiddenFileClass", java.io.File.class);
     }
 
     private static void testProductionPermissionsAndLanguageBasics() {
+        assertTrue(Permissions.isDevEnvironment(),
+                "Security regression harness must exercise dev/unrelocated class names");
+        assertEquals("org.apache.commons.jexl3.JexlScript",
+                Permissions.getClassMap().get("JexlScript").getName());
         assertEquals("b", execute("'a:b'.split(':')[1]"));
         assertEquals(2, execute("arraysList.size()"));
         assertEquals(2, execute("Arrays.asList('a', 'b').size()"));
@@ -101,6 +114,10 @@ public final class SecurityRegressionTest {
         assertEquals(2L, execute("Stream.of('a', 'b').count()"));
         assertEquals(0L, execute("syncSet.stream().count()"));
         assertEquals("key", execute("singletonMap.keySet().iterator().next()"));
+        assertTrue(execute("ZoneId.systemDefault().getId()") instanceof String,
+                "Scripts must be able to read the current time zone");
+        assertEquals(Boolean.TRUE,
+                execute("ZoneRulesProvider.getAvailableZoneIds().contains('UTC')"));
 
         assertEquals(Boolean.TRUE, execute("booleans[0] && !booleans[1]"));
         assertEquals(3, execute("bytes[0] + bytes[1]"));
@@ -168,39 +185,176 @@ public final class SecurityRegressionTest {
         }
     }
 
+    /**
+     * Regression cases adapted from the security-relevant tests in Apache Commons JEXL 3.7.0:
+     * PermissionsTest, Issues400Test, ClassCreatorTest, PragmaTest and PropertyAccessTest.
+     */
+    private static void testUpstreamJexlSecurityCases() throws Exception {
+        assertDenied("Runtime.getRuntime()");
+        assertDenied("System.getProperty('user.home')");
+        assertDenied("new('java.lang.Thread')");
+        assertDenied("new('java.util.Timer', true)");
+
+        Path archiveCanary = Paths.get("security-archive-canary.jar").toAbsolutePath();
+        Files.deleteIfExists(archiveCanary);
+        try {
+            try (JarOutputStream ignored = new JarOutputStream(Files.newOutputStream(archiveCanary))) {
+            }
+            context.set("forbiddenPath", archiveCanary);
+            String archivePath = jexlString(archiveCanary.toString());
+            assertDenied("import java.io.FileWriter; new FileWriter(" + archivePath + ")");
+            assertDenied("import java.io.FileReader; new FileReader(" + archivePath + ")");
+            assertDenied("new('java.util.zip.ZipFile', " + archivePath + ")");
+            assertDenied("new('java.util.jar.JarFile', " + archivePath + ")");
+            assertDenied("#pragma jexl.namespace.files java.nio.file.Files\n" +
+                    "files:exists(forbiddenPath)");
+        } finally {
+            context.set("forbiddenPath", null);
+            Files.deleteIfExists(archiveCanary);
+        }
+        assertDenied("new java.io.File('forbidden')");
+        assertDenied("import java.io.PrintWriter; new PrintWriter(new('java.io.StringWriter'))");
+        assertDenied("new(forbiddenFileClass, 'forbidden')");
+
+        assertDenied("''.class.forName('java.io.File')");
+        assertDenied("''.class.classLoader");
+        assertDenied("''['class'].forName('java.net.URL')");
+        assertDenied("''.class.declaredMethods");
+        assertDenied("''.class.protectionDomain");
+        assertDenied("''.class.getResourceAsStream('/jexl_allowed_classes.txt')");
+
+        assertDenied("#pragma jexl.namespace.runtime java.lang.Runtime\nruntime:getRuntime()");
+        assertDenied("#pragma jexl.namespace.sys java.lang.System\nsys:getProperty('user.home')");
+        assertDenied("#pragma jexl.namespace.services java.util.ServiceLoader\nservices:load(String)");
+        assertDenied("#pragma jexl.namespace.bundles java.util.ResourceBundle\n" +
+                "bundles:clearCache()");
+        assertDenied("new('org.apache.commons.jexl3.JexlBuilder')");
+        assertDenied("new('org.apache.commons.jexl3.internal.introspection.Uberspect', null, null)" +
+                ".getClassLoader().loadClass('java.lang.System')");
+
+        String integerProperty = "crash_assistant.security.integer";
+        String longProperty = "crash_assistant.security.long";
+        String booleanProperty = "crash_assistant.security.boolean";
+        System.setProperty(integerProperty, "7");
+        System.setProperty(longProperty, "9");
+        System.setProperty(booleanProperty, "true");
+        try {
+            assertEquals(7, execute("Integer.getInteger('" + integerProperty + "')"));
+            assertEquals(9L, execute("Long.getLong('" + longProperty + "')"));
+            assertEquals(Boolean.TRUE,
+                    execute("Boolean.getBoolean('" + booleanProperty + "')"));
+        } finally {
+            System.clearProperty(integerProperty);
+            System.clearProperty(longProperty);
+            System.clearProperty(booleanProperty);
+        }
+    }
+
+    private static void testLambdaSandboxing() throws Exception {
+        assertEquals(2, execute("var f = x -> x + 1; f(1)"));
+        assertEquals(3, execute(
+                "var outer = x -> { var inner = y -> y + 1; inner(x) }; outer(2)"
+        ));
+        assertEquals(2, execute("Stream.of(1).map(x -> x + 1).findFirst().get()"));
+        assertEquals(1024, execute(
+                "IntStream.range(0, 1024).boxed().parallel().map(x -> x + 1).toList().size()"
+        ));
+
+        Path lambdaFile = Paths.get("forbidden-lambda-file").toAbsolutePath();
+        Files.deleteIfExists(lambdaFile);
+        String[] restrictedBodies = {
+                "new('java.io.FileOutputStream', " + jexlString(lambdaFile.toString()) + ")",
+                "new('java.net.Socket')",
+                "new('java.lang.ProcessBuilder', 'forbidden-command')",
+                "''.getClass().getDeclaredMethods()",
+                "''.getClass().getClassLoader()"
+        };
+
+        try {
+            for (String restrictedBody : restrictedBodies) {
+                assertDenied("var f = x -> " + restrictedBody + "; f(1)");
+                assertDenied("var outer = x -> { var inner = y -> " + restrictedBody +
+                        "; inner(x) }; outer(1)");
+                assertDenied("Stream.of(1).map(x -> " + restrictedBody + ").findFirst()");
+                assertDenied("IntStream.range(0, 1024).boxed().parallel().forEach(x -> " +
+                        restrictedBody + ")");
+            }
+
+            // Closure and Script are intentionally visible for lambda support. Their internal Engine is not.
+            assertDenied("var f = () -> 42; f.getEngine().createScript('42')");
+            assertDenied("var f = () -> 42; " +
+                    "f.getEngine().newInstance(forbiddenFileClass, 'forbidden')");
+            assertTrue(Files.notExists(lambdaFile),
+                    "Denied lambda must not create its file-system canary");
+        } finally {
+            Files.deleteIfExists(lambdaFile);
+        }
+    }
+
     private static void testFileAndNetworkAccess() throws Exception {
         context.set("testLog", new Log(LogType.LOG, "test", Paths.get("not-readable-by-script.log")));
 
-        assertUnavailable("testLog.getPath()");
-        assertUnavailable("testLog.getFile()");
-        assertUnavailable("CrashAssistantConfig.getConfigPath()");
-        assertUnavailable("ModListUtils.MODS_FOLDER");
-        assertUnavailable("LanguageProvider.OPTIONS_PATH");
-        assertUnavailable("new('dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod', 'fake.jar')");
-        assertUnavailable("new('java.io.File', 'forbidden')");
-        assertUnavailable("new('java.io.FileInputStream', 'forbidden')");
-        assertUnavailable("new('java.io.FileOutputStream', 'forbidden')");
-        assertUnavailable("new('java.io.FileReader', 'forbidden')");
-        assertUnavailable("new('java.io.FileWriter', 'forbidden')");
-        assertUnavailable("new('java.io.RandomAccessFile', 'forbidden', 'rw')");
-        assertUnavailable("new('java.io.PrintWriter', 'forbidden')");
-        assertUnavailable("new('java.util.Formatter', 'forbidden')");
-        assertUnavailable("Stream.of(1).map(x -> new('java.io.File', 'forbidden')).findFirst()");
-        assertUnavailable("#pragma jexl.import java.io\nnew('File', 'forbidden')");
-        assertUnavailable("new('java.net.URL', 'https://example.invalid')");
-        assertUnavailable("new('java.net.URI', 'https://example.invalid')");
-        assertUnavailable("new('java.net.Socket')");
-        assertUnavailable("new('java.net.ServerSocket')");
-        assertUnavailable("new('java.lang.ProcessBuilder', 'forbidden-command')");
-        assertUnavailable("new('java.util.concurrent.ForkJoinPool')");
-        assertUnavailable("Stream.of(1).parallel().map(x -> new('java.net.URL', 'https://example.invalid')).findFirst()");
-        assertUnavailable("Integer.TYPE.getClassLoader()");
-        assertUnavailable("Integer.TYPE.getDeclaredMethods()");
-        assertUnavailable("''.getClass().forName('java.io.File')");
-        assertUnavailable("''.getClass().getProtectionDomain()");
-        assertUnavailable("PlatformHelp.FORGE.getClass().getClassLoader()");
-        assertUnavailable("foreignMap.size()");
-        assertUnavailable("foreignMap.entrySet()");
+        Path inputCanary = Paths.get("security-input-canary.properties").toAbsolutePath();
+        Path outputCanary = Paths.get("security-output-canary.txt").toAbsolutePath();
+        Files.write(inputCanary, "secret=must-not-be-readable".getBytes(StandardCharsets.UTF_8));
+        Files.deleteIfExists(outputCanary);
+
+        try {
+            String inputPath = jexlString(inputCanary.toString());
+            String outputPath = jexlString(outputCanary.toString());
+
+            assertDenied("testLog.getPath()");
+            assertDenied("testLog.getFile()");
+            assertDenied("CrashAssistantConfig.getConfigPath()");
+            assertDenied("ModListUtils.MODS_FOLDER");
+            assertDenied("LanguageProvider.OPTIONS_PATH");
+            assertDenied("new('dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod', 'fake.jar')");
+            assertDenied("new('java.io.File', " + inputPath + ")");
+            assertDenied("new('java.io.FileInputStream', " + inputPath + ")");
+            assertDenied("new('java.io.FileOutputStream', " + outputPath + ")");
+            assertDenied("new('java.io.FileReader', " + inputPath + ")");
+            assertDenied("new('java.io.FileWriter', " + outputPath + ")");
+            assertDenied("new('java.io.RandomAccessFile', " + outputPath + ", 'rw')");
+            assertDenied("new('java.io.PrintWriter', " + outputPath + ")");
+            assertDenied("new('java.util.Formatter', " + outputPath + ")");
+            assertDenied("var p = new('java.util.Properties'); " +
+                    "p.load(new('java.io.FileInputStream', " + inputPath + ")); p");
+            assertDenied("var p = new('java.util.Properties'); " +
+                    "p.store(new('java.io.FileOutputStream', " + outputPath + "), 'forbidden')");
+            assertDenied("new('java.util.Scanner', new('java.io.File', " + inputPath + ")).next()");
+            assertDenied("Stream.of(1).map(x -> new('java.io.File', " + inputPath + ")).findFirst()");
+            assertDenied("#pragma jexl.import java.io\nnew('File', " + inputPath + ")");
+
+            try (ServerSocket listener = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
+                String loopback = listener.getInetAddress().getHostAddress();
+                int port = listener.getLocalPort();
+                assertDenied("new('java.net.Socket', " + jexlString(loopback) + ", " + port + ")");
+                assertDenied("new('java.net.URL', 'http://" + loopback + ":" + port +
+                        "/canary').openConnection().connect()");
+            }
+
+            assertDenied("new('java.net.URL', 'https://example.invalid')");
+            assertDenied("new('java.net.URI', 'https://example.invalid')");
+            assertDenied("new('java.net.Socket')");
+            assertDenied("new('java.net.ServerSocket')");
+            assertDenied("new('java.lang.ProcessBuilder', 'forbidden-command')");
+            assertDenied("new('java.util.concurrent.ForkJoinPool')");
+            assertDenied("Stream.of(1).parallel().map(x -> " +
+                    "new('java.net.URL', 'https://example.invalid')).findFirst()");
+            assertDenied("Integer.TYPE.getClassLoader()");
+            assertDenied("Integer.TYPE.getDeclaredMethods()");
+            assertDenied("''.getClass().forName('java.io.File')");
+            assertDenied("''.getClass().getProtectionDomain()");
+            assertDenied("PlatformHelp.FORGE.getClass().getClassLoader()");
+            assertDenied("foreignMap.size()");
+            assertDenied("foreignMap.entrySet()");
+
+            assertTrue(Files.notExists(outputCanary),
+                    "Denied file-system operations must not create their output canary");
+        } finally {
+            Files.deleteIfExists(inputCanary);
+            Files.deleteIfExists(outputCanary);
+        }
     }
 
     private static void testPrimitiveStreamVarargsCompatibility() {
@@ -327,13 +481,29 @@ public final class SecurityRegressionTest {
         return engine.createScript(script).execute(context);
     }
 
-    private static void assertUnavailable(String script) {
+    private static void assertDenied(String script) {
         try {
             Object result = engine.createScript(script).execute(context);
-            assertTrue(result == null, "Forbidden expression returned " + result + ": " + script);
+            if (result instanceof AutoCloseable) {
+                try {
+                    ((AutoCloseable) result).close();
+                } catch (Exception ignored) {
+                }
+            }
+            throw new AssertionError("Forbidden expression completed normally with result " +
+                    result + ": " + script);
         } catch (JexlException expected) {
-            // An explicit JEXL denial is also the expected result.
+            if (expected instanceof JexlException.Parsing
+                    || expected instanceof JexlException.Tokenization
+                    || expected instanceof JexlException.Feature) {
+                throw new AssertionError("Security case must parse successfully before being denied: " +
+                        script, expected);
+            }
         }
+    }
+
+    private static String jexlString(String value) {
+        return "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'";
     }
 
     private static void assertEquals(Object expected, Object actual) {

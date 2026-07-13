@@ -12,6 +12,9 @@ public final class StartupDocumentationCompatibilityTest {
     }
 
     public static void main(String[] args) {
+        if (!Permissions.isDevEnvironment()) {
+            throw new AssertionError("Startup test harness must exercise dev/unrelocated class names");
+        }
         JexlEngine engine = Permissions.getEngine();
         JexlContext context = new MapContext();
         for (Map.Entry<String, Class<?>> entry : Permissions.getClassMap().entrySet()) {

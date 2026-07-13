@@ -27,11 +27,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarOutputStream;
 
 public final class SecurityRegressionTest {
@@ -60,7 +62,10 @@ public final class SecurityRegressionTest {
     }
 
     public static void main(String[] args) throws Exception {
+        testPermissionManifestInvariants();
         setupJexl();
+        testForbiddenClassRegistration();
+        testForbiddenCapabilityResolution();
         testProductionPermissionsAndLanguageBasics();
         testDocumentedApi();
         JexlDocumentationCompatibilityTest.run(engine, context);
@@ -100,6 +105,164 @@ public final class SecurityRegressionTest {
         context.set("forbiddenFileClass", java.io.File.class);
     }
 
+    private static void testPermissionManifestInvariants() throws Exception {
+        Set<String> entries = readPermissionEntries();
+
+        assertOnlyPermissionEntries(entries, "java.io.",
+                "java.io.BufferedReader",
+                "java.io.ByteArrayInputStream",
+                "java.io.ByteArrayOutputStream",
+                "java.io.IOException",
+                "java.io.InputStream",
+                "java.io.InputStreamReader",
+                "java.io.OutputStream",
+                "java.io.Reader",
+                "java.io.StreamTokenizer",
+                "java.io.StringReader",
+                "java.io.StringWriter",
+                "java.io.Writer");
+        assertOnlyPermissionEntries(entries, "java.net.",
+                "java.net.URLDecoder",
+                "java.net.URLEncoder");
+        assertOnlyPermissionEntries(entries, "java.nio.",
+                "java.nio.charset.Charset",
+                "java.nio.charset.CodingErrorAction",
+                "java.nio.charset.StandardCharsets");
+        assertOnlyPermissionEntries(entries, "java.util.zip.",
+                "java.util.zip.DataFormatException",
+                "java.util.zip.Deflater",
+                "java.util.zip.DeflaterOutputStream",
+                "java.util.zip.GZIPInputStream",
+                "java.util.zip.GZIPOutputStream",
+                "java.util.zip.Inflater",
+                "java.util.zip.InflaterInputStream",
+                "java.util.zip.ZipException");
+
+        assertNoPermissionPrefixes(entries,
+                "java.awt.",
+                "java.beans.",
+                "java.lang.foreign.",
+                "java.lang.instrument.",
+                "java.lang.invoke.",
+                "java.lang.management.",
+                "java.lang.reflect.",
+                "java.rmi.",
+                "java.security.",
+                "java.sql.",
+                "java.util.jar.",
+                "java.util.logging.",
+                "java.util.prefs.",
+                "javax.imageio.",
+                "javax.management.",
+                "javax.naming.",
+                "javax.net.",
+                "javax.script.",
+                "javax.sql.",
+                "javax.tools.",
+                "javax.xml.",
+                "jdk.",
+                "org.w3c.dom.ls.",
+                "org.xml.sax.",
+                "sun.",
+                "com.sun.",
+                "okhttp3.",
+                "org.apache.http.",
+                "org.apache.commons.jexl3.");
+
+        assertForbiddenPermissionEntries(entries,
+                "java.lang.ClassLoader",
+                "java.lang.ModuleLayer",
+                "java.lang.Process",
+                "java.lang.ProcessBuilder",
+                "java.lang.ProcessHandle",
+                "java.lang.Runtime",
+                "java.lang.System",
+                "java.lang.Thread",
+                "java.lang.ThreadGroup",
+                "java.util.ResourceBundle",
+                "java.util.ServiceLoader",
+                "java.util.Timer",
+                "java.util.TimerTask",
+                "java.util.spi.ToolProvider",
+                "java.util.concurrent.CompletableFuture",
+                "java.util.concurrent.Executor",
+                "java.util.concurrent.ExecutorService",
+                "java.util.concurrent.Executors",
+                "java.util.concurrent.ForkJoinPool",
+                "java.util.concurrent.ScheduledExecutorService",
+                "java.util.concurrent.ScheduledThreadPoolExecutor",
+                "java.util.concurrent.ThreadPoolExecutor",
+                "crash_assistant_relocated_libs.jexl3.JexlBuilder",
+                "crash_assistant_relocated_libs.jexl3.JexlEngine",
+                "crash_assistant_relocated_libs.jexl3.internal.Engine",
+                "crash_assistant_relocated_libs.jexl3.internal.introspection.Uberspect");
+
+        Set<String> wildcardEntries = new HashSet<String>();
+        for (String entry : entries) {
+            if (entry.endsWith(".*")) {
+                wildcardEntries.add(entry);
+            }
+        }
+        assertEquals(1, wildcardEntries.size());
+        assertTrue(wildcardEntries.contains("java.util.stream.*"),
+                "Only the reviewed java.util.stream wildcard may be used in JEXL permissions");
+    }
+
+    private static void testForbiddenClassRegistration() {
+        String[] forbiddenShortNames = {
+                "Path", "Paths", "Files", "File", "FileSystems", "ZipFile", "JarFile",
+                "URL", "URI", "URLConnection", "Socket", "ServerSocket", "DatagramSocket",
+                "InetAddress", "HttpClient", "Runtime", "System", "Process", "ProcessBuilder",
+                "ProcessHandle", "Thread", "ThreadGroup", "ClassLoader", "MethodHandles",
+                "ServiceLoader", "ResourceBundle", "Timer", "Executors", "ForkJoinPool",
+                "JexlBuilder", "JexlEngine", "Uberspect", "ScriptEngineManager", "InitialContext"
+        };
+        for (String shortName : forbiddenShortNames) {
+            assertTrue(!Permissions.getClassMap().containsKey(shortName),
+                    "Forbidden class registered in JEXL context: " + shortName);
+        }
+    }
+
+    private static void testForbiddenCapabilityResolution() {
+        context.set("probePath", Paths.get(".").toAbsolutePath());
+        String[] forbiddenScripts = {
+                "#pragma jexl.namespace.path java.nio.file.Path\npath:of('.')",
+                "#pragma jexl.namespace.paths java.nio.file.Paths\npaths:get('.')",
+                "#pragma jexl.namespace.files java.nio.file.Files\nfiles:exists(probePath)",
+                "#pragma jexl.namespace.fileSystems java.nio.file.FileSystems\n" +
+                        "fileSystems:getDefault()",
+                "#pragma jexl.namespace.inet java.net.InetAddress\ninet:getLoopbackAddress()",
+                "#pragma jexl.namespace.interfaces java.net.NetworkInterface\n" +
+                        "interfaces:getNetworkInterfaces()",
+                "#pragma jexl.namespace.proxies java.net.ProxySelector\nproxies:getDefault()",
+                "#pragma jexl.namespace.http java.net.http.HttpClient\nhttp:newHttpClient()",
+                "new('java.net.DatagramSocket')",
+                "#pragma jexl.namespace.socketChannel java.nio.channels.SocketChannel\n" +
+                        "socketChannel:open()",
+                "#pragma jexl.namespace.datagramChannel java.nio.channels.DatagramChannel\n" +
+                        "datagramChannel:open()",
+                "#pragma jexl.namespace.thread java.lang.Thread\nthread:currentThread()",
+                "#pragma jexl.namespace.process java.lang.ProcessHandle\nprocess:current()",
+                "#pragma jexl.namespace.executors java.util.concurrent.Executors\n" +
+                        "executors:newSingleThreadExecutor()",
+                "new('java.util.concurrent.CompletableFuture')",
+                "new('java.util.Formatter')",
+                "#pragma jexl.namespace.loader java.lang.ClassLoader\n" +
+                        "loader:getSystemClassLoader()",
+                "#pragma jexl.namespace.handles java.lang.invoke.MethodHandles\nhandles:lookup()",
+                "#pragma jexl.namespace.proxy java.lang.reflect.Proxy\nproxy:isProxyClass(String)",
+                "new('javax.script.ScriptEngineManager')",
+                "#pragma jexl.namespace.tools javax.tools.ToolProvider\ntools:getSystemJavaCompiler()"
+        };
+        try {
+            for (String script : forbiddenScripts) {
+                assertDenied(script);
+            }
+        } finally {
+            context.set("probePath", null);
+        }
+    }
+
     private static void testProductionPermissionsAndLanguageBasics() {
         assertTrue(Permissions.isDevEnvironment(),
                 "Security regression harness must exercise dev/unrelocated class names");
@@ -118,7 +281,6 @@ public final class SecurityRegressionTest {
                 "Scripts must be able to read the current time zone");
         assertEquals(Boolean.TRUE,
                 execute("ZoneRulesProvider.getAvailableZoneIds().contains('UTC')"));
-
         assertEquals(Boolean.TRUE, execute("booleans[0] && !booleans[1]"));
         assertEquals(3, execute("bytes[0] + bytes[1]"));
         assertEquals(7, execute("shorts[0] + shorts[1]"));
@@ -298,6 +460,8 @@ public final class SecurityRegressionTest {
         Path outputCanary = Paths.get("security-output-canary.txt").toAbsolutePath();
         Files.write(inputCanary, "secret=must-not-be-readable".getBytes(StandardCharsets.UTF_8));
         Files.deleteIfExists(outputCanary);
+        context.set("forbiddenInputPath", inputCanary);
+        context.set("forbiddenOutputPath", outputCanary);
 
         try {
             String inputPath = jexlString(inputCanary.toString());
@@ -309,6 +473,21 @@ public final class SecurityRegressionTest {
             assertDenied("ModListUtils.MODS_FOLDER");
             assertDenied("LanguageProvider.OPTIONS_PATH");
             assertDenied("new('dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod', 'fake.jar')");
+            assertDenied("#pragma jexl.namespace.path java.nio.file.Path\n" +
+                    "path:of(" + inputPath + ").toRealPath()");
+            assertDenied("#pragma jexl.namespace.path java.nio.file.Path\n" +
+                    "new('java.util.Scanner', path:of(" + inputPath + ")).next()");
+            assertDenied("#pragma jexl.namespace.files java.nio.file.Files\n" +
+                    "files:readString(forbiddenInputPath)");
+            assertDenied("#pragma jexl.namespace.files java.nio.file.Files\n" +
+                    "files:writeString(forbiddenOutputPath, 'forbidden')");
+            assertDenied("#pragma jexl.namespace.fileChannel java.nio.channels.FileChannel\n" +
+                    "fileChannel:open(forbiddenInputPath)");
+            assertDenied("#pragma jexl.namespace.files java.nio.file.Files\n" +
+                    "var p = new('java.util.Properties'); " +
+                    "p.load(files:newInputStream(forbiddenInputPath)); p");
+            assertDenied("new('java.util.Formatter', forbiddenOutputPath.toFile())" +
+                    ".format('forbidden').close()");
             assertDenied("new('java.io.File', " + inputPath + ")");
             assertDenied("new('java.io.FileInputStream', " + inputPath + ")");
             assertDenied("new('java.io.FileOutputStream', " + outputPath + ")");
@@ -352,6 +531,8 @@ public final class SecurityRegressionTest {
             assertTrue(Files.notExists(outputCanary),
                     "Denied file-system operations must not create their output canary");
         } finally {
+            context.set("forbiddenInputPath", null);
+            context.set("forbiddenOutputPath", null);
             Files.deleteIfExists(inputCanary);
             Files.deleteIfExists(outputCanary);
         }
@@ -477,6 +658,54 @@ public final class SecurityRegressionTest {
         }
     }
 
+    private static Set<String> readPermissionEntries() throws Exception {
+        Set<String> entries = new HashSet<String>();
+        try (InputStream stream = SecurityRegressionTest.class.getResourceAsStream(
+                "/jexl_allowed_classes.txt")) {
+            assertTrue(stream != null, "Missing /jexl_allowed_classes.txt");
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    stream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String entry = line.trim();
+                    if (!entry.isEmpty() && !entry.startsWith("#")) {
+                        entries.add(entry);
+                    }
+                }
+            }
+        }
+        return entries;
+    }
+
+    private static void assertOnlyPermissionEntries(Set<String> entries, String prefix,
+                                                    String... allowedEntries) {
+        Set<String> safeEntries = new HashSet<String>(Arrays.asList(allowedEntries));
+        for (String entry : entries) {
+            if (entry.startsWith(prefix) && !safeEntries.contains(entry)) {
+                throw new AssertionError("Unreviewed capability in JEXL permissions: " + entry);
+            }
+        }
+    }
+
+    private static void assertNoPermissionPrefixes(Set<String> entries, String... prefixes) {
+        for (String entry : entries) {
+            for (String prefix : prefixes) {
+                if (entry.startsWith(prefix)) {
+                    throw new AssertionError("Forbidden capability in JEXL permissions: " + entry);
+                }
+            }
+        }
+    }
+
+    private static void assertForbiddenPermissionEntries(Set<String> entries,
+                                                         String... forbiddenEntries) {
+        for (String forbiddenEntry : forbiddenEntries) {
+            if (entries.contains(forbiddenEntry)) {
+                throw new AssertionError("Forbidden JEXL class: " + forbiddenEntry);
+            }
+        }
+    }
+
     private static Object execute(String script) {
         return engine.createScript(script).execute(context);
     }
@@ -493,13 +722,58 @@ public final class SecurityRegressionTest {
             throw new AssertionError("Forbidden expression completed normally with result " +
                     result + ": " + script);
         } catch (JexlException expected) {
+            logPermissionTestException(script, expected);
             if (expected instanceof JexlException.Parsing
                     || expected instanceof JexlException.Tokenization
                     || expected instanceof JexlException.Feature) {
                 throw new AssertionError("Security case must parse successfully before being denied: " +
                         script, expected);
             }
+            if (expected.getCause() != null) {
+                throw new AssertionError("Security case was rejected by an underlying operation, " +
+                        "not by the sandbox: " + script, expected);
+            }
+            if (permissionDenialKind(script, expected) == null) {
+                throw new AssertionError("Unexpected JEXL exception in security case: " + script,
+                        expected);
+            }
         }
+    }
+
+    private static void logPermissionTestException(String script, JexlException exception) {
+        System.out.println("[permission-test] script: " + script.replace('\n', ' '));
+        System.out.println("[permission-test] classification: " +
+                permissionDenialKind(script, exception));
+        Throwable current = exception;
+        int depth = 0;
+        while (current != null) {
+            System.out.println("[permission-test] exception[" + depth + "]: " +
+                    current.getClass().getName() + ": " + current.getMessage());
+            current = current.getCause();
+            depth++;
+        }
+    }
+
+    private static String permissionDenialKind(String script, JexlException exception) {
+        if (exception instanceof JexlException.Variable) {
+            if ("Runtime.getRuntime()".equals(script)
+                    || "System.getProperty('user.home')".equals(script)) {
+                return "WITHHELD_CONTEXT_SYMBOL";
+            }
+            return null;
+        }
+        if (exception instanceof JexlException.Method) {
+            return "FILTERED_METHOD_OR_CONSTRUCTOR";
+        }
+        if (exception instanceof JexlException.Property) {
+            return "FILTERED_PROPERTY";
+        }
+        if (exception.getClass() == JexlException.class
+                && exception.getMessage() != null
+                && exception.getMessage().contains("no such function namespace")) {
+            return "FILTERED_NAMESPACE";
+        }
+        return null;
     }
 
     private static String jexlString(String value) {

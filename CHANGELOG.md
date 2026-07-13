@@ -1,3 +1,10 @@
+1.11.11:
+
+- Bumped JEXL to 3.7.0.
+- Fixed JEXL scripts could not access allowed static fields of allowed classes.
+- Fixed 1.12.2 Cleanroom processor getter function due to OSHI update.
+- Fixed CurseForge API will require an API key since July 15 to download mods from its CDN.
+
 1.11.10:
 
 - Ported mod to 26.2 for NeoForge and Fabric.

@@ -27,6 +27,7 @@ DESKTOP_PATH = Path.home() / "Desktop"
 JAR_OUTPUT_DIR = DESKTOP_PATH / "jar_releases"
 GRADLEW_CMD = ["gradlew.bat"] if sys.platform == "win32" else ["sh", "./gradlew"]
 IGNORED_BRANCHES = ["pages", "vulkan-addon-3.3.1"]
+PRE_BUILD_BRANCH = "app-common-config"
 VERSION_COMMIT_REGEX = re.compile(r'^\d+\.\d+\.\d+(\.\d+)?$')
 GRADLE_PROPERTIES_FILE = "gradle.properties"
 CHANGELOG_FILENAME = "changelog.md"
@@ -661,6 +662,29 @@ class GitPortingApp:
             """Main logic executed in a separate thread."""
             all_success = True
             try:
+                self.log(f"--- Pre-build: {PRE_BUILD_BRANCH} ---")
+                if self.get_current_branch() != PRE_BUILD_BRANCH:
+                    if not self.run_process_in_thread(['git', 'checkout', PRE_BUILD_BRANCH]):
+                        self.log(
+                            f"Failed to switch to pre-build branch {PRE_BUILD_BRANCH}. Process stopped.",
+                            "ERROR"
+                        )
+                        all_success = False
+                        return
+
+                if not self.run_process_in_thread(GRADLEW_CMD + ['clean', 'build']):
+                    self.log(
+                        f"Gradle clean build failed on {PRE_BUILD_BRANCH}. Process stopped before target branches.",
+                        "ERROR"
+                    )
+                    all_success = False
+                    return
+
+                self.log(
+                    f"Pre-build for {PRE_BUILD_BRANCH} completed successfully.",
+                    "SUCCESS"
+                )
+
                 sorted_branches = sorted(self.selected_branches, key=natural_sort_key)
 
                 for branch in sorted_branches:

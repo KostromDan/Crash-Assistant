@@ -585,6 +585,10 @@ public class ScriptsIDE {
         
         logsControlPanel.add(settingsPanel);
         logsPanel.add(logsControlPanel, BorderLayout.SOUTH);
+        Insets logsPanelInsets = logsPanel.getInsets();
+        logsPanel.setMinimumSize(new Dimension(
+                logsControlPanel.getPreferredSize().width + logsPanelInsets.left + logsPanelInsets.right,
+                0));
 
         JPanel consolePanel = new JPanel(new BorderLayout());
         consolePanel.setBorder(new TitledBorder("Console"));
@@ -609,7 +613,9 @@ public class ScriptsIDE {
             loadScript();
             startLogTailer(consoleArea);
             updateLogsTable();
-            topSplitPane.setDividerLocation(0.75);
+            topSplitPane.setDividerLocation(Math.min(
+                    (int) (topSplitPane.getWidth() * 0.75),
+                    topSplitPane.getMaximumDividerLocation()));
             mainSplitPane.setDividerLocation(0.666);
         });
 

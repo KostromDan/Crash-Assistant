@@ -23,6 +23,9 @@ eclipse
 run
 runs
 
+# macOS
+.DS_Store
+
 /local/
 /app_common-config_libs/
 /config/

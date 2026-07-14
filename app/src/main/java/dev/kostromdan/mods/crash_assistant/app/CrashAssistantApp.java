@@ -11,6 +11,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.gpu.RendererType;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.info.CrashAssistantInfo;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
@@ -73,6 +74,7 @@ public class CrashAssistantApp {
 
         LOGGER.info("CrashAssistantApp running from: {}", Paths.get("").toAbsolutePath().toString());
 
+        LOGGER.info("crashAssistantVersion: {}", CrashAssistantInfo.getVersion());
         LOGGER.info("crashAssistantJarName: {}", Boot.crashAssistantModJarName);
 
         LOGGER.info("Parent PID: {}", Boot.parentPID);

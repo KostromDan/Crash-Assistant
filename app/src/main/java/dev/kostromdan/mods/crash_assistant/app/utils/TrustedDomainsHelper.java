@@ -27,6 +27,8 @@ public class TrustedDomainsHelper {
         add("github.com");
         add("gnomebot.dev");
         add("mclo.gs");
+        add("kostromdan.dev");
+        add("kdan.dev");
         add("download.fo");
         add("t.me");
         add("cryprojects.ru");

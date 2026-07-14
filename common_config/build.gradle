@@ -34,6 +34,14 @@ dependencies {
     implementation 'oshi-project:oshi-core:1.1'
 }
 
+processResources {
+    inputs.property "crashAssistantVersion", rootProject.version.toString()
+
+    filesMatching("crash-assistant.properties") {
+        expand(crashAssistantVersion: rootProject.version.toString())
+    }
+}
+
 jar {
     archiveClassifier.set('slim')
 }

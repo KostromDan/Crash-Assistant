@@ -736,6 +736,11 @@ public class ControlPanel {
             if (response.isSuccess()) {
                 String finalLink = CrashAssistantGUI.transformLink(response.getUrl());
                 CrashAssistantApp.LOGGER.info("Modlist diff uploaded successfully: " + finalLink);
+                MclogArrayRegistrar.registerUploadedLog(
+                        response.getId(),
+                        "mod_list_diff.txt",
+                        "MOD_LIST_DIFF",
+                        MclogArrayRegistrar.LAST_PRIORITY);
                 return finalLink;
             } else {
                 if (response.isNetworkError()) {

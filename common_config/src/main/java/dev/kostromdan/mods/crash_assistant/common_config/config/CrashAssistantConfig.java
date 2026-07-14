@@ -59,11 +59,21 @@ public class CrashAssistantConfig {
                         "   - DISCORD: Uses terminology like 'join the Discord' and 'post in #channel'.\n" +
                         "   - GITHUB: Uses terminology like 'visit the GitHub' and 'post into a new issue'.",
                 "DISCORD");
-        addOption("general.upload_to",
-                "Anyways log will be uploaded to mclo.gs, but with this option you can wrap link to gnomebot.dev for better formatting.\n" +
-                        "If help_link equals 'CHANGE_ME', this value will be ignored and gnomebot.dev used.\n" +
-                        "Supported values: mclo.gs / gnomebot.dev",
-                "gnomebot.dev");
+        addOption("general.wrap_link",
+                "Logs are always uploaded to mclo.gs. This option only controls which link is copied after the upload.\n" +
+                        "This is needed to make viewing logs more convenient, especially on mobile.\n" +
+                        "Supported values:\n" +
+                        "   - mclo.gs: copies the original mclo.gs link.\n" +
+                        "   - gnomebot.dev: wraps the mclo.gs link through gnomebot.dev.\n" +
+                        "   - kostromdan.dev (recommended): wraps the mclo.gs link through paste.kostromdan.dev and copies the short p.kdan.dev link.",
+                "kostromdan.dev");
+        addOption("general.send_uploaded_logs_data_to_kostromdan_dev",
+                "If enabled, Crash Assistant sends metadata about uploaded logs to api.kostromdan.dev after upload.\n" +
+                        "This does not upload log contents to our server: logs are still uploaded to mclo.gs.\n" +
+                        "This metadata is needed so paste.kostromdan.dev can switch between logs uploaded from the same crash in the browser,\n" +
+                        "and can check/show the Minecraft UUID (for piracy check purposes) for those logs even if a particular uploaded log does not contain it.\n" +
+                        "This works independently from general.wrap_link.",
+                true);
         addOption("general.show_on_fml_error_screen",
                 "Show gui on minecraft crashed on modloading and FML error screen displayed.",
                 true);

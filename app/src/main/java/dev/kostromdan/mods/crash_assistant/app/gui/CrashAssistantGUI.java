@@ -772,7 +772,7 @@ public class CrashAssistantGUI {
                     put("$LINK.LAT_DISCORD$", "discord");
                 }});
 
-        privacyInfo = privacyInfo.replace("$GNOMEBOT_ENABLED$", Objects.toString(isUploadingToGnome()));
+        privacyInfo = privacyInfo.replace("$GNOMEBOT_ENABLED$", Objects.toString(isWrapLinkGnomebot()));
 
         JEditorPane editorPane = getEditorPane(privacyInfo, true, 600);
 
@@ -1470,18 +1470,35 @@ public class CrashAssistantGUI {
         return pane;
     }
 
-    public static boolean isUploadingToGnome() {
-        return Objects.equals(CrashAssistantConfig.get("general.upload_to"), "gnomebot.dev") || PlatformHelp.isLinkDefault();
+    public static boolean isWrapLinkGnomebot() {
+        return Objects.equals(getWrapLinkMode(), "gnomebot.dev");
+    }
+
+    public static boolean isWrapLinkKostromdan() {
+        return Objects.equals(getWrapLinkMode(), "kostromdan.dev");
+    }
+
+    public static String getWrapLinkMode() {
+        return CrashAssistantConfig.get("general.wrap_link");
     }
 
     public static String getUploadToLink() {
-        return isUploadingToGnome() ? "gnomebot.dev" : "mclo.gs";
+        if (isWrapLinkGnomebot()) {
+            return "gnomebot.dev";
+        }
+        if (isWrapLinkKostromdan()) {
+            return "p.kdan.dev";
+        }
+        return "mclo.gs";
     }
 
     public static String transformLink(String link) {
-        if (isUploadingToGnome()) {
-            String id = link.substring(link.lastIndexOf("/") + 1);
-            link = "https://gnomebot.dev/paste/mclogs/" + id;
+        String id = link.substring(link.lastIndexOf("/") + 1);
+        if (isWrapLinkGnomebot()) {
+            return "https://gnomebot.dev/paste/mclogs/" + id;
+        }
+        if (isWrapLinkKostromdan()) {
+            return "https://p.kdan.dev/" + id;
         }
         return link;
     }

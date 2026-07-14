@@ -10,6 +10,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.MclogArrayRegistrar;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.ApiProvider;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.Problem;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.UploadLogResponse;
@@ -296,6 +297,11 @@ public class FilePanel {
                             String finalLink = CrashAssistantGUI.transformLink(responseLastLines.getUrl());
                             CrashAssistantApp.LOGGER.info("{} last lines uploaded successfully: {}", log.getName(), finalLink);
                             log.setLinkToUploadedLastLines(finalLink);
+                            MclogArrayRegistrar.registerUploadedLog(
+                                    log,
+                                    responseLastLines.getId(),
+                                    log.getFileName() + " tail",
+                                    MclogArrayRegistrar.priorityFor(log, 1));
                         } else {
                             if (responseLastLines.isNetworkError()) {
                                 throw UploadException.network("An error occurred when uploading file: " + responseLastLines.getError());
@@ -318,6 +324,11 @@ public class FilePanel {
                             }
                         }
                         log.setLinkToUploadedFirstLines(finalLink);
+                        MclogArrayRegistrar.registerUploadedLog(
+                                log,
+                                responseFirstLines.getId(),
+                                lastLines != null ? log.getFileName() + " head" : log.getFileName(),
+                                MclogArrayRegistrar.priorityFor(log, 0));
                     } else {
                         if (responseFirstLines.isNetworkError()) {
                             throw UploadException.network("An error occurred when uploading file: " + responseFirstLines.getError());

@@ -2,6 +2,10 @@ plugins {
     id 'java-base'
 }
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
+
 apply plugin: 'idea'
 
 def appProject = project(':app')
@@ -44,6 +48,88 @@ registerAppMainRunTask(
 )
 registerAppMainRunTask('runIntegratedGPUWarning', 'dev.kostromdan.mods.crash_assistant.app.gui.IntegratedGPUWarning')
 registerAppMainRunTask('runIntelChipBugWarning', 'dev.kostromdan.mods.crash_assistant.app.gui.IntelChipBugWarning')
+
+def localLanguageResourcesDir = file('common_config/src/main/resources/crash_assistant_localization')
+def localLanguageConfigFile = file('config/crash_assistant/config.toml')
+def preferredLocalLanguages = ['en_us', 'ru_ru']
+
+def discoveredLocalLanguages = fileTree(localLanguageResourcesDir) {
+    include '*.json'
+}.files
+        .collect { it.name.substring(0, it.name.length() - '.json'.length()) }
+        .unique()
+
+def orderedLocalLanguages = preferredLocalLanguages.findAll { discoveredLocalLanguages.contains(it) }
+orderedLocalLanguages.addAll(
+        discoveredLocalLanguages
+                .findAll { !preferredLocalLanguages.contains(it) }
+                .sort())
+
+def switchLocalLanguage = { String languageName ->
+    if (!localLanguageConfigFile.isFile()) {
+        throw new GradleException("Crash Assistant config was not found: ${localLanguageConfigFile}")
+    }
+
+    String original = localLanguageConfigFile.getText(StandardCharsets.UTF_8.name())
+    String newline = original.contains('\r\n') ? '\r\n' : '\n'
+    List<String> lines = original.split('\\r?\\n', -1) as List<String>
+    String currentSection = null
+    int replacements = 0
+
+    for (int index = 0; index < lines.size(); index++) {
+        def sectionMatcher = lines[index] =~ /^\s*\[([^]]+)]\s*(?:#.*)?$/
+        if (sectionMatcher.matches()) {
+            currentSection = sectionMatcher.group(1).trim()
+            continue
+        }
+        if (currentSection != 'general') {
+            continue
+        }
+
+        def optionMatcher = lines[index] =~ /^(\s*default_lang\s*=\s*)(?:"[^"]*"|'[^']*'|[^\s#]+)(\s*(?:#.*)?)$/
+        if (optionMatcher.matches()) {
+            lines[index] = optionMatcher.group(1) + '"' + languageName + '"' + optionMatcher.group(2)
+            replacements++
+        }
+    }
+
+    if (replacements != 1) {
+        throw new GradleException(
+                "Expected exactly one general.default_lang option in ${localLanguageConfigFile}, found ${replacements}")
+    }
+
+    Files.write(
+            localLanguageConfigFile.toPath(),
+            lines.join(newline).getBytes(StandardCharsets.UTF_8),
+            StandardOpenOption.TRUNCATE_EXISTING,
+            StandardOpenOption.WRITE)
+    logger.lifecycle("Crash Assistant local language switched to ${languageName}")
+}
+
+def localLanguageTasksByPlainName = [:]
+orderedLocalLanguages.eachWithIndex { languageName, index ->
+    String plainTaskName = "Switch To ${languageName}"
+    // IntelliJ sorts Gradle actions by task name; invisible prefixes preserve the visible labels and required order.
+    int invisiblePrefixLength = index < preferredLocalLanguages.size() ? index + 1 : 3
+    String orderedTaskName = ('\u200B' * invisiblePrefixLength) + plainTaskName
+    localLanguageTasksByPlainName[plainTaskName] = tasks.register(orderedTaskName) {
+        group = 'Local Language'
+        description = "Sets general.default_lang to ${languageName}"
+        outputs.upToDateWhen { false }
+        doLast {
+            switchLocalLanguage(languageName)
+        }
+    }
+}
+
+tasks.addRule('Pattern: Switch To <language>') { String requestedTaskName ->
+    def orderedTask = localLanguageTasksByPlainName[requestedTaskName]
+    if (orderedTask != null) {
+        tasks.register(requestedTaskName) {
+            dependsOn orderedTask
+        }
+    }
+}
 
 idea {
     module {

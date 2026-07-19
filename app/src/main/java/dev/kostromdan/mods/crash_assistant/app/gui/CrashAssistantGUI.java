@@ -777,7 +777,8 @@ public class CrashAssistantGUI {
                     put("$LINK.LAT_DISCORD$", "discord");
                 }};
         String privacyInfo = Lang.applyPlaceHolders(
-                "<h2>$LANG.gui.privacy.crash_assistant_privacy_policy.version_text$ $LANG.gui.privacy.crash_assistant_privacy_policy.version$</h2>$LANG.gui.privacy.crash_assistant_privacy_policy.crash_assistant$ $LANG.gui.privacy.crash_assistant_privacy_policy.mclogs$ $LANG.gui.privacy.crash_assistant_privacy_policy.gnomebot$ $LANG.gui.privacy.crash_assistant_privacy_policy.validity$ $LANG.gui.privacy.crash_assistant_privacy_policy.reset$ $LANG.gui.privacy.crash_assistant_privacy_policy.volume$",
+                formatPrivacyPolicyHeading(languageName) +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.crash_assistant$ $LANG.gui.privacy.crash_assistant_privacy_policy.mclogs$ $LANG.gui.privacy.crash_assistant_privacy_policy.gnomebot$ $LANG.gui.privacy.crash_assistant_privacy_policy.validity$ $LANG.gui.privacy.crash_assistant_privacy_policy.reset$ $LANG.gui.privacy.crash_assistant_privacy_policy.volume$",
                 links,
                 key -> LanguageProvider.getForLanguage(languageName, key, links));
 
@@ -812,6 +813,27 @@ public class CrashAssistantGUI {
         if (!english && choice == 0) {
             showLogsPrivacyInfo("en_us");
         }
+    }
+
+    private static String formatPrivacyPolicyHeading(String languageName) {
+        String heading = LanguageProvider.getForLanguage(
+                languageName, "gui.privacy.crash_assistant_privacy_policy.version_text")
+                + " " + LanguageProvider.getForLanguage(
+                languageName, "gui.privacy.crash_assistant_privacy_policy.version");
+        boolean useMacJava8Workaround = PlatformHelp.OS.contains("mac")
+                && System.getProperty("java.version", "").startsWith("1.8");
+        StringBuilder html = new StringBuilder(useMacJava8Workaround
+                ? "<h2 style='font-weight:normal;'>"
+                : "<h2>");
+        heading.codePoints().forEach(codePoint -> {
+            if (useMacJava8Workaround && codePoint < 128) {
+                html.append("<font face='Arial Black'>&#")
+                        .append(codePoint).append(";</font>");
+            } else {
+                html.append("<b>&#").append(codePoint).append(";</b>");
+            }
+        });
+        return html.append("</h2>").toString();
     }
 
     public static void resize() {

@@ -157,7 +157,8 @@ public class ControlPanel {
 
         String formulationType = CrashAssistantConfig.get("general.formulation_type");
         String suffix = formulationType.equalsIgnoreCase("GITHUB") ? ".github" : "";
-        requestHelpButton = new JButton(LanguageProvider.get("gui.request_help_button" + suffix));
+        String requestHelpText = LanguageProvider.get("gui.request_help_button" + suffix);
+        requestHelpButton = new JButton(formatRequestHelpButtonText(requestHelpText));
         customizeButton(requestHelpButton, "request_help");
         requestHelpButton.addActionListener(e -> requestHelp());
         requestHelpButton.setToolTipText(PlatformHelp.getActualHelpLink());
@@ -167,7 +168,7 @@ public class ControlPanel {
         bottomPanel.add(requestHelpButton, gbc);
 
         if (enableSimpleModeButton && simpleModeAction != null) {
-            showLogsToggleButton = new JButton(LanguageProvider.get("gui.simple_mode.button"));
+            showLogsToggleButton = new JButton(formatMainButtonText(LanguageProvider.get("gui.simple_mode.button")));
             customizeButton(showLogsToggleButton, "simple_mode");
             showLogsToggleButton.addActionListener(e -> simpleModeAction.run());
             showLogsToggleButton.setToolTipText(LanguageProvider.get("gui.simple_mode.button"));
@@ -180,8 +181,32 @@ public class ControlPanel {
         panel.add(bottomPanel, BorderLayout.SOUTH);
     }
 
+    private static String formatRequestHelpButtonText(String text) {
+        String helpName = PlatformHelp.getActualHelpName();
+        int helpNameStart = text.indexOf(helpName);
+        if (helpNameStart < 0) {
+            return formatMainButtonText(text);
+        }
+
+        int helpNameEnd = helpNameStart + helpName.length();
+        return "<html><center><b>" + escapeHtml(text.substring(0, helpNameStart))
+                + "</b><b>" + escapeHtml(helpName)
+                + "</b><b>" + escapeHtml(text.substring(helpNameEnd))
+                + "</b></center></html>";
+    }
+
+    private static String formatMainButtonText(String text) {
+        return "<html><center><b>" + escapeHtml(text) + "</b></center></html>";
+    }
+
+    private static String escapeHtml(String text) {
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+
     public void customizeButton(JButton button, String button_id) {
-        button.setFont(button.getFont().deriveFont(Font.BOLD,
+        button.setFont(new Font(Font.SANS_SERIF, Font.PLAIN,
                 CrashAssistantConfig.getInteger("gui_customisation." + button_id + "_button_font_size")));
         button.setForeground(
                 deserializeColor(CrashAssistantConfig.get("gui_customisation." + button_id + "_button_foreground_color"),
@@ -775,10 +800,14 @@ public class ControlPanel {
         }
 
         private static String processTextBeforeChange(String text) {
-            if (text.equals(uploadAllText) || text.equals(copyAllText)) {
-                text = "<html><center>" + splitIntoTwoLines(text) + "</center></html>";
+            if (text == null || text.startsWith("<html>")) {
+                return text;
             }
-            return text;
+            String escapedText = escapeHtml(text);
+            if (text.equals(uploadAllText) || text.equals(copyAllText)) {
+                escapedText = splitIntoTwoLines(escapedText);
+            }
+            return "<html><center><b>" + escapedText + "</b></center></html>";
         }
 
         private static String splitIntoTwoLines(String text) {

@@ -221,12 +221,7 @@ public class PrivacyPolicyDialog {
 
         // Show a notification based on whether changes were applied
         if (changesApplied) {
-            JOptionPane.showMessageDialog(
-                    ownerFrame,
-                    LanguageProvider.get("gui.privacy.consent_reset_success"),
-                    LanguageProvider.get("gui.privacy.title"),
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+            showConsentResetSuccessDialog(ownerFrame);
         } else {
             JOptionPane.showMessageDialog(
                     ownerFrame,
@@ -235,5 +230,54 @@ public class PrivacyPolicyDialog {
                     JOptionPane.INFORMATION_MESSAGE
             );
         }
+    }
+
+    private static void showConsentResetSuccessDialog(JFrame ownerFrame) {
+        JDialog dialog = new JDialog(ownerFrame, LanguageProvider.get("gui.privacy.title"), true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        JEditorPane messagePane = CrashAssistantGUI.getEditorPane(
+                "<strong>" + LanguageProvider.get("gui.privacy.consent_reset_success") + "</strong>\n\n"
+                        + "Withdrawing consent does not automatically delete log data from related services.\n"
+                        + "Would You like to open the dialog for deleting this data?", true, 520);
+
+        JButton manageLogsButton = new JButton(LanguageProvider.get("gui.menu.privacy.manage_logs"));
+        manageLogsButton.setFont(manageLogsButton.getFont().deriveFont(Font.BOLD,
+                CrashAssistantConfig.getInteger("gui_customisation.auto_fix_button_font_size")));
+        manageLogsButton.setForeground(ControlPanel.deserializeColor(
+                CrashAssistantConfig.get("gui_customisation.auto_fix_button_foreground_color"),
+                manageLogsButton.getForeground()));
+        manageLogsButton.addActionListener(e -> {
+            dialog.dispose();
+            new LogDeletionDialog(ownerFrame).setVisible(true);
+        });
+
+        JButton closeButton = new JButton(LanguageProvider.get("gui.close"));
+        closeButton.addActionListener(e -> dialog.dispose());
+
+        JPanel actionPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        actionPanel.add(manageLogsButton, gbc);
+
+        JPanel buttonPanel = new JPanel(new BorderLayout(0, 8));
+        buttonPanel.add(actionPanel, BorderLayout.CENTER);
+        JPanel closePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        closePanel.add(closeButton);
+        buttonPanel.add(closePanel, BorderLayout.SOUTH);
+
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 14));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(16, 18, 14, 18));
+        mainPanel.add(messagePane, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.setContentPane(mainPanel);
+        dialog.getRootPane().setDefaultButton(manageLogsButton);
+        dialog.pack();
+        dialog.setMinimumSize(new Dimension(560, dialog.getHeight()));
+        dialog.setLocationRelativeTo(ownerFrame);
+        dialog.setResizable(false);
+        dialog.setVisible(true);
     }
 }

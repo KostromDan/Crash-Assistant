@@ -783,7 +783,7 @@ public class CrashAssistantGUI {
 
         privacyInfo = privacyInfo.replace("$GNOMEBOT_ENABLED$", Objects.toString(isWrapLinkGnomebot()));
 
-        JEditorPane editorPane = getEditorPane(privacyInfo, true, 600);
+        JEditorPane editorPane = getEditorPane(privacyInfo, true, 600, true);
 
         // Create a scroll pane with vertical scrolling only
         JScrollPane scrollPane = new JScrollPane(editorPane);
@@ -1437,6 +1437,10 @@ public class CrashAssistantGUI {
     }
 
     public static JEditorPane getEditorPane(String text, boolean wrap, Integer width) {
+        return getEditorPane(text, wrap, width, false);
+    }
+
+    private static JEditorPane getEditorPane(String text, boolean wrap, Integer width, boolean useSafeHeadingFont) {
         JEditorPane pane = new JEditorPane() {
             @Override
             public Dimension getPreferredSize() {
@@ -1463,6 +1467,10 @@ public class CrashAssistantGUI {
         String bodyRule = "body { font-family: " + defaultFont.getFamily() + "; " +
                 "font-size: " + defaultFont.getSize() + "pt; }";
         ((HTMLDocument) pane.getDocument()).getStyleSheet().addRule(bodyRule);
+        if (useSafeHeadingFont) {
+            ((HTMLDocument) pane.getDocument()).getStyleSheet().addRule(
+                    "h2 { font-family: " + Font.SANS_SERIF + "; }");
+        }
 
         pane.setOpaque(false);
         pane.setBackground(new JButton().getBackground());

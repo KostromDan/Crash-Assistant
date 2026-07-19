@@ -178,6 +178,8 @@
   "gui.comment_under_title_pls_report.github": "Jika anda ingin melaporkan masalah atau memerlukan bantuan, layari $CONFIG.text.support_name$.",
   "gui.comment_under_title_screenshot_notice": "Sila baca teks di atas dengan teliti. Tangkapan layar GUI ini tidak memberitahu kami apa-apa!",
   "gui.copied": "Disalin!",
+  "gui.copy_all_button": "Salin Semua",
+  "gui.copy_button": "Salin",
   "gui.copy_link_button": "Salin pautan",
   "gui.copy_split_log_dialog_text": "Saiz $FILE_NAME$ $LOG_TOO_BIG_REASON$ telah melebihi had <code>mclo.gs</code>'.\n\nUntuk meminimumkan risiko kehilangan maklumat penting apabila meninggalkan penghujung log,\nkami akan membahagikannya kepada dua bahagian sebesar 25k baris atau 10MB setiap satu: iaitu kepala dan ekor.\n\n<strong>Bahagian log manakah yang anda ingin $ACTION$?</strong>",
   "gui.copy_split_log_dialog_title": "Pilih Bahagian Log",

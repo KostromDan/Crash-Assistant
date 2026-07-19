@@ -178,6 +178,8 @@
   "gui.comment_under_title_pls_report.github": "If you want to report the problem or need help, visit the $CONFIG.text.support_name$.",
   "gui.comment_under_title_screenshot_notice": "Please read the text above carefully. A screenshot of this GUI tells us nothing!",
   "gui.copied": "Copied!",
+  "gui.copy_all_button": "Copy All",
+  "gui.copy_button": "Copy",
   "gui.copy_link_button": "Copy link",
   "gui.copy_split_log_dialog_text": "The size of $FILE_NAME$ $LOG_TOO_BIG_REASON$ exceeds <code>mclo.gs</code>' limits.\nTo minimize the risk of losing important information when omitting the end of the log,\nwe split it into two parts of 25k lines or 10MB each: the head and the tail.\n\n\n<strong>Which part of the log would you like to $ACTION$?</strong>",
   "gui.copy_split_log_dialog_title": "Choose Log Part",

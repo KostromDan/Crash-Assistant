@@ -178,6 +178,8 @@
   "gui.comment_under_title_pls_report.github": "問題を報告したり、助けが必要な場合は、$CONFIG.text.support_name$ にアクセスしてください。",
   "gui.comment_under_title_screenshot_notice": "上記のテキストを注意深く読んでください。この GUI のスクリーンショットは何の役にも立ちません！",
   "gui.copied": "コピーしました！",
+  "gui.copy_all_button": "すべてコピー",
+  "gui.copy_button": "コピー",
   "gui.copy_link_button": "リンクをコピー",
   "gui.copy_split_log_dialog_text": "$FILE_NAME$ のファイルサイズ $LOG_TOO_BIG_REASON$ は <code>mclo.gs</code> の制限を超えています。\nログの末尾を省略した際に重要な情報が失われるリスクを最小限に抑えるため、\nログをそれぞれ 25,000 行または 10MB までの 2 つの部分、つまり冒頭部分と末尾部分に分割します。\n\n\n<strong>どの部分のログを$ACTION$するか選んでください。</strong>",
   "gui.copy_split_log_dialog_title": "ログの部分を選択",

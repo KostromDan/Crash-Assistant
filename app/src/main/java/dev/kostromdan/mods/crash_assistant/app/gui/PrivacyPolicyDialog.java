@@ -25,16 +25,13 @@ public class PrivacyPolicyDialog {
     private static volatile boolean currentBatchResult = false;
 
     /**
-     * Checks whether the privacy policy has already been accepted (config, session, or disabled).
+     * Checks whether the privacy policy has already been accepted locally or for the current session.
      */
     private static boolean isAlreadyAccepted() {
         if (Objects.equals(CrashAssistantLocalConfig.get("privacy.accepted_privacy_info"), LanguageProvider.get("gui.privacy.crash_assistant_privacy_policy.version"))) {
             return true;
         }
         if (acceptedForCurrentLaunch) {
-            return true;
-        }
-        if (!CrashAssistantConfig.getBoolean("general.enable_privacy_policy_acceptance")) {
             return true;
         }
         return false;
@@ -202,8 +199,7 @@ public class PrivacyPolicyDialog {
      * Resets the privacy consent settings according to the following rules:
      * 1. If privacy.accepted_privacy_info is not null, remove it from local config
      * 2. If acceptedForCurrentLaunch is true, set it to false
-     * 3. If general.enable_privacy_policy_acceptance is false, set it to true
-     * 4. If none of the above conditions are met, show a notification
+     * 3. If none of the above conditions are met, show a notification
      */
     public static void resetPrivacyConsent() {
         boolean changesApplied = false;
@@ -217,13 +213,6 @@ public class PrivacyPolicyDialog {
         // Check if acceptedForCurrentLaunch is true and set it to false if so
         if (acceptedForCurrentLaunch) {
             acceptedForCurrentLaunch = false;
-            changesApplied = true;
-        }
-
-
-        // Check if general.enable_privacy_policy_acceptance is true and set it to false if so
-        if (!CrashAssistantConfig.getBoolean("general.enable_privacy_policy_acceptance")) {
-            CrashAssistantConfig.set("general.enable_privacy_policy_acceptance", true);
             changesApplied = true;
         }
 

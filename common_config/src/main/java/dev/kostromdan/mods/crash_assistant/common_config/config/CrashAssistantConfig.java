@@ -97,10 +97,6 @@ public class CrashAssistantConfig {
                         "This option can prevent this and enable individual upload buttons immediately after crash.\n" +
                         "However can confuse users and make them clicking individual upload buttons instead of Upload All Button.",
                 false);
-        addOption("general.enable_privacy_policy_acceptance",
-                "Before uploading the first log, requires the user to accept the privacy policy.\n" +
-                        "Disabling this option may be illegal in some countries if you are modpack creator. Disable at your own risk.",
-                true);
         addOption("general.enable_mclogs_anti_ip_like_version_censorer",
                 "Unfortunately mclogs censoring ip-like versions as has no way to determine if it's version or IP.\n" +
                         "This will prevent this by replacing dot's in them to dot-like symbol.\n" +

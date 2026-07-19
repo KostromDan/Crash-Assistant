@@ -54,19 +54,39 @@ public class Lang {
     }
 
     public String get(String key, HashMap<String, String> placeHoldersSurroundedWithHref) {
+        return get(key, placeHoldersSurroundedWithHref,
+                nestedKey -> LanguageProvider.get(nestedKey, placeHoldersSurroundedWithHref));
+    }
+
+    public String get(
+            String key,
+            HashMap<String, String> placeHoldersSurroundedWithHref,
+            Function<String, String> languageGetter
+    ) {
         String value = lang.getOrDefault(key, LanguageProvider.languages.get("en_us").lang.get(key));
         if (value == null) {
             throw new NullPointerException("Seems like key '" + key + "' is missing in language files");
         }
-        return applyPlaceHolders(value, placeHoldersSurroundedWithHref);
+        return applyPlaceHolders(value, placeHoldersSurroundedWithHref, languageGetter);
     }
 
     public static String applyPlaceHolders(String value, HashMap<String, String> placeHoldersSurroundedWithHref) {
+        return applyPlaceHolders(
+                value,
+                placeHoldersSurroundedWithHref,
+                key -> LanguageProvider.get(key, placeHoldersSurroundedWithHref));
+    }
+
+    public static String applyPlaceHolders(
+            String value,
+            HashMap<String, String> placeHoldersSurroundedWithHref,
+            Function<String, String> languageGetter
+    ) {
         if (!value.contains("$")) {
             return value;
         }
         value = applyPlaceHolder("$CONFIG.", value, CrashAssistantConfig::get, placeHoldersSurroundedWithHref);
-        value = applyPlaceHolder("$LANG.", value, (key) -> LanguageProvider.get(key, placeHoldersSurroundedWithHref), placeHoldersSurroundedWithHref);
+        value = applyPlaceHolder("$LANG.", value, languageGetter, placeHoldersSurroundedWithHref);
         value = applyPlaceHolder("$MSG_LANG.", value, LanguageProvider::getMsgLang, placeHoldersSurroundedWithHref);
         value = applyPlaceHolder("$BCC.", value, Lang::getBCCValue, placeHoldersSurroundedWithHref);
         value = applyPlaceHolder("$LINK.", value, LinksProvider::getLinkByKey, placeHoldersSurroundedWithHref);

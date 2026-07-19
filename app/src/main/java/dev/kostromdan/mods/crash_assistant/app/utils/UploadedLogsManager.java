@@ -12,8 +12,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -22,11 +25,11 @@ public class UploadedLogsManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public static void saveLog(String name, String url, String deleteToken) {
+    public static void saveLog(String name, String url, String deleteToken, String arrayToken) {
         lock.writeLock().lock();
         try {
             List<UploadedLog> logs = loadLogsInternal();
-            logs.add(new UploadedLog(name, System.currentTimeMillis(), url, deleteToken));
+            logs.add(new UploadedLog(name, System.currentTimeMillis(), url, deleteToken, arrayToken));
             writeLogs(logs);
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to save uploaded log info", e);
@@ -48,15 +51,49 @@ public class UploadedLogsManager {
         }
     }
 
+    public static void markDeletedFromMcLogs(Collection<String> logIds) {
+        Set<String> ids = new HashSet<>(logIds);
+        updateLogs(log -> {
+            if (ids.contains(log.getLogId())) {
+                log.markDeletedFromMcLogs();
+            }
+        });
+    }
+
+    public static void markMetadataDeleted(Collection<String> arrayTokens) {
+        Set<String> tokens = new HashSet<>(arrayTokens);
+        updateLogs(log -> {
+            if (log.getArrayToken() != null && tokens.contains(log.getArrayToken())) {
+                log.markMetadataDeleted();
+            }
+        });
+    }
+
     public static List<UploadedLog> getSavedLogs() {
         lock.readLock().lock();
         try {
-            return new ArrayList<>(loadLogsInternal());
+            return loadLogsInternal().stream()
+                    .filter(log -> !log.isFullyDeleted())
+                    .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Failed to load uploaded logs", e);
             return Collections.emptyList();
         } finally {
             lock.readLock().unlock();
+        }
+    }
+
+    private static void updateLogs(java.util.function.Consumer<UploadedLog> updater) {
+        lock.writeLock().lock();
+        try {
+            List<UploadedLog> logs = loadLogsInternal();
+            logs.forEach(updater);
+            logs.removeIf(UploadedLog::isFullyDeleted);
+            writeLogs(logs);
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Failed to update uploaded logs", e);
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 

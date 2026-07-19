@@ -764,13 +764,22 @@ public class CrashAssistantGUI {
 
 
     private static void showLogsPrivacyInfo() {
-        String privacyInfo = Lang.applyPlaceHolders("<h2>$LANG.gui.privacy.crash_assistant_privacy_policy.version_text$ $LANG.gui.privacy.crash_assistant_privacy_policy.version$</h2>$LANG.gui.privacy.crash_assistant_privacy_policy.crash_assistant$ $LANG.gui.privacy.crash_assistant_privacy_policy.mclogs$ $LANG.gui.privacy.crash_assistant_privacy_policy.gnomebot$ $LANG.gui.privacy.crash_assistant_privacy_policy.validity$ $LANG.gui.privacy.crash_assistant_privacy_policy.reset$ $LANG.gui.privacy.crash_assistant_privacy_policy.volume$",
-                new HashMap<String, String>() {{
-                    put("$LINK.MCLOGS_PRIVACY_POLICY$", LanguageProvider.get("gui.privacy.privacy_policy"));
-                    put("$LINK.CRASH_ASSISTANT$", LanguageProvider.get("gui.privacy.mod_description"));
+        showLogsPrivacyInfo(LanguageProvider.currentLangName);
+    }
+
+    private static void showLogsPrivacyInfo(String languageName) {
+        HashMap<String, String> links = new HashMap<String, String>() {{
+                    put("$LINK.MCLOGS_PRIVACY_POLICY$", LanguageProvider.getForLanguage(
+                            languageName, "gui.privacy.privacy_policy"));
+                    put("$LINK.CRASH_ASSISTANT$", LanguageProvider.getForLanguage(
+                            languageName, "gui.privacy.mod_description"));
                     put("$LINK.CRASH_ASSISTANT_DISCORD$", "discord");
                     put("$LINK.LAT_DISCORD$", "discord");
-                }});
+                }};
+        String privacyInfo = Lang.applyPlaceHolders(
+                "<h2>$LANG.gui.privacy.crash_assistant_privacy_policy.version_text$ $LANG.gui.privacy.crash_assistant_privacy_policy.version$</h2>$LANG.gui.privacy.crash_assistant_privacy_policy.crash_assistant$ $LANG.gui.privacy.crash_assistant_privacy_policy.mclogs$ $LANG.gui.privacy.crash_assistant_privacy_policy.gnomebot$ $LANG.gui.privacy.crash_assistant_privacy_policy.validity$ $LANG.gui.privacy.crash_assistant_privacy_policy.reset$ $LANG.gui.privacy.crash_assistant_privacy_policy.volume$",
+                links,
+                key -> LanguageProvider.getForLanguage(languageName, key, links));
 
         privacyInfo = privacyInfo.replace("$GNOMEBOT_ENABLED$", Objects.toString(isWrapLinkGnomebot()));
 
@@ -785,16 +794,24 @@ public class CrashAssistantGUI {
         // Ensure scroll position starts at the top
         SwingUtilities.invokeLater(() -> scrollPane.getVerticalScrollBar().setValue(0));
 
-        JOptionPane optionPane = new JOptionPane(
-                scrollPane,
-                JOptionPane.INFORMATION_MESSAGE,
-                JOptionPane.DEFAULT_OPTION
-        );
-        JDialog dialog = optionPane.createDialog(
+        boolean english = "en_us".equals(languageName);
+        Object[] options = english
+                ? new Object[]{LanguageProvider.getForLanguage("en_us", "gui.close")}
+                : new Object[]{
+                        LanguageProvider.get("gui.privacy.open_english_version"),
+                        LanguageProvider.get("gui.close")};
+        int choice = JOptionPane.showOptionDialog(
                 frame,
-                LanguageProvider.get("gui.privacy.title")
-        );
-        dialog.setVisible(true);
+                scrollPane,
+                LanguageProvider.getForLanguage(languageName, "gui.privacy.title"),
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                options,
+                options[options.length - 1]);
+        if (!english && choice == 0) {
+            showLogsPrivacyInfo("en_us");
+        }
     }
 
     public static void resize() {

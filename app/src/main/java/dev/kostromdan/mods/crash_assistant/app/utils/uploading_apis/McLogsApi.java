@@ -4,6 +4,7 @@ import com.google.gson.*;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.utils.UploadedLogsManager;
 import dev.kostromdan.mods.crash_assistant.app.utils.UploadedLog;
+import dev.kostromdan.mods.crash_assistant.app.utils.MclogArrayRegistrar;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -28,6 +29,8 @@ import javax.net.ssl.SSLException;
  * Implementation of the UploadingApi interface for mclo.gs
  */
 public class McLogsApi implements UploadingApi {
+    private static final int DELETE_CONNECT_TIMEOUT_MS = 5_000;
+    private static final int DELETE_READ_TIMEOUT_MS = 15_000;
     private static final String API_BASE_URL = "https://api.mclo.gs/1/";
     private static final int MAX_CONCURRENT_UPLOADS = 5;
     private static final String USER_AGENT = "CrashAssistant";
@@ -200,7 +203,11 @@ public class McLogsApi implements UploadingApi {
                         String token = jsonResponse.has("token") ? jsonResponse.get("token").getAsString() : null;
 
                         if (token != null) {
-                            UploadedLogsManager.saveLog(logName, responseUrl, token);
+                            UploadedLogsManager.saveLog(
+                                    logName,
+                                    responseUrl,
+                                    token,
+                                    MclogArrayRegistrar.getArrayTokenForStorage());
                         }
 
                         LogAnalysisResponse analysisResponse;
@@ -276,6 +283,8 @@ public class McLogsApi implements UploadingApi {
                 connection.setRequestMethod("DELETE");
                 connection.setRequestProperty("User-Agent", userAgent);
                 connection.setRequestProperty("Authorization", "Bearer " + token);
+                connection.setConnectTimeout(DELETE_CONNECT_TIMEOUT_MS);
+                connection.setReadTimeout(DELETE_READ_TIMEOUT_MS);
 
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -325,6 +334,8 @@ public class McLogsApi implements UploadingApi {
                     connection.setRequestMethod("POST");
                     connection.setRequestProperty("User-Agent", userAgent);
                     connection.setRequestProperty("Content-Type", "application/json");
+                    connection.setConnectTimeout(DELETE_CONNECT_TIMEOUT_MS);
+                    connection.setReadTimeout(DELETE_READ_TIMEOUT_MS);
                     connection.setDoOutput(true);
 
                     JsonArray jsonBody = new JsonArray();

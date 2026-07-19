@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class MclogArrayRegistrar {
@@ -28,6 +29,7 @@ public final class MclogArrayRegistrar {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final String ARRAY_TOKEN = generateArrayToken();
     private static final Set<String> REGISTERED_KEYS = ConcurrentHashMap.newKeySet();
+    private static final Set<CompletableFuture<Void>> PENDING_REGISTRATIONS = ConcurrentHashMap.newKeySet();
 
     private MclogArrayRegistrar() {
     }
@@ -48,6 +50,8 @@ public final class MclogArrayRegistrar {
             return;
         }
 
+        CompletableFuture<Void> pendingRegistration = new CompletableFuture<>();
+        PENDING_REGISTRATIONS.add(pendingRegistration);
         Thread thread = new Thread(() -> {
             try {
                 JsonObject body = buildRequest(logId, fileName, logType, priority);
@@ -57,6 +61,9 @@ public final class MclogArrayRegistrar {
                 }
             } catch (Exception e) {
                 CrashAssistantApp.LOGGER.warn("Failed to register uploaded log in mclog array: {} ({})", fileName, logId, e);
+            } finally {
+                pendingRegistration.complete(null);
+                PENDING_REGISTRATIONS.remove(pendingRegistration);
             }
         }, "MclogArrayRegistrar");
         thread.setDaemon(true);
@@ -76,6 +83,17 @@ public final class MclogArrayRegistrar {
             index++;
         }
         return log.getType().ordinal() * 10 + partOffset;
+    }
+
+    public static String getArrayTokenForStorage() {
+        return CrashAssistantConfig.getBoolean("general.send_uploaded_logs_data_to_kostromdan_dev")
+                ? ARRAY_TOKEN
+                : null;
+    }
+
+    public static CompletableFuture<Void> waitForPendingRegistrations() {
+        CompletableFuture<?>[] pending = PENDING_REGISTRATIONS.toArray(new CompletableFuture<?>[0]);
+        return CompletableFuture.allOf(pending);
     }
 
     private static JsonObject buildRequest(String logId, String fileName, String logType, int priority) {

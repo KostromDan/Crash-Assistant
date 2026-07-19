@@ -72,6 +72,22 @@ public class LanguageProvider {
         return languages.getOrDefault(currentLangName, languages.get("en_us")).get(key, placeHoldersSurroundedWithHref);
     }
 
+    public static String getForLanguage(String languageName, String key) {
+        return getForLanguage(languageName, key, new HashMap<>());
+    }
+
+    public static String getForLanguage(
+            String languageName,
+            String key,
+            HashMap<String, String> placeHoldersSurroundedWithHref
+    ) {
+        Lang language = languages.getOrDefault(languageName, languages.get("en_us"));
+        return language.get(
+                key,
+                placeHoldersSurroundedWithHref,
+                nestedKey -> getForLanguage(languageName, nestedKey, placeHoldersSurroundedWithHref));
+    }
+
     @NoJexl
     public static void updateLang() {
         currentLangName = getCurrentLang();

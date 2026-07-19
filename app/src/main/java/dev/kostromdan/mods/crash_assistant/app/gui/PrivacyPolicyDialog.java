@@ -238,8 +238,8 @@ public class PrivacyPolicyDialog {
 
         JEditorPane messagePane = CrashAssistantGUI.getEditorPane(
                 "<strong>" + LanguageProvider.get("gui.privacy.consent_reset_success") + "</strong>\n\n"
-                        + "Withdrawing consent does not automatically delete log data from related services.\n"
-                        + "Would You like to open the dialog for deleting this data?", true, 520);
+                        + LanguageProvider.get("gui.privacy.consent_reset_data_notice") + "\n"
+                        + LanguageProvider.get("gui.privacy.consent_reset_manage_question"), true, 520);
 
         JButton manageLogsButton = new JButton(LanguageProvider.get("gui.menu.privacy.manage_logs"));
         manageLogsButton.setFont(manageLogsButton.getFont().deriveFont(Font.BOLD,

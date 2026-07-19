@@ -25,6 +25,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
@@ -61,6 +63,7 @@ public class FilePanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
 
         openButton = createButton(LanguageProvider.get("gui.open_button"), e -> openFile());
+        JButton copyButton = createButton(LanguageProvider.get("gui.copy_button"), e -> copyFile((JButton) e.getSource()));
         showButton = createButton(LanguageProvider.get("gui.show_in_explorer_button"), e -> showInExplorer());
 
         browserButton = createButtonWithIcon("assets/internet.png", e -> openInBrowser());
@@ -86,6 +89,7 @@ public class FilePanel {
 
         buttonPanel.add(spacerPanel);
         buttonPanel.add(openButton);
+        buttonPanel.add(copyButton);
         buttonPanel.add(showButton);
         buttonPanel.add(uploadButton);
         buttonPanel.add(browserButton);
@@ -191,6 +195,19 @@ public class FilePanel {
         } catch (IOException e) {
             CrashAssistantApp.LOGGER.error("Failed to open file: ", e);
         }
+    }
+
+    private void copyFile(JButton button) {
+        try {
+            ClipboardUtils.copy(getFileContents());
+            CrashAssistantGUI.highlightButton(button, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_success_color"), new Color(100, 255, 100)), 2600);
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Failed to copy file: ", e);
+        }
+    }
+
+    String getFileContents() throws IOException {
+        return new String(Files.readAllBytes(log.getPath()), StandardCharsets.UTF_8);
     }
 
 

@@ -178,6 +178,8 @@
   "gui.comment_under_title_pls_report.github": "如需报告问题或寻求帮助，请访问 $CONFIG.text.support_name$。",
   "gui.comment_under_title_screenshot_notice": "请仔细阅读上方文本！仅截取此界面的截图无法提供有效信息。",
   "gui.copied": "已复制！",
+  "gui.copy_all_button": "全部复制",
+  "gui.copy_button": "复制",
   "gui.copy_link_button": "复制链接",
   "gui.copy_split_log_dialog_text": "文件 $FILE_NAME$ $LOG_TOO_BIG_REASON$ 的大小已超过 <code>mclo.gs</code> 的限制。\n为尽量避免因省略日志结尾而丢失重要信息，\n我们将其拆分为两个部分（各25k行或 10MB）：头部和尾部。\n\n\n<strong>您希望对日志的哪一部分执行“$ACTION$”？</strong>",
   "gui.copy_split_log_dialog_title": "选择日志分段",

@@ -1,5 +1,6 @@
 1.11.11:
 
+- Added buttons to copy individual or all displayed logs to the clipboard.
 - Bumped JEXL to 3.7.0.
 - Fixed JEXL scripts could not access allowed static fields of allowed classes.
 - Fixed 1.12.2 Cleanroom processor getter function due to OSHI update.

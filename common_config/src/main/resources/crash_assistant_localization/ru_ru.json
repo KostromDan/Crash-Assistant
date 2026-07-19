@@ -178,6 +178,8 @@
   "gui.comment_under_title_pls_report.github": "Чтобы сообщить о проблеме или получить помощь, посетите $CONFIG.text.support_name$.",
   "gui.comment_under_title_screenshot_notice": "Пожалуйста прочтите текст выше внимательно. Скриншот этого GUI не скажет нам ничего!",
   "gui.copied": "Скопировано!",
+  "gui.copy_all_button": "Копировать всё",
+  "gui.copy_button": "Копировать",
   "gui.copy_link_button": "Скопировать ссылку",
   "gui.copy_split_log_dialog_text": "Размер файла $FILE_NAME$ $LOG_TOO_BIG_REASON$ превышает ограничения <code>mclo.gs</code>.\nЧтобы минимизировать риск потери важной информации при обрезании конца лога,\nмы разделили его на две части по 25 тыс. строк или 10 МБ: начало и конец.\n\n\n<strong>С какой частью лога вы хотите выполнить действие «$ACTION$»?</strong>",
   "gui.copy_split_log_dialog_title": "Выбор части лога",

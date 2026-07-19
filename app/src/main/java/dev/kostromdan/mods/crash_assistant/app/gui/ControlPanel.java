@@ -153,6 +153,12 @@ public class ControlPanel {
 
         gbc.gridy = 0;
         gbc.insets = new Insets(3, 0, 0, 0);
+        JButton copyAllButton = new JButton(LanguageProvider.get("gui.copy_all_button"));
+        copyAllButton.addActionListener(e -> copyAllFiles((JButton) e.getSource()));
+        bottomPanel.add(copyAllButton, gbc);
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(5, 0, 0, 0);
         bottomPanel.add(uploadAllButton, gbc);
 
         String formulationType = CrashAssistantConfig.get("general.formulation_type");
@@ -162,7 +168,7 @@ public class ControlPanel {
         requestHelpButton.addActionListener(e -> requestHelp());
         requestHelpButton.setToolTipText(PlatformHelp.getActualHelpLink());
         hideReportButtonIfNeeded();
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.insets = new Insets(5, 0, 0, 0);
         bottomPanel.add(requestHelpButton, gbc);
 
@@ -172,12 +178,27 @@ public class ControlPanel {
             showLogsToggleButton.addActionListener(e -> simpleModeAction.run());
             showLogsToggleButton.setToolTipText(LanguageProvider.get("gui.simple_mode.button"));
             showLogsToggleButton.setVisible(enableSimpleModeButton);
-            gbc.gridy = 2;
+            gbc.gridy = 3;
             gbc.insets = new Insets(5, 0, 0, 0);
             bottomPanel.add(showLogsToggleButton, gbc);
         }
 
         panel.add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    private void copyAllFiles(JButton button) {
+        StringBuilder contents = new StringBuilder();
+        try {
+            for (FilePanel filePanel : fileListPanel.getFilePanelList()) {
+                if (contents.length() > 0) contents.append("\n\n");
+                contents.append("=== ").append(filePanel.getLog().getName()).append(" ===\n")
+                        .append(filePanel.getFileContents());
+            }
+            ClipboardUtils.copy(contents.toString());
+            CrashAssistantGUI.highlightButton(button, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_success_color"), new Color(100, 255, 100)), 2600);
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Failed to copy all files: ", e);
+        }
     }
 
     public void customizeButton(JButton button, String button_id) {

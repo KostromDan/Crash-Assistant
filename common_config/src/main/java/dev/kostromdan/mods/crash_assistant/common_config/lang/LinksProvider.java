@@ -21,6 +21,7 @@ public enum LinksProvider {
     OPTIFINE_ALTERNATIVES(() -> "https://prismlauncher.org/wiki/getting-started/install-of-alternatives/"),
     RESULTS_OF_MEMORY_DIAGNOSTICS(() -> "https://answers.microsoft.com/en-us/windows/forum/all/how-do-i-see-the-results-of-memory-diagnostic-i/36f9d014-256a-4757-927a-d85ade3b0c09"),
     MCLOGS_PRIVACY_POLICY(() -> "https://aternos.gmbh/en/mclogs/privacy"),
+    CLOUDFLARE_PRIVACY_POLICY(() -> "https://www.cloudflare.com/privacypolicy/"),
     VLC(() -> "https://www.videolan.org/vlc/"),
     PRIVACY_POLICY(() -> "PRIVACY_POLICY"),
 

@@ -770,15 +770,38 @@ public class CrashAssistantGUI {
     private static void showLogsPrivacyInfo(String languageName) {
         HashMap<String, String> links = new HashMap<String, String>() {{
                     put("$LINK.MCLOGS_PRIVACY_POLICY$", LanguageProvider.getForLanguage(
-                            languageName, "gui.privacy.privacy_policy"));
+                            languageName, "gui.privacy.mclogs_privacy_policy"));
                     put("$LINK.CRASH_ASSISTANT$", LanguageProvider.getForLanguage(
                             languageName, "gui.privacy.mod_description"));
-                    put("$LINK.CRASH_ASSISTANT_DISCORD$", "discord");
-                    put("$LINK.LAT_DISCORD$", "discord");
+                    put("$LINK.CRASH_ASSISTANT_DISCORD$", LanguageProvider.getForLanguage(
+                            languageName, "gui.privacy.discord"));
+                    put("$LINK.LAT_DISCORD$", LanguageProvider.getForLanguage(
+                            languageName, "gui.privacy.discord"));
+                    put("$LINK.CLOUDFLARE_PRIVACY_POLICY$", LanguageProvider.getForLanguage(
+                            languageName, "gui.privacy.cloudflare_privacy_policy"));
+                    put("$LANG.gui.privacy.english_version$", null);
+                    put("$LANG.gui.privacy.open_mods_folder$", null);
+                    put("$LANG.gui.privacy.open_modpack_folder$", null);
+                    put("$LANG.gui.privacy.open_config$", null);
                 }};
         String privacyInfo = Lang.applyPlaceHolders(
                 formatPrivacyPolicyHeading(languageName) +
-                        "$LANG.gui.privacy.crash_assistant_privacy_policy.crash_assistant$ $LANG.gui.privacy.crash_assistant_privacy_policy.mclogs$ $LANG.gui.privacy.crash_assistant_privacy_policy.gnomebot$ $LANG.gui.privacy.crash_assistant_privacy_policy.validity$ $LANG.gui.privacy.crash_assistant_privacy_policy.reset$ $LANG.gui.privacy.crash_assistant_privacy_policy.volume$",
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.introduction$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.crash_assistant$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.controller_and_contacts$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.mclogs$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.copied_links$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.gnomebot$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.uploaded_log_metadata$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.paste_kostromdan_dev$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.consent$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.local_upload_records_and_deletion$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.legal_bases$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.retention$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.gdpr_rights$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.children_and_automated_decisions$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.policy_changes$ " +
+                        "$LANG.gui.privacy.crash_assistant_privacy_policy.mojang_profile_request$",
                 links,
                 key -> LanguageProvider.getForLanguage(languageName, key, links));
 
@@ -1438,6 +1461,18 @@ public class CrashAssistantGUI {
                 } else if ("PRIVACY_POLICY".equals(description)) {
                     showLogsPrivacyInfo();
                     return;
+                } else if ("LANG.gui.privacy.english_version".equals(description)) {
+                    openEnglishPrivacyPolicyFromLink(e);
+                    return;
+                } else if ("LANG.gui.privacy.open_mods_folder".equals(description)) {
+                    openPrivacyPolicyPath(ModListUtils.MODS_FOLDER, "mods folder");
+                    return;
+                } else if ("LANG.gui.privacy.open_modpack_folder".equals(description)) {
+                    openPrivacyPolicyPath(Paths.get("."), "Minecraft profile folder");
+                    return;
+                } else if ("LANG.gui.privacy.open_config".equals(description)) {
+                    openPrivacyPolicyPath(CrashAssistantConfig.getConfigPath(), "Crash Assistant config");
+                    return;
                 } else if (e.getURL() != null) {
                     try {
                         ControlPanel.validateIsDomainTrustedAndOpenInBrowser(e.getURL().toString());
@@ -1452,6 +1487,24 @@ public class CrashAssistantGUI {
                 CrashAssistantGUI.highlightButton(componentToHighlight, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_attention_color"), new Color(100, 100, 255)), 3000);
             }
         };
+    }
+
+    private static void openEnglishPrivacyPolicyFromLink(HyperlinkEvent event) {
+        if (event.getSource() instanceof Component) {
+            Window privacyPolicyWindow = SwingUtilities.getWindowAncestor((Component) event.getSource());
+            if (privacyPolicyWindow != null) {
+                privacyPolicyWindow.dispose();
+            }
+        }
+        SwingUtilities.invokeLater(() -> showLogsPrivacyInfo("en_us"));
+    }
+
+    private static void openPrivacyPolicyPath(Path path, String description) {
+        try {
+            Desktop.getDesktop().open(path.toFile());
+        } catch (Exception exception) {
+            CrashAssistantApp.LOGGER.error("Failed to open {} from the Privacy Policy: {}", description, path, exception);
+        }
     }
 
     public static JEditorPane getEditorPane(String text, boolean wrap) {

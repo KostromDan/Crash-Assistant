@@ -5,6 +5,9 @@ plugins {
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
+import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
+import java.util.regex.Pattern
 
 apply plugin: 'idea'
 
@@ -48,6 +51,593 @@ registerAppMainRunTask(
 )
 registerAppMainRunTask('runIntegratedGPUWarning', 'dev.kostromdan.mods.crash_assistant.app.gui.IntegratedGPUWarning')
 registerAppMainRunTask('runIntelChipBugWarning', 'dev.kostromdan.mods.crash_assistant.app.gui.IntelChipBugWarning')
+
+def parallelsJarFile = appProject.layout.buildDirectory.file('libs/app-parallels.jar')
+def parallelsWindowsVm = providers.gradleProperty('parallelsWindowsVm')
+def parallelsUbuntuVm = providers.gradleProperty('parallelsUbuntuVm')
+def parallelsWindowsJava = providers.gradleProperty('parallelsWindowsJava').orElse('java.exe')
+def parallelsUbuntuJava = providers.gradleProperty('parallelsUbuntuJava').orElse('java')
+def parallelsUbuntuTerminal = providers.gradleProperty('parallelsUbuntuTerminal').orElse('gnome-terminal')
+def parallelsContextDirectories = ['config', 'local', 'logs', 'mods']
+def parallelsContextArchiveFile = layout.buildDirectory.file('parallels/crash-assistant-context.tar')
+def parallelsWindowsShareName = 'CrashAssistantGradle'
+def parallelsWindowsShareDirectory = layout.buildDirectory.dir('parallels/windows-share')
+def parallelsWindowsGuestSharePath = "\\\\Mac\\${parallelsWindowsShareName}"
+
+def parallelsContextArchiveTask = tasks.register('parallelsContextArchive', Tar) {
+    group = 'Parallels'
+    description = 'Archives the local Crash Assistant runtime context for Parallels test VMs.'
+    archiveFileName.set('crash-assistant-context.tar')
+    destinationDirectory.set(layout.buildDirectory.dir('parallels'))
+    compression = Compression.NONE
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+
+    from(rootDir) {
+        parallelsContextDirectories.each { directoryName ->
+            include directoryName
+            include "${directoryName}/**"
+        }
+    }
+
+    doFirst {
+        List<String> missingDirectories = parallelsContextDirectories.findAll {
+            !file(it).isDirectory()
+        }
+        if (!missingDirectories.isEmpty()) {
+            throw new GradleException(
+                    "Cannot prepare the Parallels context because these directories are missing: " +
+                            missingDirectories.join(', '))
+        }
+    }
+}
+
+def runHostCommand = { List<String> command, File standardInputFile = null, boolean ignoreFailure = false ->
+    ByteArrayOutputStream stdoutBuffer = new ByteArrayOutputStream()
+    ByteArrayOutputStream stderrBuffer = new ByteArrayOutputStream()
+    def execute = { InputStream inputStream ->
+        project.exec {
+            commandLine command
+            if (inputStream != null) {
+                standardInput = inputStream
+            }
+            standardOutput = stdoutBuffer
+            errorOutput = stderrBuffer
+            ignoreExitValue = true
+        }
+    }
+
+    def result = standardInputFile == null
+            ? execute(null)
+            : standardInputFile.withInputStream { execute(it) }
+    String stdout = stdoutBuffer.toString(StandardCharsets.UTF_8.name())
+    String stderr = stderrBuffer.toString(StandardCharsets.UTF_8.name())
+    if (result.exitValue != 0 && !ignoreFailure) {
+        throw new GradleException(
+                "Command failed (${result.exitValue}): ${command.join(' ')}\n${stdout}${stderr}")
+    }
+    [exitValue: result.exitValue, stdout: stdout, stderr: stderr]
+}
+
+def resolveParallelsVm = { def configuredVm, String guestLabel, Closure<Boolean> distributionMatcher ->
+    if (configuredVm.isPresent() && !configuredVm.get().trim().isEmpty()) {
+        return configuredVm.get().trim()
+    }
+
+    def listResult = runHostCommand([
+            'prlctl', 'list', '--all', '--no-header',
+            '--output', 'uuid,status,dist'
+    ])
+    List<Map<String, String>> candidates = listResult.stdout.readLines().collect { line ->
+        def matcher = line.trim() =~ /^(\{[^}]+})\s+(\S+)\s+(\S+)$/
+        matcher.matches()
+                ? [id: matcher.group(1), status: matcher.group(2), distribution: matcher.group(3)]
+                : null
+    }.findAll { candidate ->
+        candidate != null && distributionMatcher(candidate.distribution)
+    }
+
+    if (candidates.isEmpty()) {
+        throw new GradleException(
+                "No ${guestLabel} Parallels VM was found. " +
+                        "Set -Pparallels${guestLabel}Vm=<name-or-uuid> to select it explicitly.")
+    }
+    List<Map<String, String>> runningCandidates = candidates.findAll { it.status == 'running' }
+    if (runningCandidates.size() == 1) {
+        return runningCandidates.first().id
+    }
+    if (runningCandidates.isEmpty() && candidates.size() == 1) {
+        return candidates.first().id
+    }
+    throw new GradleException(
+            "More than one ${guestLabel} Parallels VM was found. " +
+                    "Set -Pparallels${guestLabel}Vm=<name-or-uuid> to select one explicitly.")
+}
+
+def ensureParallelsWindowsShare = { String vmName, File shareDirectory ->
+    if (!shareDirectory.isDirectory() && !shareDirectory.mkdirs()) {
+        throw new GradleException("Could not create the Windows transfer directory: ${shareDirectory}")
+    }
+
+    def vmInfo = runHostCommand(['prlctl', 'list', vmName, '-i'])
+    boolean shareExists = vmInfo.stdout.readLines().any {
+        it.trim().startsWith("${parallelsWindowsShareName} ")
+    }
+    List<String> command = [
+            'prlctl', 'set', vmName,
+            shareExists ? '--shf-host-set' : '--shf-host-add',
+            parallelsWindowsShareName,
+            '--path', shareDirectory.absolutePath,
+            '--mode', 'rw',
+            '--enable'
+    ]
+    runHostCommand(command)
+}
+
+def waitForParallelsWindowsGuest = { String vmName, File shareDirectory ->
+    String probeId = Long.toUnsignedString(System.nanoTime())
+    File probeScript = new File(shareDirectory, "probe-${probeId}.vbs")
+    File probeResult = new File(shareDirectory, "probe-${probeId}.ready")
+    probeScript.setText("""Option Explicit
+Dim fileSystem, outputFile
+Set fileSystem = CreateObject("Scripting.FileSystemObject")
+Set outputFile = fileSystem.CreateTextFile(WScript.Arguments(0), True)
+outputFile.WriteLine "ready"
+outputFile.Close
+""", StandardCharsets.UTF_8.name())
+
+    String guestProbeScript = "${parallelsWindowsGuestSharePath}\\${probeScript.name}"
+    String guestProbeResult = "${parallelsWindowsGuestSharePath}\\${probeResult.name}"
+    for (int attempt = 0; attempt < 60; attempt++) {
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'wscript.exe', '//B', '//NoLogo', guestProbeScript, guestProbeResult
+        ], null, true)
+        if (probeResult.isFile()) {
+            return
+        }
+        Thread.sleep(1000)
+    }
+    throw new GradleException(
+            "Parallels Tools or the '${parallelsWindowsShareName}' share in VM '${vmName}' " +
+                    'did not become ready within 60 seconds.')
+}
+
+def runParallelsWindowsPowerShell = { String vmName, File shareDirectory, String operationName, String scriptBody ->
+    String operationId = "${operationName}-${Long.toUnsignedString(System.nanoTime())}"
+    File runnerScript = new File(shareDirectory, 'hidden-powershell-runner.vbs')
+    File powershellScript = new File(shareDirectory, "${operationId}.ps1")
+    File statusFile = new File(shareDirectory, "${operationId}.status")
+    runnerScript.setText("""Option Explicit
+Dim shell, command, exitCode
+Set shell = CreateObject("WScript.Shell")
+command = "powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File " & Chr(34) & WScript.Arguments(0) & Chr(34)
+exitCode = shell.Run(command, 0, True)
+WScript.Quit exitCode
+""", StandardCharsets.UTF_8.name())
+
+    String guestStatusPath = "${parallelsWindowsGuestSharePath}\\${statusFile.name}"
+    powershellScript.setText("""
+\$ErrorActionPreference = 'Stop'
+\$ProgressPreference = 'SilentlyContinue'
+\$statusPath = '${guestStatusPath.replace("'", "''")}'
+try {
+${scriptBody}
+    [IO.File]::WriteAllText(\$statusPath, 'SUCCESS')
+} catch {
+    \$errorText = \$_ | Out-String
+    [IO.File]::WriteAllText(\$statusPath, "ERROR`r`n\$errorText")
+    exit 1
+}
+""".stripIndent(), StandardCharsets.UTF_8.name())
+
+    String guestRunnerScript = "${parallelsWindowsGuestSharePath}\\${runnerScript.name}"
+    String guestPowershellScript = "${parallelsWindowsGuestSharePath}\\${powershellScript.name}"
+    runHostCommand([
+            'prlctl', 'exec', vmName, '--current-user',
+            'wscript.exe', '//B', '//NoLogo', guestRunnerScript, guestPowershellScript
+    ], null, true)
+
+    for (int attempt = 0; attempt < 600 && !statusFile.isFile(); attempt++) {
+        Thread.sleep(100)
+    }
+    if (!statusFile.isFile()) {
+        throw new GradleException(
+                "Hidden Windows operation '${operationName}' did not finish within 60 seconds.")
+    }
+    String status = statusFile.getText(StandardCharsets.UTF_8.name())
+    if (!status.startsWith('SUCCESS')) {
+        throw new GradleException("Hidden Windows operation '${operationName}' failed:\n${status}")
+    }
+    status
+}
+
+def cleanParallelsWindowsShareArtifacts = { File shareDirectory ->
+    List<Pattern> generatedFilePatterns = [
+            ~/^crash-assistant-context-.*\.tar$/,
+            ~/^crash-assistant-parallels-.*\.jar$/,
+            ~/^(?:probe|stop-crash-assistant|deploy-and-launch-crash-assistant)-.*\.(?:vbs|ready|ps1|status)$/
+    ]
+    shareDirectory.listFiles()?.findAll { candidate ->
+        candidate.isFile() && generatedFilePatterns.any { candidate.name ==~ it }
+    }?.each { generatedFile ->
+        Files.deleteIfExists(generatedFile.toPath())
+    }
+}
+
+def ensureParallelsVmRunning = { String vmName ->
+    def statusResult = runHostCommand(['prlctl', 'status', vmName])
+    String status = (statusResult.stdout + statusResult.stderr).trim().toLowerCase(Locale.ROOT)
+    if (status.endsWith(' running')) {
+        return
+    }
+    if (status.endsWith(' suspended') || status.endsWith(' paused')) {
+        runHostCommand(['prlctl', 'resume', vmName])
+        return
+    }
+    if (status.endsWith(' stopped')) {
+        runHostCommand(['prlctl', 'start', vmName])
+        return
+    }
+    throw new GradleException("Unsupported state for Parallels VM '${vmName}': ${status}")
+}
+
+def waitForParallelsGuest = { String vmName, List<String> probeCommand ->
+    for (int attempt = 0; attempt < 60; attempt++) {
+        def result = runHostCommand(
+                ['prlctl', 'exec', vmName, '--current-user'] + probeCommand,
+                null,
+                true)
+        if (result.exitValue == 0) {
+            return
+        }
+        Thread.sleep(1000)
+    }
+    throw new GradleException(
+            "Parallels Tools in VM '${vmName}' did not become ready within 60 seconds.")
+}
+
+def sha256 = { File file ->
+    MessageDigest digest = MessageDigest.getInstance('SHA-256')
+    file.withInputStream { input ->
+        byte[] buffer = new byte[8192]
+        int read
+        while ((read = input.read(buffer)) != -1) {
+            digest.update(buffer, 0, read)
+        }
+    }
+    digest.digest().encodeHex().toString()
+}
+
+tasks.register('runCrashAssistantInWindows') {
+    group = 'Parallels'
+    description = 'Builds Crash Assistant, replaces its Windows test context, and launches it.'
+    dependsOn ':app:parallelsJar'
+    dependsOn parallelsContextArchiveTask
+    outputs.upToDateWhen { false }
+
+    doLast {
+        String vmName = resolveParallelsVm(
+                parallelsWindowsVm,
+                'Windows',
+                { distribution -> distribution.startsWith('win') })
+        File jarFile = parallelsJarFile.get().asFile
+        File contextArchiveFile = parallelsContextArchiveFile.get().asFile
+        File shareDirectory = parallelsWindowsShareDirectory.get().asFile
+
+        ensureParallelsWindowsShare(vmName, shareDirectory)
+        ensureParallelsVmRunning(vmName)
+        cleanParallelsWindowsShareArtifacts(shareDirectory)
+        waitForParallelsWindowsGuest(vmName, shareDirectory)
+
+        String stopPreviousProcessScript = """
+    \$workDir = Join-Path \$env:TEMP 'crash-assistant-gradle'
+    \$workDirPattern = [WildcardPattern]::Escape(\$workDir)
+    Get-CimInstance Win32_Process |
+        Where-Object {
+            \$_.CommandLine -like "*\$workDirPattern*crash-assistant-parallels-*.jar*"
+        } |
+        ForEach-Object {
+            Invoke-CimMethod -InputObject \$_ -MethodName Terminate | Out-Null
+        }
+    Start-Sleep -Milliseconds 300
+    if (Test-Path -LiteralPath \$workDir) {
+        Get-ChildItem -LiteralPath \$workDir -File |
+            Where-Object {
+                \$_.Name -like 'crash-assistant-parallels-*.jar' -or
+                \$_.Name -like 'crash-assistant-context-*.tar'
+            } |
+            Remove-Item -Force
+    }
+""".stripIndent()
+        runParallelsWindowsPowerShell(
+                vmName,
+                shareDirectory,
+                'stop-crash-assistant',
+                stopPreviousProcessScript)
+
+        String operationId = Long.toUnsignedString(System.nanoTime())
+        String guestJarName = "crash-assistant-parallels-${operationId}.jar"
+        String contextArchiveName = "crash-assistant-context-${operationId}.tar"
+        File sharedJarFile = new File(shareDirectory, guestJarName)
+        File sharedContextArchiveFile = new File(shareDirectory, contextArchiveName)
+        Files.copy(jarFile.toPath(), sharedJarFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(
+                contextArchiveFile.toPath(),
+                sharedContextArchiveFile.toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
+        String jarHash = sha256(sharedJarFile)
+        String contextHash = sha256(sharedContextArchiveFile)
+        String guestShareRoot = parallelsWindowsGuestSharePath.replace("'", "''")
+
+        String deployAndLaunchScript = """
+    \$shareRoot = '${guestShareRoot}'
+    \$sourceJar = Join-Path \$shareRoot '${guestJarName}'
+    \$sourceArchive = Join-Path \$shareRoot '${contextArchiveName}'
+    \$workDir = Join-Path \$env:TEMP 'crash-assistant-gradle'
+    \$jarPath = Join-Path \$workDir '${guestJarName}'
+    \$marker = Join-Path \$workDir 'app\\src\\main\\java\\dev\\kostromdan\\mods\\crash_assistant\\app\\CrashAssistantApp.java'
+
+    New-Item -ItemType Directory -Force -Path \$workDir | Out-Null
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent \$marker) | Out-Null
+    Set-Content -LiteralPath \$marker -Value '' -NoNewline -Encoding Ascii
+
+    Copy-Item -LiteralPath \$sourceJar -Destination \$jarPath -Force
+    \$receivedJarHash = (Get-FileHash -Algorithm SHA256 -LiteralPath \$jarPath).Hash.ToLowerInvariant()
+    if (\$receivedJarHash -ne '${jarHash}') {
+        throw "JAR SHA-256 mismatch: \$receivedJarHash"
+    }
+
+    \$archivePath = Join-Path \$workDir '${contextArchiveName}'
+    Copy-Item -LiteralPath \$sourceArchive -Destination \$archivePath -Force
+    \$receivedContextHash = (Get-FileHash -Algorithm SHA256 -LiteralPath \$archivePath).Hash.ToLowerInvariant()
+    if (\$receivedContextHash -ne '${contextHash}') {
+        throw "Context archive SHA-256 mismatch: \$receivedContextHash"
+    }
+
+    @('config', 'local', 'logs', 'mods') | ForEach-Object {
+        \$target = Join-Path \$workDir \$_
+        if (Test-Path -LiteralPath \$target) {
+            Remove-Item -LiteralPath \$target -Recurse -Force
+        }
+    }
+    & tar.exe -xf \$archivePath -C \$workDir
+    if (\$LASTEXITCODE -ne 0) {
+        throw "tar.exe failed with code \$LASTEXITCODE"
+    }
+    @('config', 'local', 'logs', 'mods') | ForEach-Object {
+        if (-not (Test-Path -LiteralPath (Join-Path \$workDir \$_) -PathType Container)) {
+            throw "Context directory was not extracted: \$_"
+        }
+    }
+
+    \$javaCommand = '${parallelsWindowsJava.get().replace("'", "''")}'
+    \$javaCommandInfo = Get-Command \$javaCommand -ErrorAction SilentlyContinue
+    \$java = if (\$javaCommandInfo) { \$javaCommandInfo.Source } else { \$null }
+    if (-not \$java -and \$javaCommand -eq 'java.exe') {
+        \$javaCandidates = New-Object 'System.Collections.Generic.List[string]'
+        if (\$env:JAVA_HOME) {
+            \$javaCandidates.Add((Join-Path \$env:JAVA_HOME 'bin\\java.exe'))
+        }
+        @(
+            (Join-Path \$env:ProgramFiles 'Eclipse Adoptium'),
+            (Join-Path \$env:ProgramFiles 'Java'),
+            (Join-Path \$env:ProgramFiles 'Microsoft'),
+            (Join-Path \$env:ProgramFiles 'Zulu'),
+            (Join-Path \$env:LOCALAPPDATA 'Programs\\Eclipse Adoptium'),
+            (Join-Path \$env:USERPROFILE '.jdks')
+        ) | Where-Object { Test-Path -LiteralPath \$_ } | ForEach-Object {
+            Get-ChildItem -LiteralPath \$_ -Filter java.exe -File -Recurse -ErrorAction SilentlyContinue |
+                ForEach-Object { \$javaCandidates.Add(\$_.FullName) }
+        }
+        \$java = \$javaCandidates | Where-Object { Test-Path -LiteralPath \$_ } | Select-Object -First 1
+    }
+    if (-not \$java) {
+        throw "Java was not found. Set -PparallelsWindowsJava=<path-or-command>."
+    }
+    \$launcherPath = Join-Path \$workDir 'launch-crash-assistant.cmd'
+    \$newLine = [Environment]::NewLine
+    \$launcher = '@echo off' + \$newLine +
+            'title Crash Assistant' + \$newLine +
+            '"' + \$java + '" -Xmx512m "-Dminecraft.launch.arguments=--username KostromDan --uuid a23d9d090e254763aa13f7e8e8715812" -jar "' + \$jarPath + '"' + \$newLine +
+            'exit /b %errorlevel%' + \$newLine
+    Set-Content -LiteralPath \$launcherPath -Value \$launcher -Encoding Ascii
+    \$commandLine = 'cmd.exe /d /c ""' + \$launcherPath + '""'
+    \$result = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+        CommandLine = \$commandLine
+        CurrentDirectory = \$workDir
+    }
+    if (\$result.ReturnValue -ne 0) {
+        throw "Win32_Process.Create failed with code \$(\$result.ReturnValue)"
+    }
+    Start-Sleep -Milliseconds 1000
+    if (-not (Get-Process -Id \$result.ProcessId -ErrorAction SilentlyContinue)) {
+        throw 'Crash Assistant exited immediately after launch'
+    }
+""".stripIndent()
+        runParallelsWindowsPowerShell(
+                vmName,
+                shareDirectory,
+                'deploy-and-launch-crash-assistant',
+                deployAndLaunchScript)
+        logger.lifecycle('Crash Assistant context replaced and started in the Windows VM')
+    }
+}
+
+tasks.register('runCrashAssistantInUbuntu') {
+    group = 'Parallels'
+    description = 'Builds Crash Assistant, replaces its Ubuntu test context, and launches it in a terminal.'
+    dependsOn ':app:parallelsJar'
+    dependsOn parallelsContextArchiveTask
+    outputs.upToDateWhen { false }
+
+    doLast {
+        String vmName = resolveParallelsVm(
+                parallelsUbuntuVm,
+                'Ubuntu',
+                { distribution -> distribution.startsWith('ubuntu') })
+        String javaPath = parallelsUbuntuJava.get()
+        String terminalCommand = parallelsUbuntuTerminal.get()
+        File jarFile = parallelsJarFile.get().asFile
+        File contextArchiveFile = parallelsContextArchiveFile.get().asFile
+        File contextSnapshotFile = new File(temporaryDir, 'crash-assistant-context-snapshot.tar')
+        contextSnapshotFile.parentFile.mkdirs()
+        Files.copy(
+                contextArchiveFile.toPath(),
+                contextSnapshotFile.toPath(),
+                StandardCopyOption.REPLACE_EXISTING)
+        String localHash = sha256(jarFile)
+        String localContextHash = sha256(contextSnapshotFile)
+        String guestJarName = "crash-assistant-parallels-${System.currentTimeMillis()}.jar"
+        String guestContextArchiveName = "crash-assistant-context-${System.currentTimeMillis()}.tar"
+        File javaLaunchScriptFile = new File(temporaryDir, 'run-crash-assistant.sh')
+        File terminalLaunchScriptFile = new File(temporaryDir, 'launch-crash-assistant-terminal.sh')
+        File prepareScriptFile = new File(temporaryDir, 'prepare-crash-assistant-context.sh')
+        javaLaunchScriptFile.parentFile.mkdirs()
+        javaLaunchScriptFile.setText("""#!/bin/sh
+set -eu
+cd /tmp/crash-assistant-gradle
+exec '${javaPath.replace("'", "'\\''")}' -Xmx512m '-Dminecraft.launch.arguments=--username KostromDan --uuid a23d9d090e254763aa13f7e8e8715812' -jar '${guestJarName}'
+""", StandardCharsets.UTF_8.name())
+        terminalLaunchScriptFile.setText("""#!/bin/sh
+set -eu
+exec '${terminalCommand.replace("'", "'\\''")}' --wait --title='Crash Assistant' -- /tmp/crash-assistant-gradle/run-crash-assistant.sh
+""", StandardCharsets.UTF_8.name())
+        prepareScriptFile.setText("""#!/bin/sh
+set -eu
+work_dir=/tmp/crash-assistant-gradle
+archive_path=\"\$work_dir/${guestContextArchiveName}\"
+cd \"\$work_dir\"
+rm -rf -- config local logs mods
+tar -xf \"\$archive_path\"
+for directory_name in config local logs mods; do
+    test -d \"\$directory_name\" || {
+        echo \"Context directory was not extracted: \$directory_name\" >&2
+        exit 1
+    }
+done
+""", StandardCharsets.UTF_8.name())
+
+        ensureParallelsVmRunning(vmName)
+        waitForParallelsGuest(vmName, ['/usr/bin/true'])
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'systemctl', '--user', 'stop', 'crash-assistant-gradle-*.service'
+        ], null, true)
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'pkill', '-TERM', '-f', '[c]rash-assistant-parallels-.*\\.jar'
+        ], null, true)
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'find', '/tmp/crash-assistant-gradle', '-maxdepth', '1', '-type', 'f',
+                '-name', 'crash-assistant-parallels-*.jar', '-delete'
+        ], null, true)
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'find', '/tmp/crash-assistant-gradle', '-maxdepth', '1', '-type', 'f',
+                '-name', 'crash-assistant-context-*.tar', '-delete'
+        ], null, true)
+        runHostCommand(['prlctl', 'exec', vmName, '--current-user', 'which', javaPath])
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'which', terminalCommand
+        ])
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'mkdir', '-p',
+                '/tmp/crash-assistant-gradle/app/src/main/java/dev/kostromdan/mods/crash_assistant/app'
+        ])
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'touch',
+                '/tmp/crash-assistant-gradle/app/src/main/java/dev/kostromdan/mods/crash_assistant/app/CrashAssistantApp.java'
+        ])
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'dd', "of=/tmp/crash-assistant-gradle/${guestJarName}", 'status=none'
+        ], jarFile)
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'dd', 'of=/tmp/crash-assistant-gradle/run-crash-assistant.sh', 'status=none'
+        ], javaLaunchScriptFile)
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'dd', 'of=/tmp/crash-assistant-gradle/launch-crash-assistant-terminal.sh', 'status=none'
+        ], terminalLaunchScriptFile)
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'dd', "of=/tmp/crash-assistant-gradle/${guestContextArchiveName}", 'status=none'
+        ], contextSnapshotFile)
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'dd', 'of=/tmp/crash-assistant-gradle/prepare-crash-assistant-context.sh', 'status=none'
+        ], prepareScriptFile)
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'chmod', '700',
+                '/tmp/crash-assistant-gradle/run-crash-assistant.sh',
+                '/tmp/crash-assistant-gradle/launch-crash-assistant-terminal.sh',
+                '/tmp/crash-assistant-gradle/prepare-crash-assistant-context.sh'
+        ])
+
+        def hashResult = runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'sha256sum', "/tmp/crash-assistant-gradle/${guestJarName}"
+        ])
+        if (!hashResult.stdout.toLowerCase(Locale.ROOT).startsWith(localHash)) {
+            throw new GradleException(
+                    "Ubuntu VM received a corrupted JAR. Expected SHA-256: ${localHash}\n" +
+                            hashResult.stdout + hashResult.stderr)
+        }
+
+        def contextHashResult = runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'sha256sum', "/tmp/crash-assistant-gradle/${guestContextArchiveName}"
+        ])
+        if (!contextHashResult.stdout.toLowerCase(Locale.ROOT).startsWith(localContextHash)) {
+            throw new GradleException(
+                    "Ubuntu VM received a corrupted context archive. Expected SHA-256: ${localContextHash}\n" +
+                            contextHashResult.stdout + contextHashResult.stderr)
+        }
+        runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                '/tmp/crash-assistant-gradle/prepare-crash-assistant-context.sh'
+        ])
+        logger.lifecycle('Crash Assistant context replaced successfully')
+
+        String unitName = "crash-assistant-gradle-${System.currentTimeMillis()}"
+        def launchResult = runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'systemd-run', '--user', '--collect', "--unit=${unitName}",
+                '/tmp/crash-assistant-gradle/launch-crash-assistant-terminal.sh'
+        ])
+        Thread.sleep(1000)
+        def activeResult = runHostCommand([
+                'prlctl', 'exec', vmName, '--current-user',
+                'systemctl', '--user', 'is-active', unitName
+        ], null, true)
+        if (activeResult.exitValue != 0 || !activeResult.stdout.trim().equals('active')) {
+            throw new GradleException(
+                    "Crash Assistant did not remain running in Ubuntu VM. " +
+                            "Inspect it with: journalctl --user -u ${unitName}\n" +
+                            launchResult.stdout + launchResult.stderr + activeResult.stdout + activeResult.stderr)
+        }
+        logger.lifecycle("Crash Assistant started in Ubuntu VM as ${unitName}.service")
+    }
+}
+
+tasks.register('runCrashAssistantMultiverse') {
+    group = 'Parallels'
+    description = 'Launches the licensed Crash Assistant app locally and in the Windows and Ubuntu VMs.'
+    dependsOn 'runCrashAssistantInWindows'
+    dependsOn 'runCrashAssistantInUbuntu'
+    dependsOn 'runCrashAssistantAppLicensed'
+}
+
+tasks.named('runCrashAssistantAppLicensed') {
+    mustRunAfter 'runCrashAssistantInWindows', 'runCrashAssistantInUbuntu'
+}
 
 def localLanguageResourcesDir = file('common_config/src/main/resources/crash_assistant_localization')
 def localLanguageConfigFile = file('config/crash_assistant/config.toml')

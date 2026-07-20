@@ -1,3 +1,38 @@
+1.11.12:
+
+- The old `general.upload_to` option has been replaced by `general.wrap_link` without migration, so its previous
+  value will be removed during the update. By default, the new option directs copied log links to our new
+  `kostromdan.dev` log viewer instead of `gnomebot.dev`.
+    - `kostromdan.dev` is a fork of `gnomebot.dev`, with changes made specifically for Crash Assistant and a more
+      convenient log-reading experience.
+    - Added a log switcher for logs from the same Upload All session.
+        - Added support for showing the Minecraft UUID/profile widget for every log in an Upload All session, even if
+          an individual log does not contain the launch command with the UUID.
+    - Added line-range selection and links instead of only single-line links.
+    - Added quick jump links for the first error, last error, and end of file.
+    - Split Raw and Download into separate actions.
+    - Added a Download action that saves the current log text as a file.
+    - Fixed the browser tab title remaining as `loading...` after the log finished loading.
+    - Added a jump-to-top button in the bottom-right corner.
+    - Added a settings menu.
+        - Added a setting to switch between shortened and full stack-trace locations.
+        - Added a setting to wrap long lines.
+        - Added a setting to show or hide the jump-to-top button.
+    - Fixed parsing and rendering of modern Minecraft stack-trace locations.
+    - Improved rendering performance for very large logs by rendering them in chunks instead of creating DOM nodes for
+      every line at once.
+    - Invalid Minecraft UUIDs are now shown in red with a shake animation.
+- Updated the Privacy Policy to reflect the new log viewer and its data processing.
+- Fixed Scripts IDE on macOS opening at an incorrect size, which could cause some buttons to be missing.
+- Removed the `general.enable_privacy_policy_acceptance` option, which allowed Privacy Policy acceptance to be
+  disabled and treated consent as accepted by default. This is incompatible with the new log viewer.
+- Improved the uploaded-data manager so that metadata can be deleted from our API.
+- The Privacy Policy consent-reset success dialog now offers to open the uploaded logs manager to remove logs from
+  servers.
+- Added an option in non-English Privacy Policy dialogs to open the Privacy Policy in English.
+- Fixed a macOS rendering issue that could cause both Chinese and English characters to be missing in large-font
+  Chinese text.
+
 1.11.11:
 
 - Bumped JEXL to 3.7.0.

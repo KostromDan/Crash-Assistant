@@ -22,6 +22,8 @@
     - Improved rendering performance for very large logs by rendering them in chunks instead of creating DOM nodes for
       every line at once.
     - Invalid Minecraft UUIDs are now shown in red with a shake animation.
+    - Fixed on Safari multiple line selection, also selected line numbers.
+    - Fixed when copying multiple lines on Firefox it was not copying new lines.
 - Updated the Privacy Policy to reflect the new log viewer and its data processing.
 - Fixed Scripts IDE on macOS opening at an incorrect size, which could cause some buttons to be missing.
 - Removed the `general.enable_privacy_policy_acceptance` option, which allowed Privacy Policy acceptance to be

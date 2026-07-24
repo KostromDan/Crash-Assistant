@@ -9,15 +9,18 @@
         - Added support for showing the Minecraft UUID/profile widget for every log in an Upload All session, even if
           an individual log does not contain the launch command with the UUID.
     - Added line-range selection and links instead of only single-line links.
+    - Selecting a line or line range now automatically copies its link, with a setting to disable this behavior.
     - Added quick jump links for the first error, last error, and end of file.
     - Split Raw and Download into separate actions.
     - Added a Download action that saves the current log text as a file.
+    - Added a Download All action that saves logs from the same Upload All session as a single ZIP archive.
     - Fixed the browser tab title remaining as `loading...` after the log finished loading.
     - Added a jump-to-top button in the bottom-right corner.
     - Added a settings menu.
         - Added a setting to switch between shortened and full stack-trace locations.
         - Added a setting to wrap long lines.
         - Added a setting to show or hide the jump-to-top button.
+        - Added a setting to show or hide the Download All action.
     - Fixed parsing and rendering of modern Minecraft stack-trace locations.
     - Improved rendering performance for very large logs by rendering them in chunks instead of creating DOM nodes for
       every line at once.

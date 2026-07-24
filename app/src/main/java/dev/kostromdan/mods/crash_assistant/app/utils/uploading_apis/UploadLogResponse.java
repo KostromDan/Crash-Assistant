@@ -9,6 +9,7 @@ public class UploadLogResponse {
     private String rawUrl;
     private String error;
     private String id;
+    private long created;
     private LogAnalysisResponse analysisResponse;
     private boolean networkError;
 
@@ -18,13 +19,15 @@ public class UploadLogResponse {
      * @param url The URL of the uploaded log
      * @param rawUrl The URL of the raw log content
      * @param id The ID of the uploaded log
+     * @param created The creation timestamp returned by mclo.gs
      * @param analysisResponse The analysis response from the log service
      */
-    public UploadLogResponse(String url, String rawUrl, String id, LogAnalysisResponse analysisResponse) {
+    public UploadLogResponse(String url, String rawUrl, String id, long created, LogAnalysisResponse analysisResponse) {
         this.success = true;
         this.url = url;
         this.rawUrl = rawUrl;
         this.id = id;
+        this.created = created;
         this.analysisResponse = analysisResponse;
     }
 
@@ -90,6 +93,15 @@ public class UploadLogResponse {
      */
     public String getId() {
         return id;
+    }
+
+    /**
+     * Gets the creation timestamp reported by mclo.gs.
+     *
+     * @return The Unix timestamp in seconds
+     */
+    public long getCreated() {
+        return created;
     }
 
     /**

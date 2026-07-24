@@ -300,6 +300,7 @@ public class FilePanel {
                             MclogArrayRegistrar.registerUploadedLog(
                                     log,
                                     responseLastLines.getId(),
+                                    responseLastLines.getCreated(),
                                     log.getFileName() + " tail",
                                     MclogArrayRegistrar.priorityFor(log, 1));
                         } else {
@@ -327,6 +328,7 @@ public class FilePanel {
                         MclogArrayRegistrar.registerUploadedLog(
                                 log,
                                 responseFirstLines.getId(),
+                                responseFirstLines.getCreated(),
                                 lastLines != null ? log.getFileName() + " head" : log.getFileName(),
                                 MclogArrayRegistrar.priorityFor(log, 0));
                     } else {

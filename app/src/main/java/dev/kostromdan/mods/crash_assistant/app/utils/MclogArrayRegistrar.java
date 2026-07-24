@@ -34,18 +34,18 @@ public final class MclogArrayRegistrar {
     private MclogArrayRegistrar() {
     }
 
-    public static void registerUploadedLog(Log log, String logId, String fileName, int priority) {
-        registerUploadedLog(logId, fileName, log.getType().name(), priority);
+    public static void registerUploadedLog(Log log, String logId, long created, String fileName, int priority) {
+        registerUploadedLog(logId, created, fileName, log.getType().name(), priority);
     }
 
-    public static void registerUploadedLog(String logId, String fileName, String logType, int priority) {
+    public static void registerUploadedLog(String logId, long created, String fileName, String logType, int priority) {
         if (!CrashAssistantConfig.getBoolean("general.send_uploaded_logs_data_to_kostromdan_dev")) {
             return;
         }
-        if (logId == null || logId.trim().isEmpty()) {
+        if (logId == null || logId.trim().isEmpty() || created <= 0) {
             return;
         }
-        String key = logId + "\n" + fileName + "\n" + priority;
+        String key = logId + "\n" + created + "\n" + fileName + "\n" + priority;
         if (!REGISTERED_KEYS.add(key)) {
             return;
         }
@@ -54,7 +54,7 @@ public final class MclogArrayRegistrar {
         PENDING_REGISTRATIONS.add(pendingRegistration);
         Thread thread = new Thread(() -> {
             try {
-                JsonObject body = buildRequest(logId, fileName, logType, priority);
+                JsonObject body = buildRequest(logId, created, fileName, logType, priority);
                 int status = postJson(getApiUrl(), body.toString());
                 if (status < 200 || status >= 300) {
                     CrashAssistantApp.LOGGER.warn("Mclog array registration returned HTTP {} for {} ({})", status, fileName, logId);
@@ -96,7 +96,7 @@ public final class MclogArrayRegistrar {
         return CompletableFuture.allOf(pending);
     }
 
-    private static JsonObject buildRequest(String logId, String fileName, String logType, int priority) {
+    private static JsonObject buildRequest(String logId, long created, String fileName, String logType, int priority) {
         JsonObject body = new JsonObject();
         body.addProperty("arrayToken", ARRAY_TOKEN);
         addIfPresent(body, "minecraftVersion", PlatformHelp.minecraftVersion);
@@ -111,6 +111,7 @@ public final class MclogArrayRegistrar {
         JsonArray logs = new JsonArray();
         JsonObject item = new JsonObject();
         item.addProperty("logId", logId);
+        item.addProperty("created", created);
         item.addProperty("fileName", fileName);
         addIfPresent(item, "logType", logType);
         item.addProperty("priority", priority);

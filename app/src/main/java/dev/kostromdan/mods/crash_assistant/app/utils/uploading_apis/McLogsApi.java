@@ -109,7 +109,7 @@ public class McLogsApi implements UploadingApi {
 //
 //                        LogAnalysisResponse fakeAnalysis = new LogAnalysisResponse("Offline simulation: No issues found.");
 //
-//                        return new UploadLogResponse(fakeUrl, fakeRaw, fakeId, fakeAnalysis);
+//                        return new UploadLogResponse(fakeUrl, fakeRaw, fakeId, 1_769_597_979L, fakeAnalysis);
 //                    } catch (InterruptedException e) {
 //                        Thread.currentThread().interrupt();
 //                        return new UploadLogResponse("Fake upload interrupted.");
@@ -210,6 +210,7 @@ public class McLogsApi implements UploadingApi {
                                     MclogArrayRegistrar.getArrayTokenForStorage());
                         }
 
+                        long created = parseCreated(jsonResponse);
                         LogAnalysisResponse analysisResponse;
                         if (jsonResponse.has("content") && jsonResponse.getAsJsonObject("content").has("insights")) {
                             JsonObject insights = jsonResponse.getAsJsonObject("content").getAsJsonObject("insights");
@@ -253,7 +254,7 @@ public class McLogsApi implements UploadingApi {
                             analysisResponse = new LogAnalysisResponse("No problems found in the log");
                         }
 
-                        return new UploadLogResponse(responseUrl, rawUrl, id, analysisResponse);
+                        return new UploadLogResponse(responseUrl, rawUrl, id, created, analysisResponse);
                     } else {
                         String error = jsonResponse.get("error").getAsString();
                         return new UploadLogResponse(error);
@@ -272,6 +273,22 @@ public class McLogsApi implements UploadingApi {
     @Override
     public CompletableFuture<UploadLogResponse> uploadLog(String logName, String text) {
         return uploadLog(logName, text, null);
+    }
+
+    static long parseCreated(JsonObject jsonResponse) {
+        JsonElement createdElement = jsonResponse.get("created");
+        if (createdElement == null ||
+                createdElement.isJsonNull() ||
+                !createdElement.isJsonPrimitive() ||
+                !createdElement.getAsJsonPrimitive().isNumber()) {
+            throw new JsonParseException("mclo.gs response is missing a numeric created timestamp.");
+        }
+
+        long created = createdElement.getAsLong();
+        if (created <= 0) {
+            throw new JsonParseException("mclo.gs returned an invalid created timestamp.");
+        }
+        return created;
     }
 
     @Override

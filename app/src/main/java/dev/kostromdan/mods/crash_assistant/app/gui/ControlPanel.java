@@ -763,6 +763,7 @@ public class ControlPanel {
                 CrashAssistantApp.LOGGER.info("Modlist diff uploaded successfully: " + finalLink);
                 MclogArrayRegistrar.registerUploadedLog(
                         response.getId(),
+                        response.getCreated(),
                         "mod_list_diff.txt",
                         "MOD_LIST_DIFF",
                         MclogArrayRegistrar.LAST_PRIORITY);

@@ -21,13 +21,23 @@
         - Added a setting to wrap long lines.
         - Added a setting to show or hide the jump-to-top button.
         - Added a setting to show or hide the Download All action.
+        - Added settings to show or hide the Raw, Download, First Error, Last Error, End of File, and Minecraft Profile
+          actions.
+        - Added a setting to show the Minecraft Profile widget only for invalid profiles.
+        - Added a setting to enable or disable selecting multiple lines by dragging.
     - Fixed parsing and rendering of modern Minecraft stack-trace locations.
     - Improved rendering performance for very large logs by rendering them in chunks instead of creating DOM nodes for
       every line at once.
     - Invalid Minecraft UUIDs are now shown in red with a shake animation.
     - Fixed on Safari multiple line selection, also selected line numbers.
     - Fixed when copying multiple lines on Firefox it was not copying new lines.
+    - Added a browser log uploader that accepts pasted text, multiple files, folders, ZIP archives, and compressed
+      Minecraft logs, uploads them directly from the browser to mclo.gs, and creates a shareable log collection.
+    - Browser-created log collections can be extended with more logs. Their locally owned logs can be deleted
+      individually, or the entire collection can be deleted at once.
 - Updated the Privacy Policy to reflect the new log viewer and its data processing.
+- Mod list differences in Upload All messages are now always uploaded; the full text is included only if uploading
+  fails.
 - Fixed Scripts IDE on macOS opening at an incorrect size, which could cause some buttons to be missing.
 - Removed the `general.enable_privacy_policy_acceptance` option, which allowed Privacy Policy acceptance to be
   disabled and treated consent as accepted by default. This is incompatible with the new log viewer.

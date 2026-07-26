@@ -391,12 +391,7 @@ public class ControlPanel {
                     ModListDiff modListDiff = ModListDiff.getDiff(true);
                     ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
                     String modlistDiffText = diffStringBuilder.toText();
-                    String modListDiffAnsi = diffStringBuilder.toAnsi();
-                    int lineCount = modlistDiffText.length() - modlistDiffText.replace("\n", "").length();
-
-                    if (shouldUploadModListDiff(0, modListDiffAnsi.length(), lineCount)) {
-                        modlistDiffFuture = uploadModlistDiff(modlistDiffText);
-                    }
+                    modlistDiffFuture = uploadModlistDiff(modlistDiffText);
                 }
                 final CompletableFuture<String> finalModlistDiffFuture = modlistDiffFuture;
 
@@ -660,47 +655,39 @@ public class ControlPanel {
             ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
             String modlistDiffText = diffStringBuilder.toText();
             String modListDiffAnsi = diffStringBuilder.toAnsi();
-            int lineCount = modlistDiffText.length() - modlistDiffText.replace("\n", "").length();
 
-            int currentMsgLength = partialMsg.replace("$MODLIST_DIFF$", "").length();
-
-            if (modlistDiffFuture != null || shouldUploadModListDiff(currentMsgLength, modListDiffAnsi.length(), lineCount)) {
-                try {
-                    if (modlistDiffFuture == null) {
-                        modlistDiffFuture = uploadModlistDiff(modlistDiffText);
-                    }
-                    String link = modlistDiffFuture.get();
-
-                    String summaryMsgKey = "gui.modlist_changed_label_msg";
-                    String summaryContent;
-                    if (CrashAssistantConfig.getBoolean("generated_message.color_message")) {
-                        summaryContent = LanguageProvider.getMsgLang(summaryMsgKey)
-                                .replace("$ADDED_MODS_COUNT$", AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + AnsiColor.postfix)
-                                .replace("$REMOVED_MODS_COUNT$", AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + AnsiColor.postfix)
-                                .replace("$UPDATED_MODS_COUNT$", AnsiColor.BLUE.getColorPrefix() + modListDiff.getUpdatedMods().size() + AnsiColor.postfix);
-                    } else {
-                        summaryContent = LanguageProvider.getMsgLang(summaryMsgKey)
-                                .replace("$ADDED_MODS_COUNT$", Integer.toString(modListDiff.getAddedMods().size()))
-                                .replace("$REMOVED_MODS_COUNT$", Integer.toString(modListDiff.getRemovedMods().size()))
-                                .replace("$UPDATED_MODS_COUNT$", Integer.toString(modListDiff.getUpdatedMods().size()));
-                    }
-
-                    String pattern = CrashAssistantConfig.get("generated_message.ansi_block_pattern", false);
-                    String filePrefix = ModListDiff.getFilePrefix();
-                    String firstString = ModListDiff.getFirstString(true, true, link);
-
-                    modListDiffContent.append("\n");
-                    modListDiffContent.append(pattern
-                            .replace("$PREFIX$", filePrefix)
-                            .replace("$HEADER$", firstString)
-                            .replace("$CONTENT$", summaryContent));
-
-                } catch (ExecutionException | InterruptedException | UploadException e) {
-                    CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
-                    if (modListDiffContent.length() == 0) modListDiffContent.append("\n");
-                    modListDiffContent.append(modListDiffAnsi);
+            try {
+                if (modlistDiffFuture == null) {
+                    modlistDiffFuture = uploadModlistDiff(modlistDiffText);
                 }
-            } else {
+                String link = modlistDiffFuture.get();
+
+                String summaryMsgKey = "gui.modlist_changed_label_msg";
+                String summaryContent;
+                if (CrashAssistantConfig.getBoolean("generated_message.color_message")) {
+                    summaryContent = LanguageProvider.getMsgLang(summaryMsgKey)
+                            .replace("$ADDED_MODS_COUNT$", AnsiColor.GREEN.getColorPrefix() + modListDiff.getAddedMods().size() + AnsiColor.postfix)
+                            .replace("$REMOVED_MODS_COUNT$", AnsiColor.RED.getColorPrefix() + modListDiff.getRemovedMods().size() + AnsiColor.postfix)
+                            .replace("$UPDATED_MODS_COUNT$", AnsiColor.BLUE.getColorPrefix() + modListDiff.getUpdatedMods().size() + AnsiColor.postfix);
+                } else {
+                    summaryContent = LanguageProvider.getMsgLang(summaryMsgKey)
+                            .replace("$ADDED_MODS_COUNT$", Integer.toString(modListDiff.getAddedMods().size()))
+                            .replace("$REMOVED_MODS_COUNT$", Integer.toString(modListDiff.getRemovedMods().size()))
+                            .replace("$UPDATED_MODS_COUNT$", Integer.toString(modListDiff.getUpdatedMods().size()));
+                }
+
+                String pattern = CrashAssistantConfig.get("generated_message.ansi_block_pattern", false);
+                String filePrefix = ModListDiff.getFilePrefix();
+                String firstString = ModListDiff.getFirstString(true, true, link);
+
+                modListDiffContent.append("\n");
+                modListDiffContent.append(pattern
+                        .replace("$PREFIX$", filePrefix)
+                        .replace("$HEADER$", firstString)
+                        .replace("$CONTENT$", summaryContent));
+
+            } catch (ExecutionException | InterruptedException | UploadException e) {
+                CrashAssistantApp.LOGGER.error("Failed to upload modlist diff message", e);
                 if (modListDiffContent.length() == 0) modListDiffContent.append("\n");
                 modListDiffContent.append(modListDiffAnsi);
             }
@@ -729,11 +716,6 @@ public class ControlPanel {
                 .replace("$LINK_FIRST_LINES$", log.getLinkToUploadedFirstLines())
                 .replace("$LINK_LAST_LINES$", log.getLinkToUploadedLastLines())
                 .replace("$TOO_BIG_REASONS$", panel.getTooBigReasons(true));
-    }
-
-    private static boolean shouldUploadModListDiff(int currentMsgLength, int diffLength, int lineCount) {
-        return currentMsgLength + diffLength >= 1650 || lineCount > 15 ||
-                (PlatformHelp.isLinkDefault() && PlatformHelp.platform == PlatformHelp.FORGE && lineCount > 3);
     }
 
     public static void showUploadAllButtonWarning(String warningMsg) {

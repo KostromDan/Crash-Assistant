@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.lang;
 
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +16,10 @@ import java.util.*;
 import java.util.function.Function;
 
 public class LanguageProvider {
+    private static final String CRASH_ASSISTANT_APP_CLASS =
+            "dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp";
+    private static final boolean STANDALONE_APP =
+            ClassExistenceChecker.classExists(CRASH_ASSISTANT_APP_CLASS);
     private static final Logger LOGGER = LogManager.getLogger();
     @NoJexl
     public static Path OPTIONS_PATH = Paths.get("options.txt");
@@ -27,8 +32,8 @@ public class LanguageProvider {
 
     static {
         migrateLangDirectory();
-        updateLang();
         unzipAndUpdateLangFiles();
+        updateLang();
     }
 
     @NoJexl
@@ -90,26 +95,41 @@ public class LanguageProvider {
 
     @NoJexl
     public static void updateLang() {
-        currentLangName = getCurrentLang();
+        String selectedLanguage = getCurrentLang();
+        if (!Objects.equals(currentLangName, selectedLanguage)) {
+            LOGGER.info("Crash Assistant interface language: {}", selectedLanguage);
+        }
+        currentLangName = selectedLanguage;
     }
 
     public static String getCurrentLang() {
-        if (!Files.exists(OPTIONS_PATH)) {
-            return CrashAssistantConfig.get("general.default_lang");
-        }
-
-        try {
-            List<String> lines = Files.readAllLines(OPTIONS_PATH);
-            for (String line : lines) {
-                if (line.startsWith("lang:")) {
-                    return line.split(":", 2)[1].trim().toLowerCase();
-                }
+        String languageSource = LanguageSelection.getEffectiveSource(
+                STANDALONE_APP ? CrashAssistantConfig.get("general.language_source") : null,
+                STANDALONE_APP
+        );
+        String gameLanguage = null;
+        if (LanguageSelection.usesGameLanguage(languageSource)) {
+            try {
+                gameLanguage = LanguageSelection.readGameLanguage(OPTIONS_PATH);
+            } catch (IOException e) {
+                LOGGER.warn("Error while reading {} file. Default language will be used.",
+                        OPTIONS_PATH.getFileName(), e);
             }
-        } catch (IOException e) {
-            LOGGER.warn("Error while reading " + OPTIONS_PATH.getFileName() + " file. Default lang will be used.");
         }
 
-        return CrashAssistantConfig.get("general.default_lang");
+        String selectedLanguage = LanguageSelection.selectLanguageFromSource(
+                languageSource,
+                Locale.getDefault(Locale.Category.DISPLAY),
+                gameLanguage,
+                languages.keySet()
+        );
+        if (selectedLanguage != null) {
+            return selectedLanguage;
+        }
+        return LanguageSelection.selectFallbackLanguage(
+                CrashAssistantConfig.get("general.default_lang"),
+                languages.keySet()
+        );
     }
 
     @NoJexl

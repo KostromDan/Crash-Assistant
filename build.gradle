@@ -664,28 +664,37 @@ def switchLocalLanguage = { String languageName ->
     String newline = original.contains('\r\n') ? '\r\n' : '\n'
     List<String> lines = original.split('\\r?\\n', -1) as List<String>
     String currentSection = null
+    int generalSectionIndex = -1
     int replacements = 0
 
     for (int index = 0; index < lines.size(); index++) {
         def sectionMatcher = lines[index] =~ /^\s*\[([^]]+)]\s*(?:#.*)?$/
         if (sectionMatcher.matches()) {
             currentSection = sectionMatcher.group(1).trim()
+            if (currentSection == 'general') {
+                generalSectionIndex = index
+            }
             continue
         }
         if (currentSection != 'general') {
             continue
         }
 
-        def optionMatcher = lines[index] =~ /^(\s*default_lang\s*=\s*)(?:"[^"]*"|'[^']*'|[^\s#]+)(\s*(?:#.*)?)$/
+        def optionMatcher = lines[index] =~ /^(\s*language_source\s*=\s*)(?:"[^"]*"|'[^']*'|[^\s#]+)(\s*(?:#.*)?)$/
         if (optionMatcher.matches()) {
             lines[index] = optionMatcher.group(1) + '"' + languageName + '"' + optionMatcher.group(2)
             replacements++
         }
     }
 
+    if (replacements == 0 && generalSectionIndex >= 0) {
+        lines.add(generalSectionIndex + 1, '\tlanguage_source = "' + languageName + '"')
+        replacements = 1
+    }
+
     if (replacements != 1) {
         throw new GradleException(
-                "Expected exactly one general.default_lang option in ${localLanguageConfigFile}, found ${replacements}")
+                "Expected exactly one general.language_source option in ${localLanguageConfigFile}, found ${replacements}")
     }
 
     Files.write(
@@ -704,7 +713,7 @@ orderedLocalLanguages.eachWithIndex { languageName, index ->
     String orderedTaskName = ('\u200B' * invisiblePrefixLength) + plainTaskName
     localLanguageTasksByPlainName[plainTaskName] = tasks.register(orderedTaskName) {
         group = 'Local Language'
-        description = "Sets general.default_lang to ${languageName}"
+        description = "Forces Crash Assistant interface language to ${languageName}"
         outputs.upToDateWhen { false }
         doLast {
             switchLocalLanguage(languageName)

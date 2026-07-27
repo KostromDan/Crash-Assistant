@@ -84,8 +84,20 @@ public class CrashAssistantConfig {
         addOption("general.kill_old_app",
                 "Close old CrashAssistantApp if it's still running when starting a new instance of Minecraft, to avoid confusing player with window from old crash.",
                 true);
+        addOption("general.language_source",
+                "Controls where the standalone Crash Assistant app gets the language for its interface.\n" +
+                        "When this code runs inside the Minecraft process, the language is always read from Minecraft options.txt and this option is ignored.\n" +
+                        "Supported values:\n" +
+                        "   - SYSTEM (default): Uses the operating system language. Regional variants are matched to an available translation.\n" +
+                        "     For example, en_US, en_GB, and other English locales use en_us when it is the available English translation.\n" +
+                        "   - GAME: Uses the language from the lang entry in the Minecraft options.txt file.\n" +
+                        "   - A language key such as en_us or ru_ru: Forces that language and ignores both the system and Minecraft languages.\n" +
+                        "If the selected source cannot provide an available language, general.default_lang is used.",
+                "SYSTEM");
         addOption("general.default_lang",
-                "If options.txt doesn't exist, the default language will be used.",
+                "Fallback interface language used when general.language_source cannot provide an available language.\n" +
+                        "Use a language key such as en_us or ru_ru.\n" +
+                        "If this language is also unavailable, Crash Assistant falls back to en_us.",
                 "en_us");
         addOption("general.priority_lang_for_overrides",
                 "By default, crash assistant will get the value for the current language from the overrides folder, then from the jar.\n" +

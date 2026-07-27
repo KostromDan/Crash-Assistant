@@ -444,6 +444,7 @@
   "gui.untrusted_domain_question": "このリンクを開いてもよろしいですか？",
   "gui.untrusted_domain_title": "リンクの確認",
   "gui.upload_all_button": "すべてのログをアップロードして、サポートへのメッセージをコピー",
+  "gui.upload_all_button_analysis_delayed": "ログの分析に予想以上の時間がかかっています... お待ちください。",
   "gui.upload_all_button_delayed": "終了したプロセスを特定中... $SECONDS$ 秒お待ちください。",
   "gui.upload_all_button_warning_title": "情報",
   "gui.upload_all_comment": "すべてアップロード...",

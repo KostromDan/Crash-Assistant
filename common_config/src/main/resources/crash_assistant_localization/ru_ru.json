@@ -444,6 +444,7 @@
   "gui.untrusted_domain_question": "Хотите ли вы открыть данную ссылку?",
   "gui.untrusted_domain_title": "Подтверждение открытия ссылки",
   "gui.upload_all_button": "Загрузить все логи и скопировать сообщение для поддержки",
+  "gui.upload_all_button_analysis_delayed": "Анализ логов занимает больше времени, чем ожидалось... Пожалуйста, подождите.",
   "gui.upload_all_button_delayed": "Ищем разрушенные процессы... Пожалуйста подожите $SECONDS$ секунд.",
   "gui.upload_all_button_warning_title": "Информация",
   "gui.upload_all_comment": "Загрузить все...",

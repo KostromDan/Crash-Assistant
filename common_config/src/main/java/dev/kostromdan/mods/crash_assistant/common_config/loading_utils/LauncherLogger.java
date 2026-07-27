@@ -89,7 +89,7 @@ public final class LauncherLogger {
             boolean injectionSuccess = injectAsyncStream(originalErr, queueStream);
 
             if (!injectionSuccess) {
-                JarInJarHelper.LOGGER.warn("Stream injection failed; legacy loggers may retain blocking behavior.");
+//                JarInJarHelper.LOGGER.warn("Stream injection failed; legacy loggers may retain blocking behavior.");
             }
 
             // Update System.err reference for new consumers.

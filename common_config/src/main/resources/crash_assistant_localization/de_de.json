@@ -444,6 +444,7 @@
   "gui.untrusted_domain_question": "Möchtest du diesen Link öffnen?",
   "gui.untrusted_domain_title": "Bestätigung zum Öffnen des Links",
   "gui.upload_all_button": "Alle Logs hochladen und eine Nachricht für den Support kopieren",
+  "gui.upload_all_button_analysis_delayed": "Die Log-Analyse dauert länger als erwartet... Bitte warten.",
   "gui.upload_all_button_delayed": "Beende laufende Prozesse… Bitte $SECONDS$ Sekunden warten.",
   "gui.upload_all_button_warning_title": "Information",
   "gui.upload_all_comment": "Alle hochladen…",

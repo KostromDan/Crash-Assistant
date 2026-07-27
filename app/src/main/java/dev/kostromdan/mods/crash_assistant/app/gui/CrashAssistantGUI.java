@@ -66,6 +66,7 @@ public class CrashAssistantGUI {
     private static boolean simpleModeActive;
     private static boolean simpleModeWasDisabled = false;
     private static boolean hideModListInSimpleMode;
+    private static volatile boolean initialLogAnalysisFinished = false;
     private static final Map<JComponent, OriginalState> highlightedComponents = new ConcurrentHashMap<>();
     private static final Deque<KnownWarningsRequest> knownWarningsRequests = new ArrayDeque<>();
     private static boolean drainingKnownWarnings;
@@ -276,6 +277,7 @@ public class CrashAssistantGUI {
 
 
     public CrashAssistantGUI() {
+        initialLogAnalysisFinished = false;
         SwingEDT.runAndWait(this::initializeGUI);
 
         controlPanel.updateModListInfo();
@@ -285,7 +287,12 @@ public class CrashAssistantGUI {
         IntelChipBugWarning.showIfAffected(false);
         showEarlyIntegratedGPUWarning();
         new Thread(() -> {
-            LogAnalyser.analyseLogs();
+            try {
+                LogAnalyser.analyseLogs();
+                initialLogAnalysisFinished = true;
+            } finally {
+                onUploadReadinessChanged();
+            }
             showKnownCrashReasonsWarnings();
             showPiracyWarning();
         }).start();
@@ -474,7 +481,7 @@ public class CrashAssistantGUI {
         frame.add(controlPanel.getPanel(), BorderLayout.SOUTH);
         updateSimpleModeVisibility();
 
-        for (Log log : LogsList.getLogs()) {
+        for (Log log : LogsList.getLogsSnapshot()) {
             fileListPanel.addLog(log);
         }
         DragAndDrop.enableDragAndDrop(fileListPanel.getScrollPane(), fileListPanel.fileListPanelFilesDragAndDrop);
@@ -1714,8 +1721,21 @@ public class CrashAssistantGUI {
         showKnownCrashReasonsWarnings();
     }
 
+    static boolean isInitialLogAnalysisFinished() {
+        return initialLogAnalysisFinished;
+    }
+
+    public static void onUploadReadinessChanged() {
+        SwingUtilities.invokeLater(() -> {
+            ControlPanel currentControlPanel = controlPanel;
+            if (currentControlPanel != null) {
+                currentControlPanel.refreshInitialUploadAllState();
+            }
+        });
+    }
+
     public static void addMissingLogs() {
-        for (Log log : LogsList.getLogs()) {
+        for (Log log : LogsList.getLogsSnapshot()) {
             if (fileListPanel.getFilePanelList().stream().noneMatch(x -> Objects.equals(x.getLog(), log))) {
                 fileListPanel.addLog(log);
             }

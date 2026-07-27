@@ -40,12 +40,13 @@ public class MixinApply extends KnownCrashReason {
             shouldTriggerOnOriginalModpackMods = false;
         }
         List<Log> logs = new ArrayList<>();
-        for (Log log : LogsList.getLogs()) {
+        List<Log> allLogs = LogsList.getLogsSnapshot();
+        for (Log log : allLogs) {
             if (log.getType() == LogType.STDERR_STREAM) {
                 logs.add(log);
             }
         }
-        for (Log log : LogsList.getLogs()) {
+        for (Log log : allLogs) {
             if (log.getType() == LogType.CRASH_REPORT) {
                 logs.add(log);
             }

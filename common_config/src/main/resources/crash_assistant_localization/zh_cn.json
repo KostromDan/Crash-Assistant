@@ -444,6 +444,7 @@
   "gui.untrusted_domain_question": "是否要打开此链接？",
   "gui.untrusted_domain_title": "链接打开确认",
   "gui.upload_all_button": "上传所有日志并复制支持信息",
+  "gui.upload_all_button_analysis_delayed": "日志分析所需时间超出预期... 请稍候。",
   "gui.upload_all_button_delayed": "正在定位已终止的进程... 请等待 $SECONDS$ 秒。",
   "gui.upload_all_button_warning_title": "提示",
   "gui.upload_all_comment": "上传全部...",

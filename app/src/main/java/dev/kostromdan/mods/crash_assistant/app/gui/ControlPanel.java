@@ -46,6 +46,8 @@ public class ControlPanel {
     public static boolean hideRequestHelpButton = false;
     private JButton showLogsToggleButton;
     private final boolean modListInitiallyVisible;
+    private boolean initialUploadAllGateOpened;
+    private boolean individualUploadButtonsActivationScheduled;
     private JPanel modListContainer;
     private String generatedMsg = null;
     private JLabel modListLabel;
@@ -107,49 +109,7 @@ public class ControlPanel {
             uploadAllButton.setVisible(false);
         }
 
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-
-            @Override
-            public void run() {
-                SwingUtilities.invokeLater(() -> {
-                    double lestTime = (CrashAssistantApp.terminatedProcessesLocationEndTime - Instant.now().toEpochMilli() + 100) / 1000.0D;
-                    uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button_delayed")
-                            .replaceAll("\\$SECONDS\\$", String.format("%.0f", lestTime)));
-
-                    if (Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
-                        uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
-                        uploadAllButton.setEnabled(true);
-                        uploadAllButton.requestFocusInWindow();
-                        uploadAllButton.setPreferredSize(uploadAllButton.getPreferredSize());
-                        CrashAssistantGUI.resize();
-
-                        if (!CrashAssistantConfig.getBoolean("general.prevent_upload_buttons_delay")) {
-                            Timer enableButtonsTimer = new Timer();
-                            enableButtonsTimer.schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    synchronized (ControlPanel.class) {
-                                        uploadButtonsActivated = true;
-                                    }
-                                    SwingUtilities.invokeLater(() -> {
-                                        for (FilePanel panel : fileListPanel.getFilePanelList()) {
-                                            if (panel.isWaiting()) {
-                                                panel.setUploadButtonEnabled(true);
-                                                panel.setWaiting(false);
-                                            }
-                                        }
-                                    });
-                                }
-                            }, 1000);
-                        }
-
-                        this.cancel();
-                    }
-                });
-            }
-        }, 0, 21);
-
+        startInitialUploadAllTimer();
 
         gbc.gridy = 0;
         gbc.insets = new Insets(3, 0, 0, 0);
@@ -179,6 +139,87 @@ public class ControlPanel {
         }
 
         panel.add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    private void startInitialUploadAllTimer() {
+        javax.swing.Timer timer = new javax.swing.Timer(21, e -> {
+            refreshInitialUploadAllState();
+            if (initialUploadAllGateOpened
+                    || Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
+                ((javax.swing.Timer) e.getSource()).stop();
+            }
+        });
+        timer.setInitialDelay(0);
+        timer.start();
+    }
+
+    void refreshInitialUploadAllState() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(this::refreshInitialUploadAllState);
+            return;
+        }
+        if (initialUploadAllGateOpened) {
+            return;
+        }
+
+        long activationTime = CrashAssistantApp.terminatedProcessesLocationEndTime + 100;
+        long currentTime = Instant.now().toEpochMilli();
+        if (currentTime < activationTime) {
+            double timeLeft = (activationTime - currentTime) / 1000.0D;
+            uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button_delayed")
+                    .replaceAll("\\$SECONDS\\$", String.format("%.0f", timeLeft)));
+            return;
+        }
+
+        scheduleIndividualUploadButtonsActivation();
+
+        if (!CrashAssistantApp.isTerminatedProcessesLocationFinished()
+                || !CrashAssistantGUI.isInitialLogAnalysisFinished()) {
+            uploadAllButton.setEnabled(false);
+            String delayedText = LanguageProvider.get("gui.upload_all_button_analysis_delayed");
+            String previousText = uploadAllButton.getText();
+            uploadAllButton.setText(delayedText);
+            if (!Objects.equals(previousText, uploadAllButton.getText())) {
+                CrashAssistantGUI.resize();
+            }
+            return;
+        }
+
+        CrashAssistantGUI.addMissingLogs();
+        initialUploadAllGateOpened = true;
+        uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
+        uploadAllButton.setEnabled(true);
+        uploadAllButton.requestFocusInWindow();
+        uploadAllButton.setPreferredSize(uploadAllButton.getPreferredSize());
+        CrashAssistantGUI.resize();
+    }
+
+    private void scheduleIndividualUploadButtonsActivation() {
+        if (individualUploadButtonsActivationScheduled) {
+            return;
+        }
+        individualUploadButtonsActivationScheduled = true;
+        if (CrashAssistantConfig.getBoolean("general.prevent_upload_buttons_delay")) {
+            return;
+        }
+
+        Timer enableButtonsTimer = new Timer();
+        enableButtonsTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                synchronized (ControlPanel.class) {
+                    uploadButtonsActivated = true;
+                }
+                SwingUtilities.invokeLater(() -> {
+                    for (FilePanel panel : fileListPanel.getFilePanelList()) {
+                        if (panel.isWaiting()) {
+                            panel.setUploadButtonEnabled(true);
+                            panel.setWaiting(false);
+                        }
+                    }
+                });
+            }
+        }, 1000);
     }
 
     private static String formatRequestHelpButtonText(String text) {

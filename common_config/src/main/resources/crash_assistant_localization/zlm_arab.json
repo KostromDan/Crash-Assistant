@@ -444,6 +444,7 @@
   "gui.untrusted_domain_question": "Adakah anda mahu membuka pautan ini?",
   "gui.untrusted_domain_title": "Pengesahan Membuka Pautan",
   "gui.upload_all_button": "Muat naik kesemua log dan salin mesej untuk sokongan",
+  "gui.upload_all_button_analysis_delayed": "Analisis log mengambil masa lebih lama daripada yang dijangkakan... Sila tunggu.",
   "gui.upload_all_button_delayed": "Sedang mencari proses yang ditamatkan... Sila tunggu selama $SECONDS$ saat.",
   "gui.upload_all_button_warning_title": "Maklumat",
   "gui.upload_all_comment": "Muat naik semua...",

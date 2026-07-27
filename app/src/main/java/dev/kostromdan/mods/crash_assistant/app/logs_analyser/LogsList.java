@@ -18,12 +18,19 @@ public class LogsList {
         return logs;
     }
 
+    @NoJexl
+    public static List<Log> getLogsSnapshot() {
+        synchronized (logs) {
+            return new ArrayList<>(logs);
+        }
+    }
+
     public static boolean isLauncherLogExist() {
-        return logs.stream().anyMatch(log -> log.getType() == LogType.LAUNCHER_LOG);
+        return getLogsSnapshot().stream().anyMatch(log -> log.getType() == LogType.LAUNCHER_LOG);
     }
 
     public static List<Log> getLogs(List<LogType> types) {
-        return logs.stream()
+        return getLogsSnapshot().stream()
                 .filter(log -> types.contains(log.getType()))
                 .collect(Collectors.toList());
     }
@@ -56,14 +63,16 @@ public class LogsList {
                 CrashAssistantApp.LOGGER.error("Error while checking file size \"" + log.getPath() + "\": ", e);
             }
             Path newPath = log.getPath().toAbsolutePath().normalize();
-            for (Log existingLog : logs) {
-                if (existingLog.getPath().toAbsolutePath().normalize().equals(newPath)) {
-                    CrashAssistantApp.LOGGER.info("Skipping duplicate log as it's already added to the list: " + log.getPath());
-                    return;
+            synchronized (logs) {
+                for (Log existingLog : logs) {
+                    if (existingLog.getPath().toAbsolutePath().normalize().equals(newPath)) {
+                        CrashAssistantApp.LOGGER.info("Skipping duplicate log as it's already added to the list: " + log.getPath());
+                        return;
+                    }
                 }
+                CrashAssistantApp.LOGGER.info("Adding {} from {}", log.getName(), log.getPath().toAbsolutePath().toString());
+                logs.add(log);
             }
-            CrashAssistantApp.LOGGER.info("Adding {} from {}", log.getName(), log.getPath().toAbsolutePath().toString());
-            logs.add(log);
         }
     }
 }

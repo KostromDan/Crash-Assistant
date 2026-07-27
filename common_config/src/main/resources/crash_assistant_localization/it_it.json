@@ -444,6 +444,7 @@
   "gui.untrusted_domain_question": "Vuoi aprire questo link?",
   "gui.untrusted_domain_title": "Conferma apertura link",
   "gui.upload_all_button": "Carica tutti i log e copia un messaggio per il supporto",
+  "gui.upload_all_button_analysis_delayed": "L'analisi dei log sta richiedendo più tempo del previsto... Attendi.",
   "gui.upload_all_button_delayed": "Localizzazione processi terminati... Attendi $SECONDS$ secondi.",
   "gui.upload_all_button_warning_title": "Informazione",
   "gui.upload_all_comment": "Carica tutto...",

@@ -32,6 +32,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -60,7 +62,10 @@ public class CrashAssistantApp {
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
     public static boolean preventCrashAssistantWindow = false;
+    private static final long LATE_HS_ERR_LOCATION_DELAY_MS = 3000L;
+    private static final long TERMINATED_PROCESSES_LOCATION_DELAY_MS = 5000L;
     public static volatile long terminatedProcessesLocationEndTime = 0;
+    private static volatile boolean terminatedProcessesLocationFinished = false;
 
     @NoJexl
     public static void main(String[] args) {
@@ -539,13 +544,26 @@ public class CrashAssistantApp {
         return false;
     }
 
-    private static void callUpdateLogsListInGUI() {
+    private static boolean callUpdateLogsListInGUI() {
         try {
             Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
             Method method = clazz.getMethod("updateLogsListInGUI");
             method.invoke(null);
+            return true;
         } catch (Exception e) {
             LOGGER.error("Exception adding file to gui later:", e);
+            return false;
+        }
+    }
+
+    private static void notifyUploadReadinessChanged() {
+        if (!GUIStartedLaunching) return;
+        try {
+            Class<?> clazz = Class.forName("dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI");
+            Method method = clazz.getMethod("onUploadReadinessChanged");
+            method.invoke(null);
+        } catch (Exception e) {
+            LOGGER.error("Exception notifying gui about upload readiness change:", e);
         }
     }
 
@@ -569,38 +587,71 @@ public class CrashAssistantApp {
     }
 
     private static void startLocatingTerminatedProcesses() {
+        long startTime = System.currentTimeMillis();
+        terminatedProcessesLocationEndTime = startTime + TERMINATED_PROCESSES_LOCATION_DELAY_MS;
+        terminatedProcessesLocationFinished = false;
+
+        FutureTask<Path> terminatedProcessesQuery = new FutureTask<>(() -> {
+            long remainingDelay = terminatedProcessesLocationEndTime - System.currentTimeMillis();
+            if (remainingDelay > 0) {
+                Thread.sleep(remainingDelay);
+            }
+            return Paths.get(TerminatedProcessesFinder.getTerminatedByWinProcessLogs());
+        });
+        new Thread(terminatedProcessesQuery).start();
+
         new Thread(() -> {
-            long startTime = System.currentTimeMillis();
-            terminatedProcessesLocationEndTime = System.currentTimeMillis() + 7000;
-            boolean firstIteration = true;
-            while (System.currentTimeMillis() < terminatedProcessesLocationEndTime) {
-                try {
-                    Thread.sleep(firstIteration ? 3000 : 100);
-                    if (firstIteration && locateAndAddHsErr()) {
-                        LOGGER.info("Added hs_err log later.");
-                        waitGuiInitialisationFinished();
-                        callUpdateLogsListInGUI();
-                    }
-                    firstIteration = false;
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+            boolean completed = false;
+            boolean lateLogsProcessed = true;
+            try {
+                long hsErrRemainingDelay = startTime + LATE_HS_ERR_LOCATION_DELAY_MS - System.currentTimeMillis();
+                if (hsErrRemainingDelay > 0) {
+                    Thread.sleep(hsErrRemainingDelay);
                 }
-                Path terminatedProcessesPath = Paths.get(TerminatedProcessesFinder.getTerminatedByWinProcessLogs());
+
+                boolean hsErrAdded = locateAndAddHsErr();
+                if (hsErrAdded) {
+                    LOGGER.info("Added hs_err log later.");
+                    waitGuiInitialisationFinished();
+                    lateLogsProcessed = callUpdateLogsListInGUI();
+                }
+
+                Path terminatedProcessesPath;
+                try {
+                    terminatedProcessesPath = terminatedProcessesQuery.get();
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e.getCause());
+                }
+                boolean winEventAdded = false;
                 if (terminatedProcessesPath.toFile().isFile()) {
                     LOGGER.info("Time to locate terminated process: " + (System.currentTimeMillis() - startTime));
                     synchronized (KnownCrashReasonMessage.class) {
                         LogsList.addIfExistsAndModified(new Log(LogType.WIN_EVENT, terminatedProcessesPath));
                     }
+                    winEventAdded = true;
+                }
+
+                if (winEventAdded) {
                     if (!GUIStartedLaunching) {
-                        if (CrashAssistantConfig.getBoolean("general.win_event_is_crash")) onMinecraftCrashed();
+                        if (CrashAssistantConfig.getBoolean("general.win_event_is_crash")) {
+                            onMinecraftCrashed();
+                        }
                     } else {
                         waitGuiInitialisationFinished();
-                        callUpdateLogsListInGUI();
-                        terminatedProcessesLocationEndTime = System.currentTimeMillis();
+                        lateLogsProcessed = callUpdateLogsListInGUI();
                     }
-                    break;
                 }
+                completed = lateLogsProcessed;
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } finally {
+                terminatedProcessesLocationFinished = completed;
+                notifyUploadReadinessChanged();
             }
         }).start();
+    }
+
+    public static boolean isTerminatedProcessesLocationFinished() {
+        return terminatedProcessesLocationFinished;
     }
 }

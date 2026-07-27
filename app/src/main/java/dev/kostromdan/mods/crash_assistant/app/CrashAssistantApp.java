@@ -39,6 +39,7 @@ import static dev.kostromdan.mods.crash_assistant.common_config.utils.MemoryUtil
 
 public class CrashAssistantApp {
     public static final Logger LOGGER = LogManager.getLogger(CrashAssistantApp.class);
+    private static final long PARENT_PROCESS_REGISTRATION_DELAY_MILLIS = 10;
     private static String customLatestLogPath = null;
     private static volatile boolean GUIStartedLaunching = false;
     public static long GUIStartTime = -1;
@@ -176,6 +177,14 @@ public class CrashAssistantApp {
         HsErrHelper.removeHsErrLog(Boot.parentPID);
 
         LOGGER.info("CrashAssistantApp started successfully. Waiting for PID " + Boot.parentPID + " to stop.");
+
+        try {
+            TimeUnit.MILLISECONDS.sleep(PARENT_PROCESS_REGISTRATION_DELAY_MILLIS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("Interrupted before awaiting Minecraft stop.", e);
+            return;
+        }
 
         while (true) {
             try {

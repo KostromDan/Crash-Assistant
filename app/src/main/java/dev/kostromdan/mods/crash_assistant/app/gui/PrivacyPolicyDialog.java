@@ -1,15 +1,19 @@
 package dev.kostromdan.mods.crash_assistant.app.gui;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.utils.SwingEDT;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 /**
  * A dialog for showing and handling the privacy policy acceptance.
@@ -17,12 +21,18 @@ import java.util.concurrent.CountDownLatch;
 public class PrivacyPolicyDialog {
 
     // Static boolean to track if the dialog should be shown during the current launch
-    private static boolean acceptedForCurrentLaunch = false;
+    private static volatile boolean acceptedForCurrentLaunch = false;
 
     // Synchronization primitives for ensurePrivacyPolicyAccepted()
     private static final Object ensureLock = new Object();
-    private static CountDownLatch currentBatchLatch = null;
-    private static volatile boolean currentBatchResult = false;
+    private static EnsureBatch currentBatch = null;
+
+    private static final class EnsureBatch {
+        private final CountDownLatch latch = new CountDownLatch(1);
+        private volatile boolean result = false;
+        private volatile boolean decisionReady = false;
+        private boolean failed = false;
+    }
 
     /**
      * Checks whether the privacy policy has already been accepted locally or for the current session.
@@ -47,7 +57,16 @@ public class PrivacyPolicyDialog {
         if (isAlreadyAccepted()) {
             return true;
         }
+        return SwingEDT.callAndWait(() -> showPrivacyPolicyDialog(null, false));
+    }
 
+    private static boolean showPrivacyPolicyDialog(Consumer<Boolean> decisionHandler, boolean checkAcceptance) {
+        if (checkAcceptance && isAlreadyAccepted()) {
+            if (decisionHandler != null) {
+                decisionHandler.accept(true);
+            }
+            return true;
+        }
         JFrame ownerFrame = CrashAssistantGUI.getFrame();
 
         JDialog dialog = new JDialog(ownerFrame, LanguageProvider.get("gui.privacy.logs_upload_title"), true);
@@ -102,6 +121,15 @@ public class PrivacyPolicyDialog {
 
         // Create a variable to store the result
         final boolean[] result = {false};
+        final boolean[] decisionReported = {false};
+        Consumer<Boolean> reportDecision = accepted -> {
+            if (!decisionReported[0]) {
+                decisionReported[0] = true;
+                if (decisionHandler != null) {
+                    decisionHandler.accept(accepted);
+                }
+            }
+        };
 
         // Add action listeners to the buttons
         acceptButton.addActionListener(e -> {
@@ -116,15 +144,24 @@ public class PrivacyPolicyDialog {
             }
             result[0] = true;
             dialog.dispose();
+            reportDecision.accept(true);
         });
 
         declineButton.addActionListener(e -> {
             result[0] = false;
             dialog.dispose();
+            reportDecision.accept(false);
+        });
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                reportDecision.accept(result[0]);
+            }
         });
 
         // Show the dialog and wait until it's closed
         dialog.setVisible(true);
+        reportDecision.accept(result[0]);
 
         return result[0];
     }
@@ -140,59 +177,110 @@ public class PrivacyPolicyDialog {
     public static boolean ensurePrivacyPolicyAccepted() {
         if (isAlreadyAccepted()) return true;
 
-        CountDownLatch myLatch;
+        EnsureBatch myBatch;
         boolean iAmFirst;
 
         synchronized (ensureLock) {
             if (isAlreadyAccepted()) return true;
 
-            if (currentBatchLatch != null) {
+            if (currentBatch != null) {
                 // Dialog is currently showing - join this batch
-                myLatch = currentBatchLatch;
+                myBatch = currentBatch;
                 iAmFirst = false;
             } else {
                 // No dialog showing - start new batch
-                currentBatchLatch = new CountDownLatch(1);
-                myLatch = currentBatchLatch;
+                myBatch = new EnsureBatch();
+                currentBatch = myBatch;
                 iAmFirst = true;
             }
         }
 
         if (iAmFirst) {
             try {
-                final boolean[] result = {false};
-                SwingUtilities.invokeAndWait(() -> {
-                    result[0] = showPrivacyPolicyDialog();
-                    if (!result[0]) {
-                        // Show ONE declined warning from here
-                        JOptionPane.showMessageDialog(
-                                CrashAssistantGUI.getFrame(),
-                                LanguageProvider.get("gui.privacy.declined"),
-                                LanguageProvider.get("gui.privacy.title"),
-                                JOptionPane.WARNING_MESSAGE
-                        );
+                SwingEDT.runAndWait(() -> {
+                    boolean result = showPrivacyPolicyDialog(
+                            accepted -> publishBatchDecision(myBatch, accepted),
+                            true
+                    );
+                    if (!myBatch.decisionReady) {
+                        publishBatchDecision(myBatch, result);
                     }
                 });
-                currentBatchResult = result[0];
-            } catch (Exception e) {
-                CrashAssistantApp.LOGGER.error("Error in ensurePrivacyPolicyAccepted", e);
-                currentBatchResult = false;
+                if (Thread.currentThread().isInterrupted()) {
+                    synchronized (myBatch) {
+                        myBatch.failed = true;
+                        myBatch.result = false;
+                        myBatch.decisionReady = true;
+                    }
+                }
+            } catch (Throwable e) {
+                try {
+                    CrashAssistantApp.LOGGER.error("Error in ensurePrivacyPolicyAccepted", e);
+                } finally {
+                    synchronized (myBatch) {
+                        myBatch.failed = true;
+                        myBatch.result = false;
+                        myBatch.decisionReady = true;
+                    }
+                }
             } finally {
                 synchronized (ensureLock) {
-                    currentBatchLatch = null;
+                    if (currentBatch == myBatch) {
+                        currentBatch = null;
+                    }
                 }
-                myLatch.countDown();
+                myBatch.latch.countDown();
             }
         }
 
+        if (SwingUtilities.isEventDispatchThread()) {
+            awaitBatchDecisionOnEDT(myBatch);
+            return myBatch.result;
+        }
+
         try {
-            myLatch.await();
+            myBatch.latch.await();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return false;
         }
 
-        return currentBatchResult;
+        return myBatch.result;
+    }
+
+    private static void publishBatchDecision(EnsureBatch batch, boolean result) {
+        synchronized (batch) {
+            if (batch.failed) return;
+            batch.result = result;
+            batch.decisionReady = true;
+        }
+        if (!result) {
+            // Show ONE declined warning from here
+            JOptionPane.showMessageDialog(
+                    CrashAssistantGUI.getFrame(),
+                    LanguageProvider.get("gui.privacy.declined"),
+                    LanguageProvider.get("gui.privacy.title"),
+                    JOptionPane.WARNING_MESSAGE
+            );
+        }
+    }
+
+    private static void awaitBatchDecisionOnEDT(EnsureBatch batch) {
+        if (batch.decisionReady) return;
+
+        SecondaryLoop loop = Toolkit.getDefaultToolkit().getSystemEventQueue().createSecondaryLoop();
+        Timer timer = new Timer(10, null);
+        timer.addActionListener(e -> {
+            if (batch.decisionReady) {
+                timer.stop();
+                loop.exit();
+            }
+        });
+        timer.start();
+        if (!loop.enter()) {
+            timer.stop();
+            throw new IllegalStateException("Could not enter a secondary event loop while awaiting privacy decision");
+        }
     }
 
     /**
@@ -202,6 +290,10 @@ public class PrivacyPolicyDialog {
      * 3. If none of the above conditions are met, show a notification
      */
     public static void resetPrivacyConsent() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingEDT.runAndWait(PrivacyPolicyDialog::resetPrivacyConsent);
+            return;
+        }
         boolean changesApplied = false;
 
         // Check if privacy.accepted_privacy_info is not null and remove it if so

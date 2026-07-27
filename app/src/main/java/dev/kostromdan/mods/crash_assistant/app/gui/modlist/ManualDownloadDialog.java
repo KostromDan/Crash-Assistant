@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui.modlist;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.SwingEDT;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModFingerprinter;
 
@@ -147,7 +148,7 @@ public class ManualDownloadDialog extends JDialog {
         Thread t = new Thread(() -> {
             while (!completed && !skipped) {
                 try {
-                    if (isVisible()) {
+                    if (SwingEDT.callAndWait(this::isVisible)) {
                         checkDownloadsDir();
                     }
                     Thread.sleep(1000);
@@ -228,12 +229,14 @@ public class ManualDownloadDialog extends JDialog {
             String msg = LanguageProvider.get("gui.modlist_diff.manual_download.hash_mismatch_warning")
                     .replace("$FILE$", candidate.getFileName().toString())
                     .replace("$EXPECTED$", expectedFileName);
-            int choice = JOptionPane.showConfirmDialog(
-                    this,
-                    msg,
-                    LanguageProvider.get("gui.modlist_diff_dialog_name"),
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE
+            int choice = SwingEDT.callAndWait(() ->
+                    JOptionPane.showConfirmDialog(
+                            this,
+                            msg,
+                            LanguageProvider.get("gui.modlist_diff_dialog_name"),
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                    )
             );
             if (choice == JOptionPane.YES_OPTION) {
                 return tryMoveCandidate(candidate);

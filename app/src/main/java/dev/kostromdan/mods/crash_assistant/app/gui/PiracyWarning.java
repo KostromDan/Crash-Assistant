@@ -14,7 +14,7 @@ import java.util.HashMap;
 
 public class PiracyWarning extends JDialog {
 
-    public static boolean isCurrentlyDisplayed = false;
+    public static volatile boolean isCurrentlyDisplayed = false;
 
     public PiracyWarning(Frame parent) {
         super(parent, LanguageProvider.get("gui.piracy_warning"), true);
@@ -94,25 +94,59 @@ public class PiracyWarning extends JDialog {
 
     public static void showWarning(Frame parent) {
         isCurrentlyDisplayed = true;
-        SwingUtilities.invokeLater(() -> {
-            CrashAssistantApp.LOGGER.warn("Showing PiracyWarning.");
-            PiracyWarning dialog = new PiracyWarning(parent);
-            CrashAssistantGUI.setUpIcon(dialog);
+        Runnable showWarning = () -> {
+            try {
+                CrashAssistantApp.LOGGER.warn("Showing PiracyWarning.");
+                PiracyWarning dialog = new PiracyWarning(parent);
+                CrashAssistantGUI.setUpIcon(dialog);
 
-            dialog.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosed(WindowEvent e) {
-                    CrashAssistantApp.LOGGER.warn("Shown PiracyWarning.");
-                    isCurrentlyDisplayed = false;
-                }
-            });
+                dialog.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        try {
+                            CrashAssistantApp.LOGGER.warn("Shown PiracyWarning.");
+                        } finally {
+                            isCurrentlyDisplayed = false;
+                        }
+                    }
+                });
 
-            dialog.setVisible(true);
-        });
+                dialog.setVisible(true);
+            } catch (Throwable throwable) {
+                isCurrentlyDisplayed = false;
+                throw throwable;
+            }
+        };
+        try {
+            if (SwingUtilities.isEventDispatchThread()) {
+                showWarning.run();
+            } else {
+                SwingUtilities.invokeLater(showWarning);
+            }
+        } catch (Throwable throwable) {
+            isCurrentlyDisplayed = false;
+            throw throwable;
+        }
         awaitShown();
     }
 
     public static void awaitShown() {
+        if (SwingUtilities.isEventDispatchThread() && isCurrentlyDisplayed) {
+            SecondaryLoop loop = Toolkit.getDefaultToolkit().getSystemEventQueue().createSecondaryLoop();
+            Timer timer = new Timer(100, null);
+            timer.addActionListener(e -> {
+                if (!isCurrentlyDisplayed) {
+                    timer.stop();
+                    loop.exit();
+                }
+            });
+            timer.start();
+            if (!loop.enter()) {
+                timer.stop();
+                throw new IllegalStateException("Could not enter a secondary event loop while awaiting PiracyWarning");
+            }
+            return;
+        }
         while (isCurrentlyDisplayed) {
             try {
                 Thread.sleep(100);

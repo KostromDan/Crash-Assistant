@@ -173,7 +173,7 @@ public class ScriptsIDE {
         originalShownCrashReasons.addAll(KnownCrashReason.shownKnownCrashReasons);
         KnownCrashReason.shownKnownCrashReasons.clear();
         
-        originalCrashReasonMessages.addAll(KnownCrashReasonMessage.getAllMessages());
+        originalCrashReasonMessages.addAll(KnownCrashReasonMessage.getAllMessagesSnapshot());
         KnownCrashReasonMessage.getAllMessages().clear();
         
         synchronized (Analysis.getRegisteredWarnings()) {
@@ -656,7 +656,7 @@ public class ScriptsIDE {
                     SwingUtilities.invokeLater(() -> consoleArea.setText(""));
                     
                     // Cache ALL GUI states before the run
-                    Set<KnownCrashReasonMessage> cachedMessages = new HashSet<>(KnownCrashReasonMessage.getAllMessages());
+                    Set<KnownCrashReasonMessage> cachedMessages = new HashSet<>(KnownCrashReasonMessage.getAllMessagesSnapshot());
                     Set<KnownCrashReason> cachedShownReasons = new HashSet<>(KnownCrashReason.shownKnownCrashReasons);
                     Map<Log, List<ScriptWarning>> cachedWarnings = new HashMap<>();
                     synchronized (Analysis.getRegisteredWarnings()) {

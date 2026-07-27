@@ -40,9 +40,9 @@ import static dev.kostromdan.mods.crash_assistant.common_config.utils.MemoryUtil
 public class CrashAssistantApp {
     public static final Logger LOGGER = LogManager.getLogger(CrashAssistantApp.class);
     private static String customLatestLogPath = null;
-    private static boolean GUIStartedLaunching = false;
+    private static volatile boolean GUIStartedLaunching = false;
     public static long GUIStartTime = -1;
-    public static boolean GUIInitialisationFinished = false;
+    public static volatile boolean GUIInitialisationFinished = false;
     public static String minecraftXms = null;
     public static String minecraftXmx = null;
     public static String systemRAM = null;
@@ -59,7 +59,7 @@ public class CrashAssistantApp {
     public static boolean gameLaunchedSuccessfully = false;
     public static boolean joinedWorldSuccessfully = false;
     public static boolean preventCrashAssistantWindow = false;
-    public static long terminatedProcessesLocationEndTime = 0;
+    public static volatile long terminatedProcessesLocationEndTime = 0;
 
     @NoJexl
     public static void main(String[] args) {

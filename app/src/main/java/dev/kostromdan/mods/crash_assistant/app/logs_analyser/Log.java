@@ -10,8 +10,8 @@ public class Log {
     private final Path path;
     private final LogType type;
     private final LogReader reader;
-    private String linkToUploadedFirstLines = null;
-    private String linkToUploadedLastLines = null;
+    private volatile String linkToUploadedFirstLines = null;
+    private volatile String linkToUploadedLastLines = null;
     private boolean isAnalysed = false;
 
     @NoJexl

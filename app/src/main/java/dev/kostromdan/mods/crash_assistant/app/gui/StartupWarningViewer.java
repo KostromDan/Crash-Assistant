@@ -6,6 +6,7 @@ import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReason;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.crash_reasons.log.ScriptedAnalysis;
+import dev.kostromdan.mods.crash_assistant.app.utils.SwingEDT;
 import dev.kostromdan.mods.crash_assistant.app.utils.ThemeUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
 import org.apache.logging.log4j.LogManager;
@@ -49,7 +50,14 @@ public class StartupWarningViewer {
 
         } catch (Exception e) {
             LOGGER.error("Failed to display startup warnings", e);
-            JOptionPane.showMessageDialog(null, "Error displaying startup warnings: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            SwingEDT.runAndWait(() ->
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Error displaying startup warnings: " + e.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                    )
+            );
         }
         System.exit(0);
     }

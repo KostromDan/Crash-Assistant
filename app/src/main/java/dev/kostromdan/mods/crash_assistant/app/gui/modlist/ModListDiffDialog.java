@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel;
 import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.SwingEDT;
 import dev.kostromdan.mods.crash_assistant.app.utils.mods_downloader.ModPlatformLookupService;
 import dev.kostromdan.mods.crash_assistant.app.utils.mods_downloader.api.CurseForge;
 import dev.kostromdan.mods.crash_assistant.app.utils.mods_downloader.api.Modrinth;
@@ -257,9 +258,13 @@ public class ModListDiffDialog extends JFrame {
             ModPlatformLookupService lookupService = new ModPlatformLookupService();
             Set<Long> cfFingerprints = collectFingerprints(true);
             Set<String> mrFingerprints = collectHashFingerprints(true);
-            JLabel fetchingLabel = new JLabel(LanguageProvider.get("gui.modlist_diff.fetching_warning"));
-            fetchingLabel.setForeground(Color.GRAY);
-            SwingUtilities.invokeLater(() -> statusLabel.setText(fetchingLabel.getText()));
+            String fetchingLabelText = LanguageProvider.get("gui.modlist_diff.fetching_warning");
+            String fetchingText = SwingEDT.callAndWait(() -> {
+                JLabel fetchingLabel = new JLabel(fetchingLabelText);
+                fetchingLabel.setForeground(Color.GRAY);
+                return fetchingLabel.getText();
+            });
+            SwingUtilities.invokeLater(() -> statusLabel.setText(fetchingText));
 
             Runnable cfTask = () -> {
                 Map<Long, CurseForge.FingerprintMatch> cfResult = lookupCurseForge(lookupService, cfFingerprints);
@@ -1331,19 +1336,25 @@ public class ModListDiffDialog extends JFrame {
                 final boolean[] ok = new boolean[]{false};
                 final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
                 final ManualDownloadDialog[] dialogRef = new ManualDownloadDialog[1];
+                final AtomicReference<Throwable> dialogFailure = new AtomicReference<Throwable>();
 
                 SwingUtilities.invokeLater(() -> {
-                    ManualDownloadDialog dlg = new ManualDownloadDialog(
-                            ModListDiffDialog.this,
-                            expectedFileName,
-                            expectedDir,
-                            expectedPageUrl,
-                            buildHashSet(saved.curseHash),
-                            buildHashSet(saved.modrinthHash)
-                    );
-                    dialogRef[0] = dlg;
-                    ok[0] = dlg.awaitResult();
-                    latch.countDown();
+                    try {
+                        ManualDownloadDialog dlg = new ManualDownloadDialog(
+                                ModListDiffDialog.this,
+                                expectedFileName,
+                                expectedDir,
+                                expectedPageUrl,
+                                buildHashSet(saved.curseHash),
+                                buildHashSet(saved.modrinthHash)
+                        );
+                        dialogRef[0] = dlg;
+                        ok[0] = dlg.awaitResult();
+                    } catch (Throwable t) {
+                        dialogFailure.set(t);
+                    } finally {
+                        latch.countDown();
+                    }
                 });
 
                 // Allow interrupt while waiting for manual download
@@ -1366,6 +1377,17 @@ public class ModListDiffDialog extends JFrame {
                     cleanupPartialDownload(stagedTarget);
                     consumeSingleCancel(); // RESET FLAG
                     return null;
+                }
+
+                Throwable failure = dialogFailure.get();
+                if (failure instanceof Exception) {
+                    throw (Exception) failure;
+                }
+                if (failure instanceof Error) {
+                    throw (Error) failure;
+                }
+                if (failure != null) {
+                    throw new RuntimeException(failure);
                 }
 
                 if (ok[0]) {

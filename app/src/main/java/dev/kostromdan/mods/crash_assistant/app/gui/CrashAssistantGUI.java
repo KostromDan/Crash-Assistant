@@ -51,6 +51,7 @@ import java.util.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -66,6 +67,33 @@ public class CrashAssistantGUI {
     private static boolean simpleModeWasDisabled = false;
     private static boolean hideModListInSimpleMode;
     private static final Map<JComponent, OriginalState> highlightedComponents = new ConcurrentHashMap<>();
+    private static final Deque<KnownWarningsRequest> knownWarningsRequests = new ArrayDeque<>();
+    private static boolean drainingKnownWarnings;
+
+    private static final class KnownWarningsRequest {
+        private final CountDownLatch assigned = new CountDownLatch(1);
+        private final CountDownLatch done = new CountDownLatch(1);
+        private final boolean callerIsEdt;
+        private Throwable failure;
+
+        private KnownWarningsRequest(boolean callerIsEdt) {
+            this.callerIsEdt = callerIsEdt;
+        }
+    }
+
+    private static InterruptedException awaitUninterruptibly(CountDownLatch latch) {
+        InterruptedException interrupted = null;
+        while (true) {
+            try {
+                latch.await();
+                return interrupted;
+            } catch (InterruptedException e) {
+                if (interrupted == null) {
+                    interrupted = e;
+                }
+            }
+        }
+    }
 
     public static void bumpWindowToFront(Window window) {
         SwingUtilities.invokeLater(() -> {
@@ -248,6 +276,22 @@ public class CrashAssistantGUI {
 
 
     public CrashAssistantGUI() {
+        SwingEDT.runAndWait(this::initializeGUI);
+
+        controlPanel.updateModListInfo();
+        showCrashAssistantDuplicatedWarning();
+        showIncompatibleModsWarning();
+        showTooManyChangesWarning();
+        IntelChipBugWarning.showIfAffected(false);
+        showEarlyIntegratedGPUWarning();
+        new Thread(() -> {
+            LogAnalyser.analyseLogs();
+            showKnownCrashReasonsWarnings();
+            showPiracyWarning();
+        }).start();
+    }
+
+    private void initializeGUI() {
         ThemeUtils.ensureThemesApplied();
         LanguageProvider.updateLang();
         frame = new JFrame(LanguageProvider.get("gui.window_name"));
@@ -461,18 +505,6 @@ public class CrashAssistantGUI {
         CrashAssistantApp.GUIStartTime = Instant.now().toEpochMilli() - CrashAssistantApp.GUIStartTime;
         CrashAssistantApp.GUIInitialisationFinished = true;
         CrashAssistantApp.LOGGER.info("CrashAssistantGUI took to start: " + CrashAssistantApp.GUIStartTime / 1000f + " seconds.");
-
-        controlPanel.updateModListInfo();
-        showCrashAssistantDuplicatedWarning();
-        showIncompatibleModsWarning();
-        showTooManyChangesWarning();
-        IntelChipBugWarning.showIfAffected(false);
-        showEarlyIntegratedGPUWarning();
-        new Thread(() -> {
-            LogAnalyser.analyseLogs();
-            showKnownCrashReasonsWarnings();
-            showPiracyWarning();
-        }).start();
     }
 
     public static void setUpIcon(Window window) {
@@ -480,7 +512,7 @@ public class CrashAssistantGUI {
             java.io.InputStream iconStream = JarInJarHelper.class.getResourceAsStream("/crash_assistant_ico.png");
             if (iconStream != null) {
                 BufferedImage iconImage = ImageIO.read(iconStream);
-                window.setIconImage(iconImage);
+                SwingEDT.runAndWait(() -> window.setIconImage(iconImage));
                 iconStream.close();
             } else {
                 CrashAssistantApp.LOGGER.warn("Could not find crash_assistant_logo.png in jar root");
@@ -509,14 +541,16 @@ public class CrashAssistantGUI {
                 LanguageProvider.get("gui.comment_under_title_pls_report" + suffix, hrefOptions);
 
         String commentText = "<div style='margin-left: 5px;'>" + firstLinesOfComment + "\n" + LanguageProvider.get("gui.comment_under_title" + suffix, hrefOptions) + "</div>";
-        JEditorPane pane = getEditorPaneNoMargins(commentText, false);
-        if (commentPane == null) {
-            commentPane = pane;
-        } else {
-            commentPane.setText(pane.getText());
-            commentPane.revalidate();
-            commentPane.repaint();
-        }
+        SwingEDT.runAndWait(() -> {
+            JEditorPane pane = getEditorPaneNoMargins(commentText, false);
+            if (commentPane == null) {
+                commentPane = pane;
+            } else {
+                commentPane.setText(pane.getText());
+                commentPane.revalidate();
+                commentPane.repaint();
+            }
+        });
         return commentText;
     }
 
@@ -712,6 +746,10 @@ public class CrashAssistantGUI {
     }
 
     public static void showLogsAndDisableSimpleMode() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingEDT.runAndWait(CrashAssistantGUI::showLogsAndDisableSimpleMode);
+            return;
+        }
         simpleModeActive = false;
         simpleModeWasDisabled = true;
         updateSimpleModeVisibility();
@@ -860,6 +898,10 @@ public class CrashAssistantGUI {
     }
 
     public static void resize() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingEDT.runAndWait(CrashAssistantGUI::resize);
+            return;
+        }
         if (frame == null || fileListPanel == null) return;
         int old = fileListPanel.getScrollPane().getVerticalScrollBarPolicy();
         fileListPanel.getScrollPane().setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -880,24 +922,85 @@ public class CrashAssistantGUI {
 
     }
 
-    public static synchronized void showKnownCrashReasonsWarnings() {
+    public static void showKnownCrashReasonsWarnings() {
         ControlPanel.stopMovingToTop = true;
-        synchronized (KnownCrashReasonMessage.class) {
-            try {
-                SwingUtilities.invokeAndWait(() -> {
-                    boolean isHeadless = frame == null;
-                    if (isHeadless) {
-                        frame = new JFrame(LanguageProvider.get("gui.window_name"));
-                        frame.setUndecorated(true);
-                        frame.setBackground(new Color(0, 0, 0, 0));
-                        frame.setSize(0, 0);
-                        frame.setLocationRelativeTo(null);
-                        frame.setAlwaysOnTop(true);
-                        setUpIcon(frame);
-                        frame.setVisible(true);
-                    }
-                    try {
-                        for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessages()) {
+        boolean callerIsEdt = SwingUtilities.isEventDispatchThread();
+        KnownWarningsRequest request = new KnownWarningsRequest(callerIsEdt);
+        InterruptedException interrupted = null;
+        try {
+            SwingEDT.invokeAndWait(() -> {
+                try {
+                    knownWarningsRequests.addLast(request);
+                } finally {
+                    request.assigned.countDown();
+                }
+                if (!drainingKnownWarnings) {
+                    drainingKnownWarnings = true;
+                    processNextKnownWarningsRequest();
+                }
+            });
+        } catch (InterruptedException e) {
+            interrupted = e;
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error while showing known crash reasons warnings: ", e);
+            return;
+        }
+
+        if (interrupted != null) {
+            awaitUninterruptibly(request.assigned);
+        }
+        if (!callerIsEdt) {
+            InterruptedException waitInterrupted = awaitUninterruptibly(request.done);
+            if (interrupted == null) {
+                interrupted = waitInterrupted;
+            }
+        }
+        if (interrupted != null) {
+            CrashAssistantApp.LOGGER.error("Error while showing known crash reasons warnings: ", interrupted);
+        } else if (!callerIsEdt && request.failure != null) {
+            CrashAssistantApp.LOGGER.error(
+                    "Error while showing known crash reasons warnings: ",
+                    new java.lang.reflect.InvocationTargetException(request.failure)
+            );
+        }
+    }
+
+    private static void processNextKnownWarningsRequest() {
+        KnownWarningsRequest request = knownWarningsRequests.removeFirst();
+        try {
+            showKnownCrashReasonsWarningsOnEdt();
+        } catch (Throwable failure) {
+            request.failure = failure;
+            if (request.callerIsEdt) {
+                CrashAssistantApp.LOGGER.error(
+                        "Error while showing known crash reasons warnings: ",
+                        new java.lang.reflect.InvocationTargetException(failure)
+                );
+            }
+        } finally {
+            request.done.countDown();
+            if (knownWarningsRequests.isEmpty()) {
+                drainingKnownWarnings = false;
+            } else {
+                SwingUtilities.invokeLater(CrashAssistantGUI::processNextKnownWarningsRequest);
+            }
+        }
+    }
+
+    private static void showKnownCrashReasonsWarningsOnEdt() {
+        boolean isHeadless = frame == null;
+        try {
+            if (isHeadless) {
+                frame = new JFrame(LanguageProvider.get("gui.window_name"));
+                frame.setUndecorated(true);
+                frame.setBackground(new Color(0, 0, 0, 0));
+                frame.setSize(0, 0);
+                frame.setLocationRelativeTo(null);
+                frame.setAlwaysOnTop(true);
+                setUpIcon(frame);
+                frame.setVisible(true);
+            }
+            for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessagesSnapshot()) {
                             if (crashReasonMessage.isShownWarn()) continue;
                             KnownCrashReason crashReason = crashReasonMessage.getReason();
                             if (CrashAssistantConfig.getBlacklistedAnalysis().contains(crashReason.getClass().getSimpleName()))
@@ -1079,16 +1182,11 @@ public class CrashAssistantGUI {
                             long showStartTime = System.currentTimeMillis();
                             dialog.setVisible(true);
                             CrashAssistantApp.LOGGER.info("Shown KnownCrashReason: {} (Seen warning for {}s)", crashReason.getClass().getSimpleName(), (System.currentTimeMillis() - showStartTime) / 1000.0);
-                        }
-                    } finally {
-                        if (isHeadless) {
-                            if (frame != null) frame.dispose();
-                            frame = null;
-                        }
-                    }
-                });
-            } catch (Exception e) {
-                CrashAssistantApp.LOGGER.error("Error while showing known crash reasons warnings: ", e);
+            }
+        } finally {
+            if (isHeadless) {
+                if (frame != null) frame.dispose();
+                frame = null;
             }
         }
     }
@@ -1100,14 +1198,12 @@ public class CrashAssistantGUI {
             List<Mod> mods = JarInJarHelper.checkDuplicatedCrashAssistantMod(false);
             if (mods.size() < 2) return;
 
-            synchronized (KnownCrashReasonMessage.class) {
-                KnownCrashReasonMessage.addCrashReasonMessage(
-                        new KnownCrashReasonMessage(
-                                null,
-                                new DuplicatedCrashAssistantMod(mods)
-                        )
-                );
-            }
+            KnownCrashReasonMessage.addCrashReasonMessage(
+                    new KnownCrashReasonMessage(
+                            null,
+                            new DuplicatedCrashAssistantMod(mods)
+                    )
+            );
             showKnownCrashReasonsWarnings();
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.error("Error while showing crash assistant duplicated warning: ", e);
@@ -1125,8 +1221,7 @@ public class CrashAssistantGUI {
     }
 
     public static void showTooManyChangesWarning() {
-        synchronized (KnownCrashReasonMessage.class) {
-            try {
+        try {
                 try {
                     if (Objects.equals(CrashAssistantLocalConfig.get("too_many_changes.dont_show_again"), true)) {
                         return;
@@ -1149,7 +1244,7 @@ public class CrashAssistantGUI {
 
                 ControlPanel.stopMovingToTop = true;
                 String finalMessage = message;
-                SwingUtilities.invokeAndWait(() -> {
+                SwingEDT.invokeAndWait(() -> {
                     JDialog dialog = new JDialog((Frame) null, LanguageProvider.get("gui.too_many_changes_title"), true);
                     dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
@@ -1185,20 +1280,23 @@ public class CrashAssistantGUI {
                     dialog.setVisible(true);
                     CrashAssistantApp.LOGGER.info("Too many changes warning dialog closed");
                 });
-            } catch (Exception e) {
-                CrashAssistantApp.LOGGER.error("Error while showing too many changes warning: ", e);
-            }
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error while showing too many changes warning: ", e);
         }
     }
 
     public static void showEarlyIntegratedGPUWarning() {
-        synchronized (KnownCrashReasonMessage.class) {
-            try {
+        try {
                 if (Boot.getSerialisedGPUs() == null) return;
                 if (CrashAssistantApp.renderer != null && !Objects.equals(CrashAssistantApp.renderer, "UNDEFINED"))
                     return;
                 Log latest = null;
-                for (Log log : LogsList.getLogs()) {
+                Set<Log> logs = LogsList.getLogs();
+                List<Log> logsSnapshot;
+                synchronized (logs) {
+                    logsSnapshot = new ArrayList<>(logs);
+                }
+                for (Log log : logsSnapshot) {
                     if (log.getType() == LogType.LOG) {
                         latest = log;
                         break;
@@ -1217,22 +1315,20 @@ public class CrashAssistantGUI {
                 ProcessSignalIO.postAsOtherProcess("renderer", renderer, Boot.parentPID);
                 CrashAssistantApp.LOGGER.info("Minecraft process have not reached out our renderer parsing hook, but successfully parsed renderer from logs: {}", renderer);
                 CrashAssistantApp.checkRendererFile();
-            } catch (Exception e) {
-                CrashAssistantApp.LOGGER.error("Error while showing early IGPU warning: ", e);
-            }
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error while showing early IGPU warning: ", e);
         }
     }
 
     public static void showIncompatibleModsWarning() {
-        synchronized (KnownCrashReasonMessage.class) {
-            try {
+        try {
                 Optional<IncompatibleMod> incompatibleMod = JarInJarHelper.checkForIncompatibleMods(false);
                 if (!incompatibleMod.isPresent()) return;
                 List<Mod> detectedMods = incompatibleMod.get().getDetectedMods();
                 if (detectedMods.isEmpty()) return;
                 if (!CrashAssistantConfig.getBoolean("compatibility.enabled")) return;
                 ControlPanel.stopMovingToTop = true;
-                SwingUtilities.invokeAndWait(() -> {
+                SwingEDT.invokeAndWait(() -> {
                     JButton removeIncompatibleButton = new JButton("Close " + detectedMods.get(0).getModId() + " and remove.");
                     JButton removeCrashAssistantButton = new JButton("Close crash_assistant and remove.");
                     Object[] options = {removeIncompatibleButton, removeCrashAssistantButton, "Close"};
@@ -1392,13 +1488,16 @@ public class CrashAssistantGUI {
                         System.exit(0);
                     }
                 });
-            } catch (Exception e) {
-                CrashAssistantApp.LOGGER.error("Error while showing incompatible mod warning: ", e);
-            }
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error while showing incompatible mod warning: ", e);
         }
     }
 
     public static void highlightButton(JComponent button, Color color, long time) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingEDT.runAndWait(() -> highlightButton(button, color, time));
+            return;
+        }
         // Get or create the state for the button, storing the original look only once.
         OriginalState state = highlightedComponents.computeIfAbsent(button, OriginalState::new);
         final int currentGeneration = ++state.generation;
@@ -1516,6 +1615,9 @@ public class CrashAssistantGUI {
     }
 
     private static JEditorPane getEditorPane(String text, boolean wrap, Integer width, boolean useSafeHeadingFont) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            return SwingEDT.callAndWait(() -> getEditorPane(text, wrap, width, useSafeHeadingFont));
+        }
         JEditorPane pane = new JEditorPane() {
             @Override
             public Dimension getPreferredSize() {
@@ -1556,6 +1658,9 @@ public class CrashAssistantGUI {
     }
 
     public static JEditorPane getEditorPaneNoMargins(String text, boolean wrap) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            return SwingEDT.callAndWait(() -> getEditorPaneNoMargins(text, wrap));
+        }
         // Call the original getEditorPane method
         JEditorPane pane = getEditorPane(text, wrap);
 

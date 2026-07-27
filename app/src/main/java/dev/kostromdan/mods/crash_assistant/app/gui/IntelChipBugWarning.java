@@ -3,9 +3,9 @@ package dev.kostromdan.mods.crash_assistant.app.gui;
 import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.WinReg;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
-import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.utils.IntelCorruptedProcessorChecker;
 import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
+import dev.kostromdan.mods.crash_assistant.app.utils.SwingEDT;
 import dev.kostromdan.mods.crash_assistant.app.utils.ThemeUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
@@ -30,7 +30,6 @@ public class IntelChipBugWarning {
     public static final long FIRST_NOT_AFFECTED_MICROCODE_VERSION = Long.parseLong("129", 16);
 
     public static void showIfAffected(boolean debug) {
-        synchronized (KnownCrashReasonMessage.class) {
             ThemeUtils.ensureThemesApplied();
             if (!CrashAssistantConfig.getBoolean("intel_corrupted.enabled")) return;
             if (!IntelCorruptedProcessorChecker.isAffectedProcessor() && !debug) return;
@@ -44,6 +43,7 @@ public class IntelChipBugWarning {
 
             ControlPanel.stopMovingToTop = true;
 
+            SwingEDT.runAndWait(() -> {
             JDialog dialog = new JDialog((Frame) null, LanguageProvider.get("gui.intel_corrupted_title"), true);
             dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
@@ -136,7 +136,7 @@ public class IntelChipBugWarning {
             dialog.setLocationRelativeTo(null);
             if (debug) dialog.setAlwaysOnTop(true);
             dialog.setVisible(true);
-        }
+            });
         CrashAssistantApp.LOGGER.info("Shown IntelChipBugWarning");
     }
 

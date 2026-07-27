@@ -11,6 +11,7 @@ import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
 import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
 import dev.kostromdan.mods.crash_assistant.app.utils.MclogArrayRegistrar;
+import dev.kostromdan.mods.crash_assistant.app.utils.SwingEDT;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.ApiProvider;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.Problem;
 import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.UploadLogResponse;
@@ -39,8 +40,8 @@ public class FilePanel {
     private final JButton openButton;
     private final JButton uploadButton;
     private final JButton browserButton;
-    private Exception lastError = null;
-    private boolean waiting = true;
+    private volatile Exception lastError = null;
+    private volatile boolean waiting = true;
     public static final Object uploadErrorDialogLock = new Object();
     private final Log log;
     private final int fullButtonWidth;
@@ -235,25 +236,33 @@ public class FilePanel {
     }
 
     public boolean isUploadButtonEnabled() {
-        return uploadButton.isEnabled();
+        return SwingEDT.callAndWait(uploadButton::isEnabled);
     }
 
     public void setUploadButtonEnabled(boolean enabled) {
-        uploadButton.setEnabled(enabled);
+        SwingEDT.runAndWait(() -> uploadButton.setEnabled(enabled));
     }
 
     private void uploadFile() {
         uploadFile(true);
     }
 
-    public synchronized void uploadFile(boolean fromButton) {
+    public void uploadFile(boolean fromButton) {
         ControlPanel.stopMovingToTop = true;
-        if (!uploadButton.isEnabled()) {
-            return;
+        boolean admitted = SwingEDT.callAndWait(() -> {
+            if (!uploadButton.isEnabled()) {
+                return false;
+            }
+            uploadButton.setEnabled(false);
+            lastError = null;
+            return true;
+        });
+        if (admitted) {
+            startUploadThread(fromButton);
         }
-        uploadButton.setEnabled(false);
+    }
 
-        lastError = null;
+    private void startUploadThread(boolean fromButton) {
         new Thread(() -> {
             if(!fromButton && log.getType() == LogType.CRASH_ASSISTANT && log.getLinkToUploadedFirstLines() != null){
                 untransformCopyLinkButton();
@@ -261,21 +270,21 @@ public class FilePanel {
                 log.setLinkToUploadedLastLines(null);
             }
             if (log.getLinkToUploadedFirstLines() == null) {
-                uploadButton.setText(LanguageProvider.get("gui.uploading"));
+                SwingEDT.runAndWait(() -> uploadButton.setText(LanguageProvider.get("gui.uploading")));
 
                 try {
                     if (!PrivacyPolicyDialog.ensurePrivacyPolicyAccepted()) {
                         throw new DeclinedException(LanguageProvider.get("gui.privacy.declined"));
                     }
 
-                    String oldText = uploadButton.getText();
+                    String oldText = SwingEDT.callAndWait(uploadButton::getText);
 
                     if (!fromButton && log.getType() == LogType.CRASH_ASSISTANT) {
                         List<FilePanel> allLogsList = CrashAssistantGUI.fileListPanel.getFilePanelList().stream()
                                 .filter(x -> x.getLog().getType() != LogType.CRASH_ASSISTANT)
                                 .collect(Collectors.toList());
                         while (!allLogsList.isEmpty()) {
-                            uploadButton.setText(LanguageProvider.get("gui.delayed"));
+                            SwingEDT.runAndWait(() -> uploadButton.setText(LanguageProvider.get("gui.delayed")));
                             Thread.sleep(100);
                             if (allLogsList.stream().anyMatch(x -> x.getLastError() != null))
                                 throw new UploadException("Crash Assistant log must be uploaded after all another logs. But encountered error while uploading one of them.");
@@ -284,9 +293,9 @@ public class FilePanel {
                         }
                     }
 
-                    uploadButton.setText(LanguageProvider.get("gui.preprocessing"));
+                    SwingEDT.runAndWait(() -> uploadButton.setText(LanguageProvider.get("gui.preprocessing")));
                     log.getReader().readLogFile(true);
-                    uploadButton.setText(oldText);
+                    SwingEDT.runAndWait(() -> uploadButton.setText(oldText));
                     CompletableFuture<UploadLogResponse> completableResponseFirstLines = ApiProvider.getMcLogsClient().uploadLog(log.getName(), log.getReader().getFirstLinesString());
 
                     String lastLines = log.getReader().getLastLinesString();
@@ -317,12 +326,12 @@ public class FilePanel {
                         String finalLink = CrashAssistantGUI.transformLink(responseFirstLines.getUrl());
                         CrashAssistantApp.LOGGER.info("{} " + (lastLines != null ? "first lines " : "") + "uploaded successfully: {}", log.getName(), finalLink);
                         if (LogAnalyser.CodexSupportedLogTypes.contains(log.getType())) {
-                            synchronized (KnownCrashReasonMessage.class) {
+                            synchronized (CrashAssistantGUI.class) {
                                 for (Problem problem : responseFirstLines.getInsights().getProblems()) {
                                     KnownCrashReasonMessage.addCodexMessage(log, problem, finalLink);
                                 }
-                                CrashAssistantGUI.showKnownCrashReasonsWarnings();
                             }
+                            CrashAssistantGUI.showKnownCrashReasonsWarnings();
                         }
                         log.setLinkToUploadedFirstLines(finalLink);
                         MclogArrayRegistrar.registerUploadedLog(
@@ -341,29 +350,35 @@ public class FilePanel {
                     {
                         lastError = e;
                         CrashAssistantApp.LOGGER.info("Failed to upload file \"" + log.getPath() + "\": ", e);
-                        uploadButton.setText(LanguageProvider.get("gui.error"));
-                        CrashAssistantGUI.highlightButton(uploadButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_error_color"), new Color(255, 100, 100)), 2800);
+                        SwingEDT.runAndWait(() -> {
+                            uploadButton.setText(LanguageProvider.get("gui.error"));
+                            CrashAssistantGUI.highlightButton(uploadButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_error_color"), new Color(255, 100, 100)), 2800);
+                        });
                         if (fromButton && !(e instanceof DeclinedException)) {
                             synchronized (uploadErrorDialogLock) {
-                                if (UploadErrorDialog.isNetworkUploadError(e)) {
-                                    UploadErrorDialog.show(panel, log, UploadErrorDialog.formatErrorMessage(e));
-                                } else {
-                                    String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e;
-                                    JOptionPane.showMessageDialog(
-                                            panel,
-                                            message,
-                                            LanguageProvider.get("gui.failed_to_upload_file") + "!",
-                                            JOptionPane.ERROR_MESSAGE
-                                    );
-                                }
+                                SwingEDT.runAndWait(() -> {
+                                    if (UploadErrorDialog.isNetworkUploadError(e)) {
+                                        UploadErrorDialog.show(panel, log, UploadErrorDialog.formatErrorMessage(e));
+                                    } else {
+                                        String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + e;
+                                        JOptionPane.showMessageDialog(
+                                                panel,
+                                                message,
+                                                LanguageProvider.get("gui.failed_to_upload_file") + "!",
+                                                JOptionPane.ERROR_MESSAGE
+                                        );
+                                    }
+                                });
                             }
                         }
                         new Timer().schedule(
                                 new TimerTask() {
                                     @Override
                                     public void run() {
-                                        uploadButton.setText(LanguageProvider.get("gui.upload_and_copy_link_button"));
-                                        uploadButton.setEnabled(true);
+                                        SwingEDT.runAndWait(() -> {
+                                            uploadButton.setText(LanguageProvider.get("gui.upload_and_copy_link_button"));
+                                            uploadButton.setEnabled(true);
+                                        });
                                     }
                                 },
                                 3000
@@ -381,7 +396,7 @@ public class FilePanel {
                     } else {
                         AtomicReference<String> result = new AtomicReference<>();
                         try {
-                            SwingUtilities.invokeAndWait(() -> {
+                            SwingEDT.invokeAndWait(() -> {
                                 result.set(showLogPartSelectionDialog(LanguageProvider.get("gui.split_log_dialog_action_copy")));
                             });
                         } catch (Exception e) {
@@ -400,21 +415,25 @@ public class FilePanel {
                     ClipboardUtils.copy(toCopy);
                 }
 
-                transformCopyLinkButton();
-
-                if (toCopy != null) {
-                    uploadButton.setText(LanguageProvider.get("gui.copied"));
-                    CrashAssistantGUI.highlightButton(uploadButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_success_color"), new Color(100, 255, 100)), 2800);
-                    uploadButton.setEnabled(false);
-                }
+                boolean linkCopied = toCopy != null;
+                SwingEDT.runAndWait(() -> {
+                    transformCopyLinkButton();
+                    if (linkCopied) {
+                        uploadButton.setText(LanguageProvider.get("gui.copied"));
+                        CrashAssistantGUI.highlightButton(uploadButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_success_color"), new Color(100, 255, 100)), 2800);
+                        uploadButton.setEnabled(false);
+                    }
+                });
             }
             new Timer().schedule(
                     new TimerTask() {
                         @Override
                         public void run() {
-                            uploadButton.setText(LanguageProvider.get("gui.copy_link_button"));
-                            transformCopyLinkButton();
-                            uploadButton.setEnabled(true);
+                            SwingEDT.runAndWait(() -> {
+                                uploadButton.setText(LanguageProvider.get("gui.copy_link_button"));
+                                transformCopyLinkButton();
+                                uploadButton.setEnabled(true);
+                            });
                         }
                     },
                     fromButton && log.getLinkToUploadedFirstLines() != null ? 3000 : 0
@@ -423,6 +442,10 @@ public class FilePanel {
     }
 
     private void transformCopyLinkButton() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingEDT.runAndWait(this::transformCopyLinkButton);
+            return;
+        }
         String oldText = uploadButton.getText();
         browserButton.setVisible(true);
         int newWidth = fullButtonWidth - browserButton.getPreferredSize().width - 5;
@@ -431,6 +454,10 @@ public class FilePanel {
     }
 
     private void untransformCopyLinkButton() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingEDT.runAndWait(this::untransformCopyLinkButton);
+            return;
+        }
         browserButton.setVisible(false);
     }
 
@@ -456,6 +483,9 @@ public class FilePanel {
     }
 
     public String showLogPartSelectionDialog(String action) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            return SwingEDT.callAndWait(() -> showLogPartSelectionDialog(action));
+        }
         JEditorPane logSelectionPane = CrashAssistantGUI.getEditorPane(LanguageProvider.get("gui.copy_split_log_dialog_text").replace("$LOG_TOO_BIG_REASON$", getTooBigReasons(false)).replace("$FILE_NAME$", log.getFileName()).replace("$ACTION$", action), false);
         Object[] options = {
                 LanguageProvider.get("gui.split_log_dialog_msg_with_both"),

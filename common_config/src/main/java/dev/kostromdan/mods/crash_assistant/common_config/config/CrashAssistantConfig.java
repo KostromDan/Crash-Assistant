@@ -25,6 +25,9 @@ public class CrashAssistantConfig {
     private static CommentedFileConfig config;
     private static final HashSet<String> usedOptions = new HashSet<>();
     private static long lastConfigUpdate;
+    private static final long READ_CACHE_TTL_NANOS = 1_000_000_000L;
+    private static long lastReadCacheUpdateNanos;
+    private static volatile boolean readCacheValid;
 
     private static final LinkedHashSet<String> canonicalSectionOrder = new LinkedHashSet<>();
     private static final Map<String, LinkedHashSet<String>> canonicalKeysPerSection = new LinkedHashMap<>();
@@ -35,6 +38,7 @@ public class CrashAssistantConfig {
                     .preserveInsertionOrder()
                     .build();
             load();
+            refreshReadCache();
         });
     }
 
@@ -777,16 +781,28 @@ public class CrashAssistantConfig {
         executeWithLock(() -> {
             config.save();
             lastConfigUpdate = CONFIG_PATH.toFile().lastModified();
+            readCacheValid = false;
         });
     }
 
     public static synchronized <T> T get(String path) {
+        long elapsedSinceCacheUpdate = System.nanoTime() - lastReadCacheUpdateNanos;
+        if (readCacheValid && elapsedSinceCacheUpdate >= 0 && elapsedSinceCacheUpdate < READ_CACHE_TTL_NANOS) {
+            return config.get(path);
+        }
+
         final AtomicReference<T> result = new AtomicReference<>();
         executeWithLock(() -> {
             update();
             result.set(config.get(path));
+            refreshReadCache();
         });
         return result.get();
+    }
+
+    private static void refreshReadCache() {
+        lastReadCacheUpdateNanos = System.nanoTime();
+        readCacheValid = true;
     }
 
     public static boolean getBoolean(String path) {
@@ -798,15 +814,23 @@ public class CrashAssistantConfig {
     }
 
     public static String get(String path, boolean applyPlaceHolders) {
-        return applyPlaceHolders ? Lang.applyPlaceHolders(config.get(path), new HashMap<>()) : config.get(path);
+        String value = get(path);
+        return applyPlaceHolders ? Lang.applyPlaceHolders(value, new HashMap<>()) : value;
     }
 
     public static <T> void set(String path, T value) {
-        executeWithLock(() -> {
-            update();
-            config.set(path, value);
-            save();
-        });
+        readCacheValid = false;
+        try {
+            executeWithLock(() -> {
+                update();
+                config.set(path, value);
+                save();
+            });
+        } finally {
+            synchronized (CrashAssistantConfig.class) {
+                readCacheValid = false;
+            }
+        }
     }
 
     @NoJexl

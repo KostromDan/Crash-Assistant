@@ -22,7 +22,7 @@ import java.util.List;
 
 public class IntegratedGPUWarning extends JFrame {
 
-    public static boolean isCurrentlyDisplayed = false;
+    public static volatile boolean isCurrentlyDisplayed = false;
 
     /**
      * Constructs a new frame that displays an editor pane with warning messages,
@@ -157,27 +157,61 @@ public class IntegratedGPUWarning extends JFrame {
         ThemeUtils.ensureThemesApplied();
         ControlPanel.stopMovingToTop = true;
         isCurrentlyDisplayed = true;
-        SwingUtilities.invokeLater(() -> {
-            CrashAssistantApp.LOGGER.warn("Showing IntegratedGPUWarning.");
-            IntegratedGPUWarning frame = new IntegratedGPUWarning(integratedGPU, dedicatedGPUs);
-            CrashAssistantGUI.setUpIcon(frame);
+        Runnable showWarning = () -> {
+            try {
+                CrashAssistantApp.LOGGER.warn("Showing IntegratedGPUWarning.");
+                IntegratedGPUWarning frame = new IntegratedGPUWarning(integratedGPU, dedicatedGPUs);
+                CrashAssistantGUI.setUpIcon(frame);
 
-            // Add a window listener to wait for the frame to be closed
-            frame.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosed(WindowEvent e) {
-                    CrashAssistantApp.LOGGER.warn("Shown IntegratedGPUWarning."); // Log after frame is closed.
-                    CrashAssistantGUI.bumpMainWindowToFront();
-                    isCurrentlyDisplayed = false;
-                }
-            });
+                // Add a window listener to wait for the frame to be closed
+                frame.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        try {
+                            CrashAssistantApp.LOGGER.warn("Shown IntegratedGPUWarning."); // Log after frame is closed.
+                            CrashAssistantGUI.bumpMainWindowToFront();
+                        } finally {
+                            isCurrentlyDisplayed = false;
+                        }
+                    }
+                });
 
-            frame.setVisible(true);
-        });
+                frame.setVisible(true);
+            } catch (Throwable throwable) {
+                isCurrentlyDisplayed = false;
+                throw throwable;
+            }
+        };
+        try {
+            if (SwingUtilities.isEventDispatchThread()) {
+                showWarning.run();
+            } else {
+                SwingUtilities.invokeLater(showWarning);
+            }
+        } catch (Throwable throwable) {
+            isCurrentlyDisplayed = false;
+            throw throwable;
+        }
         awaitShown();
     }
 
     public static void awaitShown() {
+        if (SwingUtilities.isEventDispatchThread() && isCurrentlyDisplayed) {
+            SecondaryLoop loop = Toolkit.getDefaultToolkit().getSystemEventQueue().createSecondaryLoop();
+            Timer timer = new Timer(100, null);
+            timer.addActionListener(e -> {
+                if (!isCurrentlyDisplayed) {
+                    timer.stop();
+                    loop.exit();
+                }
+            });
+            timer.start();
+            if (!loop.enter()) {
+                timer.stop();
+                throw new IllegalStateException("Could not enter a secondary event loop while awaiting IntegratedGPUWarning");
+            }
+            return;
+        }
         while (isCurrentlyDisplayed) {
             try {
                 Thread.sleep(100);

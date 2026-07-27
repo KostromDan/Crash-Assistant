@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.app.gui.analysis;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.gui.FilesRemover;
 import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
+import dev.kostromdan.mods.crash_assistant.app.utils.SwingEDT;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 
@@ -90,6 +91,11 @@ public abstract class AnalysisGUIBase {
     }
 
     protected void appendStyledText(String text, Color color) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingEDT.runAndWait(() -> appendStyledText(text, color));
+            return;
+        }
+
         StyledDocument doc = textPane.getStyledDocument();
         Style style = textPane.addStyle("Color Style", null);
         StyleConstants.setForeground(style, color);

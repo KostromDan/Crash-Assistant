@@ -55,12 +55,18 @@ public class KnownCrashReasonMessage {
         return crashReasonMessages;
     }
 
+    public static List<KnownCrashReasonMessage> getAllMessagesSnapshot() {
+        synchronized (crashReasonMessages) {
+            return new ArrayList<>(crashReasonMessages);
+        }
+    }
+
     public static HashMap<KnownCrashReason, List<Log>> getUniqueMessages() {
         HashMap<String, List<KnownCrashReasonMessage>> messagesByReasonType = new HashMap<>();
         HashMap<KnownCrashReason, List<Log>> result = new HashMap<>();
 
         // Group messages by reason name
-        for (KnownCrashReasonMessage message : crashReasonMessages) {
+        for (KnownCrashReasonMessage message : getAllMessagesSnapshot()) {
             String reasonType = message.getReason().getReasonName().toLowerCase();
             messagesByReasonType.computeIfAbsent(reasonType, k -> new ArrayList<>()).add(message);
         }
@@ -99,8 +105,8 @@ public class KnownCrashReasonMessage {
             msg += "\n\n" + LanguageProvider.get("warnings.codex_crash_assistant_comment") + "\n" + crashAssistantAnalysisOfCodex;
         }
         KnownCrashReasonMessage codexMsg = new KnownCrashReasonMessage(log, new CodexMessage(msg));
-        addCrashReasonMessage(codexMsg);
         codexMsg.isCodexMessage = true;
+        addCrashReasonMessage(codexMsg);
     }
 
     public boolean isCodexMessage() {

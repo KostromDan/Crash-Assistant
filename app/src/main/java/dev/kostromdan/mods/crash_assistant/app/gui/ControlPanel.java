@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class ControlPanel {
-    public static boolean stopMovingToTop = false;
+    public static volatile boolean stopMovingToTop = false;
     public static boolean uploadButtonsActivated = CrashAssistantConfig.getBoolean("general.prevent_upload_buttons_delay");
     private static boolean uploadAllButtonWarningShown = false;
     private static boolean isInsideTrustedDomainsWarning = false;
@@ -245,23 +245,25 @@ public class ControlPanel {
             }
         }
 
-        String labelMsg = "<html><div style='white-space:nowrap;'>";
-        if (modListDiff.isEmpty()) {
-            labelMsg += LanguageProvider.get("gui.modlist_not_changed_label") + ":";
-            showModListButton.setEnabled(false);
-            showModListButton.setToolTipText(LanguageProvider.get("gui.modlist_not_changed_label"));
-        } else {
-            labelMsg += LanguageProvider.get("gui.modlist_changed_label")
-                    .replace("$ADDED_MODS_COUNT$", "<span style='color:green;'>" + modListDiff.getAddedMods().size() + "</span>")
-                    .replace("$REMOVED_MODS_COUNT$", "<span style='color:red;'>" + modListDiff.getRemovedMods().size() + "</span>")
-                    .replace("$UPDATED_MODS_COUNT$", "<span style='color:blue;'>" + modListDiff.getUpdatedMods().size() + "</span>");
-            showModListButton.setEnabled(true);
-            showModListButton.setToolTipText(null);
-        }
-        labelMsg += "</div></html>";
+        SwingEDT.runAndWait(() -> {
+            String labelMsg = "<html><div style='white-space:nowrap;'>";
+            if (modListDiff.isEmpty()) {
+                labelMsg += LanguageProvider.get("gui.modlist_not_changed_label") + ":";
+                showModListButton.setEnabled(false);
+                showModListButton.setToolTipText(LanguageProvider.get("gui.modlist_not_changed_label"));
+            } else {
+                labelMsg += LanguageProvider.get("gui.modlist_changed_label")
+                        .replace("$ADDED_MODS_COUNT$", "<span style='color:green;'>" + modListDiff.getAddedMods().size() + "</span>")
+                        .replace("$REMOVED_MODS_COUNT$", "<span style='color:red;'>" + modListDiff.getRemovedMods().size() + "</span>")
+                        .replace("$UPDATED_MODS_COUNT$", "<span style='color:blue;'>" + modListDiff.getUpdatedMods().size() + "</span>");
+                showModListButton.setEnabled(true);
+                showModListButton.setToolTipText(null);
+            }
+            labelMsg += "</div></html>";
 
-        modListLabel.setText(labelMsg);
-        modListLabel.setMaximumSize(modListLabel.getPreferredSize());
+            modListLabel.setText(labelMsg);
+            modListLabel.setMaximumSize(modListLabel.getPreferredSize());
+        });
 
         new Thread(() -> {
             try {
@@ -279,17 +281,21 @@ public class ControlPanel {
     }
 
     public void setSimpleModeButtonVisible(boolean visible) {
-        if (showLogsToggleButton == null) return;
-        showLogsToggleButton.setVisible(visible);
-        panel.revalidate();
-        panel.repaint();
+        SwingEDT.runAndWait(() -> {
+            if (showLogsToggleButton == null) return;
+            showLogsToggleButton.setVisible(visible);
+            panel.revalidate();
+            panel.repaint();
+        });
     }
 
     public void setModListSectionVisible(boolean visible) {
-        if (modListContainer == null) return;
-        modListContainer.setVisible(visible);
-        panel.revalidate();
-        panel.repaint();
+        SwingEDT.runAndWait(() -> {
+            if (modListContainer == null) return;
+            modListContainer.setVisible(visible);
+            panel.revalidate();
+            panel.repaint();
+        });
     }
 
     public boolean wasModListInitiallyVisible() {
@@ -382,7 +388,7 @@ public class ControlPanel {
         uploadAllButton.setEnabled(false);
         new Thread(() -> {
             if (generatedMsg == null) {
-                uploadAllButton.setText(LanguageProvider.get("gui.uploading"));
+                SwingEDT.runAndWait(() -> uploadAllButton.setText(LanguageProvider.get("gui.uploading")));
 
                 checkAndStartUploading(false);
 
@@ -409,29 +415,35 @@ public class ControlPanel {
                                 !(filePanel.getLastError() instanceof UploadException && filePanel.getLastError().getMessage().startsWith("Crash Assistant log"))) {
                             if (!(filePanel.getLastError() instanceof DeclinedException)) {
                                 synchronized (FilePanel.uploadErrorDialogLock) {
-                                    if (UploadErrorDialog.isNetworkUploadError(filePanel.getLastError())) {
-                                        UploadErrorDialog.show(panel, log, UploadErrorDialog.formatErrorMessage(filePanel.getLastError()));
-                                    } else {
-                                        String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError();
-                                        JOptionPane.showMessageDialog(
-                                                panel,
-                                                message,
-                                                LanguageProvider.get("gui.failed_to_upload_file") + "!",
-                                                JOptionPane.ERROR_MESSAGE
-                                        );
-                                    }
+                                    SwingEDT.runAndWait(() -> {
+                                        if (UploadErrorDialog.isNetworkUploadError(filePanel.getLastError())) {
+                                            UploadErrorDialog.show(panel, log, UploadErrorDialog.formatErrorMessage(filePanel.getLastError()));
+                                        } else {
+                                            String message = LanguageProvider.get("gui.failed_to_upload_file") + " \"" + log.getPath() + "\": " + filePanel.getLastError();
+                                            JOptionPane.showMessageDialog(
+                                                    panel,
+                                                    message,
+                                                    LanguageProvider.get("gui.failed_to_upload_file") + "!",
+                                                    JOptionPane.ERROR_MESSAGE
+                                            );
+                                        }
+                                    });
                                 }
                             }
-                            uploadAllButton.setText(LanguageProvider.get("gui.error"));
-                            CrashAssistantGUI.highlightButton(uploadAllButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_error_color"), new Color(255, 100, 100)), 2600);
+                            SwingEDT.runAndWait(() -> {
+                                uploadAllButton.setText(LanguageProvider.get("gui.error"));
+                                CrashAssistantGUI.highlightButton(uploadAllButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_error_color"), new Color(255, 100, 100)), 2600);
+                            });
 
                             new Timer().schedule(
                                     new TimerTask() {
                                         @Override
                                         public void run() {
-                                            uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
-                                            uploadAllButton.setEnabled(true);
-                                            uploadAllButton.requestFocusInWindow();
+                                            SwingEDT.runAndWait(() -> {
+                                                uploadAllButton.setText(LanguageProvider.get("gui.upload_all_button"));
+                                                uploadAllButton.setEnabled(true);
+                                                uploadAllButton.requestFocusInWindow();
+                                            });
                                         }
                                     },
                                     3000
@@ -463,18 +475,23 @@ public class ControlPanel {
                 showUploadAllButtonWarning(warningMsg);
                 ClipboardUtils.copy(generatedMsg);
             }
-            uploadAllButton.setText(LanguageProvider.get("gui.copied"));
-            CrashAssistantGUI.highlightButton(uploadAllButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_success_color"), new Color(100, 255, 100)), buttonHighLightTime - 400);
+            int finalButtonHighLightTime = buttonHighLightTime;
+            SwingEDT.runAndWait(() -> {
+                uploadAllButton.setText(LanguageProvider.get("gui.copied"));
+                CrashAssistantGUI.highlightButton(uploadAllButton, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_success_color"), new Color(100, 255, 100)), finalButtonHighLightTime - 400);
+            });
             new Timer().schedule(
                     new TimerTask() {
                         @Override
                         public void run() {
-                            uploadAllButton.setText(LanguageProvider.get("gui.upload_all_finished_button"));
-                            uploadAllButton.setEnabled(true);
-                            uploadAllButton.requestFocusInWindow();
+                            SwingEDT.runAndWait(() -> {
+                                uploadAllButton.setText(LanguageProvider.get("gui.upload_all_finished_button"));
+                                uploadAllButton.setEnabled(true);
+                                uploadAllButton.requestFocusInWindow();
+                            });
                         }
                     },
-                    buttonHighLightTime
+                    finalButtonHighLightTime
             );
         }).start();
     }
@@ -605,7 +622,7 @@ public class ControlPanel {
             analysis_sb.append(Integer.toString(reasonToLogs.size()), "blue", false);
             analysis_sb.append(LanguageProvider.getMsgLang("msg.found_analysis_2"));
 
-            int scriptedResultsCount = (int) KnownCrashReasonMessage.getAllMessages().stream()
+            int scriptedResultsCount = (int) KnownCrashReasonMessage.getAllMessagesSnapshot().stream()
                     .filter(msg -> msg.getReason() instanceof ScriptedAnalysis)
                     .count();
 
@@ -719,6 +736,10 @@ public class ControlPanel {
     }
 
     public static void showUploadAllButtonWarning(String warningMsg) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingEDT.runAndWait(() -> showUploadAllButtonWarning(warningMsg));
+            return;
+        }
         JEditorPane commentPane = CrashAssistantGUI.getEditorPane(warningMsg, false);
         JOptionPane optionPane = new JOptionPane(
                 commentPane,
@@ -824,6 +845,8 @@ public class ControlPanel {
     }
 
     public static void hideReportButtonIfNeeded() {
-        if (requestHelpButton != null && hideRequestHelpButton) requestHelpButton.setVisible(false);
+        SwingEDT.runAndWait(() -> {
+            if (requestHelpButton != null && hideRequestHelpButton) requestHelpButton.setVisible(false);
+        });
     }
 }

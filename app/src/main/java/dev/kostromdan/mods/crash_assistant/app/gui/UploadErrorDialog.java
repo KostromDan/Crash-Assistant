@@ -4,6 +4,7 @@ import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
 import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
+import dev.kostromdan.mods.crash_assistant.app.utils.SwingEDT;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 
 import javax.swing.*;
@@ -47,6 +48,11 @@ public final class UploadErrorDialog {
     }
 
     public static void show(Component parent, Log log, String errorMessage, boolean justGuide) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingEDT.runAndWait(() -> show(parent, log, errorMessage, justGuide));
+            return;
+        }
+
         ControlPanel.stopMovingToTop = true;
         JDialog dialog = new JDialog((Frame) null, justGuide ? LanguageProvider.get("gui.drag_drop_guide") : LanguageProvider.get("gui.failed_to_upload_file") + "!", true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -116,7 +122,7 @@ public final class UploadErrorDialog {
                 }
 
                 Image image = Toolkit.getDefaultToolkit().createImage(LOCAL_GIF_PATH.toFile().getAbsolutePath());
-                MediaTracker tracker = new MediaTracker(new JPanel());
+                MediaTracker tracker = SwingEDT.callAndWait(() -> new MediaTracker(new JPanel()));
                 tracker.addImage(image, 0);
                 tracker.waitForAll();
                 return new ImageIcon(image);

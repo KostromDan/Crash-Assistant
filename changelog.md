@@ -21,6 +21,7 @@
 - Audited Swing/EDT usage throughout the application and ensured UI operations run on the correct threads, fixing
   thread-safety issues that, in extremely rare cases, could cause freezes, deadlocks, or an inconsistent interface
   state.
+- Reduced the maximum wait for Windows terminated-process detection from 7 to 5 seconds.
 - Fixed an extremely rare Linux startup race where process metadata for the Minecraft PID could be temporarily
   unavailable, causing Crash Assistant to mistake the running game for an immediate crash and open during startup.
 - Optimized configuration-file reads during startup.

@@ -1,52 +1,51 @@
 1.11.12:
 
-- The old `general.upload_to` option has been replaced by `general.wrap_link` without migration, so its previous
-  value will be removed during the update. By default, the new option directs copied log links to our new
-  `kostromdan.dev` log viewer instead of `gnomebot.dev`.
-    - `kostromdan.dev` is a fork of `gnomebot.dev`, with changes made specifically for Crash Assistant and a more
-      convenient log-reading experience.
-    - Added a log switcher for logs from the same Upload All session.
-        - Added support for showing the Minecraft UUID/profile widget for every log in an Upload All session, even if
-          an individual log does not contain the launch command with the UUID.
-    - Added line-range selection and links instead of only single-line links.
-    - Selecting a line or line range now automatically copies its link, with a setting to disable this behavior.
-    - Added quick jump links for the first error, last error, and end of file.
-    - Split Raw and Download into separate actions.
-    - Added a Download action that saves the current log text as a file.
-    - Added a Download All action that saves logs from the same Upload All session as a single ZIP archive.
-    - Fixed the browser tab title remaining as `loading...` after the log finished loading.
-    - Added a jump-to-top button in the bottom-right corner.
-    - Added a settings menu.
-        - Added a setting to switch between shortened and full stack-trace locations.
-        - Added a setting to wrap long lines.
-        - Added a setting to show or hide the jump-to-top button.
-        - Added a setting to show or hide the Download All action.
-        - Added settings to show or hide the Raw, Download, First Error, Last Error, End of File, and Minecraft Profile
-          actions.
-        - Added a setting to show the Minecraft Profile widget only for invalid profiles.
-        - Added a setting to enable or disable selecting multiple lines by dragging.
-    - Fixed parsing and rendering of modern Minecraft stack-trace locations.
-    - Improved rendering performance for very large logs by rendering them in chunks instead of creating DOM nodes for
-      every line at once.
-    - Invalid Minecraft UUIDs are now shown in red with a shake animation.
-    - Fixed on Safari multiple line selection, also selected line numbers.
-    - Fixed when copying multiple lines on Firefox it was not copying new lines.
-    - Added a browser log uploader that accepts pasted text, multiple files, folders, ZIP archives, and compressed
-      Minecraft logs, uploads them directly from the browser to mclo.gs, and creates a shareable log collection.
-    - Browser-created log collections can be extended with more logs. Their locally owned logs can be deleted
-      individually, or the entire collection can be deleted at once.
-- Updated the Privacy Policy to reflect the new log viewer and its data processing.
+- Replaced the `general.upload_to` configuration option with `general.wrap_link`. Its previous value is not migrated and
+  will be removed during the update. By default, copied log links now open in the new `kostromdan.dev` log viewer
+  instead of `gnomebot.dev`; see the end of this section for the full list of viewer changes.
+- Updated the Privacy Policy to describe the new log viewer and its data processing.
+- Removed the `general.enable_privacy_policy_acceptance` configuration option. Privacy Policy acceptance can no longer
+  be disabled or implicitly treated as accepted because that behavior is incompatible with the new log viewer.
+- Improved the uploaded-data manager so that associated metadata can be deleted from Crash Assistant servers.
+- The consent-reset success dialog now offers to open the uploaded logs manager, where previously uploaded data can be
+  removed from the servers.
+- Added an option to open the English Privacy Policy from non-English Privacy Policy dialogs.
 - Mod list differences in Upload All messages are now always uploaded; the full text is included only if uploading
   fails.
+- Added the `general.language_source` configuration option to control the standalone Crash Assistant interface
+  language. Its supported values are `SYSTEM` (the new default), which uses the operating system language; `GAME`,
+  which uses the language selected in Minecraft's `options.txt`; or a specific language key such as `en_us`, which
+  forces that language. Regional system locales are matched to an available translation. When Crash Assistant runs
+  inside Minecraft, it continues to use the game's language from `options.txt`; `general.default_lang` is used as a
+  fallback.
+- Audited Swing/EDT usage throughout the application and ensured UI operations run on the correct threads, fixing
+  thread-safety issues that, in extremely rare cases, could cause freezes, deadlocks, or an inconsistent interface
+  state.
+- Optimized configuration-file reads during startup.
 - Fixed Scripts IDE on macOS opening at an incorrect size, which could cause some buttons to be missing.
-- Removed the `general.enable_privacy_policy_acceptance` option, which allowed Privacy Policy acceptance to be
-  disabled and treated consent as accepted by default. This is incompatible with the new log viewer.
-- Improved the uploaded-data manager so that metadata can be deleted from our API.
-- The Privacy Policy consent-reset success dialog now offers to open the uploaded logs manager to remove logs from
-  servers.
-- Added an option in non-English Privacy Policy dialogs to open the Privacy Policy in English.
 - Fixed a macOS rendering issue that could cause both Chinese and English characters to be missing in large-font
   Chinese text.
+- The new `kostromdan.dev` log viewer is a fork of `gnomebot.dev`, with changes made specifically for Crash Assistant
+  and a more convenient log-reading experience:
+    - Added a switcher between logs from the same Upload All session.
+    - For logs uploaded through Crash Assistant, the Minecraft Profile widget now uses the session UUID and is shown
+      for every log in that upload session, even if an individual log does not contain the UUID.
+    - In addition to links to individual lines, you can now drag across line numbers to select multiple lines and copy
+      a link to the entire range.
+    - Selecting a line or range now automatically copies its link. This behavior can be disabled in the settings.
+    - Added quick links to the first error, last error, and end of the file, plus a jump-to-top button.
+    - Separated Raw and Download buttons. Download saves the current log as a file.
+    - Added Download All button, which saves every log from the same Upload All session in a single ZIP archive.
+    - Added an option to disable shortened stack-trace locations and show their full form instead.
+    - Added an option to wrap long lines.
+    - The viewer is now highly configurable: each navigation and download button can be shown or hidden individually.
+    - Fixed parsing and rendering of modern Minecraft stack-trace locations.
+    - Improved rendering performance for very large logs.
+    - Invalid Minecraft UUIDs are now displayed in red with a shake animation.
+      - Added an option to show the Minecraft Profile widget only for invalid UUIDs and hide it for valid ones.
+    - Fixed the browser tab title remaining as `loading...` after a log finished loading.
+    - Fixed Safari selecting line numbers during multi-line selection.
+    - Fixed Firefox omitting line breaks when copying multiple lines.
 
 1.11.11:
 

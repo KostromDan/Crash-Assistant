@@ -21,6 +21,8 @@
 - Audited Swing/EDT usage throughout the application and ensured UI operations run on the correct threads, fixing
   thread-safety issues that, in extremely rare cases, could cause freezes, deadlocks, or an inconsistent interface
   state.
+- Fixed an extremely rare Linux startup race where process metadata for the Minecraft PID could be temporarily
+  unavailable, causing Crash Assistant to mistake the running game for an immediate crash and open during startup.
 - Optimized configuration-file reads during startup.
 - Fixed Scripts IDE on macOS opening at an incorrect size, which could cause some buttons to be missing.
 - Fixed a macOS rendering issue that could cause both Chinese and English characters to be missing in large-font

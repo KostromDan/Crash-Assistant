@@ -1699,7 +1699,7 @@ public class CrashAssistantGUI {
             return "gnomebot.dev";
         }
         if (isWrapLinkKostromdan()) {
-            return "p.kdan.dev";
+            return "paste.kostromdan.dev";
         }
         return "mclo.gs";
     }

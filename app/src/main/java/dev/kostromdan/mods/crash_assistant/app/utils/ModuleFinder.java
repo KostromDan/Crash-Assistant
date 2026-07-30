@@ -88,6 +88,11 @@ public class ModuleFinder {
         for (CompletableFuture<List<String>> task : tasks) {
             try {
                 allResults.addAll(task.get());
+            } catch (InterruptedException e) {
+                tasks.forEach(future -> future.cancel(true));
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+                return allResults;
             } catch (Exception ignored) {
             }
         }

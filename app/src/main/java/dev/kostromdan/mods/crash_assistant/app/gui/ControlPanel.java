@@ -50,6 +50,7 @@ public class ControlPanel {
     private boolean individualUploadButtonsActivationScheduled;
     private JPanel modListContainer;
     private String generatedMsg = null;
+    private List<FilePanel> generatedMsgBatch = Collections.emptyList();
     private JLabel modListLabel;
     private JButton showModListButton;
 
@@ -104,6 +105,7 @@ public class ControlPanel {
         uploadAllButton.addActionListener(e -> uploadAllFiles());
 
         uploadAllButton.setEnabled(false);
+        LogAnalyser.startInitialAnalysisDeadline();
 
         if (CrashAssistantConfig.getBoolean("gui_customisation.disable_upload_all_button")) {
             uploadAllButton.setVisible(false);
@@ -144,8 +146,7 @@ public class ControlPanel {
     private void startInitialUploadAllTimer() {
         javax.swing.Timer timer = new javax.swing.Timer(21, e -> {
             refreshInitialUploadAllState();
-            if (initialUploadAllGateOpened
-                    || Instant.now().toEpochMilli() >= CrashAssistantApp.terminatedProcessesLocationEndTime + 100) {
+            if (initialUploadAllGateOpened) {
                 ((javax.swing.Timer) e.getSource()).stop();
             }
         });
@@ -173,8 +174,18 @@ public class ControlPanel {
 
         scheduleIndividualUploadButtonsActivation();
 
-        if (!CrashAssistantApp.isTerminatedProcessesLocationFinished()
-                || !CrashAssistantGUI.isInitialLogAnalysisFinished()) {
+        boolean analysisDeadlineReached = LogAnalyser.isAnalysisDeadlineReached();
+        if (analysisDeadlineReached) {
+            try {
+                LogAnalyser.stopTimedOutAnalysisForUpload();
+            } catch (Throwable throwable) {
+                CrashAssistantApp.LOGGER.error("Failed to stop timed out log analysis.", throwable);
+            }
+        }
+
+        if (!analysisDeadlineReached
+                && (!CrashAssistantGUI.isInitialLogAnalysisFinished()
+                || !CrashAssistantApp.isTerminatedProcessesLocationFinished())) {
             uploadAllButton.setEnabled(false);
             String delayedText = LanguageProvider.get("gui.upload_all_button_analysis_delayed");
             String previousText = uploadAllButton.getText();
@@ -406,8 +417,8 @@ public class ControlPanel {
         showModListDiff(dialog);
     }
 
-    private void checkAndStartUploading(boolean startUploading) {
-        for (FilePanel panel : fileListPanel.getFilePanelList()) {
+    private void checkAndStartUploading(List<FilePanel> uploadBatch, boolean startUploading) {
+        for (FilePanel panel : uploadBatch) {
             while (!panel.isUploadButtonEnabled() && (panel.getLastError() != null || panel.isWaiting())) {
                 if (panel.isWaiting()) {
                     panel.setWaiting(false);
@@ -420,7 +431,24 @@ public class ControlPanel {
                     throw new RuntimeException(e);
                 }
             }
-            if (startUploading) panel.uploadFile(false);
+            if (startUploading) {
+                if (panel.getLog().getType() == LogType.CRASH_ASSISTANT) {
+                    boolean batchUploadStarted = false;
+                    while (!batchUploadStarted) {
+                        while (panel.isUploadInProgress() || !panel.isUploadButtonEnabled()) {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        batchUploadStarted = panel.uploadFile(false, uploadBatch);
+                    }
+                } else {
+                    panel.uploadFile(false, uploadBatch);
+                }
+            }
         }
     }
 
@@ -428,10 +456,16 @@ public class ControlPanel {
         stopMovingToTop = true;
         uploadAllButton.setEnabled(false);
         new Thread(() -> {
+            List<FilePanel> uploadBatch = Collections.unmodifiableList(
+                    new ArrayList<>(fileListPanel.getFilePanelList())
+            );
+            if (generatedMsg != null && !generatedMsgBatch.equals(uploadBatch)) {
+                generatedMsg = null;
+            }
             if (generatedMsg == null) {
                 SwingEDT.runAndWait(() -> uploadAllButton.setText(LanguageProvider.get("gui.uploading")));
 
-                checkAndStartUploading(false);
+                checkAndStartUploading(uploadBatch, false);
 
                 CompletableFuture<String> modlistDiffFuture = null;
                 if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
@@ -442,15 +476,15 @@ public class ControlPanel {
                 }
                 final CompletableFuture<String> finalModlistDiffFuture = modlistDiffFuture;
 
-                checkAndStartUploading(true);
+                checkAndStartUploading(uploadBatch, true);
 
                 outerLoop:
                 while (true) {
-                    if (fileListPanel.getFilePanelList().isEmpty()) {
+                    if (uploadBatch.isEmpty()) {
                         break;
                     }
                     int successCounter = 0;
-                    for (FilePanel filePanel : fileListPanel.getFilePanelList()) {
+                    for (FilePanel filePanel : uploadBatch) {
                         Log log = filePanel.getLog();
                         if (filePanel.getLastError() != null &&
                                 !(filePanel.getLastError() instanceof UploadException && filePanel.getLastError().getMessage().startsWith("Crash Assistant log"))) {
@@ -494,7 +528,7 @@ public class ControlPanel {
                         if (log.getLinkToUploadedFirstLines() != null) {
                             successCounter++;
                         }
-                        if (successCounter == fileListPanel.getFilePanelList().size()) {
+                        if (successCounter == uploadBatch.size()) {
                             break outerLoop;
                         }
                         try {
@@ -505,7 +539,7 @@ public class ControlPanel {
 
                     }
                 }
-                generateMsg(finalModlistDiffFuture);
+                generateMsg(finalModlistDiffFuture, uploadBatch);
             }
 
             String warningMsg = CrashAssistantConfig.get("generated_message.warning_after_upload_all_button_press", true);
@@ -538,11 +572,15 @@ public class ControlPanel {
     }
 
     public void generateMsg(CompletableFuture<String> modlistDiffFuture) {
+        generateMsg(modlistDiffFuture, new ArrayList<>(fileListPanel.getFilePanelList()));
+    }
+
+    private void generateMsg(CompletableFuture<String> modlistDiffFuture, List<FilePanel> uploadBatch) {
         List<String> logs = new ArrayList<>();
 
         boolean kubeJSPosted = false;
         List<Log> kubeJSPanelList = new ArrayList<>();
-        for (FilePanel panel : fileListPanel.getFilePanelList()) {
+        for (FilePanel panel : uploadBatch) {
             Log log = panel.getLog();
             if (!log.getName().startsWith("KubeJS: ")) {
                 continue;
@@ -554,7 +592,7 @@ public class ControlPanel {
             kubeJSPanelList.add(log);
         }
 
-        for (FilePanel panel : fileListPanel.getFilePanelList()) {
+        for (FilePanel panel : uploadBatch) {
             Log log = panel.getLog();
 
             if (log.getName().startsWith("KubeJS: ")) {
@@ -753,6 +791,7 @@ public class ControlPanel {
 
         generatedMsg = partialMsg
                 .replace("$MODLIST_DIFF$", modListDiffContent.toString());
+        generatedMsgBatch = new ArrayList<>(uploadBatch);
 
         CrashAssistantApp.LOGGER.info("Generated message successfully:\n\n\n" + generatedMsg + "\n\n\n");
     }

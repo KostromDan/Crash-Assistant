@@ -6,6 +6,7 @@ import dev.kostromdan.mods.crash_assistant.app.exceptions.UploadException;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogAnalyser;
+import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogReader;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.DragAndDrop;
@@ -42,6 +43,9 @@ public class FilePanel {
     private final JButton browserButton;
     private volatile Exception lastError = null;
     private volatile boolean waiting = true;
+    private volatile boolean uploadInProgress;
+    private volatile int lastUploadCountedLines = -1;
+    private volatile boolean lastUploadLineCountInterrupted;
     public static final Object uploadErrorDialogLock = new Object();
     private final Log log;
     private final int fullButtonWidth;
@@ -248,6 +252,10 @@ public class FilePanel {
     }
 
     public void uploadFile(boolean fromButton) {
+        uploadFile(fromButton, null);
+    }
+
+    boolean uploadFile(boolean fromButton, List<FilePanel> uploadBatch) {
         ControlPanel.stopMovingToTop = true;
         boolean admitted = SwingEDT.callAndWait(() -> {
             if (!uploadButton.isEnabled()) {
@@ -258,17 +266,29 @@ public class FilePanel {
             return true;
         });
         if (admitted) {
-            startUploadThread(fromButton);
-        }
-    }
-
-    private void startUploadThread(boolean fromButton) {
-        new Thread(() -> {
-            if(!fromButton && log.getType() == LogType.CRASH_ASSISTANT && log.getLinkToUploadedFirstLines() != null){
+            if (!fromButton && log.getType() == LogType.CRASH_ASSISTANT
+                    && log.getLinkToUploadedFirstLines() != null) {
                 untransformCopyLinkButton();
                 log.setLinkToUploadedFirstLines(null);
                 log.setLinkToUploadedLastLines(null);
             }
+            uploadInProgress = true;
+            startUploadThread(fromButton, uploadBatch);
+        }
+        return admitted;
+    }
+
+    private void startUploadThread(boolean fromButton, List<FilePanel> uploadBatch) {
+        new Thread(() -> {
+            try {
+                uploadFileInBackground(fromButton, uploadBatch);
+            } finally {
+                uploadInProgress = false;
+            }
+        }).start();
+    }
+
+    private void uploadFileInBackground(boolean fromButton, List<FilePanel> uploadBatch) {
             if (log.getLinkToUploadedFirstLines() == null) {
                 SwingEDT.runAndWait(() -> uploadButton.setText(LanguageProvider.get("gui.uploading")));
 
@@ -280,7 +300,10 @@ public class FilePanel {
                     String oldText = SwingEDT.callAndWait(uploadButton::getText);
 
                     if (!fromButton && log.getType() == LogType.CRASH_ASSISTANT) {
-                        List<FilePanel> allLogsList = CrashAssistantGUI.fileListPanel.getFilePanelList().stream()
+                        Collection<FilePanel> currentUpload = uploadBatch == null
+                                ? CrashAssistantGUI.fileListPanel.getFilePanelList()
+                                : uploadBatch;
+                        List<FilePanel> allLogsList = currentUpload.stream()
                                 .filter(x -> x.getLog().getType() != LogType.CRASH_ASSISTANT)
                                 .collect(Collectors.toList());
                         while (!allLogsList.isEmpty()) {
@@ -294,24 +317,21 @@ public class FilePanel {
                     }
 
                     SwingEDT.runAndWait(() -> uploadButton.setText(LanguageProvider.get("gui.preprocessing")));
-                    log.getReader().readLogFile(true);
+                    LogReader uploadReader = new LogReader(log);
+                    uploadReader.readLogFile(true);
+                    lastUploadLineCountInterrupted = uploadReader.isLineCountInterrupted();
+                    lastUploadCountedLines = uploadReader.getCountedLines();
                     SwingEDT.runAndWait(() -> uploadButton.setText(oldText));
-                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = ApiProvider.getMcLogsClient().uploadLog(log.getName(), log.getReader().getFirstLinesString());
 
-                    String lastLines = log.getReader().getLastLinesString();
+                    String lastLines = uploadReader.getLastLinesString();
+                    UploadLogResponse responseLastLines = null;
                     if (lastLines != null) {
                         CompletableFuture<UploadLogResponse> completableResponseLastLines = ApiProvider.getMcLogsClient().uploadLog(log.getName() + " (Last Lines)", lastLines);
-                        UploadLogResponse responseLastLines = completableResponseLastLines.get();
+                        responseLastLines = completableResponseLastLines.get();
                         if (responseLastLines.isSuccess()) {
                             String finalLink = CrashAssistantGUI.transformLink(responseLastLines.getUrl());
                             CrashAssistantApp.LOGGER.info("{} last lines uploaded successfully: {}", log.getName(), finalLink);
                             log.setLinkToUploadedLastLines(finalLink);
-                            MclogArrayRegistrar.registerUploadedLog(
-                                    log,
-                                    responseLastLines.getId(),
-                                    responseLastLines.getCreated(),
-                                    log.getFileName() + " tail",
-                                    MclogArrayRegistrar.priorityFor(log, 1));
                         } else {
                             if (responseLastLines.isNetworkError()) {
                                 throw UploadException.network("An error occurred when uploading file: " + responseLastLines.getError());
@@ -319,6 +339,7 @@ public class FilePanel {
                             throw new UploadException("An error occurred when uploading file: " + responseLastLines.getError());
                         }
                     }
+                    CompletableFuture<UploadLogResponse> completableResponseFirstLines = ApiProvider.getMcLogsClient().uploadLog(log.getName(), uploadReader.getFirstLinesString());
                     UploadLogResponse responseFirstLines = completableResponseFirstLines.get();
 
 
@@ -334,6 +355,14 @@ public class FilePanel {
                             CrashAssistantGUI.showKnownCrashReasonsWarnings();
                         }
                         log.setLinkToUploadedFirstLines(finalLink);
+                        if (responseLastLines != null) {
+                            MclogArrayRegistrar.registerUploadedLog(
+                                    log,
+                                    responseLastLines.getId(),
+                                    responseLastLines.getCreated(),
+                                    log.getFileName() + " tail",
+                                    MclogArrayRegistrar.priorityFor(log, 1));
+                        }
                         MclogArrayRegistrar.registerUploadedLog(
                                 log,
                                 responseFirstLines.getId(),
@@ -438,7 +467,6 @@ public class FilePanel {
                     },
                     fromButton && log.getLinkToUploadedFirstLines() != null ? 3000 : 0
             );
-        }).start();
     }
 
     private void transformCopyLinkButton() {
@@ -464,13 +492,19 @@ public class FilePanel {
     public String getTooBigReasons(boolean forMsg) {
         Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
         long size = log.getFile().length();
+        int uploadedCountedLines = lastUploadCountedLines;
+        int countedLines = uploadedCountedLines < 0
+                ? log.getReader().getCountedLines()
+                : uploadedCountedLines;
+        boolean lineCountInterrupted = uploadedCountedLines < 0
+                ? log.getReader().isLineCountInterrupted()
+                : lastUploadLineCountInterrupted;
         List<String> tooBigReasons = new ArrayList<>();
         if (size > 10 * 1024 * 1024)
             tooBigReasons.add("~" + size / (1024 * 1024) + langFunc.apply("msg.mb"));
-        if (log.getReader().getCountedLines() > 25000) {
-            boolean lineCountInterrupted = log.getReader().isLineCountInterrupted();
+        if (countedLines > 25000) {
             tooBigReasons.add((lineCountInterrupted ? langFunc.apply("msg.over") + " " : "~") +
-                    log.getReader().getCountedLines() / 1000 + langFunc.apply("msg.k_lines") +
+                    countedLines / 1000 + langFunc.apply("msg.k_lines") +
                     (lineCountInterrupted ? langFunc.apply("msg.over_end") : ""));
         }
         return tooBigReasons.isEmpty() ? "" : "(" + String.join(" & ", tooBigReasons) + ")";
@@ -564,6 +598,10 @@ public class FilePanel {
 
     public boolean isWaiting() {
         return waiting;
+    }
+
+    public boolean isUploadInProgress() {
+        return uploadInProgress;
     }
 
     public void setWaiting(boolean waiting) {

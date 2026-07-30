@@ -9,6 +9,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.NoRouteToHostException;
@@ -17,10 +18,14 @@ import java.net.UnknownHostException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.SSLException;
@@ -33,6 +38,12 @@ public class McLogsApi implements UploadingApi {
     private static final int DELETE_READ_TIMEOUT_MS = 15_000;
     private static final String API_BASE_URL = "https://api.mclo.gs/1/";
     private static final int MAX_CONCURRENT_UPLOADS = 5;
+    private static final int UPLOAD_INACTIVITY_TIMEOUT_MS = 15_000;
+    private static final int HTTP_TOO_MANY_REQUESTS = 429;
+    private static final long RATE_LIMIT_RETRY_FALLBACK_MS = 60_000L;
+    private static final String UPLOAD_INACTIVITY_ERROR =
+            "Upload timed out: no data was sent or received for 15 seconds. Please try again. " +
+                    "This may be caused by a slow or unstable internet connection.";
     private static final String USER_AGENT = "CrashAssistant";
 
     private final String userAgent;
@@ -67,6 +78,132 @@ public class McLogsApi implements UploadingApi {
             current = current.getCause();
         }
         return false;
+    }
+
+    private static boolean isSocketTimeout(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof SocketTimeoutException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private static long getRetryAfterMillis(HttpURLConnection connection) {
+        String retryAfter = connection.getHeaderField("Retry-After");
+        if (retryAfter == null) {
+            return RATE_LIMIT_RETRY_FALLBACK_MS;
+        }
+
+        retryAfter = retryAfter.trim();
+        try {
+            long seconds = Long.parseLong(retryAfter);
+            if (seconds < 0) {
+                return RATE_LIMIT_RETRY_FALLBACK_MS;
+            }
+            return seconds > Long.MAX_VALUE / 1_000L ? Long.MAX_VALUE : seconds * 1_000L;
+        } catch (NumberFormatException ignored) {
+        }
+
+        try {
+            long retryAtMillis = ZonedDateTime.parse(retryAfter, DateTimeFormatter.RFC_1123_DATE_TIME)
+                    .toInstant()
+                    .toEpochMilli();
+            long nowMillis = System.currentTimeMillis();
+            return retryAtMillis <= nowMillis ? 0L : retryAtMillis - nowMillis;
+        } catch (DateTimeParseException | ArithmeticException ignored) {
+            return RATE_LIMIT_RETRY_FALLBACK_MS;
+        }
+    }
+
+    private static UploadLogResponse uploadInactivityTimeoutResponse() {
+        return new UploadLogResponse(UPLOAD_INACTIVITY_ERROR, true);
+    }
+
+    private static void closeResponseStream(HttpURLConnection connection) {
+        InputStream responseStream = connection.getErrorStream();
+        if (responseStream == null) {
+            return;
+        }
+        try {
+            responseStream.close();
+        } catch (IOException ignored) {
+        }
+    }
+
+    private static final class UploadInactivityWatchdog implements AutoCloseable {
+        private final Object monitor = new Object();
+        private final HttpURLConnection connection;
+        private final Thread watchdogThread;
+        private long lastProgressNanos = System.nanoTime();
+        private boolean closed;
+        private volatile boolean timedOut;
+
+        private UploadInactivityWatchdog(HttpURLConnection connection) {
+            this.connection = connection;
+            this.watchdogThread = new Thread(this::watch, "CrashAssistant-mclogs-upload-watchdog");
+            this.watchdogThread.setDaemon(true);
+            this.watchdogThread.start();
+        }
+
+        private void recordNetworkProgress() {
+            synchronized (monitor) {
+                if (closed) {
+                    return;
+                }
+                lastProgressNanos = System.nanoTime();
+                monitor.notifyAll();
+            }
+        }
+
+        private void watch() {
+            while (true) {
+                synchronized (monitor) {
+                    if (closed) {
+                        return;
+                    }
+
+                    long remainingNanos = TimeUnit.MILLISECONDS.toNanos(UPLOAD_INACTIVITY_TIMEOUT_MS)
+                            - (System.nanoTime() - lastProgressNanos);
+                    if (remainingNanos > 0) {
+                        long waitMillis = TimeUnit.NANOSECONDS.toMillis(remainingNanos);
+                        int waitNanos = (int) (remainingNanos - TimeUnit.MILLISECONDS.toNanos(waitMillis));
+                        try {
+                            monitor.wait(waitMillis, waitNanos);
+                        } catch (InterruptedException ignored) {
+                        }
+                        continue;
+                    }
+
+                    timedOut = true;
+                    closed = true;
+                }
+
+                try {
+                    connection.disconnect();
+                } catch (RuntimeException ignored) {
+                }
+                return;
+            }
+        }
+
+        private boolean hasTimedOut() {
+            return timedOut;
+        }
+
+        @Override
+        public void close() {
+            synchronized (monitor) {
+                if (closed) {
+                    return;
+                }
+                closed = true;
+                monitor.notifyAll();
+            }
+            watchdogThread.interrupt();
+        }
     }
 
     @Override
@@ -119,15 +256,6 @@ public class McLogsApi implements UploadingApi {
 //                }
 
 
-                URL url = new URL(API_BASE_URL + "log?insights=true");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("User-Agent", userAgent);
-                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                // Indicate that the content is GZIP compressed
-                connection.setRequestProperty("Content-Encoding", "gzip");
-                connection.setDoOutput(true);
-
                 // Prepare the request body
                 String content = "content=" + URLEncoder.encode(finalText, StandardCharsets.UTF_8.name());
                 byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
@@ -140,127 +268,217 @@ public class McLogsApi implements UploadingApi {
                 byte[] compressedBytes = byteArrayOutputStream.toByteArray();
 
                 int totalBytes = compressedBytes.length;
+                while (true) {
+                    HttpURLConnection connection = null;
+                    UploadInactivityWatchdog watchdog = null;
+                    try {
+                        URL url = new URL(API_BASE_URL + "log?insights=true");
+                        connection = (HttpURLConnection) url.openConnection();
+                        connection.setRequestMethod("POST");
+                        connection.setRequestProperty("User-Agent", userAgent);
+                        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                        // Indicate that the content is GZIP compressed
+                        connection.setRequestProperty("Content-Encoding", "gzip");
+                        // Lets the server reject a rate-limited request before a large body is sent.
+                        connection.setRequestProperty("Expect", "100-Continue");
+                        connection.setConnectTimeout(UPLOAD_INACTIVITY_TIMEOUT_MS);
+                        connection.setReadTimeout(UPLOAD_INACTIVITY_TIMEOUT_MS);
+                        connection.setDoOutput(true);
+                        // Stream directly to the connection so completed writes represent real network progress.
+                        connection.setFixedLengthStreamingMode(totalBytes);
 
-                // Tell the server how much we will send (compressed size)
-                connection.setRequestProperty("Content-Length", String.valueOf(totalBytes));
+                        watchdog = new UploadInactivityWatchdog(connection);
 
-                // --- real progress reporting ------------------------------------------------
-                if (onProgressChanged != null) onProgressChanged.accept(0); // start
+                        // --- real progress reporting ----------------------------------------
+                        if (onProgressChanged != null) onProgressChanged.accept(0); // start
 
-                try (OutputStream os = connection.getOutputStream()) {
-                    final int MIN_CHUNK = 4 * 1024;     //  4 KiB
-                    final int MAX_CHUNK = 64 * 1024;    // 64 KiB
+                        IOException requestWriteFailure = null;
+                        try (OutputStream os = connection.getOutputStream()) {
+                            watchdog.recordNetworkProgress();
 
-                    int bytesPerPercent = (int) Math.ceil(totalBytes / 100.0);
+                            final int MIN_CHUNK = 4 * 1024;     //  4 KiB
+                            final int MAX_CHUNK = 64 * 1024;    // 64 KiB
 
-                    int chunkSize = Integer.highestOneBit(bytesPerPercent);
+                            int bytesPerPercent = (int) Math.ceil(totalBytes / 100.0);
+                            int chunkSize = Integer.highestOneBit(bytesPerPercent);
 
-                    while (chunkSize > bytesPerPercent && chunkSize > MIN_CHUNK) {
-                        chunkSize >>= 1;
-                    }
+                            while (chunkSize > bytesPerPercent && chunkSize > MIN_CHUNK) {
+                                chunkSize >>= 1;
+                            }
 
-                    chunkSize = Math.max(MIN_CHUNK, Math.min(MAX_CHUNK, chunkSize));
+                            chunkSize = Math.max(MIN_CHUNK, Math.min(MAX_CHUNK, chunkSize));
 
-                    int bytesWritten = 0;
-                    int lastPercent = 0;
+                            int bytesWritten = 0;
+                            int lastPercent = 0;
 
-                    while (bytesWritten < totalBytes) {
-                        int len = Math.min(chunkSize, totalBytes - bytesWritten);
-                        // Write the compressed bytes
-                        os.write(compressedBytes, bytesWritten, len);
-                        bytesWritten += len;
+                            while (bytesWritten < totalBytes) {
+                                int len = Math.min(chunkSize, totalBytes - bytesWritten);
+                                // A completed streaming write means the connection is still making progress.
+                                os.write(compressedBytes, bytesWritten, len);
+                                bytesWritten += len;
+                                watchdog.recordNetworkProgress();
 
-                        int percent = (int) ((bytesWritten * 100L) / totalBytes);
-                        if (percent > lastPercent && onProgressChanged != null) {
-                            onProgressChanged.accept(percent);
-                            lastPercent = percent;
-                        }
-                    }
-                    os.flush();
-                }
-                // ---------------------------------------------------------------------------
-
-                // Get the response
-                int responseCode = connection.getResponseCode();
-
-                if (onProgressChanged != null) onProgressChanged.accept(100);
-
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    // Parse the response
-                    StringBuilder responseBody = new StringBuilder();
-                    try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            responseBody.append(line);
-                        }
-                    }
-                    JsonObject jsonResponse = JsonParser.parseString(responseBody.toString()).getAsJsonObject();
-
-                    if (jsonResponse.get("success").getAsBoolean()) {
-                        String id = jsonResponse.get("id").getAsString();
-                        String responseUrl = jsonResponse.get("url").getAsString();
-                        String rawUrl = jsonResponse.get("raw").getAsString();
-                        String token = jsonResponse.has("token") ? jsonResponse.get("token").getAsString() : null;
-
-                        if (token != null) {
-                            UploadedLogsManager.saveLog(
-                                    logName,
-                                    responseUrl,
-                                    token,
-                                    MclogArrayRegistrar.getArrayTokenForStorage());
-                        }
-
-                        long created = parseCreated(jsonResponse);
-                        LogAnalysisResponse analysisResponse;
-                        if (jsonResponse.has("content") && jsonResponse.getAsJsonObject("content").has("insights")) {
-                            JsonObject insights = jsonResponse.getAsJsonObject("content").getAsJsonObject("insights");
-                            if (insights.has("analysis") && insights.getAsJsonObject("analysis").has("problems")) {
-                                JsonArray problemsArray = insights.getAsJsonObject("analysis").getAsJsonArray("problems");
-                                List<Problem> problems = new ArrayList<>();
-
-                                for (JsonElement problemElement : problemsArray) {
-                                    JsonObject problemObject = problemElement.getAsJsonObject();
-                                    String problemMessage = problemObject.get("message").getAsString();
-
-                                    // Get the line number
-                                    int lineNumber = 0;
-                                    if (problemObject.has("entry") &&
-                                            problemObject.getAsJsonObject("entry").has("lines") &&
-                                            problemObject.getAsJsonObject("entry").getAsJsonArray("lines").size() > 0) {
-                                        lineNumber = problemObject.getAsJsonObject("entry")
-                                                .getAsJsonArray("lines")
-                                                .get(0)
-                                                .getAsJsonObject()
-                                                .get("number")
-                                                .getAsInt();
-                                    }
-
-                                    // Get the solutions
-                                    List<String> solutions = new ArrayList<>();
-                                    if (problemObject.has("solutions")) {
-                                        JsonArray solutionsArray = problemObject.getAsJsonArray("solutions");
-                                        for (JsonElement solutionElement : solutionsArray) {
-                                            solutions.add(solutionElement.getAsJsonObject().get("message").getAsString());
-                                        }
-                                    }
-
-                                    problems.add(new Problem(lineNumber, problemMessage, solutions));
+                                int percent = (int) ((bytesWritten * 100L) / totalBytes);
+                                if (percent > lastPercent && onProgressChanged != null) {
+                                    onProgressChanged.accept(percent);
+                                    lastPercent = percent;
                                 }
-                                analysisResponse = new LogAnalysisResponse(problems);
+                            }
+                            os.flush();
+                            watchdog.recordNetworkProgress();
+                        } catch (IOException e) {
+                            // A server may send 429 before consuming the entire request body.
+                            // Ask for the response code below so that an explicit 429 is still retried.
+                            requestWriteFailure = e;
+                        }
+                        // -------------------------------------------------------------------
+
+                        int responseCode;
+                        try {
+                            responseCode = connection.getResponseCode();
+                        } catch (Exception e) {
+                            if (requestWriteFailure != null && requestWriteFailure != e) {
+                                e.addSuppressed(requestWriteFailure);
+                            }
+                            throw e;
+                        }
+                        if (watchdog.hasTimedOut()) {
+                            return uploadInactivityTimeoutResponse();
+                        }
+                        watchdog.recordNetworkProgress();
+
+                        if (responseCode == -1 && requestWriteFailure != null) {
+                            throw requestWriteFailure;
+                        }
+
+                        if (responseCode == HTTP_TOO_MANY_REQUESTS) {
+                            // Java 8 may start a second POST while fetching response headers after
+                            // Expect: 100-Continue was rejected. Use the safe fallback in that case.
+                            long retryAfterMillis = requestWriteFailure == null
+                                    ? getRetryAfterMillis(connection)
+                                    : RATE_LIMIT_RETRY_FALLBACK_MS;
+
+                            // The deliberate rate-limit wait is outside the inactivity window.
+                            watchdog.close();
+                            watchdog = null;
+                            closeResponseStream(connection);
+                            connection.disconnect();
+                            connection = null;
+
+                            try {
+                                Thread.sleep(retryAfterMillis);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                                return new UploadLogResponse("Upload interrupted while waiting to retry after rate limiting.");
+                            }
+                            continue;
+                        }
+
+                        if (responseCode == HttpURLConnection.HTTP_OK) {
+                            ByteArrayOutputStream responseBody = new ByteArrayOutputStream();
+                            try (InputStream inputStream = connection.getInputStream()) {
+                                byte[] buffer = new byte[8 * 1024];
+                                int bytesRead;
+                                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                                    responseBody.write(buffer, 0, bytesRead);
+                                    watchdog.recordNetworkProgress();
+                                }
+                            }
+
+                            if (watchdog.hasTimedOut()) {
+                                return uploadInactivityTimeoutResponse();
+                            }
+                            watchdog.close();
+                            watchdog = null;
+                            if (onProgressChanged != null) onProgressChanged.accept(100);
+
+                            JsonObject jsonResponse = JsonParser.parseString(
+                                    new String(responseBody.toByteArray(), StandardCharsets.UTF_8)).getAsJsonObject();
+
+                            if (jsonResponse.get("success").getAsBoolean()) {
+                                String id = jsonResponse.get("id").getAsString();
+                                String responseUrl = jsonResponse.get("url").getAsString();
+                                String rawUrl = jsonResponse.get("raw").getAsString();
+                                String token = jsonResponse.has("token") ? jsonResponse.get("token").getAsString() : null;
+
+                                if (token != null) {
+                                    UploadedLogsManager.saveLog(
+                                            logName,
+                                            responseUrl,
+                                            token,
+                                            MclogArrayRegistrar.getArrayTokenForStorage());
+                                }
+
+                                long created = parseCreated(jsonResponse);
+                                LogAnalysisResponse analysisResponse;
+                                if (jsonResponse.has("content") && jsonResponse.getAsJsonObject("content").has("insights")) {
+                                    JsonObject insights = jsonResponse.getAsJsonObject("content").getAsJsonObject("insights");
+                                    if (insights.has("analysis") && insights.getAsJsonObject("analysis").has("problems")) {
+                                        JsonArray problemsArray = insights.getAsJsonObject("analysis").getAsJsonArray("problems");
+                                        List<Problem> problems = new ArrayList<>();
+
+                                        for (JsonElement problemElement : problemsArray) {
+                                            JsonObject problemObject = problemElement.getAsJsonObject();
+                                            String problemMessage = problemObject.get("message").getAsString();
+
+                                            // Get the line number
+                                            int lineNumber = 0;
+                                            if (problemObject.has("entry") &&
+                                                    problemObject.getAsJsonObject("entry").has("lines") &&
+                                                    problemObject.getAsJsonObject("entry").getAsJsonArray("lines").size() > 0) {
+                                                lineNumber = problemObject.getAsJsonObject("entry")
+                                                        .getAsJsonArray("lines")
+                                                        .get(0)
+                                                        .getAsJsonObject()
+                                                        .get("number")
+                                                        .getAsInt();
+                                            }
+
+                                            // Get the solutions
+                                            List<String> solutions = new ArrayList<>();
+                                            if (problemObject.has("solutions")) {
+                                                JsonArray solutionsArray = problemObject.getAsJsonArray("solutions");
+                                                for (JsonElement solutionElement : solutionsArray) {
+                                                    solutions.add(solutionElement.getAsJsonObject().get("message").getAsString());
+                                                }
+                                            }
+
+                                            problems.add(new Problem(lineNumber, problemMessage, solutions));
+                                        }
+                                        analysisResponse = new LogAnalysisResponse(problems);
+                                    } else {
+                                        analysisResponse = new LogAnalysisResponse("No problems found in the log");
+                                    }
+                                } else {
+                                    analysisResponse = new LogAnalysisResponse("No problems found in the log");
+                                }
+
+                                return new UploadLogResponse(responseUrl, rawUrl, id, created, analysisResponse);
                             } else {
-                                analysisResponse = new LogAnalysisResponse("No problems found in the log");
+                                String error = jsonResponse.get("error").getAsString();
+                                return new UploadLogResponse(error);
                             }
                         } else {
-                            analysisResponse = new LogAnalysisResponse("No problems found in the log");
+                            watchdog.close();
+                            watchdog = null;
+                            if (onProgressChanged != null) onProgressChanged.accept(100);
+                            return new UploadLogResponse("HTTP error: " + responseCode, responseCode >= 500);
                         }
-
-                        return new UploadLogResponse(responseUrl, rawUrl, id, created, analysisResponse);
-                    } else {
-                        String error = jsonResponse.get("error").getAsString();
-                        return new UploadLogResponse(error);
+                    } catch (Exception e) {
+                        if ((watchdog != null && watchdog.hasTimedOut()) || isSocketTimeout(e)) {
+                            return uploadInactivityTimeoutResponse();
+                        }
+                        return new UploadLogResponse(
+                                "Error while uploading log to mclo.gs:\n" + ErrorUtils.getErrorMessageAndStackTrace(e),
+                                isNetworkError(e));
+                    } finally {
+                        if (watchdog != null) {
+                            watchdog.close();
+                        }
+                        if (connection != null) {
+                            connection.disconnect();
+                        }
                     }
-                } else {
-                    return new UploadLogResponse("HTTP error: " + responseCode, responseCode >= 500);
                 }
             } catch (Exception e) {
                 return new UploadLogResponse("Error while uploading log to mclo.gs:\n" + ErrorUtils.getErrorMessageAndStackTrace(e), isNetworkError(e));

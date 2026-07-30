@@ -21,6 +21,7 @@ public class KnownCrashReasonMessage {
     private final Log log;
     private final KnownCrashReason reason;
     private boolean isCodexMessage = false;
+    private volatile boolean provisional;
 
     public Log getLog() {
         return log;
@@ -111,5 +112,13 @@ public class KnownCrashReasonMessage {
 
     public boolean isCodexMessage() {
         return isCodexMessage;
+    }
+
+    public boolean isProvisional() {
+        return provisional;
+    }
+
+    public void setProvisional(boolean provisional) {
+        this.provisional = provisional;
     }
 }

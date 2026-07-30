@@ -289,8 +289,10 @@ public class CrashAssistantGUI {
         new Thread(() -> {
             try {
                 LogAnalyser.analyseLogs();
-                initialLogAnalysisFinished = true;
+            } catch (Throwable throwable) {
+                CrashAssistantApp.LOGGER.error("Error during initial log analysis.", throwable);
             } finally {
+                initialLogAnalysisFinished = true;
                 onUploadReadinessChanged();
             }
             showKnownCrashReasonsWarnings();
@@ -1008,6 +1010,7 @@ public class CrashAssistantGUI {
                 frame.setVisible(true);
             }
             for (KnownCrashReasonMessage crashReasonMessage : KnownCrashReasonMessage.getAllMessagesSnapshot()) {
+                            if (crashReasonMessage.isProvisional()) continue;
                             if (crashReasonMessage.isShownWarn()) continue;
                             KnownCrashReason crashReason = crashReasonMessage.getReason();
                             if (CrashAssistantConfig.getBlacklistedAnalysis().contains(crashReason.getClass().getSimpleName()))
@@ -1717,7 +1720,11 @@ public class CrashAssistantGUI {
 
     public static void updateLogsListInGUI() {
         SwingUtilities.invokeLater(CrashAssistantGUI::addMissingLogs);
-        LogAnalyser.analyseLogs();
+        try {
+            LogAnalyser.analyseLogs();
+        } catch (Throwable throwable) {
+            CrashAssistantApp.LOGGER.error("Error while analysing a log added later.", throwable);
+        }
         showKnownCrashReasonsWarnings();
     }
 

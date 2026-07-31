@@ -355,20 +355,27 @@ public class FilePanel {
                             CrashAssistantGUI.showKnownCrashReasonsWarnings();
                         }
                         log.setLinkToUploadedFirstLines(finalLink);
-                        if (responseLastLines != null) {
+                        if (log.getType() == LogType.CRASH_ASSISTANT) {
+                            MclogArrayRegistrar.replaceCrashAssistantUploadedLog(
+                                    log,
+                                    responseFirstLines,
+                                    responseLastLines);
+                        } else {
+                            if (responseLastLines != null) {
+                                MclogArrayRegistrar.registerUploadedLog(
+                                        log,
+                                        responseLastLines.getId(),
+                                        responseLastLines.getCreated(),
+                                        log.getFileName() + " tail",
+                                        MclogArrayRegistrar.priorityFor(log, 1));
+                            }
                             MclogArrayRegistrar.registerUploadedLog(
                                     log,
-                                    responseLastLines.getId(),
-                                    responseLastLines.getCreated(),
-                                    log.getFileName() + " tail",
-                                    MclogArrayRegistrar.priorityFor(log, 1));
+                                    responseFirstLines.getId(),
+                                    responseFirstLines.getCreated(),
+                                    lastLines != null ? log.getFileName() + " head" : log.getFileName(),
+                                    MclogArrayRegistrar.priorityFor(log, 0));
                         }
-                        MclogArrayRegistrar.registerUploadedLog(
-                                log,
-                                responseFirstLines.getId(),
-                                responseFirstLines.getCreated(),
-                                lastLines != null ? log.getFileName() + " head" : log.getFileName(),
-                                MclogArrayRegistrar.priorityFor(log, 0));
                     } else {
                         if (responseFirstLines.isNetworkError()) {
                             throw UploadException.network("An error occurred when uploading file: " + responseFirstLines.getError());

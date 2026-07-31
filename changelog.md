@@ -33,6 +33,8 @@
   the copied message is regenerated when the set changes instead of becoming stale or incomplete.
 - Fixed split-log retries adding duplicate tail entries to the viewer and Download All after the head upload failed.
   Split parts are now uploaded sequentially and registered in the collection only after both parts succeed.
+- Re-uploading `crash_assistant_app.log` now removes the previous version's metadata from the current viewer collection.
+  The previously uploaded log itself remains available on `mclo.gs`.
 - Added the `general.language_source` configuration option to control the standalone Crash Assistant interface
   language. Its supported values are `SYSTEM` (the new default), which uses the operating system language; `GAME`,
   which uses the language selected in Minecraft's `options.txt`; or a specific language key such as `en_us`, which

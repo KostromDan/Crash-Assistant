@@ -69,6 +69,15 @@ public class UploadedLogsManager {
         });
     }
 
+    public static void markMetadataDeletedByLogIds(Collection<String> logIds) {
+        Set<String> ids = new HashSet<>(logIds);
+        updateLogs(log -> {
+            if (ids.contains(log.getLogId())) {
+                log.markMetadataDeleted();
+            }
+        });
+    }
+
     public static List<UploadedLog> getSavedLogs() {
         lock.readLock().lock();
         try {

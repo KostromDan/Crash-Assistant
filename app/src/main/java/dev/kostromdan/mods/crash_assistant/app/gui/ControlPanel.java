@@ -17,9 +17,12 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -42,6 +45,8 @@ public class ControlPanel {
     public static JDialog dialog;
     private final FileListPanel fileListPanel;
     public final UploadAllButton uploadAllButton;
+    private final JButton uploadArrayBrowserButton;
+    private final JPanel uploadAllRow;
     public static JButton requestHelpButton;
     public static boolean hideRequestHelpButton = false;
     private JButton showLogsToggleButton;
@@ -53,6 +58,8 @@ public class ControlPanel {
     private List<FilePanel> generatedMsgBatch = Collections.emptyList();
     private JLabel modListLabel;
     private JButton showModListButton;
+    private String uploadArrayViewerLink;
+    private boolean uploadAllMessageCopied;
 
     public ControlPanel(FileListPanel fileListPanel, boolean enableSimpleModeButton, Runnable simpleModeAction) {
         this.fileListPanel = fileListPanel;
@@ -107,15 +114,21 @@ public class ControlPanel {
         uploadAllButton.setEnabled(false);
         LogAnalyser.startInitialAnalysisDeadline();
 
+        uploadArrayBrowserButton = createUploadArrayBrowserButton();
+        uploadAllRow = new JPanel(new BorderLayout(5, 0));
+        uploadAllRow.add(uploadAllButton, BorderLayout.CENTER);
+        uploadAllRow.add(uploadArrayBrowserButton, BorderLayout.EAST);
+        listenForFirstUploadArrayRegistration();
+
         if (CrashAssistantConfig.getBoolean("gui_customisation.disable_upload_all_button")) {
-            uploadAllButton.setVisible(false);
+            uploadAllRow.setVisible(false);
         }
 
         startInitialUploadAllTimer();
 
         gbc.gridy = 0;
         gbc.insets = new Insets(3, 0, 0, 0);
-        bottomPanel.add(uploadAllButton, gbc);
+        bottomPanel.add(uploadAllRow, gbc);
 
         String formulationType = CrashAssistantConfig.get("general.formulation_type");
         String suffix = formulationType.equalsIgnoreCase("GITHUB") ? ".github" : "";
@@ -266,6 +279,61 @@ public class ControlPanel {
 //        button.setBackground(
 //                deserializeColor(CrashAssistantConfig.get("gui_customisation." + button_id + "_button_background_color"),
 //                        button.getBackground())); // todo: Swing brakes gradient if we try to customize BG color,
+    }
+
+    private JButton createUploadArrayBrowserButton() {
+        JButton button = new JButton();
+        button.setFont(uploadAllButton.getFont());
+        button.setToolTipText(LanguageProvider.get("gui.browser_button_tooltip"));
+        button.setMargin(new Insets(0, 0, 0, 0));
+        button.addActionListener(e -> openUploadArrayInBrowser());
+
+        int side = uploadAllButton.getPreferredSize().height;
+        int iconSize = Math.max(1, button.getFontMetrics(button.getFont()).getHeight());
+        try (InputStream imageStream = ControlPanel.class.getClassLoader().getResourceAsStream("assets/internet.png")) {
+            if (imageStream != null) {
+                BufferedImage originalImage = ImageIO.read(imageStream);
+                Image resized = originalImage.getScaledInstance(iconSize, iconSize, Image.SCALE_SMOOTH);
+                button.setIcon(new ImageIcon(resized));
+            } else {
+                button.setText("\uD83C\uDF10");
+            }
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Error creating Upload All browser button icon: ", e);
+            button.setText("\uD83C\uDF10");
+        }
+
+        Dimension size = new Dimension(side, side);
+        button.setPreferredSize(size);
+        button.setVisible(false);
+        return button;
+    }
+
+    private void listenForFirstUploadArrayRegistration() {
+        MclogArrayRegistrar.onFirstSuccessfulArrayRegistration(arrayId ->
+                SwingUtilities.invokeLater(() -> {
+                    uploadArrayViewerLink = "https://paste.kostromdan.dev/mclogsarray/" + arrayId;
+                    updateUploadArrayBrowserButtonVisibility();
+                }));
+    }
+
+    private void updateUploadArrayBrowserButtonVisibility() {
+        boolean visible = uploadAllMessageCopied && uploadArrayViewerLink != null;
+        uploadArrayBrowserButton.setVisible(visible);
+        uploadAllRow.revalidate();
+        uploadAllRow.repaint();
+    }
+
+    private void openUploadArrayInBrowser() {
+        stopMovingToTop = true;
+        if (uploadArrayViewerLink == null) {
+            return;
+        }
+        try {
+            LinksHelper.browse(new URI(uploadArrayViewerLink));
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.error("Failed to open uploaded log array in browser", e);
+        }
     }
 
     public static Color deserializeColor(String colorString, Color fallbackColor) {
@@ -544,6 +612,10 @@ public class ControlPanel {
 
             String warningMsg = CrashAssistantConfig.get("generated_message.warning_after_upload_all_button_press", true);
             ClipboardUtils.copy(generatedMsg);
+            SwingEDT.runAndWait(() -> {
+                uploadAllMessageCopied = true;
+                updateUploadArrayBrowserButtonVisibility();
+            });
             int buttonHighLightTime = 3000;
             if (!uploadAllButtonWarningShown && !warningMsg.isEmpty()) {
                 buttonHighLightTime = 4500;

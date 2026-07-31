@@ -12,6 +12,27 @@
 - Added an option to open the English Privacy Policy from non-English Privacy Policy dialogs.
 - Mod list differences in Upload All messages are now always uploaded; the full text is included only if uploading
   fails.
+- Added the `general.send_uploaded_logs_data_to_kostromdan_dev` configuration option, enabled by default. Independently
+  of `general.wrap_link`, it controls whether uploaded-log metadata is sent to `api.kostromdan.dev` so logs from the
+  same Crash Assistant launch can be grouped in the viewer. Log contents continue to be uploaded only to `mclo.gs`.
+- Added a browser button beside Upload All. It appears after the Upload All message has been copied and the log
+  collection has been registered successfully, and opens the complete collection in the viewer.
+- Added a 60-second deadline for initial log analysis. When the deadline is reached, completed results are preserved,
+  unfinished work can no longer change them, cancellation is requested, and Upload All becomes available. Analysis
+  failures are logged without stopping the remaining analyzers or blocking Upload All. On timeout, stack traces of
+  only the still-active analysis threads are written to `crash_assistant_app.log` for diagnostics.
+- Fixed `MixinApply` analysis being scheduled once for every eligible log even though it already inspects the related
+  logs itself. It is now scheduled at most once per Crash Assistant launch.
+- Added a 15-second inactivity timeout for `mclo.gs` uploads. The timer is reset while data is actually being sent or
+  received, so a slow transfer can continue for longer while it is making progress. A stalled transfer uses the
+  existing network-error dialog and visual recovery guide.
+- `mclo.gs` uploads that receive HTTP 429 now respect `Retry-After` when available and retry indefinitely while the
+  service continues to rate-limit them. If `Retry-After` is unavailable, the next attempt is made after 60 seconds.
+- Fixed Upload All races involving manual or already-running uploads and logs discovered while a batch is in progress.
+  Each operation now uses a stable log set, the Crash Assistant log is uploaded after the other logs in that set, and
+  the copied message is regenerated when the set changes instead of becoming stale or incomplete.
+- Fixed split-log retries adding duplicate tail entries to the viewer and Download All after the head upload failed.
+  Split parts are now uploaded sequentially and registered in the collection only after both parts succeed.
 - Added the `general.language_source` configuration option to control the standalone Crash Assistant interface
   language. Its supported values are `SYSTEM` (the new default), which uses the operating system language; `GAME`,
   which uses the language selected in Minecraft's `options.txt`; or a specific language key such as `en_us`, which
@@ -30,15 +51,15 @@
   Chinese text.
 - The new `kostromdan.dev` log viewer is a fork of `gnomebot.dev`, with changes made specifically for Crash Assistant
   and a more convenient log-reading experience:
-    - Added a switcher between logs from the same Upload All session.
+    - Added a switcher between logs from the same Crash Assistant launch.
     - For logs uploaded through Crash Assistant, the Minecraft Profile widget now uses the session UUID and is shown
-      for every log in that upload session, even if an individual log does not contain the UUID.
+      for every log from that Crash Assistant launch, even if an individual log does not contain the UUID.
     - In addition to links to individual lines, you can now drag across line numbers to select multiple lines and copy
       a link to the entire range.
     - Selecting a line or range now automatically copies its link. This behavior can be disabled in the settings.
     - Added quick links to the first error, last error, and end of the file, plus a jump-to-top button.
     - Separated Raw and Download buttons. Download saves the current log as a file.
-    - Added Download All button, which saves every log from the same Upload All session in a single ZIP archive.
+    - Added Download All button, which saves every log from the same Crash Assistant launch in a single ZIP archive.
     - Added an option to disable shortened stack-trace locations and show their full form instead.
     - Added an option to wrap long lines.
     - The viewer is now highly configurable: each navigation and download button can be shown or hidden individually.

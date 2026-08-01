@@ -19,13 +19,10 @@ import dev.kostromdan.mods.crash_assistant.app.utils.uploading_apis.UploadLogRes
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -68,7 +65,7 @@ public class FilePanel {
         openButton = createButton(LanguageProvider.get("gui.open_button"), e -> openFile());
         showButton = createButton(LanguageProvider.get("gui.show_in_explorer_button"), e -> showInExplorer());
 
-        browserButton = createButtonWithIcon("assets/internet.png", e -> openInBrowser());
+        browserButton = createIconButton(e -> openInBrowser());
         browserButton.setVisible(false);
         browserButton.setToolTipText(LanguageProvider.get("gui.browser_button_tooltip"));
 
@@ -84,6 +81,7 @@ public class FilePanel {
         Dimension browserDim = new Dimension(browserButton.getPreferredSize().width, dim.height);
         browserButton.setPreferredSize(browserDim);
         browserButton.setMinimumSize(browserDim);
+        SvgButtonIcon.install(browserButton, GeneratedInternetIcon.ICON);
 
         uploadButton.setPreferredSize(dim);
         uploadButton.setMinimumSize(dim);
@@ -150,28 +148,8 @@ public class FilePanel {
         return button;
     }
 
-    private JButton createButtonWithIcon(String iconPath, ActionListener actionListener) {
+    private JButton createIconButton(ActionListener actionListener) {
         JButton button = new JButton();
-        try {
-            InputStream imageStream = FilePanel.class.getClassLoader().getResourceAsStream(iconPath);
-            if (imageStream != null) {
-                BufferedImage originalImage = ImageIO.read(imageStream);
-
-                JButton temp = new JButton("\uD83C\uDF10");
-                FontMetrics fm = temp.getFontMetrics(temp.getFont());
-                int iconHeight = fm.getHeight();
-
-                Image resized = originalImage.getScaledInstance(iconHeight, iconHeight, Image.SCALE_SMOOTH);
-                ImageIcon icon = new ImageIcon(resized);
-                button.setIcon(icon);
-            } else {
-                button.setText("\uD83C\uDF10");
-            }
-        } catch (Exception e) {
-            CrashAssistantApp.LOGGER.error("Error creating button with icon: ", e);
-            button.setText("\uD83C\uDF10");
-        }
-
         Dimension textSize = new JButton("\uD83C\uDF10").getPreferredSize();
         button.setPreferredSize(textSize);
         button.setMinimumSize(button.getPreferredSize());

@@ -45,6 +45,7 @@ public class LogDeletionDialog extends JDialog {
     public LogDeletionDialog(Frame owner) {
         super(owner, LanguageProvider.get("gui.log_deletion.title"), true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        CrashAssistantGUI.setUpIcon(this);
 
         Rectangle screenBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
         int defaultWidth = Math.min(Math.max(owner.getWidth(), 1200), screenBounds.width);
@@ -204,6 +205,7 @@ public class LogDeletionDialog extends JDialog {
     private JDialog createLoadingDialog(int count) {
         JDialog dialog = new JDialog(this, LanguageProvider.get("gui.log_deletion.status.deleting"), true);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        CrashAssistantGUI.setUpIcon(dialog);
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(new EmptyBorder(20, 20, 20, 20));
         panel.add(new JLabel(

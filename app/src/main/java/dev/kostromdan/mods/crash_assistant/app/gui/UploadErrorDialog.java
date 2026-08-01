@@ -56,6 +56,7 @@ public final class UploadErrorDialog {
         ControlPanel.stopMovingToTop = true;
         JDialog dialog = new JDialog((Frame) null, justGuide ? LanguageProvider.get("gui.drag_drop_guide") : LanguageProvider.get("gui.failed_to_upload_file") + "!", true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        CrashAssistantGUI.setUpIcon(dialog);
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));

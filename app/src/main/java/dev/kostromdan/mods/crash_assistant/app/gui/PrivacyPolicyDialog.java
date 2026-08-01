@@ -71,6 +71,7 @@ public class PrivacyPolicyDialog {
 
         JDialog dialog = new JDialog(ownerFrame, LanguageProvider.get("gui.privacy.logs_upload_title"), true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        CrashAssistantGUI.setUpIcon(dialog);
 
         // Create the question text with a link to the privacy policy
         String question = CrashAssistantLocalConfig.get("privacy.accepted_privacy_info") == null ? "" : LanguageProvider.get("gui.privacy.logs_upload_question_changed") + "\n";
@@ -327,6 +328,7 @@ public class PrivacyPolicyDialog {
     private static void showConsentResetSuccessDialog(JFrame ownerFrame) {
         JDialog dialog = new JDialog(ownerFrame, LanguageProvider.get("gui.privacy.title"), true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        CrashAssistantGUI.setUpIcon(dialog);
 
         JEditorPane messagePane = CrashAssistantGUI.getEditorPane(
                 "<strong>" + LanguageProvider.get("gui.privacy.consent_reset_success") + "</strong>\n\n"

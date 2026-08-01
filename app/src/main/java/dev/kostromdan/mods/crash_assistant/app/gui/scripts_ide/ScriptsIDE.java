@@ -299,6 +299,7 @@ public class ScriptsIDE {
     private void createAndShowGUI() {
         frame = new JFrame("Scripts IDE - " + currentScriptFile.getName());
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        CrashAssistantGUI.setUpIcon(frame);
 
         frame.addWindowListener(new WindowAdapter() {
             @Override

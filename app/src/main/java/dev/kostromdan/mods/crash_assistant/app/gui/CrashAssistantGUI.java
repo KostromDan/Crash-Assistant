@@ -517,18 +517,7 @@ public class CrashAssistantGUI {
     }
 
     public static void setUpIcon(Window window) {
-        try {
-            java.io.InputStream iconStream = JarInJarHelper.class.getResourceAsStream("/crash_assistant_ico.png");
-            if (iconStream != null) {
-                BufferedImage iconImage = ImageIO.read(iconStream);
-                SwingEDT.runAndWait(() -> window.setIconImage(iconImage));
-                iconStream.close();
-            } else {
-                CrashAssistantApp.LOGGER.warn("Could not find crash_assistant_logo.png in jar root");
-            }
-        } catch (IOException e) {
-            CrashAssistantApp.LOGGER.error("Failed to load window icon", e);
-        }
+        ApplicationIcon.install(window);
     }
 
     public static String updateCommentText() {
@@ -1257,6 +1246,7 @@ public class CrashAssistantGUI {
                 SwingEDT.invokeAndWait(() -> {
                     JDialog dialog = new JDialog((Frame) null, LanguageProvider.get("gui.too_many_changes_title"), true);
                     dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                    setUpIcon(dialog);
 
                     JEditorPane textPane = CrashAssistantGUI.getEditorPane(finalMessage, false);
                     JPanel textPanel = new JPanel(new BorderLayout());

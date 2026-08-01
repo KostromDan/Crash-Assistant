@@ -606,6 +606,7 @@ public abstract class DependenciesAnalysisGUIBase extends AnalysisGUIBase {
         public JdkWarningDialog(JFrame parent, JDialog parentDialog) {
             super(parent, LanguageProvider.get("gui.analysis.dependencies.jdk_required_title"), true);
             setLayout(new BorderLayout());
+            CrashAssistantGUI.setUpIcon(this);
 
             String message = LanguageProvider.get("gui.analysis.dependencies.jdk_required_message")
                     .replace("$ADOPTIUM_JDK_LINK$", LinksProvider.ADOPTIUM_JDK.getLink());

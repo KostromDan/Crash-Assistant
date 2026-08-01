@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.modlist;
 
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
 import dev.kostromdan.mods.crash_assistant.app.utils.SwingEDT;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
@@ -50,6 +51,7 @@ public class ManualDownloadDialog extends JDialog {
         this.downloadsDir = Paths.get(System.getProperty("user.home", ""), "Downloads");
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        CrashAssistantGUI.setUpIcon(this);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {

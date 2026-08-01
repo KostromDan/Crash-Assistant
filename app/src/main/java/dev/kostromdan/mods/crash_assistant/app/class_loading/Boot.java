@@ -1,5 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
+import dev.kostromdan.mods.crash_assistant.app.gui.LinuxDesktopIntegration;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.permissions.Permissions;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
@@ -180,6 +181,7 @@ public class Boot {
                 System.exit(0);
             }
 
+            LinuxDesktopIntegration.prepare();
             Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
             Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);
             mainMethod.invoke(null, (Object) effectiveArgs.toArray(new String[0]));

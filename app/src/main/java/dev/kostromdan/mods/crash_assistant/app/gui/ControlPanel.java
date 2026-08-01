@@ -17,12 +17,9 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -289,22 +286,10 @@ public class ControlPanel {
         button.addActionListener(e -> openUploadArrayInBrowser());
 
         int side = uploadAllButton.getPreferredSize().height;
-        int iconSize = Math.max(1, button.getFontMetrics(button.getFont()).getHeight());
-        try (InputStream imageStream = ControlPanel.class.getClassLoader().getResourceAsStream("assets/internet.png")) {
-            if (imageStream != null) {
-                BufferedImage originalImage = ImageIO.read(imageStream);
-                Image resized = originalImage.getScaledInstance(iconSize, iconSize, Image.SCALE_SMOOTH);
-                button.setIcon(new ImageIcon(resized));
-            } else {
-                button.setText("\uD83C\uDF10");
-            }
-        } catch (Exception e) {
-            CrashAssistantApp.LOGGER.error("Error creating Upload All browser button icon: ", e);
-            button.setText("\uD83C\uDF10");
-        }
-
         Dimension size = new Dimension(side, side);
         button.setPreferredSize(size);
+        button.setMinimumSize(size);
+        SvgButtonIcon.install(button, GeneratedInternetIcon.ICON);
         button.setVisible(false);
         return button;
     }

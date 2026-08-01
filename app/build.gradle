@@ -6,6 +6,8 @@ plugins {
 group = 'dev.kostromdan.mods'
 version = ''
 
+def generatedSvgIconsDir = layout.buildDirectory.dir('generated/sources/svgIcons/java/main')
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(8)
@@ -13,6 +15,12 @@ java {
 }
 
 sourceSets {
+    main {
+        java.srcDir generatedSvgIconsDir
+    }
+    svgCodegen {
+        java.srcDirs = ['src/svgCodegen/java']
+    }
     java9 {
         java {
             srcDirs = ['src/main/java9']
@@ -135,6 +143,36 @@ shadowJar {
     }
 }
 
+tasks.register('generateSvgIcons', JavaExec) {
+    group = 'build'
+    description = 'Compiles fixed SVG assets into dependency-free Java2D painters.'
+    dependsOn compileSvgCodegenJava
+    classpath = sourceSets.svgCodegen.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.svg_codegen.SvgIconGenerator'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+
+    def logoSvg = file('src/main/resources/assets/logo.svg')
+    def internetSvg = file('src/main/resources/assets/internet.svg')
+    inputs.files logoSvg, internetSvg
+    outputs.dir generatedSvgIconsDir
+    args generatedSvgIconsDir.get().asFile.absolutePath,
+            'dev.kostromdan.mods.crash_assistant.app.gui',
+            logoSvg.absolutePath, 'GeneratedLogoIcon',
+            internetSvg.absolutePath, 'GeneratedInternetIcon'
+
+    doFirst {
+        delete generatedSvgIconsDir
+    }
+}
+
+compileJava.dependsOn generateSvgIcons
+
+processResources {
+    exclude 'assets/logo.svg', 'assets/internet.svg'
+}
+
 tasks.register('parallelsJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
     group = 'build'
     description = 'Builds a self-contained Crash Assistant JAR for Parallels test VMs.'
@@ -190,4 +228,15 @@ tasks.register('securityRegressionTest', JavaExec) {
     workingDir testWorkDir
 }
 
-check.dependsOn securityRegressionTest
+tasks.register('applicationIconRasterizationTest', JavaExec) {
+    group = 'verification'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.app.gui.ApplicationIconRasterizationTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+    systemProperty 'java.awt.headless', 'true'
+}
+
+check.dependsOn securityRegressionTest, applicationIconRasterizationTest

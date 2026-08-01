@@ -46,6 +46,7 @@ public class IntelChipBugWarning {
             SwingEDT.runAndWait(() -> {
             JDialog dialog = new JDialog((Frame) null, LanguageProvider.get("gui.intel_corrupted_title"), true);
             dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            CrashAssistantGUI.setUpIcon(dialog);
 
             JPanel mainPanel = new JPanel(new GridBagLayout());
             mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));

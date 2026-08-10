@@ -60,3 +60,21 @@ task collectJars(type: Copy) {
 }
 
 build.finalizedBy(collectJars)
+
+task publishUnified {
+    group = "upload"
+    dependsOn(
+            ":fabric:publishUnified",
+            ":forge_coremod:publishUnified",
+            ":neoforge_coremod:publishUnified"
+    )
+}
+
+task publishUnifiedToLocal {
+    group = "upload"
+    dependsOn(
+            ":fabric:publishUnifiedToLocal",
+            ":forge_coremod:publishUnifiedToLocal",
+            ":neoforge_coremod:publishUnifiedToLocal"
+    )
+}

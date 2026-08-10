@@ -2,7 +2,8 @@ plugins {
     id 'multiloader-loader'
     id 'net.neoforged.moddev'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id "me.shedaniel.unified-publishing" version "0.1.+"
+    id "com.modrinth.minotaur" version "2.+"
+    id "net.darkhax.curseforgegradle" version "1.1.+"
 }
 
 configurations {
@@ -82,33 +83,50 @@ neoForge {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-unifiedPublishing {
-    project {
-        gameVersions = ["1.20.6", "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4"]
-        gameLoaders = ["neoforge"]
+def publishingGameVersions = ["1.20.6", "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4"]
+def parsedChangelog = file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
+        "\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
 
-        displayName = tasks.jar.archiveFile.get().asFile.name
-        version = project.version
-        changelog = file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
-                "\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
-        releaseType = release_type
-
-        mainPublication tasks.jar
-
-        var cfToken = System.getenv("CF_TOKEN")
-        if (cfToken != null) {
-            curseforge {
-                token = cfToken
-                id = "1154099"
-            }
-        }
-
-        var mrToken = System.getenv("MODRINTH_TOKEN")
-        if (mrToken != null) {
-            modrinth {
-                token = mrToken
-                id = "ix1qq8Ux"
-            }
-        }
+if (System.getenv("MODRINTH_TOKEN") != null) {
+    modrinth {
+        token = System.getenv("MODRINTH_TOKEN")
+        projectId = "ix1qq8Ux"
+        versionNumber = project.version
+        versionName = tasks.jar.archiveFile.get().asFile.name
+        versionType = release_type
+        changelog = parsedChangelog
+        uploadFile = tasks.jar
+        gameVersions = publishingGameVersions
+        loaders = ["neoforge"]
     }
+}
+
+if (System.getenv("CF_TOKEN") != null) {
+    tasks.register("publishCurseForge", net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+        group = "upload"
+        apiToken = System.getenv("CF_TOKEN")
+
+        def mainFile = upload("1154099", tasks.jar)
+        mainFile.displayName = tasks.jar.archiveFile.get().asFile.name
+        mainFile.changelog = parsedChangelog
+        mainFile.changelogType = "markdown"
+        mainFile.releaseType = release_type
+
+        mainFile.addGameVersion(*publishingGameVersions)
+        mainFile.addEnvironment("Client")
+        mainFile.addModLoader("NeoForge")
+    }
+}
+
+task publishUnified {
+    group = "upload"
+    if (System.getenv("MODRINTH_TOKEN") != null) dependsOn(tasks.modrinth)
+    if (System.getenv("CF_TOKEN") != null) dependsOn(tasks.publishCurseForge)
+}
+
+task publishUnifiedToLocal(type: Copy) {
+    group = "upload"
+    dependsOn(tasks.jar)
+    from(tasks.jar.archiveFile)
+    into("build/unified-local/project0")
 }

@@ -218,6 +218,7 @@ if (System.getenv("CF_TOKEN") != null) {
         fabricFile.changelogType = "markdown"
         fabricFile.releaseType = release_type
         fabricFile.addGameVersion(project.minecraft_version)
+        fabricFile.addEnvironment("Client")
         fabricFile.addModLoader("Fabric")
     }
 }

@@ -75,6 +75,7 @@ if (System.getenv("CF_TOKEN") != null) {
 		mainFile.releaseType = release_type
 
 		mainFile.addGameVersion("26.1", "26.1.1", "26.1.2")
+		mainFile.addEnvironment("Client")
 		mainFile.addModLoader("Fabric", "Quilt")
 	}
 }

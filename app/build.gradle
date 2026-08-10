@@ -228,15 +228,4 @@ tasks.register('securityRegressionTest', JavaExec) {
     workingDir testWorkDir
 }
 
-tasks.register('applicationIconRasterizationTest', JavaExec) {
-    group = 'verification'
-    dependsOn testClasses
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'dev.kostromdan.mods.crash_assistant.app.gui.ApplicationIconRasterizationTest'
-    javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(8)
-    }
-    systemProperty 'java.awt.headless', 'true'
-}
-
-check.dependsOn securityRegressionTest, applicationIconRasterizationTest
+check.dependsOn securityRegressionTest

@@ -1,7 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
-import dev.kostromdan.mods.crash_assistant.app.gui.LinuxDesktopIntegration;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
@@ -70,8 +69,6 @@ public class CrashAssistantApp {
 
     @NoJexl
     public static void main(String[] args) {
-        // Also covers standalone/test launches that bypass Boot (e.g. the Parallels JAR).
-        LinuxDesktopIntegration.prepare();
 //        PlatformHelp.platform = PlatformHelp.FORGE;
 //        PlatformHelp.platform = PlatformHelp.FABRIC;
 //        PlatformHelp.platform = PlatformHelp.NEOFORGE;

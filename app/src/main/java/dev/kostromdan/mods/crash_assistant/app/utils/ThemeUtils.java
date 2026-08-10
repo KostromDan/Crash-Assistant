@@ -4,6 +4,7 @@ import com.formdev.flatlaf.*;
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp;
+import dev.kostromdan.mods.crash_assistant.app.gui.LinuxDesktopIntegration;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 
 import java.io.InputStream;
@@ -18,6 +19,10 @@ public class ThemeUtils {
     public static synchronized void ensureThemesApplied() {
         if (applied) return;
         applied = true;
+
+        // This method is the common UI initialization barrier. Linux desktop integration must
+        // run before FlatLaf or any AWT/Swing component initializes the native toolkit.
+        LinuxDesktopIntegration.prepare();
 
         String themeIdentifier = CrashAssistantConfig.get("gui_customisation.theme_file_name");
 

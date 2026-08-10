@@ -285,6 +285,8 @@ public final class ModListHistoryDialog extends JDialog {
         table.getColumnModel().getColumn(ModListHistoryTableModel.STATUS_COLUMN).setPreferredWidth(300);
         table.getColumnModel().getColumn(ModListHistoryTableModel.DATE_COLUMN)
                 .setCellRenderer(new DateRenderer());
+        table.getColumnModel().getColumn(ModListHistoryTableModel.DATE_COLUMN).setMinWidth(160);
+        table.getColumnModel().getColumn(ModListHistoryTableModel.DATE_COLUMN).setPreferredWidth(180);
         DefaultTableCellRenderer countRenderer = new DefaultTableCellRenderer();
         countRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
         table.getColumnModel().getColumn(ModListHistoryTableModel.MODS_COUNT_COLUMN)

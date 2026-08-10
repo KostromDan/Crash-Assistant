@@ -537,25 +537,39 @@ public class ModListDiffDialog extends JFrame {
         statusLabel.setForeground(new Color(70, 70, 70));
         footer.add(statusLabel, BorderLayout.WEST);
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel buttons = new JPanel();
+        buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
+
+        JPanel utilityRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        utilityRow.setAlignmentX(Component.RIGHT_ALIGNMENT);
         JButton copyDiff = new JButton(LanguageProvider.get("gui.modlist_diff.copy_diff"));
         copyDiff.addActionListener(e -> copyDiffWithFeedback(copyDiff));
-        buttons.add(copyDiff);
+        utilityRow.add(copyDiff);
+        buttons.add(utilityRow);
         footerButtons.add(copyDiff);
         if (comparison.isCurrentInstallationEditable()) {
+            buttons.add(Box.createVerticalStrut(4));
+            JPanel selectionActionsRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+            selectionActionsRow.setAlignmentX(Component.RIGHT_ALIGNMENT);
             disableToggleButton = new JButton(LanguageProvider.get("gui.files_remover.disable_selected"));
             disableToggleButton.addActionListener(e -> {
                 if (allSelectedDisabled()) bulkApply(SectionAction.ENABLE);
                 else bulkApply(SectionAction.DISABLE);
             });
-            buttons.add(disableToggleButton);
+            selectionActionsRow.add(disableToggleButton);
             footerButtons.add(disableToggleButton);
             JButton removeSelected = new JButton(LanguageProvider.get("gui.files_remover.remove_selected"));
             removeSelected.addActionListener(e -> bulkApply(SectionAction.REMOVE));
-            buttons.add(removeSelected);
+            selectionActionsRow.add(removeSelected);
             footerButtons.add(removeSelected);
+            buttons.add(selectionActionsRow);
+
+            buttons.add(Box.createVerticalStrut(4));
+            JPanel restoreRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+            restoreRow.setAlignmentX(Component.RIGHT_ALIGNMENT);
             updateApplyButtonLabel();
-            buttons.add(applyButton);
+            restoreRow.add(applyButton);
+            buttons.add(restoreRow);
             footerButtons.add(applyButton);
         }
         footer.add(buttons, BorderLayout.EAST);

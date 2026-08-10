@@ -7,10 +7,16 @@ import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,6 +30,9 @@ public class ModListUtils {
     private static final Path RESOURCEPACKS_FOLDER = Paths.get("resourcepacks");
     private static final Path DATAPACKS_FOLDER = Paths.get("datapacks");
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
+    private static final byte[] UTF_8_BOM = {
+            (byte) 0xef, (byte) 0xbb, (byte) 0xbf
+    };
     public static String currentUsername = "";
     private static LinkedHashSet<Mod> cachedModList = null;
 
@@ -111,16 +120,97 @@ public class ModListUtils {
 
     public static LinkedHashSet<Mod> getSavedModList() {
         try {
-            if (Files.exists(JSON_FILE)) {
-                String json = new String(Files.readAllBytes(JSON_FILE));
-                return Mod.GSON.fromJson(json, Mod.TYPE);
-
-            }
+            return readModList(JSON_FILE);
         } catch (Exception e) {
             LOGGER.error("Error while getting Modlist", e);
-
         }
         return new LinkedHashSet<>();
+    }
+
+    static LinkedHashSet<Mod> readModList(Path path) throws IOException {
+        if (!Files.isRegularFile(path)) {
+            return new LinkedHashSet<>();
+        }
+        return parseModListJson(Files.readAllBytes(path));
+    }
+
+    static void writeModList(Path path, Collection<Mod> mods) throws IOException {
+        Path parent = path.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        byte[] json = Mod.GSON.toJson(mods, Mod.TYPE).getBytes(StandardCharsets.UTF_8);
+        byte[] encoded = new byte[UTF_8_BOM.length + json.length];
+        System.arraycopy(UTF_8_BOM, 0, encoded, 0, UTF_8_BOM.length);
+        System.arraycopy(json, 0, encoded, UTF_8_BOM.length, json.length);
+        Files.write(path, encoded,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE);
+    }
+
+    /** Parses the new UTF-8+BOM format and both legacy no-BOM formats. */
+    @NoJexl
+    public static LinkedHashSet<Mod> parseModListJson(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            return new LinkedHashSet<>();
+        }
+        boolean hasBom = hasUtf8Bom(bytes);
+        int offset = hasBom ? UTF_8_BOM.length : 0;
+        RuntimeException firstFailure = null;
+        LinkedHashSet<Charset> charsets = new LinkedHashSet<>();
+        charsets.add(StandardCharsets.UTF_8);
+        if (!hasBom) {
+            addCharset(charsets, System.getProperty("native.encoding"));
+            charsets.add(Charset.defaultCharset());
+        }
+        for (Charset charset : charsets) {
+            try {
+                return parseDecodedModList(decodeStrict(bytes, offset, charset));
+            } catch (CharacterCodingException | RuntimeException failure) {
+                if (firstFailure == null) {
+                    firstFailure = new IllegalArgumentException(
+                            "Invalid modlist.json for charset " + charset.name(), failure);
+                } else {
+                    firstFailure.addSuppressed(failure);
+                }
+            }
+        }
+        throw firstFailure == null
+                ? new IllegalArgumentException("Invalid modlist.json")
+                : firstFailure;
+    }
+
+    private static String decodeStrict(byte[] bytes, int offset, Charset charset)
+            throws CharacterCodingException {
+        return charset.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(ByteBuffer.wrap(bytes, offset, bytes.length - offset))
+                .toString();
+    }
+
+    private static void addCharset(Set<Charset> charsets, String charsetName) {
+        if (charsetName == null || charsetName.isEmpty()) {
+            return;
+        }
+        try {
+            charsets.add(Charset.forName(charsetName));
+        } catch (RuntimeException ignored) {
+            // Ignore unavailable or malformed values supplied by the runtime.
+        }
+    }
+
+    private static LinkedHashSet<Mod> parseDecodedModList(String json) {
+        LinkedHashSet<Mod> mods = Mod.GSON.fromJson(json, Mod.TYPE);
+        return mods == null ? new LinkedHashSet<Mod>() : mods;
+    }
+
+    private static boolean hasUtf8Bom(byte[] bytes) {
+        return bytes.length >= UTF_8_BOM.length
+                && bytes[0] == UTF_8_BOM[0]
+                && bytes[1] == UTF_8_BOM[1]
+                && bytes[2] == UTF_8_BOM[2];
     }
 
     @NoJexl
@@ -140,12 +230,7 @@ public class ModListUtils {
             return;
         }
         try {
-            Files.createDirectories(JSON_FILE.getParent());
-            try (FileWriter writer = new FileWriter(JSON_FILE.toFile())) {
-                String jsonOutput = Mod.GSON.toJson(getCurrentModList(false), Mod.TYPE);
-                writer.write(jsonOutput);
-            }
-
+            writeModList(JSON_FILE, getCurrentModList(false));
             LOGGER.info("Modlist saved to " + JSON_FILE);
         } catch (Exception e) {
             LOGGER.error("Error while saving Modlist", e);

@@ -118,4 +118,15 @@ tasks.register('modListHistoryTest', JavaExec) {
     }
 }
 
-check.dependsOn startupDocumentationTest, modListTxtParserTest, modListHistoryTest
+tasks.register('modListJsonEncodingTest', JavaExec) {
+    group = 'verification'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListJsonEncodingTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+    jvmArgs '-Dfile.encoding=windows-1251'
+}
+
+check.dependsOn startupDocumentationTest, modListTxtParserTest, modListHistoryTest, modListJsonEncodingTest

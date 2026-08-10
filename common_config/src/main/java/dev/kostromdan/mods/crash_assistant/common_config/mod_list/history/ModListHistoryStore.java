@@ -7,12 +7,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryStream;
@@ -307,23 +307,7 @@ public class ModListHistoryStore {
         String sourceFingerprint = sha256(sourceBytes);
         LinkedHashSet<Mod> legacyMods;
         try {
-            // Legacy modlist.json was written with FileWriter and therefore
-            // used the JVM default charset (not guaranteed to be UTF-8 on old
-            // Windows/Java installations).
-            boolean utf8Bom = sourceBytes.length >= 3
-                    && (sourceBytes[0] & 0xff) == 0xef
-                    && (sourceBytes[1] & 0xff) == 0xbb
-                    && (sourceBytes[2] & 0xff) == 0xbf;
-            String json = utf8Bom
-                    ? new String(sourceBytes, 3, sourceBytes.length - 3, StandardCharsets.UTF_8)
-                    : new String(sourceBytes, Charset.defaultCharset());
-            if (!json.isEmpty() && json.charAt(0) == '\ufeff') {
-                json = json.substring(1);
-            }
-            legacyMods = Mod.GSON.fromJson(json, Mod.TYPE);
-            if (legacyMods == null) {
-                legacyMods = new LinkedHashSet<>();
-            }
+            legacyMods = ModListUtils.parseModListJson(sourceBytes);
         } catch (RuntimeException e) {
             throw new IOException("Failed to parse legacy mod list " + legacyJson, e);
         }

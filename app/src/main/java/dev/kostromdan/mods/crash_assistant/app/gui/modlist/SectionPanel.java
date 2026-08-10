@@ -34,6 +34,7 @@ class SectionPanel {
     private boolean collapsed = false;
     private final Model model;
     private final String fileColumnLabel;
+    private final boolean editableComparison;
     private final Map<Integer, ModListDiffDialog.SectionAction> actionColumns = new HashMap<Integer, ModListDiffDialog.SectionAction>();
     private JComponent body;
     private JPanel headerPanel;
@@ -42,9 +43,8 @@ class SectionPanel {
         this.dialog = dialog;
         this.type = type;
         this.entries = entries;
-        this.fileColumnLabel = type == ModListDiffDialog.SectionType.UPDATED
-                ? LanguageProvider.get("gui.modlist_diff.column.file_current")
-                : LanguageProvider.get("gui.modlist_diff.column.file");
+        this.editableComparison = dialog.isCurrentInstallationEditable();
+        this.fileColumnLabel = LanguageProvider.get("gui.modlist_diff.column.file");
         this.model = new Model();
         this.container = new JPanel(new BorderLayout()) {
             @Override
@@ -86,6 +86,7 @@ class SectionPanel {
                 boolean active = dialog.isEntryActive(entry);
                 boolean enabled = active;
                 if (c instanceof JButton) {
+                    enabled = active && c.isEnabled();
                     ModListDiffDialog.SectionAction action = actionColumns.get(modelCol);
                     if (action != null) {
                         enabled = dialog.isActionEnabled(entry, action);
@@ -105,7 +106,8 @@ class SectionPanel {
             public String getToolTipText(MouseEvent event) {
                 int rowIndex = rowAtPoint(event.getPoint());
                 int colIndex = columnAtPoint(event.getPoint());
-                if (rowIndex >= 0 && colIndex == 1) {
+                int modelColumn = colIndex < 0 ? -1 : convertColumnIndexToModel(colIndex);
+                if (rowIndex >= 0 && modelColumn == model.fileColumn) {
                     DiffEntry entry = entries.get(convertRowIndexToModel(rowIndex));
                     return entry.tooltip;
                 }
@@ -117,8 +119,10 @@ class SectionPanel {
         table.setRowHeight(28);
         table.setFillsViewportHeight(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        table.setDefaultEditor(Boolean.class, new DefaultCellEditor(new JCheckBox()));
-        table.setDefaultRenderer(Boolean.class, table.getDefaultRenderer(Boolean.class));
+        if (editableComparison) {
+            table.setDefaultEditor(Boolean.class, new DefaultCellEditor(new JCheckBox()));
+            table.setDefaultRenderer(Boolean.class, table.getDefaultRenderer(Boolean.class));
+        }
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -126,6 +130,7 @@ class SectionPanel {
             }
         });
         table.getTableHeader().setReorderingAllowed(false);
+        table.getTableHeader().setToolTipText(dialog.getComparisonDescription());
 
         configureColumns();
         model.addTableModelListener(new TableModelListener() {
@@ -143,7 +148,9 @@ class SectionPanel {
         master.addActionListener(e -> toggleAll());
         JButton toggle = new JButton("▼");
         toggle.addActionListener(e -> toggle());
-        header.add(master);
+        if (editableComparison) {
+            header.add(master);
+        }
         header.add(toggle);
         header.add(headerLabel);
         headerPanel = header;
@@ -152,7 +159,9 @@ class SectionPanel {
             JLabel empty = new JLabel(getEmptyText(type));
             empty.setBorder(new EmptyBorder(8, 12, 8, 12));
             body = empty;
-            master.setEnabled(false);
+            if (editableComparison) {
+                master.setEnabled(false);
+            }
         } else {
             JPanel tableContainer = new JPanel(new BorderLayout());
             tableContainer.add(table.getTableHeader(), BorderLayout.NORTH);
@@ -202,6 +211,7 @@ class SectionPanel {
     }
 
     private void toggleAll() {
+        if (!editableComparison || !dialog.isDialogOpen()) return;
         boolean target = master.isSelected();
         for (DiffEntry entry : entries) {
             if (!entry.resolved) {
@@ -213,65 +223,57 @@ class SectionPanel {
 
     private void configureColumns() {
         TableColumnModel cm = table.getColumnModel();
-        TableColumn fileCol = cm.getColumn(1);
+        TableColumn fileCol = cm.getColumn(model.fileColumn);
         fileCol.setCellRenderer(new FileNameRenderer());
         int dynamicNameWidth = Math.max(measureWidestEntry(), dialog.measureHeaderWidth(fileColumnLabel));
         if (table.getPreferredScrollableViewportSize().width > 0) {
             dynamicNameWidth = Math.max(dynamicNameWidth, table.getPreferredScrollableViewportSize().width / 2);
         }
 
-        cm.getColumn(0).setPreferredWidth(40);
-        cm.getColumn(0).setMaxWidth(40);
-        cm.getColumn(1).setPreferredWidth(dynamicNameWidth);
-        if (type == ModListDiffDialog.SectionType.UPDATED) {
-            cm.getColumn(2).setPreferredWidth(Math.max(measureUpdatedFromWidth(), 120)); // updated from
-            cm.getColumn(3).setPreferredWidth(64);
-            cm.getColumn(3).setMaxWidth(64);
-            cm.getColumn(4).setPreferredWidth(64);
-            cm.getColumn(4).setMaxWidth(64);
-        } else {
-            cm.getColumn(2).setPreferredWidth(64);
-            cm.getColumn(2).setMaxWidth(64);
-            cm.getColumn(3).setPreferredWidth(64);
-            cm.getColumn(3).setMaxWidth(64);
+        if (model.selectionColumn >= 0) {
+            cm.getColumn(model.selectionColumn).setPreferredWidth(40);
+            cm.getColumn(model.selectionColumn).setMaxWidth(40);
+            cm.getColumn(model.selectionColumn).setCellRenderer(new BooleanRenderer());
+            cm.getColumn(model.selectionColumn).setCellEditor(new DefaultCellEditor(new JCheckBox()));
         }
-        cm.getColumn(0).setCellRenderer(new BooleanRenderer());
-        cm.getColumn(0).setCellEditor(new DefaultCellEditor(new JCheckBox()));
+        fileCol.setPreferredWidth(dynamicNameWidth);
+        if (type == ModListDiffDialog.SectionType.UPDATED) {
+            cm.getColumn(model.previousFileColumn).setPreferredWidth(Math.max(measureUpdatedFromWidth(), 120));
+        }
+        cm.getColumn(model.curseForgeColumn).setPreferredWidth(64);
+        cm.getColumn(model.curseForgeColumn).setMaxWidth(64);
+        cm.getColumn(model.modrinthColumn).setPreferredWidth(64);
+        cm.getColumn(model.modrinthColumn).setMaxWidth(64);
 
         TableCellRenderer cfRenderer = new IconButtonRenderer(dialog.getCfIcon(), false);
         TableCellRenderer mrRenderer = new IconButtonRenderer(dialog.getMrIcon(), true);
-        if (type == ModListDiffDialog.SectionType.UPDATED) {
-            cm.getColumn(3).setCellRenderer(cfRenderer);
-            cm.getColumn(4).setCellRenderer(mrRenderer);
-            cm.getColumn(3).setCellEditor(new IconButtonEditor(this, false));
-            cm.getColumn(4).setCellEditor(new IconButtonEditor(this, true));
-        } else {
-            cm.getColumn(2).setCellRenderer(cfRenderer);
-            cm.getColumn(3).setCellRenderer(mrRenderer);
-            cm.getColumn(2).setCellEditor(new IconButtonEditor(this, false));
-            cm.getColumn(3).setCellEditor(new IconButtonEditor(this, true));
-        }
+        cm.getColumn(model.curseForgeColumn).setCellRenderer(cfRenderer);
+        cm.getColumn(model.modrinthColumn).setCellRenderer(mrRenderer);
+        cm.getColumn(model.curseForgeColumn).setCellEditor(new IconButtonEditor(this, false));
+        cm.getColumn(model.modrinthColumn).setCellEditor(new IconButtonEditor(this, true));
 
-        int startActionCol = (type == ModListDiffDialog.SectionType.UPDATED ? 5 : 4);
+        int startActionCol = model.actionStartColumn;
         int colIdx = startActionCol;
-        switch (type) {
-            case ADDED:
-                actionColumns.put(colIdx, ModListDiffDialog.SectionAction.DISABLE);
-                colIdx++;
-                actionColumns.put(colIdx, ModListDiffDialog.SectionAction.REMOVE);
-                colIdx++;
-                actionColumns.put(colIdx, ModListDiffDialog.SectionAction.SHOW_FOLDER);
-                break;
-            case UPDATED:
-                cm.getColumn(colIdx).setPreferredWidth(140); // revert action
-                actionColumns.put(colIdx, ModListDiffDialog.SectionAction.REVERT);
-                actionColumns.put(colIdx + 1, ModListDiffDialog.SectionAction.DISABLE);
-                actionColumns.put(colIdx + 2, ModListDiffDialog.SectionAction.REMOVE);
-                actionColumns.put(colIdx + 3, ModListDiffDialog.SectionAction.SHOW_FOLDER);
-                break;
-            case REMOVED:
-                actionColumns.put(colIdx, ModListDiffDialog.SectionAction.RESTORE);
-                break;
+        if (editableComparison) {
+            switch (type) {
+                case ADDED:
+                    actionColumns.put(colIdx, ModListDiffDialog.SectionAction.DISABLE);
+                    colIdx++;
+                    actionColumns.put(colIdx, ModListDiffDialog.SectionAction.REMOVE);
+                    colIdx++;
+                    actionColumns.put(colIdx, ModListDiffDialog.SectionAction.SHOW_FOLDER);
+                    break;
+                case UPDATED:
+                    cm.getColumn(colIdx).setPreferredWidth(140); // revert action
+                    actionColumns.put(colIdx, ModListDiffDialog.SectionAction.REVERT);
+                    actionColumns.put(colIdx + 1, ModListDiffDialog.SectionAction.DISABLE);
+                    actionColumns.put(colIdx + 2, ModListDiffDialog.SectionAction.REMOVE);
+                    actionColumns.put(colIdx + 3, ModListDiffDialog.SectionAction.SHOW_FOLDER);
+                    break;
+                case REMOVED:
+                    actionColumns.put(colIdx, ModListDiffDialog.SectionAction.RESTORE);
+                    break;
+            }
         }
 
         for (int i = startActionCol; i < model.getColumnCount(); i++) {
@@ -374,7 +376,9 @@ class SectionPanel {
                 if (e.selected) selected++;
             }
         }
-        master.setSelected(selected == total && total > 0);
+        if (editableComparison) {
+            master.setSelected(selected == total && total > 0);
+        }
         String name;
         switch (type) {
             case ADDED:
@@ -431,6 +435,10 @@ class SectionPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if (!dialog.isDialogOpen()) {
+                fireEditingCanceled();
+                return;
+            }
             DiffEntry entry = panel.entries.get(row);
             ModListDiffDialog.SectionAction effective = action;
             if (action == ModListDiffDialog.SectionAction.DISABLE && dialog.isDisabledEntry(entry)) {
@@ -464,6 +472,10 @@ class SectionPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if (!dialog.isDialogOpen()) {
+                fireEditingCanceled();
+                return;
+            }
             DiffEntry entry = panel.entries.get(row);
             if (modrinth) {
                 dialog.openModrinthProject(entry);
@@ -486,7 +498,8 @@ class SectionPanel {
             SectionPanel panel = (SectionPanel) table.getClientProperty("sectionPanel");
             if (panel != null && table.getRowCount() > 0) {
                 DiffEntry entry = panel.entries.get(table.convertRowIndexToModel(row));
-                ModListDiffDialog.SectionAction action = panel.actionColumns.get(column);
+                int modelColumn = table.convertColumnIndexToModel(column);
+                ModListDiffDialog.SectionAction action = panel.actionColumns.get(modelColumn);
                 setEnabled(dialog.isActionEnabled(entry, action));
             } else {
                 setEnabled(false);
@@ -579,32 +592,53 @@ class SectionPanel {
 
     private class Model extends AbstractTableModel {
         private final String[] columns;
+        private final int selectionColumn;
+        private final int fileColumn;
+        private final int previousFileColumn;
+        private final int curseForgeColumn;
+        private final int modrinthColumn;
+        private final int actionStartColumn;
 
         Model() {
             List<String> cols = new ArrayList<String>();
-            cols.add("");
+            int nextColumn = 0;
+            if (editableComparison) {
+                selectionColumn = nextColumn++;
+                cols.add("");
+            } else {
+                selectionColumn = -1;
+            }
+            fileColumn = nextColumn++;
             cols.add(fileColumnLabel);
             boolean updated = type == ModListDiffDialog.SectionType.UPDATED;
             if (updated) {
+                previousFileColumn = nextColumn++;
                 cols.add(LanguageProvider.get("gui.modlist_diff.updated_from"));
+            } else {
+                previousFileColumn = -1;
             }
+            curseForgeColumn = nextColumn++;
             cols.add("CF");
+            modrinthColumn = nextColumn++;
             cols.add("MR");
-            switch (type) {
-                case ADDED:
-                    cols.add(LanguageProvider.get("gui.files_remover.disable"));
-                    cols.add(LanguageProvider.get("gui.files_remover.remove"));
-                    cols.add(LanguageProvider.get("gui.show_in_explorer_button"));
-                    break;
-                case UPDATED:
-                    cols.add(LanguageProvider.get("gui.modlist_diff.actions.revert"));
-                    cols.add(LanguageProvider.get("gui.files_remover.disable"));
-                    cols.add(LanguageProvider.get("gui.files_remover.remove"));
-                    cols.add(LanguageProvider.get("gui.show_in_explorer_button"));
-                    break;
-                case REMOVED:
-                    cols.add(LanguageProvider.get("gui.modlist_diff.actions.restore"));
-                    break;
+            actionStartColumn = nextColumn;
+            if (editableComparison) {
+                switch (type) {
+                    case ADDED:
+                        cols.add(LanguageProvider.get("gui.files_remover.disable"));
+                        cols.add(LanguageProvider.get("gui.files_remover.remove"));
+                        cols.add(LanguageProvider.get("gui.show_in_explorer_button"));
+                        break;
+                    case UPDATED:
+                        cols.add(LanguageProvider.get("gui.modlist_diff.actions.revert"));
+                        cols.add(LanguageProvider.get("gui.files_remover.disable"));
+                        cols.add(LanguageProvider.get("gui.files_remover.remove"));
+                        cols.add(LanguageProvider.get("gui.show_in_explorer_button"));
+                        break;
+                    case REMOVED:
+                        cols.add(LanguageProvider.get("gui.modlist_diff.actions.restore"));
+                        break;
+                }
             }
             columns = cols.toArray(new String[0]);
         }
@@ -626,54 +660,42 @@ class SectionPanel {
 
         @Override
         public Class<?> getColumnClass(int columnIndex) {
-            return columnIndex == 0 ? Boolean.class : Object.class;
+            return columnIndex == selectionColumn ? Boolean.class : Object.class;
         }
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             DiffEntry entry = entries.get(rowIndex);
-            if (!dialog.isEntryActive(entry)) return false;
-            if (columnIndex == 0) return true;
-            boolean updated = type == ModListDiffDialog.SectionType.UPDATED;
-            int cfCol = updated ? 3 : 2;
-            int mrCol = updated ? 4 : 3;
-            if (updated && columnIndex == 2) return false; // updated from
-            if (columnIndex == cfCol) return entry.hasAnyCurseMatch();
-            if (columnIndex == mrCol) return entry.hasAnyModrinthMatch();
+            if (!dialog.isDialogOpen() || !dialog.isEntryActive(entry)) return false;
+            if (columnIndex == selectionColumn) return editableComparison;
+            if (columnIndex == curseForgeColumn) return entry.hasAnyCurseMatch();
+            if (columnIndex == modrinthColumn) return entry.hasAnyModrinthMatch();
             ModListDiffDialog.SectionAction action = actionColumns.get(columnIndex);
             if (action != null) {
                 return dialog.isActionEnabled(entry, action);
             }
-            return true;
+            return false;
         }
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             DiffEntry entry = entries.get(rowIndex);
-            switch (columnIndex) {
-                case 0:
-                    return entry.selected && !entry.resolved;
-                case 1:
-                    return entry.primaryDisplayText();
-                case 2:
-                    if (type == ModListDiffDialog.SectionType.UPDATED) {
-                        return entry.savedDisplayText();
-                    }
-                    return "";
-                case 3:
-                    return "";
-                default:
-                    ModListDiffDialog.SectionAction action = actionColumns.get(columnIndex);
-                    if (action != null) {
-                        return dialog.getActionLabel(entry, action, columns[columnIndex]);
-                    }
-                    return columns[columnIndex];
+            if (columnIndex == selectionColumn) {
+                return entry.selected && !entry.resolved;
             }
+            if (columnIndex == fileColumn) return entry.primaryDisplayText();
+            if (columnIndex == previousFileColumn) return entry.savedDisplayText();
+            if (columnIndex == curseForgeColumn || columnIndex == modrinthColumn) return "";
+            ModListDiffDialog.SectionAction action = actionColumns.get(columnIndex);
+            if (action != null) {
+                return dialog.getActionLabel(entry, action, columns[columnIndex]);
+            }
+            return "";
         }
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            if (columnIndex == 0) {
+            if (editableComparison && columnIndex == selectionColumn && dialog.isDialogOpen()) {
                 entries.get(rowIndex).selected = (Boolean) aValue;
                 fireTableRowsUpdated(rowIndex, rowIndex);
             }

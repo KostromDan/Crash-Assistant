@@ -8,8 +8,10 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class Mod {
@@ -106,6 +108,28 @@ public class Mod {
      */
     @NoJexl
     public static void writeModlistTxt(Path modListTxtPath, Collection<Mod> mods) throws IOException {
+        Path absoluteTarget = modListTxtPath.toAbsolutePath();
+        Path parent = absoluteTarget.getParent();
+        if (parent == null) {
+            throw new IOException("modlist.txt has no parent directory: " + modListTxtPath);
+        }
+        Files.createDirectories(parent);
+        Path temporary = Files.createTempFile(parent, ".modlist-", ".tmp");
+        try {
+            writeModlistTxtDirect(temporary, mods);
+            try {
+                Files.move(temporary, absoluteTarget,
+                        StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporary, absoluteTarget, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
+    }
+
+    private static void writeModlistTxtDirect(Path modListTxtPath, Collection<Mod> mods) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(modListTxtPath, StandardCharsets.UTF_8)) {
             writer.write("Mods count: " + mods.size() + "\n \n");
 

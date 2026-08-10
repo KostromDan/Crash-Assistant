@@ -15,6 +15,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.info.CrashAssistantInfo
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryManager;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
@@ -147,6 +148,12 @@ public class CrashAssistantApp {
                 }
             }
         }
+
+        if (customLatestLogPath != null) {
+            ModListUtils.MODS_FOLDER = Paths.get(customLatestLogPath).getParent().getParent()
+                    .resolve("mods").resolve("fabric-" + PlatformHelp.minecraftVersion);
+            LOGGER.info("ModListUtils.MODS_FOLDER: {}", ModListUtils.MODS_FOLDER);
+        }
         LOGGER.info("Boot.getSerialisedGPUs():\n{}", Boot.getSerialisedGPUs());
 
         LOGGER.info("os.name: {}", PlatformHelp.OS);
@@ -177,6 +184,8 @@ public class CrashAssistantApp {
 
         FileUtils.removeTmpFiles(localFolder);
 
+        ModListHistoryManager.initialize(Boot.parentStarted);
+
         WinEventCleaner.cleanOldWinEventFiles();
 
         HsErrHelper.removeHsErrLog(Boot.parentPID);
@@ -193,6 +202,7 @@ public class CrashAssistantApp {
 
         while (true) {
             try {
+                ModListHistoryManager.refreshMilestoneSignals(Boot.parentPID);
                 if (Boot.parentStarted == -1 || Boot.parentStarted != ProcessHelper.getProcessStartTime(Boot.parentPID)) {
                     LOGGER.info("PID \"{}\" is not alive or reused by another process. Minecraft JVM appears to have stopped.", Boot.parentPID);
                     onMinecraftFinished();
@@ -286,6 +296,8 @@ public class CrashAssistantApp {
     private static void onMinecraftFinished() {
         GUIStartTime = Instant.now().toEpochMilli();
 
+        ModListHistoryManager.refreshMilestoneSignals(Boot.parentPID);
+
         UUIDUtils.startCheck();
 
         new Thread(LanguageProvider::updateLang).start(); // Init lang async.
@@ -293,11 +305,6 @@ public class CrashAssistantApp {
         LOGGER.info("System used RAM after Minecraft process finish moment: {}", formatMemorySize(getSystemUsedMemoryBytes()));
         LOGGER.info("System used Swap Space after Minecraft process finish moment: {}", formatMemorySize(getSystemUsedSwapBytes()));
         LOGGER.info("System free Disk ({}) Space after Minecraft process finish moment: {}", getDiskName(), formatMemorySize(getDiskFreeSpaceBytes()));
-
-        if (customLatestLogPath != null) {
-            ModListUtils.MODS_FOLDER = Paths.get(customLatestLogPath).getParent().getParent().resolve("mods").resolve("fabric-" + PlatformHelp.minecraftVersion);
-            LOGGER.info("ModListUtils.MODS_FOLDER: {}", ModListUtils.MODS_FOLDER);
-        }
 
         LogsList.addIfExistsAndModified(new Log(LogType.LOG, customLatestLogPath == null ? Paths.get("logs", "latest.log") : Paths.get(customLatestLogPath)));
         LogsList.addIfExistsAndModified(new Log(LogType.DEBUG_LOG, Paths.get("logs", "debug.log")));
@@ -451,6 +458,7 @@ public class CrashAssistantApp {
         if (emergencySaveFired) crashed = true;
         LOGGER.info("emergencySave() function of Minecraft fired: {}", emergencySaveFired);
 
+        boolean crashEvidenceBeforeWindowSuppression = crashed;
         if (preventCrashAssistantWindow) crashed = false;
 
         LOGGER.info("isModpackCreator: {}", ModListDiff.isModpackCreator());
@@ -458,7 +466,7 @@ public class CrashAssistantApp {
         LOGGER.info("helpLink: {}", PlatformHelp.getActualHelpLink());
 
 
-        startLocatingTerminatedProcesses();
+        startLocatingTerminatedProcesses(!crashEvidenceBeforeWindowSuppression);
 
         if (crashed) {
             if (!crashed_with_report) {
@@ -475,6 +483,7 @@ public class CrashAssistantApp {
     }
 
     private static void onMinecraftCrashed() {
+        ModListHistoryManager.markCrashAssistantOpened();
         startApp();
     }
 
@@ -586,7 +595,7 @@ public class CrashAssistantApp {
         }
     }
 
-    private static void startLocatingTerminatedProcesses() {
+    private static void startLocatingTerminatedProcesses(final boolean peacefulInitialOutcome) {
         long startTime = System.currentTimeMillis();
         terminatedProcessesLocationEndTime = startTime + TERMINATED_PROCESSES_LOCATION_DELAY_MS;
         terminatedProcessesLocationFinished = false;
@@ -603,6 +612,8 @@ public class CrashAssistantApp {
         new Thread(() -> {
             boolean completed = false;
             boolean lateLogsProcessed = true;
+            boolean crashEvidenceFound = false;
+            boolean terminatedProcessSearchFinished = false;
             try {
                 long hsErrRemainingDelay = startTime + LATE_HS_ERR_LOCATION_DELAY_MS - System.currentTimeMillis();
                 if (hsErrRemainingDelay > 0) {
@@ -610,10 +621,18 @@ public class CrashAssistantApp {
                 }
 
                 boolean hsErrAdded = locateAndAddHsErr();
+                crashEvidenceFound = hsErrAdded;
                 if (hsErrAdded) {
                     LOGGER.info("Added hs_err log later.");
-                    waitGuiInitialisationFinished();
-                    lateLogsProcessed = callUpdateLogsListInGUI();
+                    if (!GUIStartedLaunching) {
+                        // The fatal-error file appeared after the initial scan.
+                        // Start the app now; the log is already in LogsList and
+                        // will be present during initial GUI construction.
+                        onMinecraftCrashed();
+                    } else {
+                        waitGuiInitialisationFinished();
+                        lateLogsProcessed = callUpdateLogsListInGUI();
+                    }
                 }
 
                 Path terminatedProcessesPath;
@@ -630,6 +649,8 @@ public class CrashAssistantApp {
                     }
                     winEventAdded = true;
                 }
+                crashEvidenceFound = crashEvidenceFound || winEventAdded;
+                terminatedProcessSearchFinished = true;
 
                 if (winEventAdded) {
                     if (!GUIStartedLaunching) {
@@ -645,6 +666,12 @@ public class CrashAssistantApp {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } finally {
+                if (peacefulInitialOutcome
+                        && terminatedProcessSearchFinished
+                        && !crashEvidenceFound
+                        && !GUIStartedLaunching) {
+                    ModListHistoryManager.markClosedWithoutCrash();
+                }
                 terminatedProcessesLocationFinished = completed;
                 notifyUploadReadinessChanged();
             }

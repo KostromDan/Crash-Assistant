@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ModListDiff {
+    private final LinkedHashSet<Mod> savedMods;
     private final LinkedHashSet<Mod> currentMods;
     private final LinkedHashSet<Mod> addedMods;
     private final LinkedHashSet<Mod> removedMods;
@@ -15,22 +16,23 @@ public class ModListDiff {
     private static String filePrefix = null;
 
     public ModListDiff(LinkedHashSet<Mod> saved, LinkedHashSet<Mod> current) {
-        currentMods = current;
+        savedMods = saved == null ? new LinkedHashSet<Mod>() : new LinkedHashSet<Mod>(saved);
+        currentMods = current == null ? new LinkedHashSet<Mod>() : new LinkedHashSet<Mod>(current);
 
         // Added mods: present in current but not in saved
-        addedMods = current.stream()
-                .filter(mod -> !saved.contains(mod))
+        addedMods = currentMods.stream()
+                .filter(mod -> !savedMods.contains(mod))
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         // Removed mods: present in saved but not in current
-        removedMods = saved.stream()
-                .filter(mod -> !current.contains(mod))
+        removedMods = savedMods.stream()
+                .filter(mod -> !currentMods.contains(mod))
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
         updatedMods = new LinkedHashSet<>();
 
         LinkedHashMap<String, UpdatedPair> updatedPairCandidates = new LinkedHashMap<>();
 
-        for (Mod mod : saved) {
+        for (Mod mod : savedMods) {
             if (mod.getModId() == null) continue;
             updatedPairCandidates
                     .computeIfAbsent(mod.getModId(), k -> new UpdatedPair(new LinkedHashSet<>(), new LinkedHashSet<>()))
@@ -38,7 +40,7 @@ public class ModListDiff {
                     .add(mod);
         }
 
-        for (Mod mod : current) {
+        for (Mod mod : currentMods) {
             if (mod.getModId() == null) continue;
             updatedPairCandidates
                     .computeIfAbsent(mod.getModId(), k -> new UpdatedPair(new LinkedHashSet<>(), new LinkedHashSet<>()))
@@ -62,7 +64,11 @@ public class ModListDiff {
     }
 
     public LinkedHashSet<Mod> getCurrentMods() {
-        return currentMods;
+        return new LinkedHashSet<Mod>(currentMods);
+    }
+
+    public LinkedHashSet<Mod> getSavedMods() {
+        return new LinkedHashSet<Mod>(savedMods);
     }
 
     public LinkedHashSet<Mod> getAddedMods() {
@@ -118,12 +124,25 @@ public class ModListDiff {
     }
 
     public ModListDiffStringBuilder generateDiffMsg(boolean forMsg) {
+        return generateDiffMsg(forMsg, getFirstString(forMsg, false, null), true);
+    }
+
+    /**
+     * Generates the same diff body for an explicitly selected pair of snapshots.
+     * The caller supplies the header because historical comparisons are not tied
+     * to the global modpack-creator state.
+     */
+    public ModListDiffStringBuilder generateDiffMsg(boolean forMsg, String header) {
+        return generateDiffMsg(forMsg, header, false);
+    }
+
+    private ModListDiffStringBuilder generateDiffMsg(boolean forMsg, String header, boolean legacyFirstLaunchHandling) {
         Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
         ModListDiffStringBuilder sb = new ModListDiffStringBuilder();
         if (!CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) return sb;
 
-        sb.append(getFirstString(forMsg, false, null));
-        if (isModpackCreator()) {
+        sb.append(header == null ? "" : header);
+        if (legacyFirstLaunchHandling && isModpackCreator()) {
             if (ModListUtils.getSavedModList().isEmpty() && CrashAssistantConfig.getBoolean("modpack_modlist.auto_update")) {
                 sb.append(langFunc.apply("msg.modlist_first_launch"), "blue");
                 return sb;

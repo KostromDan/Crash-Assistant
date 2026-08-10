@@ -135,7 +135,12 @@ public class ModListUtils {
 
     @NoJexl
     public static void saveCurrentModList() {
+        if (PlatformHelp.isLinkDefault()) {
+            LOGGER.info("Skipping modlist.json update in an ordinary installation; launch snapshots are stored in modlist_history.");
+            return;
+        }
         try {
+            Files.createDirectories(JSON_FILE.getParent());
             try (FileWriter writer = new FileWriter(JSON_FILE.toFile())) {
                 String jsonOutput = Mod.GSON.toJson(getCurrentModList(false), Mod.TYPE);
                 writer.write(jsonOutput);
@@ -147,12 +152,43 @@ public class ModListUtils {
         }
     }
 
+    /**
+     * Applies the long-standing modpack-baseline auto-update policy when a
+     * Quick Play / Direct Connect launch reaches a world without visiting the
+     * title screen. Ordinary installations only use launch history and never
+     * write {@code modlist.json}.
+     */
+    @NoJexl
+    public static synchronized void autoUpdateModpackModListAfterDirectJoin() {
+        if (PlatformHelp.isLinkDefault()
+                || !CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
+            return;
+        }
+        String username = getCurrentUsername();
+        if (username == null || username.isEmpty()) {
+            LOGGER.warn("Cannot auto-update modlist.json after Direct Connect: current username is unavailable.");
+            return;
+        }
+        if (CrashAssistantConfig.getModpackCreators().isEmpty()) {
+            CrashAssistantConfig.addModpackCreator(username);
+        }
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update")
+                && CrashAssistantConfig.getModpackCreators().contains(username)) {
+            saveCurrentModList();
+        }
+    }
+
     public static String getCurrentUsername() {
         if (currentUsername.isEmpty()) {
             Optional<String> x = ProcessSignalIO.getInfo("username");
             x.ifPresent(s -> currentUsername = s);
         }
         return currentUsername;
+    }
+
+    @NoJexl
+    public static Path getSavedModListPath() {
+        return JSON_FILE;
     }
 
     @NoJexl

@@ -98,4 +98,24 @@ tasks.register('startupDocumentationTest', JavaExec) {
     workingDir testWorkDir
 }
 
-check.dependsOn startupDocumentationTest
+tasks.register('modListTxtParserTest', JavaExec) {
+    group = 'verification'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListTxtParserTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+tasks.register('modListHistoryTest', JavaExec) {
+    group = 'verification'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryStoreTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+check.dependsOn startupDocumentationTest, modListTxtParserTest, modListHistoryTest

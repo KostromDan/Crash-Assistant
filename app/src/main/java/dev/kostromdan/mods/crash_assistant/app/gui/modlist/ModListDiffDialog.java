@@ -5,7 +5,6 @@ import dev.kostromdan.mods.crash_assistant.app.gui.ControlPanel;
 import dev.kostromdan.mods.crash_assistant.app.gui.CrashAssistantGUI;
 import dev.kostromdan.mods.crash_assistant.app.utils.ClipboardUtils;
 import dev.kostromdan.mods.crash_assistant.app.utils.LinksHelper;
-import dev.kostromdan.mods.crash_assistant.app.utils.SwingEDT;
 import dev.kostromdan.mods.crash_assistant.app.utils.mods_downloader.ModPlatformLookupService;
 import dev.kostromdan.mods.crash_assistant.app.utils.mods_downloader.api.CurseForge;
 import dev.kostromdan.mods.crash_assistant.app.utils.mods_downloader.api.Modrinth;
@@ -27,21 +26,25 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.List;
-import java.util.Timer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Modern ModList Diff dialog with collapsible sections and platform-aware actions.
  */
 public class ModListDiffDialog extends JFrame {
-    private static ModListDiffDialog INSTANCE;
+    private static final Object DIALOG_LOCK = new Object();
+    private static ModListDiffDialog activeDialog;
+    private static boolean openingDialog;
     private Window parentWindow;
+    private boolean parentRestored;
     private static final ImageIcon CF_ICON = loadIcon("/assets/cf_logo.png");
     private static final ImageIcon MR_ICON = loadIcon("/assets/mr_logo.png");
     private final List<JButton> footerButtons = new ArrayList<JButton>();
@@ -65,6 +68,7 @@ public class ModListDiffDialog extends JFrame {
     private volatile java.io.InputStream activeDownloadStream = null;
     private volatile java.net.HttpURLConnection activeDownloadConnection = null;
     private volatile Thread activeActionThread = null;
+    private volatile ManualDownloadDialog activeManualDownloadDialog = null;
 
     private volatile boolean cfReady = false;
     private volatile boolean mrReady = false;
@@ -87,56 +91,92 @@ public class ModListDiffDialog extends JFrame {
         t.setDaemon(true);
         return t;
     });
+    private final ExecutorService lookupExecutor = Executors.newFixedThreadPool(2, r -> {
+        Thread t = new Thread(r, "modlist-lookup");
+        t.setDaemon(true);
+        return t;
+    });
     private JButton disableToggleButton;
+    private final ModListComparison comparison;
+    private final ModListDiff diff;
+    private final AtomicBoolean closing = new AtomicBoolean(false);
 
+    /** @deprecated Use an explicit {@link ModListComparison} when possible. */
+    @Deprecated
     public static void showDialog(Window parent) {
-        boolean hasSavedModlist = !ModListUtils.getSavedModList().isEmpty();
-        if (!CrashAssistantApp.gameLaunchedSuccessfully && !hasSavedModlist) {
-            JOptionPane.showMessageDialog(
-                    parent,
-                    LanguageProvider.get("gui.modlist_diff.first_launch_warning"),
-                    LanguageProvider.get("gui.modlist_diff_dialog_name"),
-                    JOptionPane.WARNING_MESSAGE
-            );
+        ControlPanel.showModListDiff(parent);
+    }
+
+    /** Opens a fresh dialog for the explicitly selected pair of snapshots. */
+    public static void showDialog(Window parent, ModListComparison comparison) {
+        showDialog(parent, comparison,
+                comparison != null && comparison.isModpackBaselineComparison());
+    }
+
+    private static void showDialog(Window parent, ModListComparison comparison, boolean showLegacyWarning) {
+        if (comparison == null) {
+            throw new IllegalArgumentException("comparison must not be null");
+        }
+        if (!SwingUtilities.isEventDispatchThread()) {
+            final Window requestedParent = parent;
+            SwingUtilities.invokeLater(() -> showDialog(requestedParent, comparison, showLegacyWarning));
             return;
         }
 
-        LinkedHashSet<Mod> savedMods = ModListUtils.getSavedModList();
-        if (savedMods.size() >= 3) {
-            boolean anyHasHash = false;
-            for (Mod mod : savedMods) {
-                if (mod.getCurseForgeHash() != null || mod.getModrinthHash() != null) {
-                    anyHasHash = true;
-                    break;
+        synchronized (DIALOG_LOCK) {
+            if (activeDialog != null && !activeDialog.closing.get()) {
+                activeDialog.setState(Frame.NORMAL);
+                activeDialog.toFront();
+                activeDialog.requestFocus();
+                return;
+            }
+            // Modal warning dialogs run a nested EDT event loop. Reserve the slot before showing one.
+            if (openingDialog) return;
+            openingDialog = true;
+        }
+
+        try {
+            LinkedHashSet<Mod> savedMods = comparison.getLeftMods();
+            if (showLegacyWarning && savedMods.size() >= 3) {
+                boolean anyHasHash = false;
+                for (Mod mod : savedMods) {
+                    if (mod.getCurseForgeHash() != null || mod.getModrinthHash() != null) {
+                        anyHasHash = true;
+                        break;
+                    }
+                }
+                if (!anyHasHash) {
+                    JOptionPane.showMessageDialog(
+                            parent,
+                            LanguageProvider.get("gui.modlist_diff.legacy_warning"),
+                            LanguageProvider.get("gui.modlist_diff_dialog_name"),
+                            JOptionPane.WARNING_MESSAGE
+                    );
                 }
             }
-            if (!anyHasHash) {
-                JOptionPane.showMessageDialog(
-                        parent,
-                        LanguageProvider.get("gui.modlist_diff.legacy_warning"),
-                        LanguageProvider.get("gui.modlist_diff_dialog_name"),
-                        JOptionPane.WARNING_MESSAGE
-                );
+
+            Window blockParent = parent;
+            if (blockParent == null) blockParent = CrashAssistantGUI.getFrame();
+
+            ModListDiffDialog dialog = new ModListDiffDialog(blockParent, comparison);
+            synchronized (DIALOG_LOCK) {
+                activeDialog = dialog;
+            }
+            dialog.setLocationRelativeTo(parent);
+            dialog.setVisible(true);
+            dialog.toFront();
+        } finally {
+            synchronized (DIALOG_LOCK) {
+                openingDialog = false;
             }
         }
-
-        Window blockParent = parent;
-        if (blockParent == null) blockParent = CrashAssistantGUI.getFrame();
-
-        if (INSTANCE == null) {
-            INSTANCE = new ModListDiffDialog(blockParent);
-        } else {
-            INSTANCE.parentWindow = blockParent;
-        }
-        INSTANCE.setLocationRelativeTo(parent);
-        INSTANCE.setVisible(true);
-        INSTANCE.toFront();
     }
 
     @Override
     public void setVisible(boolean b) {
         JFrame mainFrame = CrashAssistantGUI.getFrame();
         if (b) {
+            parentRestored = false;
             if (parentWindow != null && parentWindow != mainFrame) {
                 parentWindow.setVisible(false);
             }
@@ -146,19 +186,94 @@ public class ModListDiffDialog extends JFrame {
             super.setVisible(true);
         } else {
             super.setVisible(false);
-            if (mainFrame != null) {
-                mainFrame.setEnabled(true);
+            if (!closing.get()) {
+                dispose();
             }
-            if (parentWindow != null && parentWindow != mainFrame) {
-                SwingUtilities.invokeLater(() -> {
-                    parentWindow.setVisible(true);
-                    parentWindow.toFront();
-                });
-            } else if (mainFrame != null) {
-                SwingUtilities.invokeLater(() -> {
-                    mainFrame.toFront();
-                });
+        }
+    }
+
+    @Override
+    public void dispose() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(this::dispose);
+            return;
+        }
+        if (!closing.compareAndSet(false, true)) return;
+        setEnabled(false);
+        cancelAllRequested = true;
+        cancelCurrentRequested = true;
+        actionExecutor.getQueue().clear();
+        lookupExecutor.shutdownNow();
+        actionExecutor.shutdownNow();
+        instantActionExecutor.shutdownNow();
+        interruptActiveActionThread(null);
+        closeManualDownloadDialog(activeManualDownloadDialog);
+        activeManualDownloadDialog = null;
+
+        ModListDiffDialog.super.dispose();
+        synchronized (DIALOG_LOCK) {
+            if (activeDialog == this) {
+                activeDialog = null;
             }
+        }
+        restoreParentWindow();
+
+        Thread cleanup = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                abortRunningDownload(null);
+                awaitExecutorShutdown(lookupExecutor);
+                awaitExecutorShutdown(actionExecutor);
+                awaitExecutorShutdown(instantActionExecutor);
+            }
+        }, "modlist-dialog-close");
+        cleanup.setDaemon(true);
+        cleanup.start();
+    }
+
+    private static void awaitExecutorShutdown(ExecutorService executor) {
+        try {
+            executor.awaitTermination(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void restoreParentWindow() {
+        if (parentRestored) return;
+        parentRestored = true;
+        JFrame mainFrame = CrashAssistantGUI.getFrame();
+        if (mainFrame != null) {
+            mainFrame.setEnabled(true);
+        }
+        if (parentWindow != null && parentWindow != mainFrame) {
+            parentWindow.setVisible(true);
+            parentWindow.toFront();
+        } else if (mainFrame != null) {
+            mainFrame.toFront();
+        }
+    }
+
+    private void runOnEdtIfOpen(Runnable action) {
+        if (closing.get()) return;
+        if (SwingUtilities.isEventDispatchThread()) {
+            if (!closing.get()) action.run();
+            return;
+        }
+        SwingUtilities.invokeLater(() -> {
+            if (!closing.get()) action.run();
+        });
+    }
+
+    private boolean submitIfOpen(ExecutorService executor, Runnable action) {
+        if (closing.get() || executor.isShutdown()) return false;
+        try {
+            executor.submit(() -> {
+                if (!closing.get()) action.run();
+            });
+            return true;
+        } catch (RejectedExecutionException ignored) {
+            return false;
         }
     }
 
@@ -178,13 +293,14 @@ public class ModListDiffDialog extends JFrame {
     private final JLabel statusLabel = new JLabel(" ");
     private final JButton applyButton = new JButton();
 
-    private ModListDiffDialog(Window parent) {
+    private ModListDiffDialog(Window parent, ModListComparison comparison) {
         super(LanguageProvider.get("gui.modlist_diff_dialog_name"));
         this.parentWindow = parent;
+        this.comparison = comparison;
+        this.diff = comparison.createDiff();
         CrashAssistantGUI.setUpIcon(this);
-        setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-        ModListDiff diff = ModListDiff.getDiff(true);
         populateEntries(diff);
 
         lookupResult = new ModPlatformLookupService.LookupResult(Collections.<Long, CurseForge.FingerprintMatch>emptyMap(),
@@ -197,6 +313,7 @@ public class ModListDiffDialog extends JFrame {
         Dimension packedSize = getSize();
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         int targetHeight = (int) (screen.height * 0.8);
+        int maximumWidth = Math.max(320, (int) (screen.width * 0.9));
 
         int width = packedSize.width;
         // If the content is taller than our target height, a vertical scrollbar will appear.
@@ -205,6 +322,7 @@ public class ModListDiffDialog extends JFrame {
             width += new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().width;
         }
 
+        width = Math.min(width, maximumWidth);
         setMinimumSize(new Dimension(width, 300));
         setSize(new Dimension(width, targetHeight));
     }
@@ -254,45 +372,42 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void startLookupAsync() {
-        new Thread(() -> {
-            ModPlatformLookupService lookupService = new ModPlatformLookupService();
-            Set<Long> cfFingerprints = collectFingerprints(true);
-            Set<String> mrFingerprints = collectHashFingerprints(true);
-            String fetchingLabelText = LanguageProvider.get("gui.modlist_diff.fetching_warning");
-            String fetchingText = SwingEDT.callAndWait(() -> {
-                JLabel fetchingLabel = new JLabel(fetchingLabelText);
-                fetchingLabel.setForeground(Color.GRAY);
-                return fetchingLabel.getText();
-            });
-            SwingUtilities.invokeLater(() -> statusLabel.setText(fetchingText));
+        final Set<Long> cfFingerprints = collectFingerprints(true);
+        final Set<String> mrFingerprints = collectHashFingerprints(true);
+        statusLabel.setText(LanguageProvider.get("gui.modlist_diff.fetching_warning"));
 
-            Runnable cfTask = () -> {
-                Map<Long, CurseForge.FingerprintMatch> cfResult = lookupCurseForge(lookupService, cfFingerprints);
-                SwingUtilities.invokeLater(() -> applyLookupUpdate(cfResult, Collections.<String, Modrinth.VersionFileInfo>emptyMap(), true, null));
-            };
-            Runnable mrTask = () -> {
-                Map<String, Modrinth.VersionFileInfo> mrResult = lookupModrinth(lookupService, mrFingerprints);
-                SwingUtilities.invokeLater(() -> applyLookupUpdate(Collections.<Long, CurseForge.FingerprintMatch>emptyMap(), mrResult, null, true));
-            };
-
-            Thread cfThread = new Thread(cfTask, "modlist-lookup-cf");
-            cfThread.setDaemon(true);
-            Thread mrThread = new Thread(mrTask, "modlist-lookup-mr");
-            mrThread.setDaemon(true);
-            cfThread.start();
-            mrThread.start();
-        }, "modlist-lookup").start();
+        submitIfOpen(lookupExecutor, () -> {
+            Map<Long, CurseForge.FingerprintMatch> cfResult = lookupCurseForge(
+                    new ModPlatformLookupService(), cfFingerprints);
+            runOnEdtIfOpen(() -> applyLookupUpdate(
+                    cfResult,
+                    Collections.<String, Modrinth.VersionFileInfo>emptyMap(),
+                    true,
+                    null));
+        });
+        submitIfOpen(lookupExecutor, () -> {
+            Map<String, Modrinth.VersionFileInfo> mrResult = lookupModrinth(
+                    new ModPlatformLookupService(), mrFingerprints);
+            runOnEdtIfOpen(() -> applyLookupUpdate(
+                    Collections.<Long, CurseForge.FingerprintMatch>emptyMap(),
+                    mrResult,
+                    null,
+                    true));
+        });
     }
 
     private Map<Long, CurseForge.FingerprintMatch> lookupCurseForge(ModPlatformLookupService lookupService,
                                                                     Set<Long> cfFingerprints) {
+        if (closing.get() || Thread.currentThread().isInterrupted()) {
+            return Collections.emptyMap();
+        }
         Map<Long, CurseForge.FingerprintMatch> cfMap = null;
         try {
             ModPlatformLookupService.LookupResult cfRes = lookupService.lookup(cfFingerprints, Collections.<String>emptySet());
             cfMap = cfRes != null ? cfRes.getCurseForgeMatches() : null;
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.warn("CurseForge lookup failed", e);
-            if (isConnectionIssue(e)) {
+            if (!closing.get() && !Thread.currentThread().isInterrupted() && isConnectionIssue(e)) {
                 try {
                     ModPlatformLookupService.LookupResult cfRes = lookupService.lookup(cfFingerprints, Collections.<String>emptySet());
                     cfMap = cfRes != null ? cfRes.getCurseForgeMatches() : null;
@@ -306,13 +421,16 @@ public class ModListDiffDialog extends JFrame {
 
     private Map<String, Modrinth.VersionFileInfo> lookupModrinth(ModPlatformLookupService lookupService,
                                                                  Set<String> mrFingerprints) {
+        if (closing.get() || Thread.currentThread().isInterrupted()) {
+            return Collections.emptyMap();
+        }
         Map<String, Modrinth.VersionFileInfo> mrMap = null;
         try {
             ModPlatformLookupService.LookupResult mrRes = lookupService.lookup(Collections.<Long>emptySet(), mrFingerprints);
             mrMap = mrRes != null ? mrRes.getModrinthMatches() : null;
         } catch (Exception e) {
             CrashAssistantApp.LOGGER.warn("Modrinth lookup failed", e);
-            if (isConnectionIssue(e)) {
+            if (!closing.get() && !Thread.currentThread().isInterrupted() && isConnectionIssue(e)) {
                 try {
                     ModPlatformLookupService.LookupResult mrRes = lookupService.lookup(Collections.<Long>emptySet(), mrFingerprints);
                     mrMap = mrRes != null ? mrRes.getModrinthMatches() : null;
@@ -328,6 +446,7 @@ public class ModListDiffDialog extends JFrame {
                                    Map<String, Modrinth.VersionFileInfo> mrMap,
                                    Boolean cfDone,
                                    Boolean mrDone) {
+        if (closing.get()) return;
         Map<Long, CurseForge.FingerprintMatch> newCf = new HashMap<Long, CurseForge.FingerprintMatch>(lookupResult.getCurseForgeMatches());
         Map<String, Modrinth.VersionFileInfo> newMr = new HashMap<String, Modrinth.VersionFileInfo>(lookupResult.getModrinthMatches());
         if (cfMap != null) newCf.putAll(cfMap);
@@ -371,9 +490,21 @@ public class ModListDiffDialog extends JFrame {
 
         JPanel header = new JPanel(new BorderLayout());
         header.setBorder(new EmptyBorder(12, 12, 10, 12));
-        JLabel title = new JLabel(ModListDiff.getFirstString(false, false, null));
+        JPanel titleBlock = new JPanel();
+        titleBlock.setLayout(new BoxLayout(titleBlock, BoxLayout.Y_AXIS));
+        JLabel title = new JLabel(comparison.getTitle());
         title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
-        header.add(title, BorderLayout.WEST);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        String comparisonDescription = getComparisonDescription();
+        JLabel subtitle = new JLabel(ellipsize(comparisonDescription, 110));
+        subtitle.setFont(subtitle.getFont().deriveFont(Font.PLAIN, 11f));
+        subtitle.setForeground(new Color(100, 100, 100));
+        subtitle.setToolTipText(comparisonDescription);
+        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        titleBlock.add(title);
+        titleBlock.add(Box.createVerticalStrut(2));
+        titleBlock.add(subtitle);
+        header.add(titleBlock, BorderLayout.WEST);
         add(header, BorderLayout.NORTH);
 
         JPanel sectionsContainer = new JPanel();
@@ -396,7 +527,7 @@ public class ModListDiffDialog extends JFrame {
 
         JScrollPane scrollPane = new JScrollPane(sectionsContainer);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.getViewport().setAlignmentY(0f);
         scrollPane.getViewport().setAlignmentX(0f);
         add(scrollPane, BorderLayout.CENTER);
@@ -411,20 +542,22 @@ public class ModListDiffDialog extends JFrame {
         copyDiff.addActionListener(e -> copyDiffWithFeedback(copyDiff));
         buttons.add(copyDiff);
         footerButtons.add(copyDiff);
-        disableToggleButton = new JButton(LanguageProvider.get("gui.files_remover.disable_selected"));
-        disableToggleButton.addActionListener(e -> {
-            if (allSelectedDisabled()) bulkApply(SectionAction.ENABLE);
-            else bulkApply(SectionAction.DISABLE);
-        });
-        buttons.add(disableToggleButton);
-        footerButtons.add(disableToggleButton);
-        JButton removeSelected = new JButton(LanguageProvider.get("gui.files_remover.remove_selected"));
-        removeSelected.addActionListener(e -> bulkApply(SectionAction.REMOVE));
-        buttons.add(removeSelected);
-        footerButtons.add(removeSelected);
-        updateApplyButtonLabel();
-        buttons.add(applyButton);
-        footerButtons.add(applyButton);
+        if (comparison.isCurrentInstallationEditable()) {
+            disableToggleButton = new JButton(LanguageProvider.get("gui.files_remover.disable_selected"));
+            disableToggleButton.addActionListener(e -> {
+                if (allSelectedDisabled()) bulkApply(SectionAction.ENABLE);
+                else bulkApply(SectionAction.DISABLE);
+            });
+            buttons.add(disableToggleButton);
+            footerButtons.add(disableToggleButton);
+            JButton removeSelected = new JButton(LanguageProvider.get("gui.files_remover.remove_selected"));
+            removeSelected.addActionListener(e -> bulkApply(SectionAction.REMOVE));
+            buttons.add(removeSelected);
+            footerButtons.add(removeSelected);
+            updateApplyButtonLabel();
+            buttons.add(applyButton);
+            footerButtons.add(applyButton);
+        }
         footer.add(buttons, BorderLayout.EAST);
 
         JPanel progressRow = new JPanel(new BorderLayout(6, 0));
@@ -452,11 +585,14 @@ public class ModListDiffDialog extends JFrame {
 
         add(bottomBar, BorderLayout.SOUTH);
 
-        applyButton.addActionListener(e -> performBulkActions());
+        if (comparison.isCurrentInstallationEditable()) {
+            applyButton.addActionListener(e -> performBulkActions());
+        }
         updateStatusLabel();
     }
 
     private void bulkApply(SectionAction action) {
+        if (closing.get()) return;
         List<DiffEntry> targets = new ArrayList<DiffEntry>();
         for (DiffEntry e : allEntries()) {
             if (!e.selected || e.resolved) continue;
@@ -487,7 +623,7 @@ public class ModListDiffDialog extends JFrame {
         }
         setAllActionButtonsEnabled(false);
         ExecutorService executor = executorFor(action);
-        executor.submit(() -> {
+        boolean submitted = submitIfOpen(executor, () -> {
             Thread actionThread = null;
             if (!isInstantAction(action)) {
                 actionThread = Thread.currentThread();
@@ -498,21 +634,21 @@ public class ModListDiffDialog extends JFrame {
                 clearInterruptFlag();
                 for (DiffEntry entry : targets) {
                     clearInterruptFlag(); // Ensure this iteration starts clean
-                    if (isCancelAllRequested()) break;
+                    if (isCancelAllRequested() || closing.get()) break;
 
                     currentActionEntry = entry;
                     startAction(entry, action);
-                    SwingUtilities.invokeLater(() -> refreshTables());
+                    runOnEdtIfOpen(this::refreshTables);
 
                     boolean success = performAction(entry, action);
-
+                    if (closing.get()) break;
                     finishAction(entry, action, success);
                     clearSingleCancelFor(entry); // Just in case it wasn't cleared inside, though it should be
                     currentActionEntry = null;
 
                     if (isCancelAllRequested()) break;
                 }
-                SwingUtilities.invokeLater(() -> {
+                runOnEdtIfOpen(() -> {
                     refreshTables();
                     setAllActionButtonsEnabled(true);
                     updateStatusLabel();
@@ -526,9 +662,19 @@ public class ModListDiffDialog extends JFrame {
                 clearInterruptFlag();
             }
         });
+        if (!submitted && !closing.get()) {
+            setAllActionButtonsEnabled(true);
+        }
     }
 
     void updateStatusLabel() {
+        if (!comparison.isCurrentInstallationEditable()) {
+            statusLabel.setForeground(new Color(70, 70, 70));
+            statusLabel.setText(!cfReady && !mrReady
+                    ? LanguageProvider.get("gui.modlist_diff.fetching_warning")
+                    : " ");
+            return;
+        }
         int added = countSelected(addedEntries);
         int updated = countSelected(updatedEntries);
         int removed = countSelected(removedEntries);
@@ -546,20 +692,19 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void copyDiffWithFeedback(JButton button) {
-        ClipboardUtils.copy(ModListDiff.getDiff(true).generateDiffMsg(true).toText());
+        ClipboardUtils.copy(diff.generateDiffMsg(true, comparison.getTitle()).toText());
         String originalText = LanguageProvider.get("gui.modlist_diff.copy_diff");
         button.setText(LanguageProvider.get("gui.copied"));
         CrashAssistantGUI.highlightButton(button, ControlPanel.deserializeColor(CrashAssistantConfig.get("gui_customisation.blinking_button_success_color"), new Color(100, 255, 100)), 2600);
         button.setEnabled(false);
-        new Timer("copy-diff-feedback", true).schedule(new TimerTask() {
-            @Override
-            public void run() {
-                SwingUtilities.invokeLater(() -> {
-                    button.setText(originalText);
-                    button.setEnabled(true);
-                });
+        javax.swing.Timer feedbackTimer = new javax.swing.Timer(2800, e -> {
+            if (!closing.get()) {
+                button.setText(originalText);
+                button.setEnabled(true);
             }
-        }, 2800);
+        });
+        feedbackTimer.setRepeats(false);
+        feedbackTimer.start();
     }
 
     private int countSelected(List<DiffEntry> entries) {
@@ -571,6 +716,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void performBulkActions() {
+        if (closing.get()) return;
         List<DiffEntry> toRemove = selectedOf(addedEntries);
         List<DiffEntry> toRevert = selectedOf(updatedEntries);
         List<DiffEntry> toRestore = selectedOf(removedEntries);
@@ -604,28 +750,29 @@ public class ModListDiffDialog extends JFrame {
         for (DiffEntry entry : toRestore) {
             startAction(entry, SectionAction.RESTORE);
         }
-        SwingUtilities.invokeLater(() -> {
+        runOnEdtIfOpen(() -> {
             refreshTables();
             updateStatusLabel();
         });
 
-        actionExecutor.submit(() -> {
+        boolean submitted = submitIfOpen(actionExecutor, () -> {
             Thread actionThread = Thread.currentThread();
             activeActionThread = actionThread;
             try {
                 clearInterruptFlag();
                 for (DiffEntry entry : toRemove) {
                     clearInterruptFlag();
-                    if (isCancelAllRequested()) break;
+                    if (isCancelAllRequested() || closing.get()) break;
                     currentActionEntry = entry;
                     performAction(entry, SectionAction.REMOVE);
                     currentActionEntry = null;
                 }
                 for (DiffEntry entry : toRevert) {
                     clearInterruptFlag();
-                    if (isCancelAllRequested()) break;
+                    if (isCancelAllRequested() || closing.get()) break;
                     currentActionEntry = entry;
                     boolean success = performAction(entry, SectionAction.REVERT);
+                    if (closing.get()) break;
                     finishAction(entry, SectionAction.REVERT, success);
                     // CRITICAL: Ensure single cancel was consumed and cleared
                     clearSingleCancelFor(entry);
@@ -634,20 +781,21 @@ public class ModListDiffDialog extends JFrame {
                 }
                 for (DiffEntry entry : toRestore) {
                     clearInterruptFlag();
-                    if (isCancelAllRequested()) break;
+                    if (isCancelAllRequested() || closing.get()) break;
                     currentActionEntry = entry;
                     startAction(entry, SectionAction.RESTORE);
-                    SwingUtilities.invokeLater(() -> {
+                    runOnEdtIfOpen(() -> {
                         refreshTables();
                         updateStatusLabel();
                     });
                     boolean success = performAction(entry, SectionAction.RESTORE);
+                    if (closing.get()) break;
                     finishAction(entry, SectionAction.RESTORE, success);
                     clearSingleCancelFor(entry);
                     currentActionEntry = null;
                     if (isCancelAllRequested()) break;
                 }
-                SwingUtilities.invokeLater(() -> {
+                runOnEdtIfOpen(() -> {
                     refreshTables();
                     setAllActionButtonsEnabled(true);
                     updateStatusLabel();
@@ -661,6 +809,11 @@ public class ModListDiffDialog extends JFrame {
                 clearInterruptFlag();
             }
         });
+        if (!submitted && !closing.get()) {
+            resetQueuedRunningStatesAfterCancelAll();
+            setAllActionButtonsEnabled(true);
+            refreshTables();
+        }
     }
 
     private boolean isInstantAction(SectionAction action) {
@@ -675,6 +828,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     void runActionAsync(final DiffEntry entry, final SectionAction action) {
+        if (closing.get()) return;
         ControlPanel.stopMovingToTop = true;
 
         // Reset single cancel state for THIS specific new action
@@ -695,7 +849,7 @@ public class ModListDiffDialog extends JFrame {
         refreshTables();
         updateStatusLabel();
 
-        executorFor(action).submit(() -> {
+        boolean submitted = submitIfOpen(executorFor(action), () -> {
             Thread actionThread = null;
             if (!isInstantAction(action)) {
                 actionThread = Thread.currentThread();
@@ -704,7 +858,7 @@ public class ModListDiffDialog extends JFrame {
             try {
                 clearInterruptFlag();
                 boolean success = performAction(entry, action);
-                SwingUtilities.invokeLater(() -> {
+                runOnEdtIfOpen(() -> {
                     finishAction(entry, action, success);
                     refreshTables();
                     updateStatusLabel();
@@ -727,6 +881,11 @@ public class ModListDiffDialog extends JFrame {
                 clearInterruptFlag();
             }
         });
+        if (!submitted && !closing.get()) {
+            finishAction(entry, action, false);
+            refreshTables();
+            updateStatusLabel();
+        }
     }
 
     private List<DiffEntry> selectedOf(List<DiffEntry> entries) {
@@ -755,11 +914,13 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void startAction(DiffEntry entry, SectionAction action) {
+        if (closing.get()) return;
         if (action == SectionAction.REVERT) entry.revertState = ActionState.RUNNING;
         if (action == SectionAction.RESTORE) entry.restoreState = ActionState.RUNNING;
     }
 
     private void finishAction(DiffEntry entry, SectionAction action, boolean success) {
+        if (closing.get()) return;
         if (action == SectionAction.REVERT) entry.revertState = success ? ActionState.DONE : ActionState.IDLE;
         if (action == SectionAction.RESTORE) entry.restoreState = success ? ActionState.DONE : ActionState.IDLE;
         if (success) {
@@ -770,12 +931,13 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void requestCancelCurrentOperation() {
+        if (closing.get()) return;
         // Force cancel immediately regardless of what target the logic thinks is active.
         // We are single-threaded (mostly), so if the user clicks cancel, they mean "Stop everything now".
         cancelCurrentRequested = true;
 
         // Update UI immediately so the user gets feedback even if network clean up hangs
-        SwingUtilities.invokeLater(() -> {
+        runOnEdtIfOpen(() -> {
             progressLabel.setText(LanguageProvider.get("gui.modlist_diff.cancelling_current"));
             refreshTables();
         });
@@ -783,7 +945,7 @@ public class ModListDiffDialog extends JFrame {
         // Offload the blocking I/O (closing socket) to a background thread.
         // If the network is saturated, connection.disconnect() or stream.close() can block for seconds.
         // Doing this on the EDT freezes the GUI.
-        instantActionExecutor.submit(() -> {
+        submitIfOpen(instantActionExecutor, () -> {
             // Pass null to force abort any stream
             abortRunningDownload(null);
             interruptActiveActionThread(null);
@@ -791,6 +953,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void requestCancelAllOperations() {
+        if (closing.get()) return;
         cancelAllRequested = true;
 
         // Also trigger current cancel to stop active task immediately
@@ -798,7 +961,7 @@ public class ModListDiffDialog extends JFrame {
         cancelTargetEntry = null; // targets whatever is running
 
         // Update UI immediately
-        SwingUtilities.invokeLater(() -> {
+        runOnEdtIfOpen(() -> {
             cancelCurrentButton.setEnabled(false);
             cancelAllButton.setEnabled(false);
             progressLabel.setText(LanguageProvider.get("gui.modlist_diff.cancelling_all"));
@@ -806,13 +969,13 @@ public class ModListDiffDialog extends JFrame {
         });
 
         // Offload blocking cleanups
-        instantActionExecutor.submit(() -> {
+        submitIfOpen(instantActionExecutor, () -> {
             abortRunningDownload(null);
             interruptActiveActionThread(null);
 
             actionExecutor.getQueue().clear();
 
-            SwingUtilities.invokeLater(() -> {
+            runOnEdtIfOpen(() -> {
                 resetQueuedRunningStatesAfterCancelAll();
                 markEntryIdle(currentActionEntry);
                 clearCancelFlagsIfIdle();
@@ -821,6 +984,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private boolean isCancelRequestedFor(DiffEntry entry) {
+        if (closing.get()) return true;
         if (cancelAllRequested) return true;
         // If cancel is requested, we assume it applies to the currently running entry
         return cancelCurrentRequested;
@@ -834,7 +998,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private boolean isCancelAllRequested() {
-        return cancelAllRequested;
+        return closing.get() || cancelAllRequested;
     }
 
     private void rememberActiveDownload(DiffEntry entry, java.io.InputStream stream, java.net.HttpURLConnection connection) {
@@ -897,7 +1061,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void updateProgress(String text, boolean indeterminate, int percent) {
-        SwingUtilities.invokeLater(() -> {
+        runOnEdtIfOpen(() -> {
             progressLabel.setText(text);
             progressBar.setVisible(true);
             progressBar.setIndeterminate(indeterminate);
@@ -911,7 +1075,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void resetProgress() {
-        SwingUtilities.invokeLater(() -> {
+        runOnEdtIfOpen(() -> {
             progressLabel.setText(" ");
             progressBar.setVisible(false);
             progressBar.setIndeterminate(false);
@@ -987,7 +1151,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void addWarning(String text) {
-        SwingUtilities.invokeLater(() -> {
+        runOnEdtIfOpen(() -> {
             statusLabel.setText(text);
             statusLabel.setForeground(new Color(180, 60, 60));
         });
@@ -997,7 +1161,7 @@ public class ModListDiffDialog extends JFrame {
         if (lookupWarningShown) return;
         lookupWarningShown = true;
         addWarning(LanguageProvider.get("gui.modlist_diff.wait_for_fetch"));
-        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
+        runOnEdtIfOpen(() -> JOptionPane.showMessageDialog(
                 this,
                 LanguageProvider.get("gui.modlist_diff.wait_for_fetch"),
                 LanguageProvider.get("gui.modlist_diff_dialog_name"),
@@ -1057,15 +1221,50 @@ public class ModListDiffDialog extends JFrame {
 
     private void updateApplyButtonLabel() {
         if (applyButton == null) return;
-        String key = ModListDiff.isModpackCreator()
-                ? "gui.modlist_diff.footer.apply"
-                : "gui.modlist_diff.footer.apply.modpack";
+        String key;
+        if (comparison.isModpackBaselineComparison()) {
+            key = "gui.modlist_diff.footer.apply.modpack";
+        } else if (comparison.getLeftKind() == ModListComparison.SourceKind.HISTORY) {
+            key = "gui.modlist_diff.footer.apply.history";
+        } else {
+            key = "gui.modlist_diff.footer.apply";
+        }
         applyButton.setText(LanguageProvider.get(key));
     }
 
+    String getLeftSnapshotLabel() {
+        return comparison.getLeftLabel();
+    }
+
+    String getRightSnapshotLabel() {
+        return comparison.getRightLabel();
+    }
+
+    String getComparisonDescription() {
+        return getLeftSnapshotLabel() + "  \u2192  " + getRightSnapshotLabel();
+    }
+
+    private static String ellipsize(String text, int maximumCharacters) {
+        if (text == null || text.length() <= maximumCharacters) {
+            return text;
+        }
+        return text.substring(0, Math.max(0, maximumCharacters - 1)) + "\u2026";
+    }
+
+    boolean isCurrentInstallationEditable() {
+        return comparison.isCurrentInstallationEditable();
+    }
+
+    boolean isDialogOpen() {
+        return !closing.get();
+    }
+
     private boolean performAction(DiffEntry entry, SectionAction action) {
+        if (closing.get() || !comparison.isCurrentInstallationEditable()) {
+            return false;
+        }
         if (entry.modloaderEntry) {
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
+            runOnEdtIfOpen(() -> JOptionPane.showMessageDialog(
                     this,
                     LanguageProvider.get("gui.modlist_diff.modloader_warning"),
                     LanguageProvider.get("gui.modlist_diff_dialog_name"),
@@ -1098,6 +1297,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private boolean removeEntry(DiffEntry entry) {
+        if (closing.get()) return false;
         List<Path> targets = entry.currentPaths();
         if (targets.isEmpty()) {
             targets = entry.savedPaths();
@@ -1105,6 +1305,7 @@ public class ModListDiffDialog extends JFrame {
         if (targets.isEmpty()) return false;
         boolean ok = true;
         for (Path p : targets) {
+            if (closing.get()) return false;
             if (p == null) continue;
             try {
                 Files.deleteIfExists(p);
@@ -1113,7 +1314,7 @@ public class ModListDiffDialog extends JFrame {
                 CrashAssistantApp.LOGGER.error("Failed to remove {}", p, e);
             }
         }
-        if (ok) {
+        if (ok && !closing.get()) {
             entry.resolved = true;
             entry.removedByAction = true;
             entry.resolvedBy = SectionAction.REMOVE;
@@ -1122,13 +1323,15 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private boolean toggleDisable(DiffEntry entry, boolean disable) {
+        if (closing.get()) return false;
         List<DiffEntry.ModInstance> mods = entry.currentMods;
         if (mods.isEmpty()) {
-            entry.resolved = true;
+            if (!closing.get()) entry.resolved = true;
             return true;
         }
         try {
             for (DiffEntry.ModInstance mi : mods) {
+                if (closing.get()) return false;
                 Path path = resolveExistingPath(mi.path, mi);
                 if (path == null) continue;
                 boolean currentlyDisabled = path.getFileName().toString().endsWith(".disabled");
@@ -1142,6 +1345,7 @@ public class ModListDiffDialog extends JFrame {
                     target = path.resolveSibling(path.getFileName().toString() + ".disabled");
                 }
                 Files.move(path, target, StandardCopyOption.REPLACE_EXISTING);
+                if (closing.get()) return false;
                 mi.path = target;
             }
             return true;
@@ -1159,7 +1363,7 @@ public class ModListDiffDialog extends JFrame {
                 ? path.resolveSibling(name.replaceFirst("\\.disabled$", ""))
                 : path.resolveSibling(name + ".disabled");
         if (Files.exists(alt)) {
-            if (instance != null) {
+            if (instance != null && !closing.get()) {
                 instance.path = alt;
             }
             return alt;
@@ -1214,6 +1418,7 @@ public class ModListDiffDialog extends JFrame {
                 cleanupDownloads(downloads);
                 return false;
             }
+            if (closing.get()) return false;
             entry.resolved = true;
             entry.resolvedBy = SectionAction.REVERT;
             resetProgress();
@@ -1261,6 +1466,7 @@ public class ModListDiffDialog extends JFrame {
                 cleanupDownloads(downloads);
                 return false;
             }
+            if (closing.get()) return false;
             entry.resolved = true;
             resetProgress();
             return true;
@@ -1340,6 +1546,7 @@ public class ModListDiffDialog extends JFrame {
 
                 SwingUtilities.invokeLater(() -> {
                     try {
+                        if (closing.get()) return;
                         ManualDownloadDialog dlg = new ManualDownloadDialog(
                                 ModListDiffDialog.this,
                                 expectedFileName,
@@ -1349,10 +1556,14 @@ public class ModListDiffDialog extends JFrame {
                                 buildHashSet(saved.modrinthHash)
                         );
                         dialogRef[0] = dlg;
+                        activeManualDownloadDialog = dlg;
                         ok[0] = dlg.awaitResult();
                     } catch (Throwable t) {
                         dialogFailure.set(t);
                     } finally {
+                        if (activeManualDownloadDialog == dialogRef[0]) {
+                            activeManualDownloadDialog = null;
+                        }
                         latch.countDown();
                     }
                 });
@@ -1363,7 +1574,7 @@ public class ModListDiffDialog extends JFrame {
                     while (!latch.await(100, TimeUnit.MILLISECONDS)) {
                         if (isCancelRequestedFor(entry)) {
                             SwingUtilities.invokeLater(() -> {
-                                if (dialogRef[0] != null) dialogRef[0].dispose();
+                                closeManualDownloadDialog(dialogRef[0]);
                             });
                             cleanupPartialDownload(stagedTarget);
                             consumeSingleCancel(); // RESET FLAG
@@ -1372,7 +1583,7 @@ public class ModListDiffDialog extends JFrame {
                     }
                 } catch (InterruptedException e) {
                     SwingUtilities.invokeLater(() -> {
-                        if (dialogRef[0] != null) dialogRef[0].dispose();
+                        closeManualDownloadDialog(dialogRef[0]);
                     });
                     cleanupPartialDownload(stagedTarget);
                     consumeSingleCancel(); // RESET FLAG
@@ -1399,7 +1610,7 @@ public class ModListDiffDialog extends JFrame {
                 String unavailableMsg = LanguageProvider.get("gui.modlist_diff.unavailable_both")
                         .replace("$FILE$", targetFileName)
                         + " " + LanguageProvider.get("gui.modlist_diff.unavailable_legacy_hint");
-                SwingUtilities.invokeLater(() -> {
+                runOnEdtIfOpen(() -> {
                     JOptionPane.showMessageDialog(
                             this,
                             unavailableMsg,
@@ -1415,7 +1626,7 @@ public class ModListDiffDialog extends JFrame {
                 return null;
             }
             addWarning(LanguageProvider.get("gui.modlist_diff.wait_for_fetch"));
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
+            runOnEdtIfOpen(() -> JOptionPane.showMessageDialog(
                     this,
                     LanguageProvider.get("gui.modlist_diff.wait_for_fetch"),
                     LanguageProvider.get("gui.modlist_diff_dialog_name"),
@@ -1509,7 +1720,15 @@ public class ModListDiffDialog extends JFrame {
 
         Thread connectorThread = new Thread(() -> {
             try {
-                rawInRef.set(conn.getInputStream());
+                java.io.InputStream connectedStream = conn.getInputStream();
+                if (closing.get() || isCancelRequestedFor(entry)) {
+                    try {
+                        connectedStream.close();
+                    } catch (Exception ignored) {
+                    }
+                } else {
+                    rawInRef.set(connectedStream);
+                }
             } catch (Exception e) {
                 connectionException.set(e);
             } finally {
@@ -1605,6 +1824,12 @@ public class ModListDiffDialog extends JFrame {
             clearActiveDownload(rawIn);
         }
         return true;
+    }
+
+    private static void closeManualDownloadDialog(ManualDownloadDialog dialog) {
+        if (dialog == null) return;
+        dialog.dispatchEvent(new java.awt.event.WindowEvent(dialog, java.awt.event.WindowEvent.WINDOW_CLOSING));
+        dialog.dispose();
     }
 
     private Path findExistingMatching(DiffEntry.ModInstance saved, Path finalPath, Path disabledPath) {
@@ -1721,6 +1946,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void openFolder(DiffEntry entry) {
+        if (closing.get()) return;
         Path p = null;
         List<Path> current = entry.currentPaths();
         if (!current.isEmpty()) {
@@ -1749,6 +1975,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     void openCurseForgeProject(DiffEntry entry) {
+        if (closing.get()) return;
         DiffEntry.ModInstance mi = entry.anyCurseMatchInstance();
         CurseForge.FingerprintMatch match = mi != null ? mi.curseMatch : null;
         if (match == null) return;
@@ -1774,6 +2001,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     void openModrinthProject(DiffEntry entry) {
+        if (closing.get()) return;
         DiffEntry.ModInstance mi = entry.anyModrinthMatchInstance();
         Modrinth.VersionFileInfo info = mi != null ? mi.modrinthMatch : null;
         if (info == null || info.projectUrl == null) return;
@@ -1814,6 +2042,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     boolean isEntryActive(DiffEntry entry) {
+        if (closing.get()) return false;
         if (entry == null) return false;
         if (entry.resolved) return false;
         if (cancelAllRequested || isCancelInProgressFor(entry)) return false;
@@ -1822,6 +2051,7 @@ public class ModListDiffDialog extends JFrame {
 
     boolean isActionEnabled(DiffEntry entry, SectionAction action) {
         if (entry == null || action == null) return false;
+        if (!comparison.isCurrentInstallationEditable()) return false;
         if (cancelAllRequested || isCancelInProgressFor(entry)) return false;
         if (!isEntryActive(entry)) return false;
         if (action == SectionAction.REVERT) return entry.revertState == ActionState.IDLE;

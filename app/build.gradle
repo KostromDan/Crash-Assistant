@@ -238,4 +238,25 @@ tasks.register('logReaderCurseForgeStdoutTest', JavaExec) {
     }
 }
 
-check.dependsOn securityRegressionTest, logReaderCurseForgeStdoutTest
+tasks.register('modListHistoryTableModelTest', JavaExec) {
+    group = 'verification'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.app.gui.modlist.history.ModListHistoryTableModelTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+tasks.register('modListComparisonTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs explicit mod-list comparison source and mutability tests.'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListComparisonTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+check.dependsOn securityRegressionTest, logReaderCurseForgeStdoutTest, modListHistoryTableModelTest, modListComparisonTest

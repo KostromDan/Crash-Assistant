@@ -14,8 +14,14 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantCo
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LinksProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListComparisonReference;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryManager;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryRecord;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListComparison;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
+import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffWidget;
+import dev.kostromdan.mods.crash_assistant.app.gui.modlist.history.ModListHistoryDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,6 +37,7 @@ import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ControlPanel {
@@ -51,10 +58,11 @@ public class ControlPanel {
     private boolean initialUploadAllGateOpened;
     private boolean individualUploadButtonsActivationScheduled;
     private JPanel modListContainer;
+    private ModListDiffWidget modpackModListWidget;
+    private ModListDiffWidget historyModListWidget;
+    private volatile GeneratedMessageComparison generatedMessageComparison;
     private String generatedMsg = null;
     private List<FilePanel> generatedMsgBatch = Collections.emptyList();
-    private JLabel modListLabel;
-    private JButton showModListButton;
     private String uploadArrayViewerLink;
     private boolean uploadAllMessageCopied;
 
@@ -63,38 +71,32 @@ public class ControlPanel {
 
         panel = new JPanel(new BorderLayout());
 
-        JPanel labelButtonPanel = new JPanel();
-        labelButtonPanel.setLayout(new BoxLayout(labelButtonPanel, BoxLayout.X_AXIS));
-
         boolean modListEnabled = CrashAssistantConfig.getBoolean("modpack_modlist.enabled");
         modListInitiallyVisible = modListEnabled;
         if (modListEnabled) {
-            modListLabel = new JLabel(LanguageProvider.get("gui.modlist_loading")) {
-                @Override
-                public Dimension getPreferredSize() {
-                    Dimension d = super.getPreferredSize();
-                    d.width += 4; // Add extra margin to compensate for scaling rounding issues (e.g. at 125% DPI)
-                    return d;
-                }
-            };
-            // Add a bit of left padding to the detected mods text for better spacing
-            modListLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-            modListLabel.setMaximumSize(modListLabel.getPreferredSize());
+            modListContainer = new JPanel();
+            modListContainer.setLayout(new BoxLayout(modListContainer, BoxLayout.Y_AXIS));
 
-            showModListButton = new JButton(LanguageProvider.get("gui.show_modlist_diff_button"));
-            showModListButton.setEnabled(false);
-            showModListButton.setToolTipText(LanguageProvider.get("gui.modlist_loading"));
-            showModListButton.addActionListener(e -> showModList());
+            boolean actualModpack = !PlatformHelp.isLinkDefault();
+            boolean modpackCreator = ModListDiff.isModpackCreator();
+            if (actualModpack && !modpackCreator) {
+                modpackModListWidget = new ModListDiffWidget(
+                        false,
+                        () -> { },
+                        () -> showComparison(modpackModListWidget)
+                );
+                modpackModListWidget.setLoading(getModpackComparisonTitle(false));
+                modListContainer.add(modpackModListWidget.getComponent());
+                modListContainer.add(Box.createVerticalStrut(3));
+            }
 
-            showModListButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, showModListButton.getPreferredSize().height));
-
-            labelButtonPanel.add(modListLabel);
-            labelButtonPanel.add(Box.createHorizontalStrut(10));
-            labelButtonPanel.add(showModListButton);
-            labelButtonPanel.add(Box.createHorizontalGlue());
-            labelButtonPanel.setBorder(BorderFactory.createTitledBorder(ModListDiff.getFirstString(false, false, null)));
-
-            modListContainer = labelButtonPanel;
+            historyModListWidget = new ModListDiffWidget(
+                    true,
+                    this::showModListHistory,
+                    () -> showComparison(historyModListWidget)
+            );
+            historyModListWidget.setLoading(getLatestLaunchComparisonTitle(false));
+            modListContainer.add(historyModListWidget.getComponent());
             panel.add(modListContainer, BorderLayout.NORTH);
         }
 
@@ -336,39 +338,94 @@ public class ControlPanel {
     }
 
     public void updateModListInfo() {
-        ModListDiff modListDiff = ModListDiff.getDiff(true);
         if (!CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) return;
         if (CrashAssistantConfig.getBoolean("modpack_modlist.add_modlist_txt_as_log")) {
             Path modListTxtPath = Paths.get("logs", "modlist.txt");
-            try {
-                Mod.writeModlistTxt(modListTxtPath, modListDiff.getCurrentMods());
-                synchronized (KnownCrashReasonMessage.class) {
-                    LogsList.addIfExistsAndModified(new Log(LogType.MOD_LIST, modListTxtPath), false, false);
-                }
-            } catch (Exception e) {
-                CrashAssistantApp.LOGGER.error("Error while saving modlist.txt", e);
+            synchronized (KnownCrashReasonMessage.class) {
+                LogsList.addIfExistsAndModified(new Log(LogType.MOD_LIST, modListTxtPath), false, false);
             }
         }
 
-        SwingEDT.runAndWait(() -> {
-            String labelMsg = "<html><div style='white-space:nowrap;'>";
-            if (modListDiff.isEmpty()) {
-                labelMsg += LanguageProvider.get("gui.modlist_not_changed_label") + ":";
-                showModListButton.setEnabled(false);
-                showModListButton.setToolTipText(LanguageProvider.get("gui.modlist_not_changed_label"));
-            } else {
-                labelMsg += LanguageProvider.get("gui.modlist_changed_label")
-                        .replace("$ADDED_MODS_COUNT$", "<span style='color:green;'>" + modListDiff.getAddedMods().size() + "</span>")
-                        .replace("$REMOVED_MODS_COUNT$", "<span style='color:red;'>" + modListDiff.getRemovedMods().size() + "</span>")
-                        .replace("$UPDATED_MODS_COUNT$", "<span style='color:blue;'>" + modListDiff.getUpdatedMods().size() + "</span>");
-                showModListButton.setEnabled(true);
-                showModListButton.setToolTipText(null);
-            }
-            labelMsg += "</div></html>";
+        LinkedHashSet<Mod> currentMods = ModListUtils.getCurrentModList(true);
+        ModListComparison modpackComparison = null;
+        if (modpackModListWidget != null) {
+            String title = getModpackComparisonTitle(false);
+            modpackComparison = ModListComparison.againstCurrent(
+                    title,
+                    LanguageProvider.get("gui.modlist_diff.column.file"),
+                    ModListComparison.SourceKind.MODPACK_BASELINE,
+                    ModListUtils.getSavedModList(),
+                    LanguageProvider.get("gui.modlist_diff.column.file_current"),
+                    currentMods
+            );
+        }
 
-            modListLabel.setText(labelMsg);
-            modListLabel.setMaximumSize(modListLabel.getPreferredSize());
+        ModListComparison historyComparison = null;
+        String historyTitle = getLatestLaunchComparisonTitle(false);
+        String historyMessageTitle = getLatestLaunchComparisonTitle(true);
+        String historyMessagePart1 = getLatestLaunchComparisonPart1(true);
+        String historyMessagePart2 = getLatestLaunchComparisonPart2(true);
+        Optional<ModListHistoryRecord> currentRecord = ModListHistoryManager.getCurrentRecord();
+        if (currentRecord.isPresent()) {
+            Optional<ModListComparisonReference> reference = ModListHistoryManager.getStore()
+                    .findComparisonReference(currentRecord.get());
+            if (reference.isPresent()) {
+                ModListComparisonReference resolved = reference.get();
+                boolean duplicatedModpackBaseline = !PlatformHelp.isLinkDefault()
+                        && !ModListDiff.isModpackCreator()
+                        && resolved.getKind() == ModListComparisonReference.Kind.LEGACY_SNAPSHOT;
+                if (!duplicatedModpackBaseline) {
+                    historyTitle = getHistoryComparisonTitle(resolved.getKind(), false);
+                    historyMessageTitle = getHistoryComparisonTitle(resolved.getKind(), true);
+                    historyMessagePart1 = getHistoryComparisonPart1(resolved.getKind(), true);
+                    historyMessagePart2 = getHistoryComparisonPart2(resolved.getKind(), true);
+                    historyComparison = createHistoryComparison(
+                            historyTitle, resolved, currentMods);
+                }
+            }
+        }
+
+        final ModListComparison finalModpackComparison = modpackComparison;
+        final ModListComparison finalHistoryComparison = historyComparison;
+        final ModListDiff finalModpackDiff = modpackComparison == null
+                ? null
+                : modpackComparison.createDiff();
+        final ModListDiff finalHistoryDiff = historyComparison == null
+                ? null
+                : historyComparison.createDiff();
+        final String finalHistoryTitle = historyTitle;
+        SwingEDT.runAndWait(() -> {
+            if (modpackModListWidget != null && finalModpackComparison != null) {
+                modpackModListWidget.setComparison(
+                        getModpackComparisonTitle(false),
+                        finalModpackComparison,
+                        finalModpackDiff);
+            }
+            if (finalHistoryComparison == null) {
+                historyModListWidget.setUnavailable(finalHistoryTitle);
+            } else {
+                historyModListWidget.setComparison(
+                        finalHistoryTitle,
+                        finalHistoryComparison,
+                        finalHistoryDiff);
+            }
+            modListContainer.revalidate();
+            modListContainer.repaint();
         });
+
+        if (modpackComparison != null) {
+            generatedMessageComparison = new GeneratedMessageComparison(
+                    modpackComparison,
+                    getModpackComparisonTitle(true),
+                    getModpackComparisonPart1(true),
+                    getModpackComparisonPart2(true));
+        } else {
+            generatedMessageComparison = new GeneratedMessageComparison(
+                    historyComparison,
+                    historyMessageTitle,
+                    historyMessagePart1,
+                    historyMessagePart2);
+        }
 
         new Thread(() -> {
             try {
@@ -379,6 +436,97 @@ public class ControlPanel {
                 SwingUtilities.invokeLater(CrashAssistantGUI::addMissingLogs);
             }
         }).start();
+    }
+
+    private static String getModpackComparisonTitle(boolean forMsg) {
+        return getModpackComparisonPart1(forMsg) + getModpackComparisonPart2(forMsg);
+    }
+
+    private static String getModpackComparisonPart1(boolean forMsg) {
+        return LanguageProvider.getLangFunction(forMsg).apply("msg.modlist_changes_modpack_1");
+    }
+
+    private static String getModpackComparisonPart2(boolean forMsg) {
+        return LanguageProvider.getLangFunction(forMsg).apply("msg.modlist_changes_modpack_2");
+    }
+
+    private static String getLatestLaunchComparisonTitle(boolean forMsg) {
+        return getLatestLaunchComparisonPart1(forMsg) + getLatestLaunchComparisonPart2(forMsg);
+    }
+
+    private static String getLatestLaunchComparisonPart1(boolean forMsg) {
+        return LanguageProvider.getLangFunction(forMsg).apply("msg.modlist_changes_latest_launch_1");
+    }
+
+    private static String getLatestLaunchComparisonPart2(boolean forMsg) {
+        return LanguageProvider.getLangFunction(forMsg).apply("msg.modlist_changes_latest_launch_2");
+    }
+
+    private static String getHistoryComparisonTitle(ModListComparisonReference.Kind kind, boolean forMsg) {
+        return getHistoryComparisonPart1(kind, forMsg)
+                + getHistoryComparisonPart2(kind, forMsg);
+    }
+
+    private static String getHistoryComparisonPart1(ModListComparisonReference.Kind kind, boolean forMsg) {
+        Function<String, String> lang = LanguageProvider.getLangFunction(forMsg);
+        switch (kind) {
+            case JOINED:
+                return lang.apply("gui.modlist_changes_latest_world_join_1");
+            case LEGACY_SNAPSHOT:
+                return lang.apply("gui.modlist_changes_legacy_snapshot_1");
+            case TITLE_SCREEN:
+            default:
+                return getLatestLaunchComparisonPart1(forMsg);
+        }
+    }
+
+    private static String getHistoryComparisonPart2(ModListComparisonReference.Kind kind, boolean forMsg) {
+        Function<String, String> lang = LanguageProvider.getLangFunction(forMsg);
+        switch (kind) {
+            case JOINED:
+                return lang.apply("gui.modlist_changes_latest_world_join_2");
+            case LEGACY_SNAPSHOT:
+                return lang.apply("gui.modlist_changes_legacy_snapshot_2");
+            case TITLE_SCREEN:
+            default:
+                return getLatestLaunchComparisonPart2(forMsg);
+        }
+    }
+
+    private static String formatHistoryReferenceLabel(ModListHistoryRecord record) {
+        if (record.isLegacySnapshot()) {
+            return LanguageProvider.get("gui.modlist_history.legacy_snapshot");
+        }
+        return Instant.ofEpochMilli(record.getTimestamp()).toString();
+    }
+
+    private static ModListComparison createHistoryComparison(
+            String title,
+            ModListComparisonReference reference,
+            LinkedHashSet<Mod> currentMods) {
+        ModListHistoryRecord record = reference.getRecord();
+        String referenceLabel = formatHistoryReferenceLabel(record);
+        String currentLabel = LanguageProvider.get("gui.modlist_diff.column.file_current");
+        if (reference.getKind() == ModListComparisonReference.Kind.LEGACY_SNAPSHOT) {
+            // The migrated file has no trustworthy launch outcome. It is kept
+            // for comparison, but must never drive destructive restore/remove
+            // actions against the live installation.
+            return ModListComparison.readOnly(
+                    title,
+                    referenceLabel,
+                    ModListComparison.SourceKind.LEGACY_SNAPSHOT,
+                    record.getMods(),
+                    currentLabel,
+                    ModListComparison.SourceKind.CURRENT,
+                    currentMods);
+        }
+        return ModListComparison.againstCurrent(
+                title,
+                referenceLabel,
+                ModListComparison.SourceKind.HISTORY,
+                record.getMods(),
+                currentLabel,
+                currentMods);
     }
 
     public JPanel getPanel() {
@@ -463,11 +611,69 @@ public class ControlPanel {
 
     public static void showModListDiff(Window parent) {
         stopMovingToTop = true;
-        ModListDiffDialog.showDialog(parent);
+        ModListComparison comparison = resolveDefaultModListComparison();
+        if (comparison == null) {
+            JOptionPane.showMessageDialog(
+                    parent,
+                    LanguageProvider.get("gui.modlist_history.no_comparison_reference"),
+                    LanguageProvider.get("gui.modlist_history.comparison_title"),
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        ModListDiffDialog.showDialog(parent, comparison);
     }
 
-    private void showModList() {
-        showModListDiff(dialog);
+    /**
+     * Resolves the same source as the visible primary diff widget. Scripted
+     * warnings also use this entry point, so they must not fall back to the
+     * migrated/absent standalone modlist.json.
+     */
+    private static ModListComparison resolveDefaultModListComparison() {
+        LinkedHashSet<Mod> currentMods = ModListUtils.getCurrentModList(true);
+        if (!PlatformHelp.isLinkDefault() && !ModListDiff.isModpackCreator()) {
+            String title = getModpackComparisonTitle(false);
+            return ModListComparison.againstCurrent(
+                    title,
+                    LanguageProvider.get("gui.modlist_diff.column.file"),
+                    ModListComparison.SourceKind.MODPACK_BASELINE,
+                    ModListUtils.getSavedModList(),
+                    LanguageProvider.get("gui.modlist_diff.column.file_current"),
+                    currentMods);
+        }
+
+        Optional<ModListHistoryRecord> currentRecord = ModListHistoryManager.getCurrentRecord();
+        if (!currentRecord.isPresent()) {
+            return null;
+        }
+        Optional<ModListComparisonReference> reference = ModListHistoryManager.getStore()
+                .findComparisonReference(currentRecord.get());
+        if (!reference.isPresent()) {
+            return null;
+        }
+        ModListComparisonReference resolved = reference.get();
+        return createHistoryComparison(
+                getHistoryComparisonTitle(resolved.getKind(), false),
+                resolved,
+                currentMods);
+    }
+
+    private void showComparison(ModListDiffWidget widget) {
+        ModListComparison comparison = widget == null ? null : widget.getComparison();
+        if (comparison == null) return;
+        stopMovingToTop = true;
+        ModListDiffDialog.showDialog(getModListOwner(), comparison);
+    }
+
+    private void showModListHistory() {
+        stopMovingToTop = true;
+        ModListHistoryDialog.showDialog(getModListOwner());
+    }
+
+    private Window getModListOwner() {
+        Window owner = modListContainer == null
+                ? null
+                : SwingUtilities.getWindowAncestor(modListContainer);
+        return owner == null ? CrashAssistantGUI.getFrame() : owner;
     }
 
     private void checkAndStartUploading(List<FilePanel> uploadBatch, boolean startUploading) {
@@ -521,9 +727,16 @@ public class ControlPanel {
                 checkAndStartUploading(uploadBatch, false);
 
                 CompletableFuture<String> modlistDiffFuture = null;
-                if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-                    ModListDiff modListDiff = ModListDiff.getDiff(true);
-                    ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
+                GeneratedMessageComparison generatedComparison = generatedMessageComparison;
+                ModListComparison comparison = generatedComparison == null
+                        ? null
+                        : generatedComparison.comparison;
+                String comparisonTitle = generatedComparison == null
+                        ? null
+                        : generatedComparison.title;
+                if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled") && comparison != null) {
+                    ModListDiff modListDiff = comparison.createDiff();
+                    ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true, comparisonTitle);
                     String modlistDiffText = diffStringBuilder.toText();
                     modlistDiffFuture = uploadModlistDiff(modlistDiffText);
                 }
@@ -803,11 +1016,25 @@ public class ControlPanel {
                 .replace("$ANALYSIS_RESULT$", analysisResult.toString());
 
         StringBuilder modListDiffContent = new StringBuilder();
-        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-            ModListDiff modListDiff = ModListDiff.getDiff(true);
-            ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true);
+        GeneratedMessageComparison generatedComparison = generatedMessageComparison;
+        ModListComparison comparison = generatedComparison == null
+                ? null
+                : generatedComparison.comparison;
+        String comparisonTitle = generatedComparison == null ? null : generatedComparison.title;
+        String comparisonPart1 = generatedComparison == null ? null : generatedComparison.part1;
+        String comparisonPart2 = generatedComparison == null ? null : generatedComparison.part2;
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled") && comparison != null) {
+            ModListDiff modListDiff = comparison.createDiff();
+            ModListDiffStringBuilder diffStringBuilder = modListDiff.generateDiffMsg(true, comparisonTitle);
             String modlistDiffText = diffStringBuilder.toText();
-            String modListDiffAnsi = diffStringBuilder.toAnsi();
+            String ansiPattern = CrashAssistantConfig.get("generated_message.ansi_block_pattern", false);
+            String filePrefix = ModListDiff.getFilePrefix();
+            String modListDiffAnsi = diffStringBuilder.toFormattedString(
+                    ansiPattern,
+                    filePrefix,
+                    comparisonTitle,
+                    true
+            );
 
             try {
                 if (modlistDiffFuture == null) {
@@ -829,12 +1056,13 @@ public class ControlPanel {
                             .replace("$UPDATED_MODS_COUNT$", Integer.toString(modListDiff.getUpdatedMods().size()));
                 }
 
-                String pattern = CrashAssistantConfig.get("generated_message.ansi_block_pattern", false);
-                String filePrefix = ModListDiff.getFilePrefix();
-                String firstString = ModListDiff.getFirstString(true, true, link);
+                String firstString = formatLinkedComparisonTitle(
+                        comparisonPart1,
+                        comparisonPart2,
+                        link);
 
                 modListDiffContent.append("\n");
-                modListDiffContent.append(pattern
+                modListDiffContent.append(ansiPattern
                         .replace("$PREFIX$", filePrefix)
                         .replace("$HEADER$", firstString)
                         .replace("$CONTENT$", summaryContent));
@@ -851,6 +1079,13 @@ public class ControlPanel {
         generatedMsgBatch = new ArrayList<>(uploadBatch);
 
         CrashAssistantApp.LOGGER.info("Generated message successfully:\n\n\n" + generatedMsg + "\n\n\n");
+    }
+
+    private static String formatLinkedComparisonTitle(String part1, String part2, String link) {
+        return CrashAssistantConfig.get("generated_message.modlist_header_pattern", false)
+                .replace("$PART1$", part1 == null ? "" : part1)
+                .replace("$PART2$", part2 == null ? "" : part2)
+                .replace("$LINK$", link);
     }
 
 
@@ -924,6 +1159,24 @@ public class ControlPanel {
     public static String getCurrentMemoryAgsMessage() {
         return LanguageProvider.getMsgLang("warnings_common.memory_args")
                 .replace("$CURRENT_MEMORY_ARGS$", getCurrentMemoryArgsString());
+    }
+
+    /** One atomic publication unit for upload/message comparison metadata. */
+    private static final class GeneratedMessageComparison {
+        private final ModListComparison comparison;
+        private final String title;
+        private final String part1;
+        private final String part2;
+
+        private GeneratedMessageComparison(ModListComparison comparison,
+                                           String title,
+                                           String part1,
+                                           String part2) {
+            this.comparison = comparison;
+            this.title = title;
+            this.part1 = part1;
+            this.part2 = part2;
+        }
     }
 
 

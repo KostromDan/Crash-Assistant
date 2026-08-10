@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -35,7 +36,10 @@ public class ModpackStatusChecker {
      * Loads mod lists from ModListUtils and indexes them.
      */
     private ModpackStatusChecker() {
-        this.isEnabled = CrashAssistantConfig.getBoolean("modpack_modlist.enabled");
+        // Saved modlist.json is a modpack manifest only when the instance uses
+        // modpack support settings. Ordinary installations use launch history.
+        this.isEnabled = CrashAssistantConfig.getBoolean("modpack_modlist.enabled")
+                && !PlatformHelp.isLinkDefault();
 
         this.currentModsById = new HashMap<>();
         this.currentModsByJarName = new HashMap<>();

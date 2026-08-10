@@ -1230,6 +1230,10 @@ public class CrashAssistantGUI {
 
                 int allowedChanges = CrashAssistantConfig.getInteger("too_many_changes_warning.count");
                 if (allowedChanges <= 0) return;
+                // This warning describes divergence from a modpack manifest. In an
+                // ordinary installation modlist.json is now migrated to launch
+                // history and must never be interpreted as a pack baseline.
+                if (PlatformHelp.isLinkDefault()) return;
                 if (ModListDiff.isModpackCreator()) return;
                 int totalChanges = ModListDiff.getDiff(true).getTotalChanges();
                 if (totalChanges <= allowedChanges) return;

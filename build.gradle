@@ -96,3 +96,13 @@ task collectJars(type: Copy) {
 }
 
 assemble.dependsOn collectJars
+
+task publishUnified {
+    group = "upload"
+    dependsOn(":neoforge_coremod:publishUnified")
+}
+
+task publishUnifiedToLocal {
+    group = "upload"
+    dependsOn(":neoforge_coremod:publishUnifiedToLocal")
+}

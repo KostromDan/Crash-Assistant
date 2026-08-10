@@ -204,6 +204,7 @@ if (System.getenv("CF_TOKEN") != null) {
         forgeFile.changelogType = "markdown"
         forgeFile.releaseType = release_type
         forgeFile.addGameVersion(project.minecraft_version)
+        forgeFile.addEnvironment("Client")
         forgeFile.addModLoader("Forge")
 
         def fabricFile = upload("1154099", tasks.remapFabricJar)
@@ -212,6 +213,7 @@ if (System.getenv("CF_TOKEN") != null) {
         fabricFile.changelogType = "markdown"
         fabricFile.releaseType = release_type
         fabricFile.addGameVersion(project.minecraft_version)
+        fabricFile.addEnvironment("Client")
         fabricFile.addModLoader("Fabric")
     }
 }

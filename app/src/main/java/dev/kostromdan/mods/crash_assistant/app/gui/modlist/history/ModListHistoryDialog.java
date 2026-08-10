@@ -385,9 +385,9 @@ public final class ModListHistoryDialog extends JDialog {
             return;
         }
 
-        // The history browser is an explorer, not a file-management surface.
-        // Arbitrary old/crashed snapshots must never enable live remove/revert
-        // actions merely because the other selected row happens to be Current.
+        // ModListComparison normalizes Current to the installed/right side and
+        // enables the usual mod-management actions. Two snapshots remain a
+        // read-only comparison.
         ModListComparison comparison = ModListComparison.readOnly(
                 LanguageProvider.get("gui.modlist_history.comparison_title"),
                 rowLabel(left), sourceKind(left), left.getMods(),
@@ -470,13 +470,12 @@ public final class ModListHistoryDialog extends JDialog {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                ModListComparison comparison = ModListComparison.readOnly(
+                ModListComparison comparison = ModListComparison.againstCurrent(
                         LanguageProvider.get("gui.modlist_history.comparison_title"),
                         LanguageProvider.get("gui.modlist_history.import.imported"),
                         ModListComparison.SourceKind.IMPORTED_MODLIST,
                         imported,
                         LanguageProvider.get("gui.modlist_history.current"),
-                        ModListComparison.SourceKind.CURRENT,
                         currentRow.getMods());
                 ModListDiffDialog.showDialog(ModListHistoryDialog.this, comparison);
             }

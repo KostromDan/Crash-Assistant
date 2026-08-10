@@ -31,23 +31,39 @@ public final class ModListComparison {
     private final LinkedHashSet<Mod> rightMods;
     private final boolean currentInstallationEditable;
 
-    public ModListComparison(String title,
-                             String leftLabel,
-                             SourceKind leftKind,
-                             Collection<Mod> leftMods,
-                             String rightLabel,
-                             SourceKind rightKind,
-                             Collection<Mod> rightMods,
-                             boolean currentInstallationEditable) {
+    private ModListComparison(String title,
+                              String leftLabel,
+                              SourceKind leftKind,
+                              Collection<Mod> leftMods,
+                              String rightLabel,
+                              SourceKind rightKind,
+                              Collection<Mod> rightMods) {
         this.title = title == null ? "" : title;
-        this.leftLabel = leftLabel == null ? "" : leftLabel;
-        this.rightLabel = rightLabel == null ? "" : rightLabel;
-        this.leftKind = leftKind;
-        this.rightKind = rightKind;
-        this.leftMods = copy(leftMods);
-        this.rightMods = copy(rightMods);
-        this.currentInstallationEditable = currentInstallationEditable
-                && rightKind == SourceKind.CURRENT;
+        boolean currentIsOnLeftOnly = leftKind == SourceKind.CURRENT
+                && rightKind != SourceKind.CURRENT;
+        if (currentIsOnLeftOnly) {
+            // ModListDiff and all live-installation actions use the right side
+            // as the installed state. Normalize here so every caller, including
+            // the two freely selectable history tables, gets the same semantics.
+            this.leftLabel = rightLabel == null ? "" : rightLabel;
+            this.rightLabel = leftLabel == null ? "" : leftLabel;
+            this.leftKind = rightKind;
+            this.rightKind = leftKind;
+            this.leftMods = copy(rightMods);
+            this.rightMods = copy(leftMods);
+        } else {
+            this.leftLabel = leftLabel == null ? "" : leftLabel;
+            this.rightLabel = rightLabel == null ? "" : rightLabel;
+            this.leftKind = leftKind;
+            this.rightKind = rightKind;
+            this.leftMods = copy(leftMods);
+            this.rightMods = copy(rightMods);
+        }
+
+        // A comparison containing the live installation is always the normal,
+        // actionable mod-list comparison. Only snapshot-to-snapshot pairs are
+        // read-only. CURRENT is deliberately authoritative.
+        this.currentInstallationEditable = this.rightKind == SourceKind.CURRENT;
     }
 
     public static ModListComparison againstCurrent(String title,
@@ -63,11 +79,15 @@ public final class ModListComparison {
                 referenceMods,
                 currentLabel,
                 SourceKind.CURRENT,
-                currentMods,
-                true
+                currentMods
         );
     }
 
+    /**
+     * Creates a comparison without explicitly granting live actions. If either
+     * source is {@link SourceKind#CURRENT}, the constructor still normalizes it
+     * to the right and enables those actions; only two snapshots stay read-only.
+     */
     public static ModListComparison readOnly(String title,
                                              String leftLabel,
                                              SourceKind leftKind,
@@ -82,8 +102,7 @@ public final class ModListComparison {
                 leftMods,
                 rightLabel,
                 rightKind,
-                rightMods,
-                false
+                rightMods
         );
     }
 

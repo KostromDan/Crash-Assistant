@@ -508,16 +508,14 @@ public class ControlPanel {
         String referenceLabel = formatHistoryReferenceLabel(record);
         String currentLabel = LanguageProvider.get("gui.modlist_diff.column.file_current");
         if (reference.getKind() == ModListComparisonReference.Kind.LEGACY_SNAPSHOT) {
-            // The migrated file has no trustworthy launch outcome. It is kept
-            // for comparison, but must never drive destructive restore/remove
-            // actions against the live installation.
-            return ModListComparison.readOnly(
+            // Its launch outcome is unknown, but it is still a valid reference
+            // snapshot for the normal comparison against the live installation.
+            return ModListComparison.againstCurrent(
                     title,
                     referenceLabel,
                     ModListComparison.SourceKind.LEGACY_SNAPSHOT,
                     record.getMods(),
                     currentLabel,
-                    ModListComparison.SourceKind.CURRENT,
                     currentMods);
         }
         return ModListComparison.againstCurrent(

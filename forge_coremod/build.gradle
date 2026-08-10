@@ -81,6 +81,7 @@ if (System.getenv("CF_TOKEN") != null) {
         mainFile.releaseType = release_type
 
         mainFile.addGameVersion("26.2")
+        mainFile.addEnvironment("Client")
         mainFile.addModLoader("Forge")
     }
 }
@@ -97,4 +98,3 @@ task publishUnifiedToLocal(type: Copy) {
     from(tasks.jar.archiveFile)
     into("build/unified-local/project0")
 }
-

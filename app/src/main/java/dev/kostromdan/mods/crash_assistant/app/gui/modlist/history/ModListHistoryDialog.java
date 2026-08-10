@@ -33,6 +33,7 @@ import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -281,19 +282,39 @@ public final class ModListHistoryDialog extends JDialog {
 
         table.getColumnModel().getColumn(ModListHistoryTableModel.STATUS_COLUMN)
                 .setCellRenderer(new StatusRenderer());
-        table.getColumnModel().getColumn(ModListHistoryTableModel.STATUS_COLUMN).setMinWidth(260);
-        table.getColumnModel().getColumn(ModListHistoryTableModel.STATUS_COLUMN).setPreferredWidth(300);
         table.getColumnModel().getColumn(ModListHistoryTableModel.DATE_COLUMN)
                 .setCellRenderer(new DateRenderer());
-        table.getColumnModel().getColumn(ModListHistoryTableModel.DATE_COLUMN).setMinWidth(160);
-        table.getColumnModel().getColumn(ModListHistoryTableModel.DATE_COLUMN).setPreferredWidth(180);
         DefaultTableCellRenderer countRenderer = new DefaultTableCellRenderer();
         countRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
         table.getColumnModel().getColumn(ModListHistoryTableModel.MODS_COUNT_COLUMN)
                 .setCellRenderer(countRenderer);
-        table.getColumnModel().getColumn(ModListHistoryTableModel.MODS_COUNT_COLUMN).setMaxWidth(110);
+        fitColumnsToContents(table);
         table.getSelectionModel().addListSelectionListener(event -> updateCompareButton());
         return table;
+    }
+
+    /** Sizes every column from the actual header and rendered cell contents. */
+    private static void fitColumnsToContents(JTable table) {
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        for (int columnIndex = 0; columnIndex < table.getColumnCount(); columnIndex++) {
+            TableColumn column = table.getColumnModel().getColumn(columnIndex);
+            TableCellRenderer headerRenderer = column.getHeaderRenderer();
+            if (headerRenderer == null) {
+                headerRenderer = table.getTableHeader().getDefaultRenderer();
+            }
+            Component header = headerRenderer.getTableCellRendererComponent(
+                    table, column.getHeaderValue(), false, false, -1, columnIndex);
+            int requiredWidth = header.getPreferredSize().width;
+
+            for (int row = 0; row < table.getRowCount(); row++) {
+                Component cell = table.prepareRenderer(table.getCellRenderer(row, columnIndex), row, columnIndex);
+                requiredWidth = Math.max(requiredWidth, cell.getPreferredSize().width);
+            }
+
+            requiredWidth += table.getColumnModel().getColumnMargin();
+            column.setMinWidth(requiredWidth);
+            column.setPreferredWidth(requiredWidth);
+        }
     }
 
     private void applyFilters() {

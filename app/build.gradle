@@ -228,4 +228,14 @@ tasks.register('securityRegressionTest', JavaExec) {
     workingDir testWorkDir
 }
 
-check.dependsOn securityRegressionTest
+tasks.register('logReaderCurseForgeStdoutTest', JavaExec) {
+    group = 'verification'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogReaderCurseForgeStdoutTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+check.dependsOn securityRegressionTest, logReaderCurseForgeStdoutTest

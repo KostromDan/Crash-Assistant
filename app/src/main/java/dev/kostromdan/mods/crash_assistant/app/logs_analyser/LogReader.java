@@ -27,7 +27,10 @@ public class LogReader {
     String allLinesStringCached;
     Log log;
     boolean isLogProcessed = false;
+    boolean contentTransformed = false;
+    boolean processedLengthComplete = false;
     long sizeOnLastRead = -1;
+    long processedLength = -1;
 
     @NoJexl
     public LogReader(Log log) {
@@ -38,60 +41,163 @@ public class LogReader {
 
     @NoJexl
     public synchronized void readLogFile(boolean checkUpdated) throws IOException {
-        if (isLogProcessed && (!checkUpdated || Files.size(log.getPath()) == sizeOnLastRead)) {
+        if (isLogProcessed && !checkUpdated) {
             return;
         }
-        sizeOnLastRead = Files.size(log.getPath());
+        long sourceSize = Files.size(log.getPath());
+        if (isLogProcessed && sourceSize == sizeOnLastRead) {
+            return;
+        }
+
+        boolean transformCurseForgeStdout = isCurseForgeStdoutFormatSupported();
+        try {
+            readLogFile(transformCurseForgeStdout, sourceSize);
+        } catch (CurseForgeStdoutLogDeobfuscator.UnsupportedFormatException e) {
+            // The format changed after the probe or the file was being written while it was read.
+            // Re-read it through the unchanged standard path instead of returning partially decoded data.
+            readLogFile(false, sourceSize);
+        }
+        sizeOnLastRead = sourceSize;
+        isLogProcessed = true;
+    }
+
+    private void readLogFile(boolean transformCurseForgeStdout, long sourceSize) throws IOException {
+        isLogProcessed = false;
         countedLines = 0;
         lineCountInterrupted = false;
         lastLines = null;
         firstLines = new ArrayList<>(maxUploadLines);
+        allLinesListCached = null;
+        allLinesStringCached = null;
+        contentTransformed = transformCurseForgeStdout;
+        processedLengthComplete = !transformCurseForgeStdout;
+        processedLength = transformCurseForgeStdout ? 0 : sourceSize;
 
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(this.log.getFile()), StandardCharsets.UTF_8))) {
+        boolean hasMoreLines = false;
+        try (LogLineReader reader = createForwardLineReader(transformCurseForgeStdout)) {
             String line;
-            int length = 0;
-
-            while ((line = reader.readLine()) != null && countedLines < maxUploadLines && length < maxUploadLength) {
+            long length = 0;
+            while ((line = reader.readLine()) != null) {
                 if (line.isEmpty()) {
                     continue;
                 }
-                firstLines.add(line);
-                length += line.length() + 1;
-                countedLines++;
+                int lineLength = getLineContentLength(line);
+                recordProcessedLine(lineLength);
+                if (firstLines.size() < maxUploadLines && length < maxUploadLength) {
+                    if (!firstLines.isEmpty()) {
+                        length++;
+                    }
+                    firstLines.add(line);
+                    length += lineLength;
+                } else {
+                    hasMoreLines = true;
+                    break;
+                }
+            }
+            if (!hasMoreLines) {
+                processedLengthComplete = true;
+                return;
+            }
+
+            long timeCountStarted = Instant.now().toEpochMilli();
+            while ((line = reader.readLine()) != null) {
+                if (line.isEmpty()) {
+                    continue;
+                }
+                recordProcessedLine(contentTransformed ? getLineContentLength(line) : 0);
+                if (countedLines % 100 == 0 && Instant.now().toEpochMilli() - timeCountStarted >= 1000) {
+                    lineCountInterrupted = true;
+                    break;
+                }
             }
             if (line == null) {
-                isLogProcessed = true;
-                return;
-            } else {
-                long timeCountStarted = Instant.now().toEpochMilli();
-                while (reader.readLine() != null) {
-                    countedLines++;
-                    if (countedLines % 100 == 0 && Instant.now().toEpochMilli() - timeCountStarted >= 1000) {
-                        lineCountInterrupted = true;
-                        break;
-                    }
-                }
+                processedLengthComplete = true;
             }
         }
         lastLines = new LinkedList<>();
-        try (ReversedLinesFileReader reversedReader = createReversedLinesFileReader()) {
+        try (LogLineReader reversedReader = createReversedLineReader(transformCurseForgeStdout)) {
             String line;
             int count = 0;
-            int length = 0;
+            long length = 0;
             while ((line = reversedReader.readLine()) != null && count < maxUploadLines && length < maxUploadLength) {
                 if (line.isEmpty()) {
                     continue;
                 }
+                if (count > 0) {
+                    length++;
+                }
                 lastLines.add(0, line);
-                length += line.length() + 1;
+                length += getLineContentLength(line);
                 count++;
             }
-            if (length > maxUploadLength) {
+            if (length > maxUploadLength && !lastLines.isEmpty()) {
                 lastLines.remove(0);
             }
         }
-        isLogProcessed = true;
+    }
+
+    private void recordProcessedLine(int lineLength) {
+        if (contentTransformed) {
+            if (countedLines > 0) {
+                processedLength++;
+            }
+            processedLength += lineLength;
+        }
+        countedLines++;
+    }
+
+    private int getLineContentLength(String line) {
+        return contentTransformed ? line.getBytes(StandardCharsets.UTF_8).length : line.length();
+    }
+
+    private boolean isCurseForgeStdoutFormatSupported() throws IOException {
+        if (!CurseForgeStdoutLogDeobfuscator.isTarget(log)) {
+            return false;
+        }
+        try (BufferedReader reader = createBufferedReader()) {
+            return CurseForgeStdoutLogDeobfuscator.isSupported(reader);
+        }
+    }
+
+    private LogLineReader createForwardLineReader(boolean transformCurseForgeStdout) throws IOException {
+        BufferedReader reader = createBufferedReader();
+        if (transformCurseForgeStdout) {
+            return CurseForgeStdoutLogDeobfuscator.forward(reader);
+        }
+        return new LogLineReader() {
+            @Override
+            public String readLine() throws IOException {
+                return reader.readLine();
+            }
+
+            @Override
+            public void close() throws IOException {
+                reader.close();
+            }
+        };
+    }
+
+    private BufferedReader createBufferedReader() throws IOException {
+        return new BufferedReader(new InputStreamReader(
+                new FileInputStream(this.log.getFile()), StandardCharsets.UTF_8));
+    }
+
+    private LogLineReader createReversedLineReader(boolean transformCurseForgeStdout) throws IOException {
+        ReversedLinesFileReader reader = createReversedLinesFileReader();
+        if (transformCurseForgeStdout) {
+            return CurseForgeStdoutLogDeobfuscator.reversed(reader);
+        }
+        return new LogLineReader() {
+            @Override
+            public String readLine() throws IOException {
+                return reader.readLine();
+            }
+
+            @Override
+            public void close() throws IOException {
+                reader.close();
+            }
+        };
     }
 
     public synchronized void readLogFileSafe() {
@@ -224,5 +330,17 @@ public class LogReader {
 
     public boolean isLineCountInterrupted() {
         return lineCountInterrupted;
+    }
+
+    public boolean isContentTransformed() {
+        return contentTransformed;
+    }
+
+    public long getProcessedLength() {
+        return processedLength;
+    }
+
+    public boolean isProcessedLengthComplete() {
+        return processedLengthComplete;
     }
 }

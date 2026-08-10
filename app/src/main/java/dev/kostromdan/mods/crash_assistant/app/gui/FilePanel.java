@@ -43,6 +43,9 @@ public class FilePanel {
     private volatile boolean uploadInProgress;
     private volatile int lastUploadCountedLines = -1;
     private volatile boolean lastUploadLineCountInterrupted;
+    private volatile long lastUploadProcessedLength = -1;
+    private volatile boolean lastUploadProcessedLengthComplete;
+    private volatile boolean lastUploadContentTransformed;
     public static final Object uploadErrorDialogLock = new Object();
     private final Log log;
     private final int fullButtonWidth;
@@ -298,6 +301,9 @@ public class FilePanel {
                     LogReader uploadReader = new LogReader(log);
                     uploadReader.readLogFile(true);
                     lastUploadLineCountInterrupted = uploadReader.isLineCountInterrupted();
+                    lastUploadProcessedLength = uploadReader.getProcessedLength();
+                    lastUploadProcessedLengthComplete = uploadReader.isProcessedLengthComplete();
+                    lastUploadContentTransformed = uploadReader.isContentTransformed();
                     lastUploadCountedLines = uploadReader.getCountedLines();
                     SwingEDT.runAndWait(() -> uploadButton.setText(oldText));
 
@@ -476,8 +482,20 @@ public class FilePanel {
 
     public String getTooBigReasons(boolean forMsg) {
         Function<String, String> langFunc = LanguageProvider.getLangFunction(forMsg);
-        long size = log.getFile().length();
         int uploadedCountedLines = lastUploadCountedLines;
+        boolean usingUploadMetrics = uploadedCountedLines >= 0;
+        boolean contentTransformed = usingUploadMetrics
+                ? lastUploadContentTransformed
+                : log.getReader().isContentTransformed();
+        long processedLength = usingUploadMetrics
+                ? lastUploadProcessedLength
+                : log.getReader().getProcessedLength();
+        boolean processedLengthComplete = usingUploadMetrics
+                ? lastUploadProcessedLengthComplete
+                : log.getReader().isProcessedLengthComplete();
+        long size = contentTransformed && processedLength >= 0
+                ? processedLength
+                : log.getFile().length();
         int countedLines = uploadedCountedLines < 0
                 ? log.getReader().getCountedLines()
                 : uploadedCountedLines;
@@ -485,8 +503,12 @@ public class FilePanel {
                 ? log.getReader().isLineCountInterrupted()
                 : lastUploadLineCountInterrupted;
         List<String> tooBigReasons = new ArrayList<>();
-        if (size > 10 * 1024 * 1024)
-            tooBigReasons.add("~" + size / (1024 * 1024) + langFunc.apply("msg.mb"));
+        if (size > 10 * 1024 * 1024) {
+            boolean sizeIsLowerBound = contentTransformed && !processedLengthComplete;
+            tooBigReasons.add((sizeIsLowerBound ? langFunc.apply("msg.over") + " " : "~")
+                    + size / (1024 * 1024) + langFunc.apply("msg.mb")
+                    + (sizeIsLowerBound ? langFunc.apply("msg.over_end") : ""));
+        }
         if (countedLines > 25000) {
             tooBigReasons.add((lineCountInterrupted ? langFunc.apply("msg.over") + " " : "~") +
                     countedLines / 1000 + langFunc.apply("msg.k_lines") +

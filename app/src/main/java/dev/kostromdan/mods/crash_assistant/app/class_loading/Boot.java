@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 
 public class Boot {
+    private static final long MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS = 15L;
     private static String classPath = null;
     private static boolean recursiveStart = false;
     private static boolean gpuDetect = false;
@@ -361,7 +362,7 @@ public class Boot {
             processBuilder.redirectErrorStream(true);
             processBuilder.redirectOutput(outputFile.toFile());
             Process process = processBuilder.start();
-            boolean finished = process.waitFor(10, TimeUnit.MINUTES);
+            boolean finished = process.waitFor(MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!finished) {
                 process.destroyForcibly();
                 process.waitFor();
@@ -370,7 +371,8 @@ public class Boot {
             String output = new String(Files.readAllBytes(outputFile), StandardCharsets.UTF_8);
             if (!finished) {
                 return output + System.lineSeparator()
-                        + "Mod-list snapshot process exceeded 10 minutes and was killed.";
+                        + "Mod-list snapshot process exceeded "
+                        + MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS + " seconds and was killed.";
             }
             if (process.exitValue() != 0) {
                 return output + System.lineSeparator()

@@ -196,8 +196,6 @@ public class CrashAssistantApp {
 
         FileUtils.removeTmpFiles(localFolder);
 
-        ModListHistoryManager.attachSnapshot(historySnapshotTimestamp, modListTxtGenerated);
-
         WinEventCleaner.cleanOldWinEventFiles();
 
         HsErrHelper.removeHsErrLog(Boot.parentPID);
@@ -214,14 +212,13 @@ public class CrashAssistantApp {
 
         while (true) {
             try {
-                ModListHistoryManager.refreshMilestoneSignals(Boot.parentPID);
                 if (Boot.parentStarted == -1 || Boot.parentStarted != ProcessHelper.getProcessStartTime(Boot.parentPID)) {
                     LOGGER.info("PID \"{}\" is not alive or reused by another process. Minecraft JVM appears to have stopped.", Boot.parentPID);
-                    onMinecraftFinished();
+                    onMinecraftFinished(historySnapshotTimestamp, modListTxtGenerated);
                     return;
                 }
 
-                if (checkLoadingErrorScreen()) {
+                if (checkLoadingErrorScreen(historySnapshotTimestamp, modListTxtGenerated)) {
                     return;
                 }
 
@@ -258,11 +255,12 @@ public class CrashAssistantApp {
         return new long[]{historyTimestamp, txtGenerated ? 1L : 0L};
     }
 
-    private static boolean checkLoadingErrorScreen() {
+    private static boolean checkLoadingErrorScreen(long historySnapshotTimestamp,
+                                                   boolean modListTxtGenerated) {
         if (ProcessSignalIO.exists("loading_error_fml", Boot.parentPID)) {
             LOGGER.info("Detected FML error modloading screen.");
             if (CrashAssistantConfig.getBoolean("general.show_on_fml_error_screen")) {
-                onMinecraftFinished();
+                onMinecraftFinished(historySnapshotTimestamp, modListTxtGenerated);
             }
             return true;
         }
@@ -326,9 +324,11 @@ public class CrashAssistantApp {
         return s.toLowerCase().replace(" ", "");
     }
 
-    private static void onMinecraftFinished() {
+    private static void onMinecraftFinished(long historySnapshotTimestamp,
+                                            boolean modListTxtGenerated) {
         GUIStartTime = Instant.now().toEpochMilli();
 
+        ModListHistoryManager.attachSnapshot(historySnapshotTimestamp, modListTxtGenerated);
         ModListHistoryManager.refreshMilestoneSignals(Boot.parentPID);
 
         UUIDUtils.startCheck();

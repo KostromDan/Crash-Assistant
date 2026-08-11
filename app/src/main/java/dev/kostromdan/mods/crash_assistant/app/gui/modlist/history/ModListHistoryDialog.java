@@ -44,6 +44,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.Dimension;
+import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsConfiguration;
@@ -53,6 +54,11 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -330,7 +336,77 @@ public final class ModListHistoryDialog extends JDialog {
                 .setCellRenderer(countRenderer);
         fitColumnsToContents(table);
         table.getSelectionModel().addListSelectionListener(event -> updateCompareButton());
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() != 2 || !SwingUtilities.isLeftMouseButton(event)) {
+                    return;
+                }
+                int viewRow = table.rowAtPoint(event.getPoint());
+                if (viewRow < 0) {
+                    return;
+                }
+                table.setRowSelectionInterval(viewRow, viewRow);
+                int modelRow = table.convertRowIndexToModel(viewRow);
+                openTemporaryModList(((ModListHistoryTableModel) table.getModel()).getRow(modelRow));
+            }
+        });
         return table;
+    }
+
+    private void openTemporaryModList(final ModListHistoryRow row) {
+        Thread opener = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Path directory = null;
+                Path modList = null;
+                try {
+                    if (!Desktop.isDesktopSupported()
+                            || !Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                        throw new IOException("Opening files is not supported on this system");
+                    }
+                    directory = Files.createTempDirectory("crash-assistant-modlist-");
+                    modList = directory.resolve("modlist.txt");
+                    Mod.writeModlistTxt(modList, row.getMods());
+                    directory.toFile().deleteOnExit();
+                    modList.toFile().deleteOnExit();
+                    Desktop.getDesktop().open(modList.toFile());
+                } catch (final Exception e) {
+                    CrashAssistantApp.LOGGER.error("Failed to open a temporary modlist.txt from history", e);
+                    if (modList != null) {
+                        try {
+                            Files.deleteIfExists(modList);
+                        } catch (IOException ignored) {
+                        }
+                    }
+                    if (directory != null) {
+                        try {
+                            Files.deleteIfExists(directory);
+                        } catch (IOException ignored) {
+                        }
+                    }
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!isDisplayable()) {
+                                return;
+                            }
+                            String details = e.getMessage() == null
+                                    ? e.getClass().getSimpleName()
+                                    : e.getMessage();
+                            JOptionPane.showMessageDialog(
+                                    ModListHistoryDialog.this,
+                                    LanguageProvider.get("gui.modlist_history.open_txt_error")
+                                            .replace("$ERROR$", details),
+                                    LanguageProvider.get("gui.modlist_history.title"),
+                                    JOptionPane.ERROR_MESSAGE);
+                        }
+                    });
+                }
+            }
+        }, "modlist-history-file-opener");
+        opener.setDaemon(true);
+        opener.start();
     }
 
     /** Sizes every column from the actual header and rendered cell contents. */

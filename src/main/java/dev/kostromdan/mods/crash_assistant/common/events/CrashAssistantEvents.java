@@ -11,6 +11,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 public class CrashAssistantEvents {
 
     public static void onGameJoin() {
+        ModListUtils.scheduleAutomaticUpdate(CrashAssistant.playerNickname);
         ProcessSignalIO.post("joined_world");
         if (!CrashAssistantConfig.getModpackCreators()
                 .contains(CrashAssistant.playerNickname) || CrashAssistantConfig.getBoolean("greeting.shown_greeting")) {
@@ -43,17 +44,7 @@ public class CrashAssistantEvents {
             CrashAssistant.init();
         }
 
-        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-            if (CrashAssistantConfig.getModpackCreators()
-                    .isEmpty()) {
-                CrashAssistantConfig.addModpackCreator(CrashAssistant.playerNickname);
-            }
-            if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update")
-                    && CrashAssistantConfig.getModpackCreators()
-                    .contains(CrashAssistant.playerNickname)) {
-                ModListUtils.saveCurrentModList();
-            }
-        }
+        ModListUtils.scheduleAutomaticUpdate(CrashAssistant.playerNickname);
 
         ProcessSignalIO.post("successful_launch");
     }

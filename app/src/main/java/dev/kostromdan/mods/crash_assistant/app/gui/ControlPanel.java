@@ -111,7 +111,6 @@ public class ControlPanel {
         uploadAllButton.addActionListener(e -> uploadAllFiles());
 
         uploadAllButton.setEnabled(false);
-        LogAnalyser.startInitialAnalysisDeadline();
 
         uploadArrayBrowserButton = createUploadArrayBrowserButton();
         uploadAllRow = new JPanel(new BorderLayout(5, 0));

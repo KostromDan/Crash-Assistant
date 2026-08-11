@@ -24,11 +24,14 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
+import javax.swing.JScrollBar;
 import javax.swing.SortOrder;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -43,7 +46,10 @@ import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GraphicsConfiguration;
 import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
@@ -61,6 +67,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Two-pane selector for comparing arbitrary mod-list launch snapshots. */
 public final class ModListHistoryDialog extends JDialog {
+    private static final int DEFAULT_WIDTH = 1040;
+    private static final int DEFAULT_HEIGHT = 580;
+    private static final int MINIMUM_WIDTH = 760;
+    private static final int MINIMUM_HEIGHT = 420;
     private static final AtomicBoolean OPENING_OR_OPEN = new AtomicBoolean(false);
 
     private final List<ModListHistoryRow> rows;
@@ -71,6 +81,7 @@ public final class ModListHistoryDialog extends JDialog {
     private final ModListHistoryTable rightTable;
     private final JButton compareButton = new JButton(LanguageProvider.get("gui.modlist_history.compare"));
     private final String preferredReferenceId;
+    private JSplitPane splitPane;
 
     private ModListHistoryDialog(Window owner, LoadedRows loadedRows) {
         super(owner, LanguageProvider.get("gui.modlist_history.title"), Dialog.ModalityType.APPLICATION_MODAL);
@@ -84,10 +95,37 @@ public final class ModListHistoryDialog extends JDialog {
         rightTable = createTable();
 
         buildUi();
-        setMinimumSize(new Dimension(760, 420));
-        setSize(new Dimension(1040, 580));
+        pack();
+        Dimension initialSize = initialDialogSize(getSize(), usableScreenBounds());
+        setMinimumSize(new Dimension(
+                Math.min(MINIMUM_WIDTH, initialSize.width),
+                Math.min(MINIMUM_HEIGHT, initialSize.height)));
+        setSize(initialSize);
+        validate();
+        centerSplitPane(splitPane);
         setLocationRelativeTo(owner);
         selectInitialRows();
+    }
+
+    private Rectangle usableScreenBounds() {
+        GraphicsConfiguration configuration = getGraphicsConfiguration();
+        if (configuration == null) {
+            Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+            return new Rectangle(0, 0, screen.width, screen.height);
+        }
+        Rectangle bounds = new Rectangle(configuration.getBounds());
+        Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(configuration);
+        bounds.x += insets.left;
+        bounds.y += insets.top;
+        bounds.width = Math.max(1, bounds.width - insets.left - insets.right);
+        bounds.height = Math.max(1, bounds.height - insets.top - insets.bottom);
+        return bounds;
+    }
+
+    static Dimension initialDialogSize(Dimension packedSize, Rectangle usableScreen) {
+        int width = Math.min(Math.max(DEFAULT_WIDTH, packedSize.width), usableScreen.width);
+        int height = Math.min(Math.max(DEFAULT_HEIGHT, packedSize.height), usableScreen.height);
+        return new Dimension(Math.max(1, width), Math.max(1, height));
     }
 
     /** Reloads history and opens a fresh selector. Safe to call from any thread. */
@@ -218,10 +256,7 @@ public final class ModListHistoryDialog extends JDialog {
         JScrollPane rightScroll = new JScrollPane(rightTable);
         rightScroll.setBorder(BorderFactory.createTitledBorder(LanguageProvider.get("gui.modlist_history.right")));
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftScroll, rightScroll);
-        splitPane.setContinuousLayout(true);
-        splitPane.setResizeWeight(0.5);
-        splitPane.setDividerLocation(0.5);
+        splitPane = createHistorySplitPane(leftScroll, rightScroll);
         root.add(splitPane, BorderLayout.CENTER);
 
         JButton importButton = new JButton(LanguageProvider.get("gui.modlist_history.compare_to_txt"));
@@ -259,6 +294,7 @@ public final class ModListHistoryDialog extends JDialog {
         table.setFillsViewportHeight(true);
         table.setRowHeight(Math.max(24, table.getRowHeight()));
         table.setAutoCreateRowSorter(false);
+        keepSelectionColorsActive(table);
 
         final TableRowSorter<ModListHistoryTableModel> sorter =
                 new TableRowSorter<ModListHistoryTableModel>(model);
@@ -294,7 +330,7 @@ public final class ModListHistoryDialog extends JDialog {
     }
 
     /** Sizes every column from the actual header and rendered cell contents. */
-    private static void fitColumnsToContents(JTable table) {
+    static void fitColumnsToContents(JTable table) {
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         for (int columnIndex = 0; columnIndex < table.getColumnCount(); columnIndex++) {
             TableColumn column = table.getColumnModel().getColumn(columnIndex);
@@ -315,6 +351,41 @@ public final class ModListHistoryDialog extends JDialog {
             column.setMinWidth(requiredWidth);
             column.setPreferredWidth(requiredWidth);
         }
+        Dimension viewportSize = table.getPreferredScrollableViewportSize();
+        table.setPreferredScrollableViewportSize(new Dimension(
+                table.getColumnModel().getTotalColumnWidth()
+                        + new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().width,
+                viewportSize.height));
+    }
+
+    static JSplitPane createHistorySplitPane(Component left, Component right) {
+        JSplitPane pane = new BalancedSplitPane(left, right);
+        pane.setContinuousLayout(true);
+        pane.setResizeWeight(0.5);
+        return pane;
+    }
+
+    static void centerSplitPane(JSplitPane pane) {
+        pane.setDividerLocation(0.5);
+        if (pane instanceof BalancedSplitPane) {
+            ((BalancedSplitPane) pane).balanceFutureResizes();
+        }
+    }
+
+    static void keepSelectionColorsActive(JTable table) {
+        Color background = UIManager.getColor("Table.selectionBackground");
+        Color foreground = UIManager.getColor("Table.selectionForeground");
+        table.setSelectionBackground(independentColor(
+                background == null ? new Color(10, 100, 216) : background));
+        table.setSelectionForeground(independentColor(
+                foreground == null ? Color.WHITE : foreground));
+    }
+
+    private static Color independentColor(Color color) {
+        // FlatLaf switches to inactive selection colors using identity checks.
+        // A value-equivalent application color keeps both selected snapshots
+        // visually active even when focus moves to the other table.
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
     private void applyFilters() {
@@ -467,11 +538,51 @@ public final class ModListHistoryDialog extends JDialog {
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 18));
         buttons.add(clipboard);
         buttons.add(file);
-        choice.setContentPane(buttons);
+
+        Dimension buttonsSize = buttons.getPreferredSize();
+        int descriptionWidth = Math.max(1, buttonsSize.width - 24);
+        JTextArea description = createFixedWidthDescriptionPane(
+                LanguageProvider.get("gui.modlist_history.import.description"),
+                descriptionWidth);
+        JPanel descriptionPanel = new JPanel(new BorderLayout());
+        descriptionPanel.setBorder(BorderFactory.createEmptyBorder(12, 12, 0, 12));
+        descriptionPanel.add(description, BorderLayout.CENTER);
+        descriptionPanel.setPreferredSize(new Dimension(
+                buttonsSize.width,
+                description.getPreferredSize().height + 12));
+
+        JPanel content = new JPanel(new BorderLayout());
+        content.add(descriptionPanel, BorderLayout.NORTH);
+        content.add(buttons, BorderLayout.CENTER);
+        choice.setContentPane(content);
         choice.pack();
         choice.setResizable(false);
         choice.setLocationRelativeTo(this);
         choice.setVisible(true);
+    }
+
+    static JTextArea createFixedWidthDescriptionPane(String text, int width) {
+        int safeWidth = Math.max(1, width);
+        JTextArea pane = new JTextArea(text == null ? "" : text);
+        pane.setEditable(false);
+        pane.setFocusable(false);
+        pane.setLineWrap(true);
+        pane.setWrapStyleWord(true);
+        pane.setOpaque(false);
+        pane.setBorder(BorderFactory.createEmptyBorder());
+        pane.setMargin(new Insets(0, 0, 0, 0));
+        Font labelFont = UIManager.getFont("Label.font");
+        if (labelFont != null) {
+            pane.setFont(labelFont);
+        }
+        Color labelForeground = UIManager.getColor("Label.foreground");
+        if (labelForeground != null) {
+            pane.setForeground(labelForeground);
+        }
+        pane.setSize(new Dimension(safeWidth, Short.MAX_VALUE));
+        Dimension preferredSize = pane.getPreferredSize();
+        pane.setPreferredSize(new Dimension(safeWidth, preferredSize.height));
+        return pane;
     }
 
     private static JButton largeButton(String text) {
@@ -572,6 +683,68 @@ public final class ModListHistoryDialog extends JDialog {
                     ? LanguageProvider.get("gui.modlist_history.current")
                     : formatDate(row.getTimestamp()));
             setFont(getFont().deriveFont(row.isCurrent() ? Font.BOLD : Font.PLAIN));
+        }
+    }
+
+    /** Keeps later window growth balanced even before the L&F considers the split pane painted. */
+    private static final class BalancedSplitPane extends JSplitPane {
+        private int pendingDividerLocation = -1;
+        private int resizeReferenceWidth = -1;
+        private int resizeReferenceDividerLocation = -1;
+        private boolean balanceResizes;
+        private boolean applyingBalancedDivider;
+        private boolean insideLayout;
+
+        private BalancedSplitPane(Component left, Component right) {
+            super(JSplitPane.HORIZONTAL_SPLIT, left, right);
+        }
+
+        private void balanceFutureResizes() {
+            balanceResizes = true;
+            resizeReferenceWidth = getWidth();
+            resizeReferenceDividerLocation = getDividerLocation();
+        }
+
+        @Override
+        public void setDividerLocation(int location) {
+            super.setDividerLocation(location);
+            if (balanceResizes && !insideLayout && !applyingBalancedDivider && getWidth() > 0) {
+                resizeReferenceWidth = getWidth();
+                resizeReferenceDividerLocation = location;
+                pendingDividerLocation = -1;
+            }
+        }
+
+        @Override
+        public void setBounds(int x, int y, int width, int height) {
+            super.setBounds(x, y, width, height);
+            if (balanceResizes && resizeReferenceWidth > 0 && width != resizeReferenceWidth) {
+                int target = resizeReferenceDividerLocation + (width - resizeReferenceWidth) / 2;
+                pendingDividerLocation = Math.max(0, Math.min(
+                        Math.max(0, width - getDividerSize()), target));
+            }
+        }
+
+        @Override
+        public void doLayout() {
+            int targetDividerLocation = pendingDividerLocation;
+            pendingDividerLocation = -1;
+            insideLayout = true;
+            try {
+                super.doLayout();
+                // A look and feel may apply resizeWeight before honoring an
+                // explicit location. A second same-size layout makes the
+                // cumulative 50/50 target authoritative without re-anchoring
+                // on an internal L&F update.
+                if (targetDividerLocation >= 0) {
+                    applyingBalancedDivider = true;
+                    super.setDividerLocation(targetDividerLocation);
+                    super.doLayout();
+                }
+            } finally {
+                applyingBalancedDivider = false;
+                insideLayout = false;
+            }
         }
     }
 

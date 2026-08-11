@@ -30,10 +30,34 @@ public class ModListDiff {
 
         updatedMods = new LinkedHashSet<>();
 
+        Set<Mod> hashUpdatedOldMods = Collections.newSetFromMap(new IdentityHashMap<Mod, Boolean>());
+        Set<Mod> hashUpdatedNewMods = Collections.newSetFromMap(new IdentityHashMap<Mod, Boolean>());
+        for (Mod oldMod : savedMods) {
+            for (Mod newMod : currentMods) {
+                if (hashUpdatedNewMods.contains(newMod) || oldMod.getJarName() == null ||
+                        newMod.getJarName() == null ||
+                        !oldMod.getJarName().equalsIgnoreCase(newMod.getJarName()) ||
+                        !UpdatedPair.haveDifferentComparableHashes(oldMod, newMod)) {
+                    continue;
+                }
+
+                LinkedHashSet<Mod> oldHashMods = new LinkedHashSet<>();
+                oldHashMods.add(oldMod);
+                LinkedHashSet<Mod> newHashMods = new LinkedHashSet<>();
+                newHashMods.add(newMod);
+                UpdatedPair hashUpdatedPair = new UpdatedPair(oldHashMods, newHashMods);
+                hashUpdatedPair.markModMessedUpWithVersion();
+                updatedMods.add(hashUpdatedPair);
+                hashUpdatedOldMods.add(oldMod);
+                hashUpdatedNewMods.add(newMod);
+                break;
+            }
+        }
+
         LinkedHashMap<String, UpdatedPair> updatedPairCandidates = new LinkedHashMap<>();
 
         for (Mod mod : savedMods) {
-            if (mod.getModId() == null) continue;
+            if (hashUpdatedOldMods.contains(mod) || mod.getModId() == null) continue;
             updatedPairCandidates
                     .computeIfAbsent(mod.getModId(), k -> new UpdatedPair(new LinkedHashSet<>(), new LinkedHashSet<>()))
                     .getOldMods()
@@ -41,7 +65,7 @@ public class ModListDiff {
         }
 
         for (Mod mod : currentMods) {
-            if (mod.getModId() == null) continue;
+            if (hashUpdatedNewMods.contains(mod) || mod.getModId() == null) continue;
             updatedPairCandidates
                     .computeIfAbsent(mod.getModId(), k -> new UpdatedPair(new LinkedHashSet<>(), new LinkedHashSet<>()))
                     .getNewMods()
@@ -59,8 +83,10 @@ public class ModListDiff {
             }
         }
         updatedMods.addAll(updatedPairCandidates.values());
-        addedMods.removeIf(addedMod -> updatedPairCandidates.containsKey(addedMod.getModId()));
-        removedMods.removeIf(removedMod -> updatedPairCandidates.containsKey(removedMod.getModId()));
+        addedMods.removeIf(addedMod -> hashUpdatedNewMods.contains(addedMod) ||
+                updatedPairCandidates.containsKey(addedMod.getModId()));
+        removedMods.removeIf(removedMod -> hashUpdatedOldMods.contains(removedMod) ||
+                updatedPairCandidates.containsKey(removedMod.getModId()));
     }
 
     public LinkedHashSet<Mod> getCurrentMods() {

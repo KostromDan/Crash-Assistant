@@ -68,10 +68,6 @@ public class LogAnalyser {
         }
     }
 
-    public static synchronized void startInitialAnalysisDeadline() {
-        ensureAnalysisDeadline();
-    }
-
     private static void analyseLogsWithinDeadline() {
         if (!CrashAssistantConfig.getBoolean("analysis.enabled")) {
             return;

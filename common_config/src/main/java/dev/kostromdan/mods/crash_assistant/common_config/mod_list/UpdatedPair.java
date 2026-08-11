@@ -8,6 +8,7 @@ import java.util.Map;
 public class UpdatedPair {
     private final LinkedHashSet<Mod> oldMods;
     private final LinkedHashSet<Mod> newMods;
+    private boolean modMessedUpWithVersion;
 
     public UpdatedPair(LinkedHashSet<Mod> oldMods, LinkedHashSet<Mod> newMods) {
         this.oldMods = oldMods;
@@ -32,11 +33,32 @@ public class UpdatedPair {
         return false;
     }
 
+    void markModMessedUpWithVersion() {
+        modMessedUpWithVersion = true;
+    }
+
+    static boolean haveDifferentComparableHashes(Mod oldMod, Mod newMod) {
+        if (oldMod == null || newMod == null) {
+            return false;
+        }
+
+        boolean modrinthHashesDiffer = oldMod.getModrinthHash() != null &&
+                newMod.getModrinthHash() != null &&
+                !oldMod.getModrinthHash().equalsIgnoreCase(newMod.getModrinthHash());
+        boolean curseForgeHashesDiffer = oldMod.getCurseForgeHash() != null &&
+                newMod.getCurseForgeHash() != null &&
+                !oldMod.getCurseForgeHash().equals(newMod.getCurseForgeHash());
+        return modrinthHashesDiffer || curseForgeHashesDiffer;
+    }
+
     public String getModId() {
         return oldMods.iterator().next().getModId();
     }
 
     public boolean isAnyModMessedUpWithVersion() {
+        if (modMessedUpWithVersion) {
+            return true;
+        }
         block:
         {
             HashMap<String, HashSet<String>> versionToJarNames = new HashMap<>();

@@ -259,4 +259,20 @@ tasks.register('modListComparisonTest', JavaExec) {
     }
 }
 
-check.dependsOn securityRegressionTest, logReaderCurseForgeStdoutTest, modListHistoryTableModelTest, modListComparisonTest
+tasks.register('modFileTransactionTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs rollback and retry regression tests for mod-file actions.'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModFileTransactionTest'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+    def testWorkDir = layout.buildDirectory.dir('mod-file-transaction-test-workdir').get().asFile
+    doFirst {
+        testWorkDir.mkdirs()
+    }
+    workingDir testWorkDir
+}
+
+check.dependsOn securityRegressionTest, logReaderCurseForgeStdoutTest, modListHistoryTableModelTest, modListComparisonTest, modFileTransactionTest

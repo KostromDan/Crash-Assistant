@@ -20,9 +20,11 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.Desktop;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.List;
@@ -34,6 +36,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -54,21 +57,27 @@ public class ModListDiffDialog extends JFrame {
     private final JButton cancelCurrentButton = new JButton(LanguageProvider.get("gui.modlist_diff.cancel_current"));
     private final JButton cancelAllButton = new JButton(LanguageProvider.get("gui.modlist_diff.cancel_all"));
     public static final Path tmpDownloadsFolder = ModListUtils.MODS_FOLDER.resolve(".crash_assistant_tmp");
+    private static final Path transactionRecoveryFolder =
+            Paths.get("local", "crash_assistant", "mod_file_recovery");
+
+    static Path getTransactionRecoveryFolder() {
+        return transactionRecoveryFolder;
+    }
 
     // Cancellation State Flags
-    private volatile boolean cancelCurrentRequested = false;
-    private volatile boolean cancelAllRequested = false;
-    private volatile DiffEntry cancelTargetEntry = null;
+    private final ActionCancellationState cancellationState = new ActionCancellationState();
     private volatile boolean preferModrinth = false;
 
     // State Tracking
     private volatile boolean lookupWarningShown = false;
     private volatile DiffEntry currentActionEntry = null;
-    private volatile DiffEntry activeDownloadEntry = null;
-    private volatile java.io.InputStream activeDownloadStream = null;
-    private volatile java.net.HttpURLConnection activeDownloadConnection = null;
-    private volatile Thread activeActionThread = null;
+    private final ActiveActionResources activeActionResources = new ActiveActionResources();
     private volatile ManualDownloadDialog activeManualDownloadDialog = null;
+    // Reserved before submitting a mutating action. This keeps row/footer actions disabled even
+    // during the short interval before the serial executor starts the action.
+    private final AtomicInteger activeOwnedOperations = new AtomicInteger();
+    private final ThreadLocal<Boolean> lastActionTransactionFailed =
+            ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     private volatile boolean cfReady = false;
     private volatile boolean mrReady = false;
@@ -85,7 +94,8 @@ public class ModListDiffDialog extends JFrame {
                 return t;
             }
     );
-    // Instant actions (disable/remove/reveal) shouldn't wait behind queued tasks.
+    // Non-mutating reveal/cancellation work may run independently. Every file mutation is sent to
+    // actionExecutor and additionally guarded by activeOwnedOperations.
     private final ExecutorService instantActionExecutor = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "modlist-instant-actions");
         t.setDaemon(true);
@@ -200,13 +210,12 @@ public class ModListDiffDialog extends JFrame {
         }
         if (!closing.compareAndSet(false, true)) return;
         setEnabled(false);
-        cancelAllRequested = true;
-        cancelCurrentRequested = true;
+        cancellationState.requestAll();
         actionExecutor.getQueue().clear();
+        ActiveActionResources.AbortRequest abortRequest = activeActionResources.interruptAndSnapshot();
         lookupExecutor.shutdownNow();
         actionExecutor.shutdownNow();
         instantActionExecutor.shutdownNow();
-        interruptActiveActionThread(null);
         closeManualDownloadDialog(activeManualDownloadDialog);
         activeManualDownloadDialog = null;
 
@@ -221,7 +230,7 @@ public class ModListDiffDialog extends JFrame {
         Thread cleanup = new Thread(new Runnable() {
             @Override
             public void run() {
-                abortRunningDownload(null);
+                abortRequest.abort();
                 awaitExecutorShutdown(lookupExecutor);
                 awaitExecutorShutdown(actionExecutor);
                 awaitExecutorShutdown(instantActionExecutor);
@@ -606,10 +615,10 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void bulkApply(SectionAction action) {
-        if (closing.get()) return;
+        if (closing.get() || cancellationState.isAllRequested() || activeOwnedOperations.get() != 0) return;
         List<DiffEntry> targets = new ArrayList<DiffEntry>();
         for (DiffEntry e : allEntries()) {
-            if (!e.selected || e.resolved) continue;
+            if (!e.selected || !isEntryActive(e)) continue;
             if (action == SectionAction.REVERT && e.type != SectionType.UPDATED) continue;
             if ((action == SectionAction.DISABLE || action == SectionAction.ENABLE) && e.type == SectionType.REMOVED)
                 continue;
@@ -635,49 +644,69 @@ public class ModListDiffDialog extends JFrame {
                 return;
             }
         }
-        setAllActionButtonsEnabled(false);
+        if (!reserveFileMutation()) return;
         ExecutorService executor = executorFor(action);
+        final boolean ownsCancellation = !isInstantAction(action);
         boolean submitted = submitIfOpen(executor, () -> {
             Thread actionThread = null;
-            if (!isInstantAction(action)) {
+            if (ownsCancellation) {
                 actionThread = Thread.currentThread();
-                activeActionThread = actionThread;
+                activeActionResources.begin(actionThread);
             }
             try {
                 // IMPORTANT: Clear stale interrupts from previous cancellations before starting new batch
                 clearInterruptFlag();
+                lastActionTransactionFailed.set(Boolean.FALSE);
                 for (DiffEntry entry : targets) {
                     clearInterruptFlag(); // Ensure this iteration starts clean
                     if (isCancelAllRequested() || closing.get()) break;
 
-                    currentActionEntry = entry;
+                    if (ownsCancellation) {
+                        currentActionEntry = entry;
+                    }
                     startAction(entry, action);
                     runOnEdtIfOpen(this::refreshTables);
 
                     boolean success = performAction(entry, action);
+                    boolean transactionFailed = didLastTransactionFail();
                     if (closing.get()) break;
                     finishAction(entry, action, success);
-                    clearSingleCancelFor(entry); // Just in case it wasn't cleared inside, though it should be
-                    currentActionEntry = null;
+                    if (ownsCancellation) {
+                        // Instant actions may overlap a download batch and must not consume its Cancel Current.
+                        clearSingleCancelFor(entry); // Just in case it wasn't cleared inside, though it should be
+                    }
+                    if (ownsCancellation) {
+                        currentActionEntry = null;
+                    }
 
+                    if (transactionFailed) break;
                     if (isCancelAllRequested()) break;
+                }
+                if (ownsCancellation) {
+                    clearCancellationAfterOwnedOperation();
+                    currentActionEntry = null;
                 }
                 runOnEdtIfOpen(() -> {
                     refreshTables();
-                    setAllActionButtonsEnabled(true);
                     updateStatusLabel();
-                    resetProgress();
-                    clearCancelAllFlag();
+                    if (ownsCancellation) {
+                        resetProgress();
+                    }
                 });
             } finally {
-                if (actionThread != null && activeActionThread == actionThread) {
-                    activeActionThread = null;
+                if (actionThread != null) {
+                    activeActionResources.finish(actionThread);
                 }
+                if (ownsCancellation) {
+                    clearCancellationAfterOwnedOperation();
+                    currentActionEntry = null;
+                }
+                releaseFileMutation();
                 clearInterruptFlag();
             }
         });
-        if (!submitted && !closing.get()) {
-            setAllActionButtonsEnabled(true);
+        if (!submitted) {
+            releaseFileMutation();
         }
     }
 
@@ -730,7 +759,7 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void performBulkActions() {
-        if (closing.get()) return;
+        if (closing.get() || cancellationState.isAllRequested() || activeOwnedOperations.get() != 0) return;
         List<DiffEntry> toRemove = selectedOf(addedEntries);
         List<DiffEntry> toRevert = selectedOf(updatedEntries);
         List<DiffEntry> toRestore = selectedOf(removedEntries);
@@ -751,10 +780,7 @@ public class ModListDiffDialog extends JFrame {
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (res != JOptionPane.YES_OPTION) return;
 
-        cancelCurrentRequested = false;
-        cancelAllRequested = false;
-        cancelTargetEntry = null;
-        setAllActionButtonsEnabled(false);
+        if (!reserveFileMutation()) return;
         ControlPanel.stopMovingToTop = true;
 
         // Mark queued items as running so the UI shows them disabled immediately.
@@ -771,9 +797,10 @@ public class ModListDiffDialog extends JFrame {
 
         boolean submitted = submitIfOpen(actionExecutor, () -> {
             Thread actionThread = Thread.currentThread();
-            activeActionThread = actionThread;
+            activeActionResources.begin(actionThread);
             try {
                 clearInterruptFlag();
+                lastActionTransactionFailed.set(Boolean.FALSE);
                 for (DiffEntry entry : toRemove) {
                     clearInterruptFlag();
                     if (isCancelAllRequested() || closing.get()) break;
@@ -786,47 +813,59 @@ public class ModListDiffDialog extends JFrame {
                     if (isCancelAllRequested() || closing.get()) break;
                     currentActionEntry = entry;
                     boolean success = performAction(entry, SectionAction.REVERT);
+                    boolean transactionFailed = didLastTransactionFail();
                     if (closing.get()) break;
                     finishAction(entry, SectionAction.REVERT, success);
                     // CRITICAL: Ensure single cancel was consumed and cleared
                     clearSingleCancelFor(entry);
                     currentActionEntry = null;
+                    if (transactionFailed) break;
                     if (isCancelAllRequested()) break;
                 }
-                for (DiffEntry entry : toRestore) {
-                    clearInterruptFlag();
-                    if (isCancelAllRequested() || closing.get()) break;
-                    currentActionEntry = entry;
-                    startAction(entry, SectionAction.RESTORE);
-                    runOnEdtIfOpen(() -> {
-                        refreshTables();
-                        updateStatusLabel();
-                    });
-                    boolean success = performAction(entry, SectionAction.RESTORE);
-                    if (closing.get()) break;
-                    finishAction(entry, SectionAction.RESTORE, success);
-                    clearSingleCancelFor(entry);
-                    currentActionEntry = null;
-                    if (isCancelAllRequested()) break;
+                boolean revertFailed = didLastTransactionFail();
+                if (!revertFailed) {
+                    for (DiffEntry entry : toRestore) {
+                        clearInterruptFlag();
+                        if (isCancelAllRequested() || closing.get()) break;
+                        currentActionEntry = entry;
+                        startAction(entry, SectionAction.RESTORE);
+                        runOnEdtIfOpen(() -> {
+                            refreshTables();
+                            updateStatusLabel();
+                        });
+                        boolean success = performAction(entry, SectionAction.RESTORE);
+                        boolean transactionFailed = didLastTransactionFail();
+                        if (closing.get()) break;
+                        finishAction(entry, SectionAction.RESTORE, success);
+                        clearSingleCancelFor(entry);
+                        currentActionEntry = null;
+                        if (transactionFailed) break;
+                        if (isCancelAllRequested()) break;
+                    }
                 }
+                if (didLastTransactionFail()) {
+                    resetQueuedRunningStatesAfterFailure();
+                }
+                clearCancellationAfterOwnedOperation();
                 runOnEdtIfOpen(() -> {
                     refreshTables();
-                    setAllActionButtonsEnabled(true);
                     updateStatusLabel();
                     resetProgress();
-                    clearCancelAllFlag();
                 });
             } finally {
-                if (activeActionThread == actionThread) {
-                    activeActionThread = null;
-                }
+                activeActionResources.finish(actionThread);
+                clearCancellationAfterOwnedOperation();
+                currentActionEntry = null;
+                releaseFileMutation();
                 clearInterruptFlag();
             }
         });
-        if (!submitted && !closing.get()) {
-            resetQueuedRunningStatesAfterCancelAll();
-            setAllActionButtonsEnabled(true);
-            refreshTables();
+        if (!submitted) {
+            releaseFileMutation();
+            if (!closing.get()) {
+                resetQueuedRunningStatesAfterCancelAll();
+                refreshTables();
+            }
         }
     }
 
@@ -838,74 +877,76 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private ExecutorService executorFor(SectionAction action) {
-        return isInstantAction(action) ? instantActionExecutor : actionExecutor;
+        return action == SectionAction.SHOW_FOLDER ? instantActionExecutor : actionExecutor;
     }
 
     void runActionAsync(final DiffEntry entry, final SectionAction action) {
-        if (closing.get()) return;
+        if (closing.get() || cancellationState.isAllRequested()) return;
         ControlPanel.stopMovingToTop = true;
 
-        // Reset single cancel state for THIS specific new action
-        clearInterruptFlag();
-        cancelCurrentRequested = false;
-        cancelTargetEntry = null;
+        final boolean ownsCancellation = !isInstantAction(action);
+        final boolean mutatesFiles = action != SectionAction.SHOW_FOLDER;
+        if (mutatesFiles && !reserveFileMutation()) return;
 
-        // If we are running a new action, we shouldn't have leftover states
-        if (!isInstantAction(action)) {
-            // Note: We do NOT reset cancelAllRequested here, because the user might have clicked "Cancel All"
-            // just as a new action was being spawned by code (rare, but safer).
-            cancelCurrentRequested = false;
-            cancelTargetEntry = null;
-            currentActionEntry = entry;
-        }
+        // Submission must not mutate the current owner's state. A queued download/transaction
+        // receives ownership only after the single-thread action executor actually starts it.
+        clearInterruptFlag();
 
         startAction(entry, action);
         refreshTables();
         updateStatusLabel();
 
         boolean submitted = submitIfOpen(executorFor(action), () -> {
+            if (ownsCancellation) {
+                currentActionEntry = entry;
+            }
             Thread actionThread = null;
-            if (!isInstantAction(action)) {
+            if (ownsCancellation) {
                 actionThread = Thread.currentThread();
-                activeActionThread = actionThread;
+                activeActionResources.begin(actionThread);
             }
             try {
                 clearInterruptFlag();
                 boolean success = performAction(entry, action);
+                if (ownsCancellation) {
+                    clearCancellationAfterOwnedOperation();
+                }
                 runOnEdtIfOpen(() -> {
                     finishAction(entry, action, success);
                     refreshTables();
                     updateStatusLabel();
-
-                    if (isCancelAllRequested()) {
+                    if (ownsCancellation) {
                         resetProgress();
-                    }
-
-                    // Cleanup this entry's cancel state
-                    clearSingleCancelFor(entry);
-
-                    if (!isInstantAction(action)) {
-                        currentActionEntry = null;
                     }
                 });
             } finally {
-                if (actionThread != null && activeActionThread == actionThread) {
-                    activeActionThread = null;
+                if (actionThread != null) {
+                    activeActionResources.finish(actionThread);
                 }
+                if (ownsCancellation) {
+                    clearCancellationAfterOwnedOperation();
+                    if (currentActionEntry == entry) {
+                        currentActionEntry = null;
+                    }
+                }
+                if (mutatesFiles) releaseFileMutation();
                 clearInterruptFlag();
             }
         });
-        if (!submitted && !closing.get()) {
-            finishAction(entry, action, false);
-            refreshTables();
-            updateStatusLabel();
+        if (!submitted) {
+            if (mutatesFiles) releaseFileMutation();
+            if (!closing.get()) {
+                finishAction(entry, action, false);
+                refreshTables();
+                updateStatusLabel();
+            }
         }
     }
 
     private List<DiffEntry> selectedOf(List<DiffEntry> entries) {
         List<DiffEntry> list = new ArrayList<DiffEntry>();
         for (DiffEntry e : entries) {
-            if (e.selected && !e.resolved) list.add(e);
+            if (e.selected && isEntryActive(e)) list.add(e);
         }
         return list;
     }
@@ -948,7 +989,16 @@ public class ModListDiffDialog extends JFrame {
         if (closing.get()) return;
         // Force cancel immediately regardless of what target the logic thinks is active.
         // We are single-threaded (mostly), so if the user clicks cancel, they mean "Stop everything now".
-        cancelCurrentRequested = true;
+        AtomicReference<ActiveActionResources.AbortRequest> abortRequest = new AtomicReference<ActiveActionResources.AbortRequest>();
+        boolean ownerCaptured = cancellationState.requestCurrentAtomically(() -> {
+            ActiveActionResources.AbortRequest captured = activeActionResources.interruptAndSnapshot();
+            abortRequest.set(captured);
+            return captured.hadActiveOwner();
+        });
+        if (!ownerCaptured) {
+            resetProgress();
+            return;
+        }
 
         // Update UI immediately so the user gets feedback even if network clean up hangs
         runOnEdtIfOpen(() -> {
@@ -960,19 +1010,21 @@ public class ModListDiffDialog extends JFrame {
         // If the network is saturated, connection.disconnect() or stream.close() can block for seconds.
         // Doing this on the EDT freezes the GUI.
         submitIfOpen(instantActionExecutor, () -> {
-            // Pass null to force abort any stream
-            abortRunningDownload(null);
-            interruptActiveActionThread(null);
+            abortRequest.get().abort();
+            runOnEdtIfOpen(this::clearCancelFlagsIfIdle);
         });
     }
 
     private void requestCancelAllOperations() {
         if (closing.get()) return;
-        cancelAllRequested = true;
-
-        // Also trigger current cancel to stop active task immediately
-        cancelCurrentRequested = true;
-        cancelTargetEntry = null; // targets whatever is running
+        // File mutations are globally single-flight, so there is no second mutation to discard.
+        // Keep interruption/snapshotting under the same monitor so the current owner cannot clear
+        // the request and be replaced while cancellation captures its resources.
+        AtomicReference<ActiveActionResources.AbortRequest> abortRequest = new AtomicReference<ActiveActionResources.AbortRequest>();
+        cancellationState.requestAllAtomically(() -> {
+            abortRequest.set(activeActionResources.interruptAndSnapshot());
+        });
+        setAllActionButtonsEnabled(false);
 
         // Update UI immediately
         runOnEdtIfOpen(() -> {
@@ -984,10 +1036,7 @@ public class ModListDiffDialog extends JFrame {
 
         // Offload blocking cleanups
         submitIfOpen(instantActionExecutor, () -> {
-            abortRunningDownload(null);
-            interruptActiveActionThread(null);
-
-            actionExecutor.getQueue().clear();
+            abortRequest.get().abort();
 
             runOnEdtIfOpen(() -> {
                 resetQueuedRunningStatesAfterCancelAll();
@@ -999,75 +1048,33 @@ public class ModListDiffDialog extends JFrame {
 
     private boolean isCancelRequestedFor(DiffEntry entry) {
         if (closing.get()) return true;
-        if (cancelAllRequested) return true;
+        if (cancellationState.isAllRequested()) return true;
         // If cancel is requested, we assume it applies to the currently running entry
-        return cancelCurrentRequested;
+        return cancellationState.isCurrentRequested();
     }
 
     private boolean isCancelInProgressFor(DiffEntry entry) {
         // Used for UI disabling logic
-        if (cancelAllRequested) return true;
+        if (cancellationState.isAllRequested()) return true;
         // Simplified check: if cancel is requested, we consider it in progress for the active entry
-        return cancelCurrentRequested && (currentActionEntry == entry || activeDownloadEntry == entry);
+        return cancellationState.isCurrentRequested()
+                && (currentActionEntry == entry || activeActionResources.isDownloadFor(entry));
     }
 
     private boolean isCancelAllRequested() {
-        return closing.get() || cancelAllRequested;
+        return closing.get() || cancellationState.isAllRequested();
     }
 
     private void rememberActiveDownload(DiffEntry entry, java.io.InputStream stream, java.net.HttpURLConnection connection) {
-        activeDownloadEntry = entry;
-        activeDownloadStream = stream;
-        activeDownloadConnection = connection;
+        activeActionResources.rememberDownload(entry, stream, connection);
     }
 
     private void clearActiveDownload(java.io.InputStream stream) {
-        if (activeDownloadStream == stream) {
-            activeDownloadStream = null;
-            activeDownloadEntry = null;
-            activeDownloadConnection = null;
-        }
+        activeActionResources.clearDownload(stream);
     }
 
     private void abortRunningDownload(DiffEntry target) {
-        java.io.InputStream stream = activeDownloadStream;
-        java.net.HttpURLConnection connection = activeDownloadConnection;
-
-        if (connection != null) {
-            try {
-                connection.disconnect();
-            } catch (Exception ignored) {
-            }
-        }
-
-        if (stream != null) {
-            try {
-                stream.close();
-            } catch (Exception ignored) {
-            }
-        }
-
-        if (stream == null) {
-            if (connection != null && activeDownloadConnection == connection) {
-                activeDownloadConnection = null;
-                activeDownloadEntry = null;
-            }
-        } else {
-            if (activeDownloadStream == stream) {
-                activeDownloadStream = null;
-                activeDownloadEntry = null;
-                activeDownloadConnection = null;
-            }
-        }
-    }
-
-    private void interruptActiveActionThread(DiffEntry target) {
-        Thread t = activeActionThread;
-        if (t == null) return;
-        try {
-            t.interrupt();
-        } catch (Exception ignored) {
-        }
+        activeActionResources.snapshotDownload(target).abort();
     }
 
     private void updateProgress(String text, boolean indeterminate) {
@@ -1090,6 +1097,9 @@ public class ModListDiffDialog extends JFrame {
 
     private void resetProgress() {
         runOnEdtIfOpen(() -> {
+            if (cancellationState.isAllRequested()) {
+                return;
+            }
             progressLabel.setText(" ");
             progressBar.setVisible(false);
             progressBar.setIndeterminate(false);
@@ -1098,14 +1108,6 @@ public class ModListDiffDialog extends JFrame {
             cancelCurrentButton.setEnabled(true);
             cancelAllButton.setEnabled(true);
 
-            // Only clear flags if we aren't in the middle of something else,
-            // or if this was a forced reset.
-            cancelCurrentRequested = false;
-            cancelAllRequested = false;
-            cancelTargetEntry = null;
-            activeDownloadEntry = null;
-            activeDownloadStream = null;
-            activeDownloadConnection = null;
             statusLabel.setForeground(new Color(70, 70, 70));
         });
     }
@@ -1116,15 +1118,9 @@ public class ModListDiffDialog extends JFrame {
         }
     }
 
-    private void clearCancelAllFlag() {
-        cancelAllRequested = false;
-    }
-
     // Helper to CONSUME the single cancel flag so it doesn't bleed into the next task
     private void consumeSingleCancel() {
-        if (cancelCurrentRequested) {
-            cancelCurrentRequested = false;
-            cancelTargetEntry = null;
+        if (cancellationState.consumeCurrentOnly()) {
             resetProgress();
         }
     }
@@ -1135,16 +1131,37 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private void clearCancelFlagsIfIdle() {
-        if (actionExecutor.getActiveCount() == 0 && actionExecutor.getQueue().isEmpty()) {
-            cancelAllRequested = false;
-            cancelCurrentRequested = false;
+        if (actionExecutor.getActiveCount() == 0
+                && actionExecutor.getQueue().isEmpty()
+                && activeOwnedOperations.get() == 0
+                && currentActionEntry == null
+                && !activeActionResources.hasActiveThread()) {
+            cancellationState.clearAfterOwnerFinished(closing::get);
             resetProgress();
+            setAllActionButtonsEnabled(true);
+            refreshTables();
         }
+    }
+
+    private void clearCancellationAfterOwnedOperation() {
+        cancellationState.clearAfterOwnerFinished(closing::get);
     }
 
     private void resetQueuedRunningStatesAfterCancelAll() {
         for (DiffEntry entry : allEntries()) {
             if (entry == currentActionEntry) continue;
+            if (entry.revertState == ActionState.RUNNING) {
+                entry.revertState = ActionState.IDLE;
+            }
+            if (entry.restoreState == ActionState.RUNNING) {
+                entry.restoreState = ActionState.IDLE;
+            }
+        }
+    }
+
+    private void resetQueuedRunningStatesAfterFailure() {
+        for (DiffEntry entry : allEntries()) {
+            if (entry.resolved) continue;
             if (entry.revertState == ActionState.RUNNING) {
                 entry.revertState = ActionState.IDLE;
             }
@@ -1168,6 +1185,51 @@ public class ModListDiffDialog extends JFrame {
         runOnEdtIfOpen(() -> {
             statusLabel.setText(text);
             statusLabel.setForeground(new Color(180, 60, 60));
+        });
+    }
+
+    private boolean didLastTransactionFail() {
+        return Boolean.TRUE.equals(lastActionTransactionFailed.get());
+    }
+
+    private void showActionFailure(DiffEntry entry, Throwable failure,
+                                   boolean rollbackComplete, Path backupDirectory) {
+        Throwable detail = failure;
+        while (detail.getCause() != null && detail.getCause() != detail) {
+            detail = detail.getCause();
+        }
+        String detailMessage = detail.getMessage();
+        if (detailMessage == null || detailMessage.trim().isEmpty()) {
+            detailMessage = detail.getClass().getSimpleName();
+        }
+
+        LinkedHashSet<String> fileNames = new LinkedHashSet<String>();
+        for (DiffEntry.ModInstance mod : entry.savedMods) {
+            fileNames.add(mod.fileName());
+        }
+        for (DiffEntry.ModInstance mod : entry.currentMods) {
+            fileNames.add(mod.fileName());
+        }
+        String affectedFiles = fileNames.isEmpty() ? "unknown" : String.join(", ", fileNames);
+        String key = rollbackComplete
+                ? "gui.modlist_diff.transaction_failed"
+                : "gui.modlist_diff.transaction_rollback_failed";
+        String message = LanguageProvider.get(key)
+                .replace("$FILE$", affectedFiles)
+                .replace("$ERROR$", ellipsize(detailMessage, 600))
+                .replace("$BACKUP$", backupDirectory == null ? "-" : backupDirectory.toAbsolutePath().toString());
+        String status = LanguageProvider.get(rollbackComplete
+                ? "gui.modlist_diff.transaction_failed_status"
+                : "gui.modlist_diff.transaction_rollback_failed_status");
+        runOnEdtIfOpen(() -> {
+            statusLabel.setText(status);
+            statusLabel.setForeground(new Color(180, 60, 60));
+            JOptionPane.showMessageDialog(
+                    this,
+                    message,
+                    LanguageProvider.get("gui.modlist_diff.transaction_failed_title"),
+                    JOptionPane.ERROR_MESSAGE
+            );
         });
     }
 
@@ -1206,6 +1268,29 @@ public class ModListDiffDialog extends JFrame {
                 b.setEnabled(enabled);
             }
         }
+    }
+
+    private boolean reserveFileMutation() {
+        if (closing.get() || cancellationState.isAllRequested()
+                || !activeOwnedOperations.compareAndSet(0, 1)) {
+            return false;
+        }
+        setAllActionButtonsEnabled(false);
+        refreshTables();
+        return true;
+    }
+
+    private void releaseFileMutation() {
+        if (!activeOwnedOperations.compareAndSet(1, 0)) {
+            return;
+        }
+        runOnEdtIfOpen(() -> {
+            if (!cancellationState.isAllRequested()) {
+                setAllActionButtonsEnabled(true);
+            }
+            refreshTables();
+            updateStatusLabel();
+        });
     }
 
     private boolean allSelectedDisabled() {
@@ -1386,112 +1471,134 @@ public class ModListDiffDialog extends JFrame {
     }
 
     private boolean revertEntry(DiffEntry entry) {
+        lastActionTransactionFailed.set(Boolean.FALSE);
         if (entry.savedMods.isEmpty()) return false;
         if (isCancelAllRequested()) {
             resetProgress();
             return false;
         }
         List<DownloadResult> downloads = new ArrayList<DownloadResult>();
-        Set<Path> keepFinalPaths = new HashSet<Path>();
+        Path stagingDirectory = null;
         try {
             Files.createDirectories(tmpDownloadsFolder);
+            stagingDirectory = Files.createTempDirectory(tmpDownloadsFolder, ".action-");
             for (DiffEntry.ModInstance saved : entry.savedMods) {
                 if (isCancelRequestedFor(entry)) {
                     consumeSingleCancel(); // RESET THE FLAG!
-                    cleanupDownloads(downloads);
                     return false;
                 }
-                DownloadResult result = downloadSavedFile(entry, saved, tmpDownloadsFolder);
+                DownloadResult result = downloadSavedFile(entry, saved, stagingDirectory);
                 if (result == null) {
                     consumeSingleCancel(); // RESET THE FLAG!
-                    cleanupDownloads(downloads);
                     return false;
                 }
                 downloads.add(result);
-                if (result.finalPath != null) {
-                    keepFinalPaths.add(result.finalPath.toAbsolutePath().normalize());
-                }
             }
             if (isCancelRequestedFor(entry)) {
                 consumeSingleCancel(); // RESET THE FLAG!
-                cleanupDownloads(downloads);
                 return false;
             }
-            if (!deletePaths(entry.currentPaths(), keepFinalPaths, entry)) {
-                consumeSingleCancel(); // RESET THE FLAG!
-                cleanupDownloads(downloads);
-                return false;
-            }
-            if (isCancelRequestedFor(entry)) {
-                consumeSingleCancel(); // RESET THE FLAG!
-                cleanupDownloads(downloads);
-                return false;
-            }
-            if (!placeDownloads(downloads, entry)) {
-                consumeSingleCancel(); // RESET THE FLAG!
-                cleanupDownloads(downloads);
-                return false;
-            }
-            if (closing.get()) return false;
+            applyPreparedTransaction(entry, downloads, entry.currentPaths());
             entry.resolved = true;
             entry.resolvedBy = SectionAction.REVERT;
             resetProgress();
             return true;
-        } catch (Exception e) {
-            if (!isCancelRequestedFor(entry)) {
-                CrashAssistantApp.LOGGER.error("Failed to revert entry", e);
+        } catch (ModFileTransaction.CancelledException e) {
+            if (!e.isRollbackComplete()) {
+                lastActionTransactionFailed.set(Boolean.TRUE);
+                CrashAssistantApp.LOGGER.error("Failed to roll back cancelled mod revert; backup kept at {}",
+                        e.getBackupDirectory(), e);
+                showActionFailure(entry, e, false, e.getBackupDirectory());
             }
-            consumeSingleCancel(); // RESET THE FLAG!
-            cleanupDownloads(downloads);
+            consumeSingleCancel();
             resetProgress();
             return false;
+        } catch (ModFileTransaction.TransactionException e) {
+            lastActionTransactionFailed.set(Boolean.TRUE);
+            CrashAssistantApp.LOGGER.error("Failed to revert entry; rollback complete: {}",
+                    e.isRollbackComplete(), e);
+            showActionFailure(entry, e, e.isRollbackComplete(), e.getBackupDirectory());
+            consumeSingleCancel();
+            resetProgress();
+            return false;
+        } catch (Exception e) {
+            if (!isCancelRequestedFor(entry)) {
+                lastActionTransactionFailed.set(Boolean.TRUE);
+                CrashAssistantApp.LOGGER.error("Failed to revert entry", e);
+                showActionFailure(entry, e, true, null);
+            }
+            consumeSingleCancel(); // RESET THE FLAG!
+            resetProgress();
+            return false;
+        } finally {
+            cleanupDownloads(downloads);
+            cleanupStagingDirectory(stagingDirectory);
         }
     }
 
     private boolean restoreEntry(DiffEntry entry) {
+        lastActionTransactionFailed.set(Boolean.FALSE);
         if (entry.savedMods.isEmpty()) return false;
         if (isCancelAllRequested()) {
             resetProgress();
             return false;
         }
         List<DownloadResult> downloads = new ArrayList<DownloadResult>();
-        Set<Path> keepFinalPaths = new HashSet<Path>();
+        Path stagingDirectory = null;
         try {
             Files.createDirectories(tmpDownloadsFolder);
+            stagingDirectory = Files.createTempDirectory(tmpDownloadsFolder, ".action-");
             for (DiffEntry.ModInstance saved : entry.savedMods) {
-                DownloadResult result = downloadSavedFile(entry, saved, tmpDownloadsFolder);
+                if (isCancelRequestedFor(entry)) {
+                    consumeSingleCancel();
+                    return false;
+                }
+                DownloadResult result = downloadSavedFile(entry, saved, stagingDirectory);
                 if (result == null) {
                     consumeSingleCancel(); // RESET THE FLAG!
-                    cleanupDownloads(downloads);
                     return false;
                 }
                 downloads.add(result);
-                if (result.finalPath != null) {
-                    keepFinalPaths.add(result.finalPath.toAbsolutePath().normalize());
-                }
             }
             if (isCancelRequestedFor(entry)) {
                 consumeSingleCancel(); // RESET THE FLAG!
-                cleanupDownloads(downloads);
                 return false;
             }
-            if (!placeDownloads(downloads, entry)) {
-                consumeSingleCancel(); // RESET THE FLAG!
-                cleanupDownloads(downloads);
-                return false;
-            }
-            if (closing.get()) return false;
+            applyPreparedTransaction(entry, downloads, Collections.<Path>emptyList());
             entry.resolved = true;
+            entry.resolvedBy = SectionAction.RESTORE;
             resetProgress();
             return true;
-        } catch (Exception e) {
-            if (!isCancelRequestedFor(entry)) {
-                CrashAssistantApp.LOGGER.error("Failed to restore entry", e);
+        } catch (ModFileTransaction.CancelledException e) {
+            if (!e.isRollbackComplete()) {
+                lastActionTransactionFailed.set(Boolean.TRUE);
+                CrashAssistantApp.LOGGER.error("Failed to roll back cancelled mod restore; backup kept at {}",
+                        e.getBackupDirectory(), e);
+                showActionFailure(entry, e, false, e.getBackupDirectory());
             }
-            consumeSingleCancel(); // RESET THE FLAG!
-            cleanupDownloads(downloads);
+            consumeSingleCancel();
             resetProgress();
             return false;
+        } catch (ModFileTransaction.TransactionException e) {
+            lastActionTransactionFailed.set(Boolean.TRUE);
+            CrashAssistantApp.LOGGER.error("Failed to restore entry; rollback complete: {}",
+                    e.isRollbackComplete(), e);
+            showActionFailure(entry, e, e.isRollbackComplete(), e.getBackupDirectory());
+            consumeSingleCancel();
+            resetProgress();
+            return false;
+        } catch (Exception e) {
+            if (!isCancelRequestedFor(entry)) {
+                lastActionTransactionFailed.set(Boolean.TRUE);
+                CrashAssistantApp.LOGGER.error("Failed to restore entry", e);
+                showActionFailure(entry, e, true, null);
+            }
+            consumeSingleCancel(); // RESET THE FLAG!
+            resetProgress();
+            return false;
+        } finally {
+            cleanupDownloads(downloads);
+            cleanupStagingDirectory(stagingDirectory);
         }
     }
 
@@ -1501,10 +1608,8 @@ public class ModListDiffDialog extends JFrame {
         // Ensure we start without interrupt flags
         clearInterruptFlag();
 
-        // Assign active download references IMMEDIATELY.
-        this.activeDownloadEntry = entry;
-        this.activeDownloadConnection = null; // Will be set once created
-        this.activeDownloadStream = null;
+        // Assign the download owner immediately; concrete I/O is attached once it exists.
+        activeActionResources.initializeDownload(entry);
 
         if (isCancelRequestedFor(entry)) {
             consumeSingleCancel(); // RESET FLAG
@@ -1525,24 +1630,25 @@ public class ModListDiffDialog extends JFrame {
                 : ModListUtils.MODS_FOLDER;
         Path finalPath = finalDir.resolve(targetFileName);
         Path disabledPath = finalPath.resolveSibling(finalPath.getFileName().toString() + ".disabled");
+        Path stagedTarget = stagingDir.resolve(targetFileName);
 
         Path existing = findExistingMatching(saved, finalPath, disabledPath);
         if (existing != null) {
-            if (existing.getFileName().toString().endsWith(".disabled")) {
-                try {
-                    Files.move(existing, finalPath, StandardCopyOption.REPLACE_EXISTING);
-                    existing = finalPath;
-                } catch (Exception e) {
-                    CrashAssistantApp.LOGGER.error("Failed to rename disabled file {}", existing, e);
-                }
+            if (existing.toAbsolutePath().normalize().equals(finalPath.toAbsolutePath().normalize())) {
+                return new DownloadResult(saved, null, targetFileName, finalPath, true, null);
             }
-            return new DownloadResult(saved, null, targetFileName, existing, true);
+            cleanupPartialDownload(stagedTarget);
+            Files.copy(existing, stagedTarget, StandardCopyOption.REPLACE_EXISTING);
+            if (!fingerprintMatches(saved, stagedTarget)) {
+                cleanupPartialDownload(stagedTarget);
+                throw new IOException("Staged existing file does not match the saved fingerprint: " + saved.fileName());
+            }
+            return new DownloadResult(saved, stagedTarget, targetFileName, finalPath, false, existing);
         }
 
         String cfUrl = (cf != null && cf.hasDownload()) ? cf.downloadUrl : null;
         String mrUrl = (mr != null && mr.downloadUrl != null) ? mr.downloadUrl : null;
 
-        Path stagedTarget = stagingDir.resolve(targetFileName);
         cleanupPartialDownload(stagedTarget);
 
         if (cfUrl == null && mrUrl == null) {
@@ -1616,7 +1722,7 @@ public class ModListDiffDialog extends JFrame {
                 }
 
                 if (ok[0]) {
-                    return new DownloadResult(saved, stagedTarget, targetFileName, finalPath, false);
+                    return new DownloadResult(saved, stagedTarget, targetFileName, finalPath, false, null);
                 }
                 return null;
             }
@@ -1673,7 +1779,8 @@ public class ModListDiffDialog extends JFrame {
         try {
             boolean success = performDownload(firstUrl, stagedTarget, entry, targetFileName);
             if (!success) return null;
-            return new DownloadResult(saved, stagedTarget, targetFileName, finalPath, false);
+            verifyAutomaticDownload(saved, stagedTarget);
+            return new DownloadResult(saved, stagedTarget, targetFileName, finalPath, false, null);
         } catch (Exception e) {
             if (isCancelRequestedFor(entry)) return null; // Immediate cancel handling
 
@@ -1695,14 +1802,23 @@ public class ModListDiffDialog extends JFrame {
 
                     boolean success = performDownload(secondUrl, stagedTarget, entry, targetFileName);
                     if (!success) return null;
+                    verifyAutomaticDownload(saved, stagedTarget);
 
-                    return new DownloadResult(saved, stagedTarget, targetFileName, finalPath, false);
+                    return new DownloadResult(saved, stagedTarget, targetFileName, finalPath, false, null);
                 } catch (Exception ex) {
                     if (isCancelRequestedFor(entry)) return null; // Immediate cancel handling for fallback
                     throw ex; // Throw the fallback exception
                 }
             }
             throw e; // Rethrow original if no fallback
+        }
+    }
+
+    private void verifyAutomaticDownload(DiffEntry.ModInstance saved, Path stagedTarget) throws IOException {
+        if ((saved.curseHash != null || saved.modrinthHash != null)
+                && !fingerprintMatches(saved, stagedTarget)) {
+            cleanupPartialDownload(stagedTarget);
+            throw new IOException("Downloaded file does not match the saved fingerprint: " + saved.fileName());
         }
     }
 
@@ -1718,7 +1834,7 @@ public class ModListDiffDialog extends JFrame {
             CurseForge.authenticateDownload(httpConn);
             httpConn.setConnectTimeout(15000);
             httpConn.setReadTimeout(15000);
-            this.activeDownloadConnection = httpConn; // Track explicitly
+            rememberActiveDownload(entry, null, httpConn);
         }
 
         // Before we start blocking network I/O
@@ -1872,26 +1988,43 @@ public class ModListDiffDialog extends JFrame {
         }
     }
 
-    private boolean placeDownloads(List<DownloadResult> downloads, DiffEntry entry) throws Exception {
+    private void applyPreparedTransaction(DiffEntry entry,
+                                          List<DownloadResult> downloads,
+                                          Collection<Path> pathsToRemove)
+            throws ModFileTransaction.CancelledException, ModFileTransaction.TransactionException {
+        List<ModFileTransaction.Installation> installations =
+                new ArrayList<ModFileTransaction.Installation>();
+        Set<Path> pathsToKeep = new HashSet<Path>();
         for (DownloadResult dl : downloads) {
-            if (isCancelRequestedFor(entry)) {
-                consumeSingleCancel(); // RESET FLAG
-                return false;
-            }
             if (dl == null) continue;
             if (dl.alreadyPresent) {
                 if (dl.finalPath != null) {
-                    dl.source.path = dl.finalPath;
+                    pathsToKeep.add(dl.finalPath);
                 }
                 continue;
             }
             if (dl.stagedPath == null) continue;
             Path finalTarget = dl.finalPath != null ? dl.finalPath : dl.stagedPath;
-            Files.createDirectories(finalTarget.getParent());
-            Files.move(dl.stagedPath, finalTarget, StandardCopyOption.REPLACE_EXISTING);
-            dl.source.path = finalTarget;
+            installations.add(new ModFileTransaction.Installation(
+                    dl.stagedPath, finalTarget, dl.existingSourceToRemove));
         }
-        return true;
+
+        ModFileTransaction.Result result = ModFileTransaction.apply(
+                transactionRecoveryFolder,
+                pathsToRemove,
+                pathsToKeep,
+                installations,
+                () -> isCancelRequestedFor(entry));
+
+        for (DownloadResult dl : downloads) {
+            if (dl != null && dl.finalPath != null) {
+                dl.source.path = dl.finalPath;
+            }
+        }
+        if (result.getCleanupFailure() != null) {
+            CrashAssistantApp.LOGGER.warn("Mod file transaction committed, but its backup could not be removed: {}",
+                    result.getBackupDirectory(), result.getCleanupFailure());
+        }
     }
 
     private void cleanupDownloads(List<DownloadResult> downloads) {
@@ -1901,26 +2034,13 @@ public class ModListDiffDialog extends JFrame {
         }
     }
 
-    private boolean deletePaths(List<Path> paths, Set<Path> keep, DiffEntry entry) {
-        Set<Path> normalizedKeep = new HashSet<Path>();
-        for (Path k : keep) {
-            if (k != null) normalizedKeep.add(k.toAbsolutePath().normalize());
+    private void cleanupStagingDirectory(Path stagingDirectory) {
+        if (stagingDirectory == null) return;
+        try {
+            Files.deleteIfExists(stagingDirectory);
+        } catch (Exception e) {
+            CrashAssistantApp.LOGGER.warn("Failed to delete mod action staging directory {}", stagingDirectory, e);
         }
-        for (Path p : paths) {
-            if (isCancelRequestedFor(entry)) {
-                consumeSingleCancel(); // RESET FLAG
-                return false;
-            }
-            if (p == null) continue;
-            Path np = p.toAbsolutePath().normalize();
-            if (normalizedKeep.contains(np)) continue;
-            try {
-                Files.deleteIfExists(p);
-            } catch (Exception e) {
-                CrashAssistantApp.LOGGER.error("Failed to delete {}", p, e);
-            }
-        }
-        return true;
     }
 
     private void cleanupPartialDownload(Path target) {
@@ -1949,13 +2069,16 @@ public class ModListDiffDialog extends JFrame {
         final String finalFileName;
         final Path finalPath;
         final boolean alreadyPresent;
+        final Path existingSourceToRemove;
 
-        DownloadResult(DiffEntry.ModInstance source, Path stagedPath, String finalFileName, Path finalPath, boolean alreadyPresent) {
+        DownloadResult(DiffEntry.ModInstance source, Path stagedPath, String finalFileName, Path finalPath,
+                       boolean alreadyPresent, Path existingSourceToRemove) {
             this.source = source;
             this.stagedPath = stagedPath;
             this.finalFileName = finalFileName;
             this.finalPath = finalPath;
             this.alreadyPresent = alreadyPresent;
+            this.existingSourceToRemove = existingSourceToRemove;
         }
     }
 
@@ -2059,14 +2182,15 @@ public class ModListDiffDialog extends JFrame {
         if (closing.get()) return false;
         if (entry == null) return false;
         if (entry.resolved) return false;
-        if (cancelAllRequested || isCancelInProgressFor(entry)) return false;
+        if (activeOwnedOperations.get() != 0) return false;
+        if (cancellationState.isAllRequested() || isCancelInProgressFor(entry)) return false;
         return entry.revertState != ActionState.RUNNING && entry.restoreState != ActionState.RUNNING;
     }
 
     boolean isActionEnabled(DiffEntry entry, SectionAction action) {
         if (entry == null || action == null) return false;
         if (!comparison.isCurrentInstallationEditable()) return false;
-        if (cancelAllRequested || isCancelInProgressFor(entry)) return false;
+        if (cancellationState.isAllRequested() || isCancelInProgressFor(entry)) return false;
         if (!isEntryActive(entry)) return false;
         if (action == SectionAction.REVERT) return entry.revertState == ActionState.IDLE;
         if (action == SectionAction.RESTORE) return entry.restoreState == ActionState.IDLE;

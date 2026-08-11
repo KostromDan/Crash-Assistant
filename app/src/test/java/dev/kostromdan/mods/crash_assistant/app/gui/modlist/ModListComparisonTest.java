@@ -16,6 +16,10 @@ public final class ModListComparisonTest {
         testEverySingleCurrentComparisonIsEditable();
         testCurrentOnLeftIsCanonicallySwapped();
         testSnapshotToSnapshotComparisonStaysReadOnly();
+        testSameFilenameAndHashesIsUnchanged();
+        testSameFilenameAndDifferentHashIsUpdatedAndMessy();
+        testSameFilenameAndDifferentHashWithChangedModIdIsUpdated();
+        testSameFilenameWithoutComparableHashesIsUnchanged();
 
         System.out.println("Mod-list comparison tests passed.");
     }
@@ -128,6 +132,54 @@ public final class ModListComparisonTest {
         assertTrue(!historyOnly.isCurrentInstallationEditable(), "history-to-history is read-only");
     }
 
+    private static void testSameFilenameAndHashesIsUnchanged() {
+        Mod oldMod = mod("example-1.0.jar", "example", "1.0", 123L, "same-hash");
+        Mod newMod = mod("example-1.0.jar", "example", "1.0", 123L, "same-hash");
+
+        ModListDiff diff = new ModListDiff(mods(oldMod), mods(newMod));
+
+        assertTrue(diff.isEmpty(), "same filename and hashes remain unchanged");
+    }
+
+    private static void testSameFilenameAndDifferentHashIsUpdatedAndMessy() {
+        Mod oldMod = mod("example-1.0.jar", "example", "1.0", 123L, "old-hash");
+        Mod newMod = mod("example-1.0.jar", "example", "1.0", 123L, "new-hash");
+
+        ModListDiff diff = new ModListDiff(mods(oldMod), mods(newMod));
+
+        assertEquals(1, diff.getUpdatedMods().size(), "different comparable hash produces update");
+        assertEquals(0, diff.getAddedMods().size(), "hash update is not also added");
+        assertEquals(0, diff.getRemovedMods().size(), "hash update is not also removed");
+        assertTrue(diff.getUpdatedMods().iterator().next().isAnyModMessedUpWithVersion(),
+                "hash update is marked as mod messed up with version");
+    }
+
+    private static void testSameFilenameAndDifferentHashWithChangedModIdIsUpdated() {
+        Mod oldMod = mod("example-1.0.jar", null, "1.0", 123L, null);
+        Mod newMod = mod("example-1.0.jar", "renamed-example", "1.0", 456L, null);
+
+        ModListDiff diff = new ModListDiff(mods(oldMod), mods(newMod));
+
+        assertEquals(1, diff.getUpdatedMods().size(),
+                "filename-first hash comparison does not depend on mod id");
+        assertEquals(0, diff.getAddedMods().size(), "changed-mod-id hash update is not also added");
+        assertEquals(0, diff.getRemovedMods().size(), "changed-mod-id hash update is not also removed");
+    }
+
+    private static void testSameFilenameWithoutComparableHashesIsUnchanged() {
+        Mod oldMod = mod("example-1.0.jar", "example", "1.0", null, "old-only");
+        Mod newMod = mod("example-1.0.jar", "example", "1.0", 456L, null);
+
+        ModListDiff diff = new ModListDiff(mods(oldMod), mods(newMod));
+
+        assertTrue(diff.isEmpty(), "different hash types are not comparable");
+
+        ModListDiff oneSidedHashDiff = new ModListDiff(
+                mods(mod("example-1.0.jar", "example", "1.0", null, "old-only")),
+                mods(mod("example-1.0.jar", "example", "1.0", null, null)));
+        assertTrue(oneSidedHashDiff.isEmpty(), "one-sided hash preserves previous behavior");
+    }
+
     private static LinkedHashSet<Mod> mods(Mod mod) {
         LinkedHashSet<Mod> result = new LinkedHashSet<Mod>();
         result.add(mod);
@@ -140,6 +192,11 @@ public final class ModListComparisonTest {
     }
 
     private static Mod mod(String jarName, String modId, String version) {
+        return mod(jarName, modId, version, null, null);
+    }
+
+    private static Mod mod(String jarName, String modId, String version,
+                           Long curseForgeHash, String modrinthHash) {
         return new Mod(
                 jarName,
                 modId,
@@ -150,8 +207,8 @@ public final class ModListComparisonTest {
                 new HashSet<String>(),
                 new ArrayList<Mod>(),
                 null,
-                null,
-                null);
+                curseForgeHash,
+                modrinthHash);
     }
 
     private static void assertTrue(boolean value, String label) {

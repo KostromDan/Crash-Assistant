@@ -67,6 +67,7 @@ public class CrashAssistantGUI {
     private static boolean simpleModeWasDisabled = false;
     private static boolean hideModListInSimpleMode;
     private static volatile boolean initialLogAnalysisFinished = false;
+    private static volatile boolean initialLogAnalysisAllowed = false;
     private static final Map<JComponent, OriginalState> highlightedComponents = new ConcurrentHashMap<>();
     private static final Deque<KnownWarningsRequest> knownWarningsRequests = new ArrayDeque<>();
     private static boolean drainingKnownWarnings;
@@ -277,6 +278,7 @@ public class CrashAssistantGUI {
 
 
     public CrashAssistantGUI() {
+        initialLogAnalysisAllowed = false;
         initialLogAnalysisFinished = false;
         SwingEDT.runAndWait(this::initializeGUI);
 
@@ -286,6 +288,7 @@ public class CrashAssistantGUI {
         showTooManyChangesWarning();
         IntelChipBugWarning.showIfAffected(false);
         showEarlyIntegratedGPUWarning();
+        initialLogAnalysisAllowed = true;
         new Thread(() -> {
             try {
                 LogAnalyser.analyseLogs();
@@ -1714,6 +1717,9 @@ public class CrashAssistantGUI {
 
     public static void updateLogsListInGUI() {
         SwingUtilities.invokeLater(CrashAssistantGUI::addMissingLogs);
+        if (!initialLogAnalysisAllowed) {
+            return;
+        }
         try {
             LogAnalyser.analyseLogs();
         } catch (Throwable throwable) {

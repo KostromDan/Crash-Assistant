@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 public class ModDataParser {
     public static final List<String> inJarPaths = PlatformHelp.getOrderedInJarPaths();
-    private static final Path CACHE_FOLDER = Paths.get("local", "crash_assistant", "mod_data_cache_v4");
+    private static final Path CACHE_FOLDER = Paths.get("local", "crash_assistant", "mod_data_cache_v5");
     private static final Gson GSON = new Gson();
 
     static {
@@ -60,7 +60,18 @@ public class ModDataParser {
              FileChannel channel = raf.getChannel();
              FileLock lock = channel.lock(0, Long.MAX_VALUE, true)) {
             String json = new String(Files.readAllBytes(cacheFilePath), StandardCharsets.UTF_8);
-            return GSON.fromJson(json, Mod.class);
+            CachedModData cached = GSON.fromJson(json, CachedModData.class);
+            if (cached == null || cached.mod == null || cached.fileSize == null ||
+                    cached.lastModifiedMillis == null) {
+                // Cache entries written by older versions contain only the Mod object.
+                // They have no file identity, so they cannot safely be reused.
+                return null;
+            }
+            if (cached.fileSize.longValue() != Files.size(jarPath) ||
+                    cached.lastModifiedMillis.longValue() != Files.getLastModifiedTime(jarPath).toMillis()) {
+                return null;
+            }
+            return cached.mod;
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed to read or parse cache file for " + jarPath, e);
             return null;
@@ -76,14 +87,36 @@ public class ModDataParser {
      */
     public static void saveModToCache(Path jarPath, Mod mod) {
         Path cacheFilePath = getCacheFilePath(jarPath);
+        CachedModData cached;
+        try {
+            cached = new CachedModData(
+                    Files.size(jarPath),
+                    Files.getLastModifiedTime(jarPath).toMillis(),
+                    mod);
+        } catch (Exception e) {
+            JarInJarHelper.LOGGER.error("Failed to read file metadata for cache " + jarPath, e);
+            return;
+        }
         try (RandomAccessFile raf = new RandomAccessFile(cacheFilePath.toFile(), "rw");
              FileChannel ch = raf.getChannel();
              FileLock ignored = ch.lock()) {
 
             ch.truncate(0);
-            ch.write(ByteBuffer.wrap(GSON.toJson(mod).getBytes(StandardCharsets.UTF_8)));
+            ch.write(ByteBuffer.wrap(GSON.toJson(cached).getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
             JarInJarHelper.LOGGER.error("Failed to save mod data to cache for " + jarPath, e);
+        }
+    }
+
+    private static final class CachedModData {
+        private Long fileSize;
+        private Long lastModifiedMillis;
+        private Mod mod;
+
+        private CachedModData(long fileSize, long lastModifiedMillis, Mod mod) {
+            this.fileSize = fileSize;
+            this.lastModifiedMillis = lastModifiedMillis;
+            this.mod = mod;
         }
     }
 

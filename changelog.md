@@ -1,56 +1,27 @@
 1.11.12:
 
-- Replaced the `general.upload_to` configuration option with `general.wrap_link`. Its previous value is not migrated and
-  will be removed during the update. By default, copied log links now open in the new `kostromdan.dev` log viewer
-  instead of `gnomebot.dev`; see the end of this section for the full list of viewer changes.
-- Updated the Privacy Policy to describe the new log viewer and its data processing.
-- Removed the `general.enable_privacy_policy_acceptance` configuration option. Privacy Policy acceptance can no longer
-  be disabled or implicitly treated as accepted because that behavior is incompatible with the new log viewer.
-- Improved the uploaded-data manager so that associated metadata can be deleted from Crash Assistant servers.
-- The consent-reset success dialog now offers to open the uploaded logs manager, where previously uploaded data can be
-  removed from the servers.
-- Added an option to open the English Privacy Policy from non-English Privacy Policy dialogs.
+- Added persistent mod-list history for Minecraft launches. Each snapshot records whether the game only started,
+  reached the title screen, joined a world, crashed during gameplay, or closed without a crash. The main mod-list
+  comparison now selects a suitable previous launch dynamically instead of relying only on a single static baseline.
+- Added a filterable, sortable two-pane mod-list history browser for comparing any two launch snapshots. Comparisons
+  involving Current retain the Remove, Enable/Disable, Revert, Restore, and Show Folder actions, while
+  snapshot-to-snapshot comparisons remain read-only.
+- Added importing of `modlist.txt` data from a file or the clipboard for comparison with Current. During migration,
+  the previous `modlist.json` snapshot is preserved in history and the previous `modlist.txt` is backed up before
+  per-launch generation replaces it.
+- Fixed mod-list comparisons missing an updated mod when its JAR was replaced without changing the file name or
+  declared version. If both snapshots contain a comparable CurseForge or Modrinth hash and it differs, the mod is now
+  treated as updated.
+- Fixed Revert and Restore potentially leaving the `mods` folder partially changed when a file operation failed.
+  Changes are now staged and applied transactionally: downloads are fingerprint-checked, existing files are backed
+  up, failures are rolled back, and failed actions remain available for another attempt. If a rollback cannot finish,
+  its recovery backup is preserved. A manually selected download is copied for installation and remains in its
+  original location.
 - Mod list differences in Upload All messages are now always uploaded; the full text is included only if uploading
   fails.
-- Added the `general.send_uploaded_logs_data_to_kostromdan_dev` configuration option, enabled by default. Independently
-  of `general.wrap_link`, it controls whether uploaded-log metadata is sent to `api.kostromdan.dev` so logs from the
-  same Crash Assistant launch can be grouped in the viewer. Log contents continue to be uploaded only to `mclo.gs`.
-- Added a browser button beside Upload All. It appears after the Upload All message has been copied and the log
-  collection has been registered successfully, and opens the complete collection in the viewer.
-- Added a 60-second deadline for initial log analysis. When the deadline is reached, completed results are preserved,
-  unfinished work can no longer change them, cancellation is requested, and Upload All becomes available. Analysis
-  failures are logged without stopping the remaining analyzers or blocking Upload All. On timeout, stack traces of
-  only the still-active analysis threads are written to `crash_assistant_app.log` for diagnostics.
-- Fixed `MixinApply` analysis being scheduled once for every eligible log even though it already inspects the related
-  logs itself. It is now scheduled at most once per Crash Assistant launch.
-- Added a 15-second inactivity timeout for `mclo.gs` uploads. The timer is reset while data is actually being sent or
-  received, so a slow transfer can continue for longer while it is making progress. A stalled transfer uses the
-  existing network-error dialog and visual recovery guide.
-- `mclo.gs` uploads that receive HTTP 429 now respect `Retry-After` when available and retry indefinitely while the
-  service continues to rate-limit them. If `Retry-After` is unavailable, the next attempt is made after 60 seconds.
-- Fixed Upload All races involving manual or already-running uploads and logs discovered while a batch is in progress.
-  Each operation now uses a stable log set, the Crash Assistant log is uploaded after the other logs in that set, and
-  the copied message is regenerated when the set changes instead of becoming stale or incomplete.
-- Fixed split-log retries adding duplicate tail entries to the viewer and Download All after the head upload failed.
-  Split parts are now uploaded sequentially and registered in the collection only after both parts succeed.
-- Re-uploading `crash_assistant_app.log` now removes the previous version's metadata from the current viewer collection.
-  The previously uploaded log itself remains available on `mclo.gs`.
-- Added the `general.language_source` configuration option to control the standalone Crash Assistant interface
-  language. Its supported values are `SYSTEM` (the new default), which uses the operating system language; `GAME`,
-  which uses the language selected in Minecraft's `options.txt`; or a specific language key such as `en_us`, which
-  forces that language. Regional system locales are matched to an available translation. When Crash Assistant runs
-  inside Minecraft, it continues to use the game's language from `options.txt`; `general.default_lang` is used as a
-  fallback.
-- Audited Swing/EDT usage throughout the application and ensured UI operations run on the correct threads, fixing
-  thread-safety issues that, in extremely rare cases, could cause freezes, deadlocks, or an inconsistent interface
-  state.
-- Reduced the maximum wait for Windows terminated-process detection from 7 to 5 seconds.
-- Fixed an extremely rare Linux startup race where process metadata for the Minecraft PID could be temporarily
-  unavailable, causing Crash Assistant to mistake the running game for an immediate crash and open during startup.
-- Optimized configuration-file reads during startup.
-- Fixed Scripts IDE on macOS opening at an incorrect size, which could cause some buttons to be missing.
-- Fixed a macOS rendering issue that could cause both Chinese and English characters to be missing in large-font
-  Chinese text.
+- Replaced the `general.upload_to` configuration option with `general.wrap_link`. Its previous value is not migrated and
+  will be removed during the update. By default, copied log links now open in the new `kostromdan.dev` log viewer
+  instead of `gnomebot.dev`.
 - The new `kostromdan.dev` log viewer is a fork of `gnomebot.dev`, with changes made specifically for Crash Assistant
   and a more convenient log-reading experience:
     - Added a switcher between logs from the same Crash Assistant launch.
@@ -72,6 +43,56 @@
     - Fixed the browser tab title remaining as `loading...` after a log finished loading.
     - Fixed Safari selecting line numbers during multi-line selection.
     - Fixed Firefox omitting line breaks when copying multiple lines.
+- Added the `general.send_uploaded_logs_data_to_kostromdan_dev` configuration option, enabled by default. Independently
+  of `general.wrap_link`, it controls whether uploaded-log metadata is sent to `api.kostromdan.dev` so logs from the
+  same Crash Assistant launch can be grouped in the viewer. Log contents continue to be uploaded only to `mclo.gs`.
+- Added a browser button beside Upload All. It appears after the Upload All message has been copied and the log
+  collection has been registered successfully, and opens the complete collection in the viewer.
+- Added the `general.language_source` configuration option to control the standalone Crash Assistant interface
+  language. Its supported values are `SYSTEM` (the new default), which uses the operating system language; `GAME`,
+  which uses the language selected in Minecraft's `options.txt`; or a specific language key such as `en_us`, which
+  forces that language. Regional system locales are matched to an available translation. When Crash Assistant runs
+  inside Minecraft, it continues to use the game's language from `options.txt`; `general.default_lang` is used as a
+  fallback.
+- Added decoding for the XML-formatted `stdout-logs.txt` generated by CurseForge. Messages, throwables, timestamps, log
+  levels, and thread names are reconstructed before the log is displayed, analyzed, or uploaded.
+- Added a 60-second deadline for initial log analysis. When the deadline is reached, completed results are preserved,
+  unfinished work can no longer change them, cancellation is requested, and Upload All becomes available. Analysis
+  failures are logged without stopping the remaining analyzers or blocking Upload All. On timeout, stack traces of
+  only the still-active analysis threads are written to `crash_assistant_app.log` for diagnostics.
+- Added a 15-second inactivity timeout for `mclo.gs` uploads. The timer is reset while data is actually being sent or
+  received, so a slow transfer can continue for longer while it is making progress. A stalled transfer uses the
+  existing network-error dialog and visual recovery guide.
+- `mclo.gs` uploads that receive HTTP 429 now respect `Retry-After` when available and retry indefinitely while the
+  service continues to rate-limit them. If `Retry-After` is unavailable, the next attempt is made after 60 seconds.
+- Fixed Upload All races involving manual or already-running uploads and logs discovered while a batch is in progress.
+  Each operation now uses a stable log set, the Crash Assistant log is uploaded after the other logs in that set, and
+  the copied message is regenerated when the set changes instead of becoming stale or incomplete.
+- Improved the uploaded-data manager so that associated metadata can be deleted from Crash Assistant servers.
+- The consent-reset success dialog now offers to open the uploaded logs manager, where previously uploaded data can be
+  removed from the servers.
+- Updated the Privacy Policy to describe the new log viewer and its data processing.
+- Removed the `general.enable_privacy_policy_acceptance` configuration option. Privacy Policy acceptance can no longer
+  be disabled or implicitly treated as accepted because that behavior is incompatible with the new log viewer.
+- Added an option to open the English Privacy Policy from non-English Privacy Policy dialogs.
+- Audited Swing/EDT usage throughout the application and ensured UI operations run on the correct threads, fixing
+  thread-safety issues that, in extremely rare cases, could cause freezes, deadlocks, or an inconsistent interface
+  state.
+- Fixed `modlist.json` not being saved when joining a server through Direct Connect.
+- Fixed `modlist.json` potentially corrupting non-ASCII file names on systems whose default encoding was not UTF-8. It
+  is now written as UTF-8 with a BOM, while existing no-BOM UTF-8 and legacy system-encoding files remain readable.
+- Fixed `MixinApply` analysis being scheduled once for every eligible log even though it already inspects the related
+  logs itself. It is now scheduled at most once per Crash Assistant launch.
+- Fixed an extremely rare Linux startup race where process metadata for the Minecraft PID could be temporarily
+  unavailable, causing Crash Assistant to mistake the running game for an immediate crash and open during startup.
+- Marked Crash Assistant as a client-side mod in CurseForge publishing metadata for every supported Minecraft version.
+- Replaced fixed raster UI assets with SVG-generated multi-resolution application and button icons, including Windows
+  title-bar and taskbar sizes, a Retina-aware macOS Dock icon, and Linux desktop and dock integration.
+- Reduced the maximum wait for Windows terminated-process detection from 7 to 5 seconds.
+- Optimized configuration-file reads during startup.
+- Fixed Scripts IDE on macOS opening at an incorrect size, which could cause some buttons to be missing.
+- Fixed a macOS rendering issue that could cause both Chinese and English characters to be missing in large-font
+  Chinese text.
 
 1.11.11:
 

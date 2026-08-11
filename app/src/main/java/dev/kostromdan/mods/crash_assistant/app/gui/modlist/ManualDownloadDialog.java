@@ -16,6 +16,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -178,12 +179,9 @@ public class ManualDownloadDialog extends JDialog {
         }
     }
 
-    private boolean tryMoveCandidate(Path candidate) {
+    private boolean tryCopyAcceptedCandidateToStaging(Path candidate) {
         try {
-            if (!Files.exists(candidate)) return false;
-            Files.createDirectories(targetDir);
-            Path target = targetDir.resolve(expectedFileName);
-            Files.move(candidate, target, StandardCopyOption.REPLACE_EXISTING);
+            copyAcceptedCandidateToStaging(candidate, targetDir, expectedFileName);
             completed = true;
             SwingUtilities.invokeLater(() -> {
                 statusLabel.setText(LanguageProvider.get("gui.modlist_diff.manual_download.done"));
@@ -191,9 +189,22 @@ public class ManualDownloadDialog extends JDialog {
             });
             return true;
         } catch (Exception e) {
-            CrashAssistantApp.LOGGER.error("Failed to move downloaded file {}", candidate, e);
+            CrashAssistantApp.LOGGER.error("Failed to copy accepted downloaded file {} into staging", candidate, e);
             return false;
         }
+    }
+
+    static Path copyAcceptedCandidateToStaging(Path candidate, Path targetDir, String expectedFileName)
+            throws IOException {
+        if (candidate == null || !Files.isRegularFile(candidate)) {
+            throw new IOException("Manual download candidate is missing or is not a file: " + candidate);
+        }
+        Files.createDirectories(targetDir);
+        Path target = targetDir.resolve(expectedFileName);
+        if (!candidate.toAbsolutePath().normalize().equals(target.toAbsolutePath().normalize())) {
+            Files.copy(candidate, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+        return target;
     }
 
     private ModFingerprinter.IdentificationResult fingerprint(Path candidate) {
@@ -220,7 +231,7 @@ public class ManualDownloadDialog extends JDialog {
             boolean hashOk = hashesMatch(fp);
 
             if (hashOk) {
-                return tryMoveCandidate(candidate);
+                return tryCopyAcceptedCandidateToStaging(candidate);
             }
 
             // hash mismatch
@@ -241,7 +252,7 @@ public class ManualDownloadDialog extends JDialog {
                     )
             );
             if (choice == JOptionPane.YES_OPTION) {
-                return tryMoveCandidate(candidate);
+                return tryCopyAcceptedCandidateToStaging(candidate);
             }
             return false;
         } catch (Exception e) {
@@ -251,7 +262,7 @@ public class ManualDownloadDialog extends JDialog {
     }
 
     /**
-     * @return true when file obtained and moved, false if skipped or closed.
+     * @return true when the accepted file was copied into staging, false if skipped or closed.
      */
     public boolean awaitResult() {
         setVisible(true);

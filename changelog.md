@@ -1,21 +1,16 @@
 1.11.12:
 
-- Added persistent mod-list history for Minecraft launches. Each snapshot records whether the game only started,
-  reached the title screen, joined a world, crashed during gameplay, or closed without a crash. The main mod-list
-  comparison now selects a suitable previous launch dynamically instead of relying only on a single static baseline.
+- Added persistent mod-list history for Minecraft launches. Each snapshot records whether the game only started, reached
+  the title screen, joined a world, crashed during gameplay, or closed without a crash. The main mod-list comparison now
+  selects a suitable previous launch dynamically instead of relying only on a single static baseline.
 - Added a filterable, sortable two-pane mod-list history browser for comparing any two launch snapshots. Comparisons
   involving Current retain the Remove, Enable/Disable, Revert, Restore, and Show Folder actions, while
   snapshot-to-snapshot comparisons remain read-only.
-- Added importing of `modlist.txt` data from a file or the clipboard for comparison with Current. During migration,
-  the previous `modlist.json` snapshot is preserved in history.
-- Fixed mod-list comparisons missing an updated mod when its JAR was replaced without changing the file name or
-  declared version. If both snapshots contain a comparable CurseForge or Modrinth hash and it differs, the mod is now
-  treated as updated.
-- Fixed Revert and Restore potentially leaving the `mods` folder partially changed when a file operation failed.
-  Changes are now staged and applied transactionally: downloads are fingerprint-checked, existing files are backed
-  up, failures are rolled back, and failed actions remain available for another attempt. If a rollback cannot finish,
-  its recovery backup is preserved. A manually selected download is copied for installation and remains in its
-  original location.
+- Added importing of `modlist.txt` data from a file or the clipboard for comparison with Current. During migration, the
+  previous `modlist.json` snapshot is preserved in history.
+- Fixed mod-list comparisons missing an updated mod when its JAR was replaced without changing the file name or declared
+  version. If both snapshots contain a comparable CurseForge or Modrinth hash and it differs, the mod is now treated as
+  updated.
 - Mod list differences in Upload All messages are now always uploaded; the full text is included only if uploading
   fails.
 - Replaced the `general.upload_to` configuration option with `general.wrap_link`. Its previous value is not migrated and
@@ -24,10 +19,10 @@
 - The new `kostromdan.dev` log viewer is a fork of `gnomebot.dev`, with changes made specifically for Crash Assistant
   and a more convenient log-reading experience:
     - Added a switcher between logs from the same Crash Assistant launch.
-    - For logs uploaded through Crash Assistant, the Minecraft Profile widget now uses the session UUID and is shown
-      for every log from that Crash Assistant launch, even if an individual log does not contain the UUID.
-    - In addition to links to individual lines, you can now drag across line numbers to select multiple lines and copy
-      a link to the entire range.
+    - For logs uploaded through Crash Assistant, the Minecraft Profile widget now uses the session UUID and is shown for
+      every log from that Crash Assistant launch, even if an individual log does not contain the UUID.
+    - In addition to links to individual lines, you can now drag across line numbers to select multiple lines and copy a
+      link to the entire range.
     - Selecting a line or range now automatically copies its link. This behavior can be disabled in the settings.
     - Added quick links to the first error, last error, and end of the file, plus a jump-to-top button.
     - Separated Raw and Download buttons. Download saves the current log as a file.
@@ -38,7 +33,7 @@
     - Fixed parsing and rendering of modern Minecraft stack-trace locations.
     - Improved rendering performance for very large logs.
     - Invalid Minecraft UUIDs are now displayed in red with a shake animation.
-      - Added an option to show the Minecraft Profile widget only for invalid UUIDs and hide it for valid ones.
+        - Added an option to show the Minecraft Profile widget only for invalid UUIDs and hide it for valid ones.
     - Fixed the browser tab title remaining as `loading...` after a log finished loading.
     - Fixed Safari selecting line numbers during multi-line selection.
     - Fixed Firefox omitting line breaks when copying multiple lines.
@@ -47,21 +42,13 @@
   same Crash Assistant launch can be grouped in the viewer. Log contents continue to be uploaded only to `mclo.gs`.
 - Added a browser button beside Upload All. It appears after the Upload All message has been copied and the log
   collection has been registered successfully, and opens the complete collection in the viewer.
-- Added the `general.language_source` configuration option to control the standalone Crash Assistant interface
-  language. Its supported values are `SYSTEM` (the new default), which uses the operating system language; `GAME`,
-  which uses the language selected in Minecraft's `options.txt`; or a specific language key such as `en_us`, which
-  forces that language. Regional system locales are matched to an available translation. When Crash Assistant runs
-  inside Minecraft, it continues to use the game's language from `options.txt`; `general.default_lang` is used as a
-  fallback.
+- Added the `general.language_source` configuration option to control the standalone Crash Assistant interface language.
+  Its supported values are `SYSTEM` (the new default), which uses the operating system language; `GAME`, which uses the
+  language selected in Minecraft's `options.txt`; or a specific language key such as `en_us`, which forces that
+  language. Regional system locales are matched to an available translation. When Crash Assistant runs inside Minecraft,
+  it continues to use the game's language from `options.txt`; `general.default_lang` is used as a fallback.
 - Added decoding for the XML-formatted `stdout-logs.txt` generated by CurseForge. Messages, throwables, timestamps, log
   levels, and thread names are reconstructed before the log is displayed, analyzed, or uploaded.
-- Added a 60-second deadline for initial log analysis. When the deadline is reached, completed results are preserved,
-  unfinished work can no longer change them, cancellation is requested, and Upload All becomes available. Analysis
-  failures are logged without stopping the remaining analyzers or blocking Upload All. On timeout, stack traces of
-  only the still-active analysis threads are written to `crash_assistant_app.log` for diagnostics.
-- Added a 15-second inactivity timeout for `mclo.gs` uploads. The timer is reset while data is actually being sent or
-  received, so a slow transfer can continue for longer while it is making progress. A stalled transfer uses the
-  existing network-error dialog and visual recovery guide.
 - `mclo.gs` uploads that receive HTTP 429 now respect `Retry-After` when available and retry indefinitely while the
   service continues to rate-limit them. If `Retry-After` is unavailable, the next attempt is made after 60 seconds.
 - Fixed Upload All races involving manual or already-running uploads and logs discovered while a batch is in progress.
@@ -81,14 +68,14 @@
   is now written as UTF-8 with a BOM, while existing no-BOM UTF-8 and legacy system-encoding files remain readable.
 - Fixed an extremely rare Linux startup race where process metadata for the Minecraft PID could be temporarily
   unavailable, causing Crash Assistant to mistake the running game for an immediate crash and open during startup.
-- Marked Crash Assistant as a client-side mod in CurseForge publishing metadata for every supported Minecraft version.
 - Replaced fixed raster UI assets with SVG-generated multi-resolution application and button icons, including Windows
   title-bar and taskbar sizes, a Retina-aware macOS Dock icon, and Linux desktop and dock integration.
+    - Fixed on macOS and Linux sometimes crash assistant icon was just Java icon.
 - Reduced the maximum wait for Windows terminated-process detection from 7 to 5 seconds.
 - Optimized configuration-file reads during startup.
 - Fixed Scripts IDE on macOS opening at an incorrect size, which could cause some buttons to be missing.
-- Fixed a macOS rendering issue that could cause both Chinese and English characters to be missing in large-font
-  Chinese text.
+- Fixed a macOS rendering issue that could cause both Chinese and English characters to be missing in large-font Chinese
+  text.
 
 1.11.11:
 
@@ -125,8 +112,8 @@
 - Clarified config option descriptions. Thanks `Madis0` for making PR!
 - Added detailed upload error handling with a visual guide for network failures and updated language localizations.
 - Piracy Warning redesign:
-    - For non-modpacks: removed warning, button to join Forge/Fabric/Neo communities will be hidden, top text of
-      gui will be changed to remove instructions about how to join Forge/Fabric/Neo discord.
+    - For non-modpacks: removed warning, button to join Forge/Fabric/Neo communities will be hidden, top text of gui
+      will be changed to remove instructions about how to join Forge/Fabric/Neo discord.
     - For modpacks (only if piracy warning is enabled): warning was rephrased, button to join modpack discord will be
       hidden, top text of gui will be changed to remove instructions about how to join your modpack discord.
 - Added missing localization keys to other languages.
@@ -188,8 +175,8 @@
 - Fixed 1.11.2 update broke 26.1 fabric.
 - Fixed some rare issues related with logs uploading.
 - Fixed `LauncherLogger` warnings may come with delay to original log.
-- Major refactor of a Crash Assistant build process.
-  Now every single mc version has the same code of `app` and `common_config` subprojects.
+- Major refactor of a Crash Assistant build process. Now every single mc version has the same code of `app` and
+  `common_config` subprojects.
 - Small fixes.
 
 1.11.2:
@@ -234,11 +221,11 @@
   `MacJDK` now includes a Java version guide;
 - Added debug option `debug.crash_after_init` to crash immediately after Crash Assistant launched its process to
   conveniently debug it, configure it without need to manually crash.
-- Language provider now preserves localization keys starting with `custom.` in the localization overrides folder,
-  even if they do not exist in the mod's internal translation files. To add ability to create own language keys.
+- Language provider now preserves localization keys starting with `custom.` in the localization overrides folder, even
+  if they do not exist in the mod's internal translation files. To add ability to create own language keys.
 - Added `modpack_modlist.add_datapacks` config option to track datapacks in the generated `modlist.json`.
-- Added compatibility with `yosbr` and `modpack_defaults`, automatically copying default Crash Assistant
-  configs from their directories if present. This needed because our entry point is earlier than theirs.
+- Added compatibility with `yosbr` and `modpack_defaults`, automatically copying default Crash Assistant configs from
+  their directories if present. This needed because our entry point is earlier than theirs.
 - Added logging of currently used ram, swap space and currently used swap space at moment of minecraft launch and moment
   of minecraft crash.
 - Added a "Don't show again" checkbox to the OptiFine warning dialog.
@@ -260,8 +247,8 @@
 
 1.10.29:
 
-- Now crash assistant supports mclo.gs logs deletion feature.
-  You can see/remove previously uploaded logs from mclo.gs servers from our gui.
+- Now crash assistant supports mclo.gs logs deletion feature. You can see/remove previously uploaded logs from mclo.gs
+  servers from our gui.
 - Updated privacy policy with feature description.
 - New Piracy warning. Checks if user is using piracy version of the game or offline mode and warns them that they won't
   receive support in Discords where it's not allowed. Modpacks need to enable this feature manually `piracy.enabled`.
@@ -269,8 +256,7 @@
 - Now generated message will also have notification about piracy (configurable).
 - Added a delay to the OK button for the first time analysis messages are shown. The default is 10 seconds, as users who
   ignore the analysis typically decide not to read it and close the window within the first 10 seconds.
-- Crash Assistant log will have JVM args of the game and launcher args of the game.
-  Confidential info is censored.
+- Crash Assistant log will have JVM args of the game and launcher args of the game. Confidential info is censored.
 - Fixed `ResourceLocationException` analysis sometimes doesn't work.
 - Fixed bracket symbols in path of modpack on MinecraftForge 1.21.1+ causing Crash Assistant not starting issue.
   However, updating forge is also needed since same issue was on side of modloader.
@@ -292,18 +278,18 @@
     - By default, it will trigger only on the mods added/updated by end users of the modpack. You can configure it so
       analysis will display anyways and will trigger also on mods which were originally in the modpack.
     - Removed config parameter `BYPASS_MODPACK_CHECK_FOR_MIXIN_APPLY`, since it no longer needed.
-- Now `ModuleResolution` analysis also detects `mixinextras.neoforge` on forge issue and recommends
-  mod created to fix issue (Mixin Extras NeoForge on Forge Fix).
-- Added `general.formulation_type` configuration option, allowing to choose between Discord and GitHub formulation
-  for the top-of-window text and help buttons. If set to `GITHUB`, terminology like "visit the GitHub" and "Report the
-  issue on GitHub" will be used instead of Discord-specific ones.
+- Now `ModuleResolution` analysis also detects `mixinextras.neoforge` on forge issue and recommends mod created to fix
+  issue (Mixin Extras NeoForge on Forge Fix).
+- Added `general.formulation_type` configuration option, allowing to choose between Discord and GitHub formulation for
+  the top-of-window text and help buttons. If set to `GITHUB`, terminology like "visit the GitHub" and "Report the issue
+  on GitHub" will be used instead of Discord-specific ones.
 - Generated Message Customisation:
     - Implemented full control over the "Upload All" message structure: users can now rearrange or modify message
       elements (Header, Logs, Analysis, etc.) using config patterns.
     - Added formatting patterns: customizable templates for individual log lines, split logs, link notifications, and
       ANSI blocks. Now you can disable markdown formatting.
-    - Replaced restrictive options: `h3_prefix` and `one_line_logs` booleans are replaced with flexible string
-      templates (`prefix`, `logs_separator`) to allow any formatting style.
+    - Replaced restrictive options: `h3_prefix` and `one_line_logs` booleans are replaced with flexible string templates
+      (`prefix`, `logs_separator`) to allow any formatting style.
 - 1.7.10: fixed crash assistant starting on lwjgl3ify relaunch.
 
 1.10.28:
@@ -325,10 +311,10 @@
 
 1.10.25:
 
-- Fixed OutOfMemory errors in crash assistant process introduced in previous update due to
-  hashing computing read entire mods files into memory.
-    - Now it uses a memory-efficient streaming approach to calculate hashes, ensuring constant memory usage
-      regardless of file size.
+- Fixed OutOfMemory errors in crash assistant process introduced in previous update due to hashing computing read entire
+  mods files into memory.
+    - Now it uses a memory-efficient streaming approach to calculate hashes, ensuring constant memory usage regardless
+      of file size.
 
 1.10.24:
 
@@ -362,16 +348,15 @@
 - Now Crash Assistant log has full analysis message displayed to the user formatted with Markdown. So now people in
   support channels can just copy it from the crash assistant log and paste it into Discord in cases where users ignored
   analysis messages. Previously, it was truncated with just the first line.
-- Fixed logs were not added to the list of logs on Lunar Client
-  because they were located in different folders.
+- Fixed logs were not added to the list of logs on Lunar Client because they were located in different folders.
 - Fixed the text of the upload button in Brazillian Portuguese may be truncated.
-- Fixed, I forgot to add Brazillian Portuguese to localization list,
-  so localization added in the previous update didn't work.
+- Fixed, I forgot to add Brazillian Portuguese to localization list, so localization added in the previous update didn't
+  work.
 - Fixed `MedievalOriginsVsForgeOrigins` analysis not triggered some times.
 - Added some logging related to the new `stderr_stream.log`.
-- Fixed AnimatedBorder worked a little incorrectly with Windows display scaling(not 100%).
-- Marked versions 1.7.10 - 1.15.2 as release instead of beta,
-  as I have not seen issues for a long time on these versions.
+- Fixed AnimatedBorder worked a little incorrectly with Windows display scaling (not 100%).
+- Marked versions 1.7.10 - 1.15.2 as release instead of beta, as I have not seen issues for a long time on these
+  versions.
 
 1.10.21:
 
@@ -418,14 +403,13 @@
 1.10.16:
 
 - Now the modpack logo is displayed at the center, not on top. Added an option to return it to the top.
-    - If the modpack logo was square, anyway it consumed all available height, and this didn't matter.
-      This is applicable only for non-square logos.
+    - If the modpack logo was square, anyway it consumed all available height, and this didn't matter. This is
+      applicable only for non-square logos.
 - Now config is restoring its canonical order for newly added keys.
-- Added a "Too Many Changes" warning for modpacks, disabled by default.
-  Allows configuring how many changes modpack creator allows
-  and displaying warning if the end user modified modpack, too heavily.
+- Added a "Too Many Changes" warning for modpacks, disabled by default. Allows configuring how many changes modpack
+  creator allows and displaying warning if the end user modified modpack, too heavily.
 - Fixed non-square but rectangle modpack logos were not sized correctly.
-- Fixed resize() function is working a little bit incorrectly when the modpack logo is configured.
+- Fixed resize () function is working a little bit incorrectly when the modpack logo is configured.
 - Fixed the error in the log on Linux systems in an Intel corrupted processor checker.
 
 1.10.15:
@@ -440,8 +424,8 @@
 - Added GIF support for modpack logos.
 - Added customization options for copied text of individual upload buttons.
     - By default, a copied link now includes the log filename.
-- Fixed Intel microcode warning didn't display a microcode version correctly due to
-  differences in byte order on some systems.
+- Fixed Intel microcode warning didn't display a microcode version correctly due to differences in byte order on some
+  systems.
 - Fixed the race condition during logs uploading added two versions ago.
 - Fixed `ConnectorIncompatibleFabricMods` log analysis added a couple of versions ago didn't work.
 - Many fixes and improvements.
@@ -592,28 +576,28 @@
 
 1.10.0 major update:
 
-- Fabric: Moved launch of our process from PreLaunchEntrypoint to a LanguageAdapter
-  to run from the first possible point.
-  Also fixes Crash Assistant not starting issue if crash happened in some MixinConfigPlugin(before PreLaunchEntrypoint).
+- Fabric: Moved launch of our process from PreLaunchEntrypoint to a LanguageAdapter to run from the first possible
+  point. Also fixes Crash Assistant not starting issue if crash happened in some MixinConfigPlugin (before
+  PreLaunchEntrypoint).
 - Forge coremod: Returned launch of our process to a constructor (to the first possible point) instead of
   `initialize()`. This was done earlier because some needed params were unavailable that early. But I've found a way to
   parse them. So now I reverted that old change.
 - Added Auto-Fix option for the Integrated GPU warning. Now can fix the issue with just one click instead of following a
   quite complex guide for inexperienced users.
 - Add clarification for desktop users regarding monitor cable and GPU connection in all translations.
-- `IntelChipBugWarning`: Added microcode version diagnostics and improved UI/wording.
-  Now notifies users if their current microcode version is affected or not.
+- `IntelChipBugWarning`: Added microcode version diagnostics and improved UI/wording. Now notifies users if their
+  current microcode version is affected or not.
 - Marked `i9-13950hx` and `i9-13980hx` as affected for `IntelChipBugWarning`, since we've seen crashes caused by them.
-- Replaced `gpu-detect-jni.dll` GPU detection with C# based detection to prevent including DLLs in mod.
-  We're shipping C# source code, which compiles at runtime using `.NET` features available in any Win 10+ system.
+- Replaced `gpu-detect-jni.dll` GPU detection with C# based detection to prevent including DLLs in mod. We're shipping
+  C# source code, which compiles at runtime using `.NET` features available in any Win 10+ system.
 - New log analysis:
     - `LegacyTooManyIds` - Too many ids on 1.12.2 and below.
     - `NeoForgeVersion1_20_1` - Notifies that Neo on 1.20.1 is abandoned and causing many crashes and switching to Forge
       is an official recommendation from Neo on that version.
     - `ConnectorIncompatibleFabricMods` - Detects if tried to run fabric mod with connector, but's it's incompatible and
       won't work. Suggests native forge alternatives if they exist. Currently, Sodium, Iris, Lithium.
-- Added new launcherlogs support: ElyPrism, SKLauncher, LegacyLauncher, CrystalLauncher,
-  KLauncher, PollyMC, Feather, Lunar, Technic.
+- Added new launcherlogs support: ElyPrism, SKLauncher, LegacyLauncher, CrystalLauncher, KLauncher, PollyMC, Feather,
+  Lunar, Technic.
 - Fixed TLauncher usage was not detected on MacOS or Linux.
 - Added handling for missing or corrupted mixin configuration detection in `MixinApply` log analysis.
 - Redesigned GUI analysis, transformed `CreateDependencies` to be able to add new analysis easily and fast.
@@ -637,8 +621,8 @@
 - Jvm.dll analysis: Added one more possible reason for this.
 - Fixed issue with non-ASCII paths causing Crash Assistant not to start. E.g., Cyrillic or Chinese symbols in the path.
 - Removed CrashAssistantAgent and refactored classpath handling to improve stability on non-ASCII paths.
-- `TerminatedProcessesFinder`: Fixed handling of non-standard datetime formats, which caused PS cmd to ignore
-  time filter and grab all available event errors instead of just those from the last 15 seconds.
+- `TerminatedProcessesFinder`: Fixed handling of non-standard datetime formats, which caused PS cmd to ignore time
+  filter and grab all available event errors instead of just those from the last 15 seconds.
 - Fixed hs_err log can be not added in some rare cases.
 - Fixed Jdeps analysis didn't checked version of java, caused analysis detected nothing in case usage of outdated jdk.
 - Fixed mod on Quilt mod-loader wasn't working since some version due to bad QuiltZipPath implementation in the loader.
@@ -679,24 +663,23 @@
 1.9.13
 
 - Initial release for 1.7.10.
-- 1.12.2: Fixed with Cleanroom Relauncher Crash Assistant can be started twice due to it named differently on
-  different versions.
+- 1.12.2: Fixed with Cleanroom Relauncher Crash Assistant can be started twice due to it named differently on different
+  versions.
 - 1.12.2: Fixed due to some mods, hooks from Crash Assistant weren't executed, caused not correct behavior of mod.
 - 1.12.2: Removed most coremods and moved to forge events to improve compatibility.
 
 1.9.12
 
-- Finally fixed `gpu-detect-jni.dll` issue. Fixes from previous update fixed "crash assistant not starting issue",
-  but haven't actually fixed the root cause of issue, so extremely rarely check of running on integrated gpu wasn't
-  working.
+- Finally fixed `gpu-detect-jni.dll` issue. Fixes from previous update fixed "crash assistant not starting issue", but
+  haven't actually fixed the root cause of issue, so extremely rarely check of running on integrated gpu wasn't working.
 - Fixed in 1.12.2 `mcmod.info` parsing issue.
 
 1.9.11
 
-- Fixed a rare issue because of which the crash assistant did not start,
-  caused by the switch to `gpu-detect-jni.dll` in 1.9.7. Fixed the cause of issue in `gpu-detect-jni.dll`.
-  Also moved GPU detection logic to a separate process from the crash assistant app process to prevent any further
-  potential issues which can lead to the crash assistant not starting due to GPU detection failure.
+- Fixed a rare issue because of which the crash assistant did not start, caused by the switch to `gpu-detect-jni.dll` in
+  1.9.7. Fixed the cause of issue in `gpu-detect-jni.dll`. Also moved GPU detection logic to a separate process from the
+  crash assistant app process to prevent any further potential issues which can lead to the crash assistant not starting
+  due to GPU detection failure.
 - Updated `ModuleFind` log analysis text, to be more clear.
 
 1.9.10
@@ -727,13 +710,13 @@
 
 - Initial release for 1.21.7.
 - Added Italian localization. Thanks `splack01` for making PR.
-- `MixinApply` new log analysis. Detects most crashes caused by mixins apply/conflicts.
-  Currently, disabled for modpacks as a feature is in the beta stage and there is a lot of work to do.
+- `MixinApply` new log analysis. Detects most crashes caused by mixins apply/conflicts. Currently, disabled for modpacks
+  as a feature is in the beta stage and there is a lot of work to do.
 - `UsedByAnotherProcess` new log analysis. If config locked by another process and it's crashing.
 - `GroovyModLoaderIPv6` new log analysis. If GML failed to download some files, and it's crashing due to IPv6 issues.
 - `EpicFightAddons` new log analysis. Same as Create6Addons log analysis.
-- Replaced back Vulkan GPU detection with `gpu-detect-jni.dll` as CurseForge finally allowed me to do so.
-  Decreases mod size from ~1,6 mb to ~600 kb.
+- Replaced back Vulkan GPU detection with `gpu-detect-jni.dll` as CurseForge finally allowed me to do so. Decreases mod
+  size from ~1,6 mb to ~600 kb.
 - Improved version compatibility checks for Create 6 and Steam and Rails mod in `Create6Addons` analysis.
 - Added Modrinth launcher log with actual STDOUT support.
 - Refactored domain validation and link opening logic.
@@ -746,12 +729,11 @@
 1.9.6:
 
 - Redesigned `ModDataParser` to parse jar in jar, mixin configs, and isMCreator.
-- Improved `modlist.txt` log. Now prints as a properly formated table, and with a
-  list of mixins, jar in jar, and isMCreator.
-  Note: `modlist.json` in config keeps the same, this is only about `modlist.txt` log.
+- Improved `modlist.txt` log. Now prints as a properly formated table, and with a list of mixins, jar in jar, and
+  isMCreator. Note: `modlist.json` in config keeps the same, this is only about `modlist.txt` log.
 - Improved error message on OSHI failed to init because of permission issues and ways to fix it.
-- Moved config option `modpack_modlist.force_add_full_modlist_as_log` to `modpack_modlist.add_modlist_txt_as_log`.
-  Now enabled by default not only for individual downloads but also for modpacks.
+- Moved config option `modpack_modlist.force_add_full_modlist_as_log` to `modpack_modlist.add_modlist_txt_as_log`. Now
+  enabled by default not only for individual downloads but also for modpacks.
 - Refactored TerminatedProcessesFinder.
 - Added instruments for LauncherLog analysis.
 - Added new `ModuleResolution` log analysis.
@@ -773,8 +755,8 @@
 - Fixed 1.20 wasn't marked as a compatible version while publishing mod. While it was.
 - Initial release for 1.21.6 all mod loaders.
 - Attempted to fix users posting separate logs instead of using the Upload All Button.
-- Added ability to customize font size and color of the upload all and request help buttons.
-  Made them bigger and colored by default to request user attention.
+- Added ability to customize font size and color of the upload all and request help buttons. Made them bigger and
+  colored by default to request user attention.
 - Locating win_events time decreased from 1 minute to 15 seconds to reduce probability of capturing false events.
 - Improved greeting message to include instructions for updating modpack Discord link.
 - Added a config option `generated_message.color_message` to be able to disable color in generated messages with ANSI.
@@ -801,8 +783,8 @@
 1.9.0:
 
 - Complete Java 8 backport to add 1.16.5 and older support.
-- Replaced external McLogs API dependency with custom implementation due to it being incompatible with Java 8.
-  Also should fix some connection issues on logs uploading.
+- Replaced external McLogs API dependency with custom implementation due to it being incompatible with Java 8. Also
+  should fix some connection issues on logs uploading.
 - Temporarily removed DirectX based gpu-detect-jni.dll due to CurseForge policy about DLLs which they are going to
   change within a month.
 - Temporarily returned Vulkan to the app fatjar. Decreased version to 3.1.0 to decrease Vulkan size as much as possible.
@@ -830,13 +812,13 @@
 
 1.8.1:
 
-- Pass parent Xmx and Xms args as params to a Crash Assistant process. Log them where.
-  As log often doesn't include them, but they can be extremely useful.
+- Pass parent Xmx and Xms args as params to a Crash Assistant process. Log them where. As log often doesn't include
+  them, but they can be extremely useful.
 - Add them to the generated message if OutOfMemory or InsufficientMemory.
 - Implemented loading of Vulkan GPU detection addon. (addon will be released soon)
 - Improved GPU detection with better error handling.
-- Changed DirectX GPU detection jni implementation to fix duplicated GPUs issue,
-  errors while creating a device also caused by duplicated GPUs.
+- Changed DirectX GPU detection jni implementation to fix duplicated GPUs issue, errors while creating a device also
+  caused by duplicated GPUs.
 - Enhanced a config file locking mechanism for config access synchronization to fix super rare macOS issue.
 - Log OS in the Crash Assistant log.
 - Improved error messages for GPU detection failures.
@@ -881,14 +863,13 @@
 1.7.26:
 
 - Added couple of new supported langs in WasClosedByWindows error message log analysis.
-- Marked mod as release, since I haven't seen any issues for a long time and haven't made any breaking changes
-  since the mod's creation. There is no reason to mark it as beta.
+- Marked mod as release, since I haven't seen any issues for a long time and haven't made any breaking changes since the
+  mod's creation. There is no reason to mark it as beta.
 
 1.7.25:
 
 - Added new LanguageProviderMismatch log analysis.
-- New Analysis for GPU driver issues log analysis.
-  Improved old messages.
+- New Analysis for GPU driver issues log analysis. Improved old messages.
 - Add some code for further modloading analysis.
 - Small fixes and improvements.
 
@@ -1016,8 +997,7 @@
 - Create6Addons now checking version larger 1.20
 - Added maven version comparator to be used in analysis.
 - Checking OS on OS specific Crash Reasons to optimise analysis.
-- Added links to all mods which we recommend in analysis.
-  Now you can click to mod and go to mod page.
+- Added links to all mods which we recommend in analysis. Now you can click to mod and go to mod page.
 - Small fixes and improvements.
 
 1.7.8:
@@ -1082,8 +1062,7 @@
 
 1.7.0 major update:
 
-- Switch from architectury to multiloader mdk.
-  A lot of things changed.
+- Switch from architectury to multiloader mdk. A lot of things changed.
 - Global re-structuration of project.
 - MinecraftForge 1.21.1 port.
 - Fixed rare bug if gui started only because of win_event, analysis didn't triggered.
@@ -1135,7 +1114,7 @@
 - Added in generated messages count of found potential crash reasons by log analysis.
 - Added some logging:
     - Paths of added logs.
-    - Path from which CA launched(modpack folder).
+    - Path from which CA launched (modpack folder).
     - gameLaunchedSuccessfully boolean variable.
 - Fixed I forgot to update 1 ru lang key.
 - Fixed case when Create addons warning displayed then it shouldn't.
@@ -1160,15 +1139,15 @@
         - WasClosedByWindows
 - Codex logs analyser integration. Every supported log type will be analysed right after uploading. And if it found some
   problem message will be displayed.
-- Sometimes Codex solution message can be unclear for avg user.
-  For such cases we added own comment on Codex message, currently:
+- Sometimes Codex solution message can be unclear for avg user. For such cases we added own comment on Codex message,
+  currently:
     - Erroring block/entity.
 - WinEvents cleaning: mod will leave only five latest files to prevent too many files in modpack folder.
 - Prevent error spam in non Windows systems in CA log, bc of PowerShell not available.
-- Now blacklisted logs config option works not by equals(), but startswith().
+- Now blacklisted logs config option works not by equals (), but startswith ().
 - Added support of ATLauncher launcher log on MacOS.
-- Added i9-14900hx to Intel corrupted processors list.
-  It's not officially listed, but we've seen already 2 similar cursed logs with this processor.
+- Added i9-14900hx to Intel corrupted processors list. It's not officially listed, but we've seen already 2 similar
+  cursed logs with this processor.
 
 1.5.1:
 
@@ -1213,8 +1192,8 @@
 1.4.0:
 
 - Improved Intel bug message.
-- Introducing Logs Analyser. Analysing logs dor most common crash reasons and displaying message with fix.
-  Currently implemented 2 checks:
+- Introducing Logs Analyser. Analysing logs dor most common crash reasons and displaying message with fix. Currently
+  implemented 2 checks:
     - Problematic frame atio6axx.dll
     - User done some input on loading, which caused freeze and taskkill.
 - Very many small fixes.
@@ -1267,8 +1246,8 @@
 1.3.3:
 
 - Added locating of terminated by Windows processes.
-- Now Crash Assistant starts as independent process instead of child process.
-  Since all child processes being terminated on parent process termination by Windows.
+- Now Crash Assistant starts as independent process instead of child process. Since all child processes being terminated
+  on parent process termination by Windows.
 - Removed ChildProcessLoggers.
 
 1.3.2:
@@ -1396,7 +1375,7 @@
 - Too big logs, which exceeding mclo.gs limits will be split into 2 parts: first and last lines containing 25k lines or
   10MB.
 - Significantly improved generated message formatting.
-- Major log reading performance improvement. No more stuck on uploading even supermassive logs(tested on 10GB logs).
+- Major log reading performance improvement. No more stuck on uploading even supermassive logs (tested on 10GB logs).
 - modlist.json now is sorted by alphabet.
 - Increased xmx to 512mb to prevent potential issues (No impact on RAM consumption on awaiting crash stage).
 - Improved some formulations in config comments.
@@ -1418,8 +1397,8 @@
     - For usage or more info see config comment of `text.modpack_name`
 - Drag and Drop support. Now files can be dragged and dropped directly from gui.
     - If dragged and dropped `Avalible log files:`, all logs will be dropped at once.
-- Added requested by Modded Minecraft Discord warning about their logs sharing policy. If discord link is default(
-  moddedmc).
+- Added requested by Modded Minecraft Discord warning about their logs sharing policy. If discord link is default
+  (moddedmc).
 - Small fixes.
 
 1.2.6:

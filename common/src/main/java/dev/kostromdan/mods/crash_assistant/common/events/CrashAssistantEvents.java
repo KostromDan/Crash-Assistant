@@ -5,6 +5,7 @@ import dev.kostromdan.mods.crash_assistant.common.commands.CrashAssistantCommand
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
@@ -13,6 +14,7 @@ import net.minecraft.network.chat.MutableComponent;
 
 public class CrashAssistantEvents {
     public static void onGameJoin() {
+        ModListUtils.scheduleAutomaticUpdate(CrashAssistant.playerNickname);
         ProcessSignalIO.post("joined_world");
         if (!CrashAssistantConfig.getModpackCreators().contains(CrashAssistant.playerNickname) || CrashAssistantConfig.getBoolean("greeting.shown_greeting")) {
             return;

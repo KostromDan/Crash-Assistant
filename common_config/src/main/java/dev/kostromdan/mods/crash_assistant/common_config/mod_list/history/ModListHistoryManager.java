@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.mod_list.history;
 
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
@@ -12,124 +13,107 @@ import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 
-/** Coordinates the one history snapshot owned by the companion app process. */
+/** Coordinates the one history snapshot owned by a Minecraft launch. */
 public final class ModListHistoryManager {
     private static final Logger LOGGER = LogManager.getLogger(ModListHistoryManager.class);
     private static final ModListHistoryStore STORE = ModListHistoryStore.getDefault();
     private static final Path MODLIST_TXT = Paths.get("logs", "modlist.txt");
 
     private static long currentLaunchStartedAt = -1L;
+    private static ModListHistoryStatus currentStatus;
     private static boolean initialized;
-    private static ModListHistoryRecord currentRecord;
+    private static boolean historyAvailable;
+    private static boolean modListTxtGenerated;
     private static boolean milestonePollingComplete;
 
     private ModListHistoryManager() {
     }
 
-    /**
-     * Captures the launch mod list once and uses that exact collection for both
-     * the history JSON and {@code logs/modlist.txt}.
-     */
-    public static synchronized Optional<ModListHistoryRecord> initialize(long launchStartedAt) {
-        if (initialized) {
-            return getCurrentRecord();
+    /** Heavy snapshot creation. This method is called only by the short-lived worker process. */
+    public static SnapshotResult createSnapshot(long launchStartedAt) {
+        try {
+            return ModListUtils.withModListScanLock(() -> createSnapshotLocked(launchStartedAt));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to create the mod-list launch snapshot", e);
         }
-        currentLaunchStartedAt = launchStartedAt > 0L
+    }
+
+    private static SnapshotResult createSnapshotLocked(long launchStartedAt) {
+        long preferredTimestamp = launchStartedAt > 0L
                 ? launchStartedAt
                 : System.currentTimeMillis();
-
-        if (!STORE.hasHistoryFiles()) {
-            try {
-                STORE.preserveLegacyText(MODLIST_TXT);
-            } catch (Exception e) {
-                LOGGER.error("Failed to preserve the pre-history modlist.txt before replacement", e);
-            }
+        LinkedHashSet<Mod> mods = ModListUtils.getCurrentModList(true);
+        if (!ModListUtils.wasLastScanSuccessful()) {
+            throw new IllegalStateException("Failed to scan the current mod list");
         }
 
-        // Capture once even when the history directory is temporarily
-        // unwritable: modlist.txt must still be generated for this launch.
-        LinkedHashSet<Mod> mods = ModListUtils.getCurrentModList(true);
-        currentRecord = ModListHistoryRecord.started(currentLaunchStartedAt, mods);
-        boolean currentRecordPersisted = false;
+        long historyTimestamp = -1L;
+        boolean historyWritten = false;
         try {
-            currentRecord = STORE.beginLaunchAtAvailableTimestamp(currentLaunchStartedAt, mods);
-            currentLaunchStartedAt = currentRecord.getTimestamp();
-            currentRecordPersisted = true;
+            ModListHistoryRecord record = STORE.beginLaunchAtAvailableTimestamp(preferredTimestamp, mods);
+            historyTimestamp = record.getTimestamp();
+            historyWritten = true;
+            LOGGER.info("Captured mod-list history for launch {} in {}",
+                    historyTimestamp, ModListHistoryStore.getHistoryDirectory());
         } catch (Exception e) {
             LOGGER.error("Failed to initialize mod-list launch history", e);
         }
-        initialized = true;
-        milestonePollingComplete = currentRecord.hasReachedJoined()
-                || currentRecord.getStatus() == ModListHistoryStatus.CRASHED_DURING_GAMEPLAY
-                || currentRecord.getStatus() == ModListHistoryStatus.CLOSED_WITHOUT_CRASH;
-        if (currentRecordPersisted) {
-            LOGGER.info("Captured mod-list history for launch {} in {}",
-                    currentLaunchStartedAt, ModListHistoryStore.getHistoryDirectory());
-        }
 
-        // Create the current launch file first, so a legacy file whose
-        // lastModified happens to equal Boot.parentStarted cannot claim the
-        // current launch's required filename.
-        if (currentRecordPersisted) {
+        if (historyWritten) {
             try {
-                Optional<ModListHistoryRecord> migrated =
-                        PlatformHelp.isLinkDefault()
-                                ? STORE.migrateLegacySnapshot(ModListUtils.getSavedModListPath())
-                                : STORE.copyLegacySnapshot(ModListUtils.getSavedModListPath());
+                Optional<ModListHistoryRecord> migrated = PlatformHelp.isLinkDefault()
+                        ? STORE.migrateLegacySnapshot(ModListUtils.getSavedModListPath())
+                        : STORE.copyLegacySnapshot(ModListUtils.getSavedModListPath());
                 if (migrated.isPresent()) {
                     LOGGER.info("Preserved the pre-history modlist.json in {}",
                             ModListHistoryStore.getHistoryDirectory());
                 }
             } catch (Exception e) {
-                // The source is deliberately kept when parsing, writing, or
-                // verification fails.
                 LOGGER.error("Failed to migrate the legacy standalone modlist.json; keeping the source file", e);
             }
         }
 
-        try {
-            // Use the same single scan that populated this launch record.
-            Mod.writeModlistTxt(MODLIST_TXT, currentRecord.getMods());
-        } catch (Exception e) {
-            LOGGER.error("Failed to generate logs/modlist.txt for this launch", e);
+        boolean txtWritten = false;
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")
+                && CrashAssistantConfig.getBoolean("modpack_modlist.add_modlist_txt_as_log")) {
+            try {
+                Mod.writeModlistTxt(MODLIST_TXT, mods);
+                txtWritten = true;
+            } catch (Exception e) {
+                LOGGER.error("Failed to generate logs/modlist.txt for this launch", e);
+            }
         }
-        return Optional.of(currentRecord);
+        return new SnapshotResult(historyTimestamp, txtWritten);
+    }
+
+    /** Attaches the lightweight waiter to the result produced by the worker. */
+    public static synchronized void attachSnapshot(long historyTimestamp, boolean txtGenerated) {
+        initialized = true;
+        currentLaunchStartedAt = historyTimestamp;
+        historyAvailable = historyTimestamp >= 0L;
+        currentStatus = historyAvailable ? ModListHistoryStatus.STARTED : null;
+        modListTxtGenerated = txtGenerated;
+        milestonePollingComplete = false;
     }
 
     public static synchronized void refreshMilestoneSignals(long minecraftPid) {
-        if (!initialized || currentRecord == null || milestonePollingComplete) {
+        if (!initialized || milestonePollingComplete) {
             return;
         }
         try {
             boolean titleScreenSignal = ProcessSignalIO.exists("successful_launch", minecraftPid);
             boolean joinedWorldSignal = ProcessSignalIO.exists("joined_world", minecraftPid);
-            boolean reachedTitle = currentRecord.hasReachedTitleScreen() || titleScreenSignal;
-            boolean reachedJoined = currentRecord.hasReachedJoined() || joinedWorldSignal;
-            boolean changed = false;
-            if (reachedTitle && !currentRecord.hasReachedTitleScreen()) {
-                currentRecord = currentRecord.withMilestone(
-                        ModListHistoryStatus.TITLE_SCREEN, true, false);
-                changed = true;
+            if (titleScreenSignal && currentStatus == ModListHistoryStatus.STARTED) {
+                setStatus(ModListHistoryStatus.TITLE_SCREEN,
+                        "update the mod-list launch title-screen milestone");
             }
-            if (reachedJoined && !currentRecord.hasReachedJoined()) {
-                if (!reachedTitle) {
-                    try {
-                        ModListUtils.autoUpdateModpackModListAfterDirectJoin();
-                    } catch (Exception e) {
-                        // Baseline maintenance is best-effort and must never
-                        // prevent the trustworthy JOINED milestone itself.
-                        LOGGER.error("Failed to auto-update modlist.json after Direct Connect", e);
-                    }
+            if (joinedWorldSignal && currentStatus != ModListHistoryStatus.JOINED) {
+                if (setStatus(ModListHistoryStatus.JOINED,
+                        "update the mod-list launch joined-world milestone")) {
+                    milestonePollingComplete = true;
                 }
-                currentRecord = currentRecord.withMilestone(
-                        ModListHistoryStatus.JOINED,
-                        currentRecord.hasReachedTitleScreen(),
-                        true);
-                milestonePollingComplete = true;
-                changed = true;
-            }
-            if (changed) {
-                persistCurrentRecord("update mod-list launch milestone");
             }
         } catch (Exception e) {
             LOGGER.error("Failed to update mod-list launch milestone", e);
@@ -140,38 +124,90 @@ public final class ModListHistoryManager {
         if (!initialized) {
             return;
         }
-        currentRecord = currentRecord.withCrashAssistantOpened();
-        milestonePollingComplete = true;
-        persistCurrentRecord("mark the mod-list launch as crashed during gameplay");
+        if (currentStatus == ModListHistoryStatus.JOINED) {
+            if (setStatus(ModListHistoryStatus.CRASHED_DURING_GAMEPLAY,
+                    "mark the mod-list launch as crashed during gameplay")) {
+                milestonePollingComplete = true;
+            }
+        } else {
+            milestonePollingComplete = true;
+        }
     }
 
     public static synchronized void markClosedWithoutCrash() {
-        if (!initialized) {
+        if (!initialized || currentStatus == ModListHistoryStatus.CRASHED_DURING_GAMEPLAY
+                || currentStatus != null && currentStatus.isClosedWithoutCrash()) {
             return;
         }
-        currentRecord = currentRecord.withClosedWithoutCrash();
-        milestonePollingComplete = true;
-        persistCurrentRecord("mark the mod-list launch as closed without crash");
+        ModListHistoryStatus closedStatus = currentStatus == ModListHistoryStatus.JOINED
+                ? ModListHistoryStatus.CLOSED_WITHOUT_CRASH_AFTER_JOIN
+                : currentStatus == ModListHistoryStatus.TITLE_SCREEN
+                ? ModListHistoryStatus.CLOSED_WITHOUT_CRASH_AFTER_TITLE_SCREEN
+                : ModListHistoryStatus.CLOSED_WITHOUT_CRASH;
+        if (setStatus(closedStatus, "mark the mod-list launch as closed without crash")) {
+            milestonePollingComplete = true;
+        }
     }
 
+    /** Loads the full record only when GUI code actually asks for it. */
     public static synchronized Optional<ModListHistoryRecord> getCurrentRecord() {
-        if (currentLaunchStartedAt < 0L || currentRecord == null) {
+        if (!historyAvailable) {
             return Optional.empty();
         }
-        return Optional.of(currentRecord);
+        return STORE.getRecord(currentLaunchStartedAt);
+    }
+
+    public static synchronized boolean wasModListTxtGenerated() {
+        return modListTxtGenerated;
     }
 
     public static ModListHistoryStore getStore() {
         return STORE;
     }
 
-    private static boolean persistCurrentRecord(String operation) {
-        try {
-            STORE.save(currentRecord);
+    private static boolean setStatus(ModListHistoryStatus status, String operation) {
+        if (currentStatus == status) {
             return true;
-        } catch (Exception e) {
-            LOGGER.error("Failed to {}", operation, e);
-            return false;
+        }
+        if (!historyAvailable) {
+            currentStatus = status;
+            return true;
+        }
+        Exception failure = null;
+        for (int attempt = 0; attempt < 2; attempt++) {
+            try {
+                if (!STORE.updateStatus(currentLaunchStartedAt, status)) {
+                    historyAvailable = false;
+                    currentStatus = status;
+                    LOGGER.error("Failed to {}: history record {} does not exist",
+                            operation, currentLaunchStartedAt);
+                    return true;
+                }
+                currentStatus = status;
+                return true;
+            } catch (Exception e) {
+                failure = e;
+            }
+        }
+        LOGGER.error("Failed to {}", operation, failure);
+        return false;
+    }
+
+    public static final class SnapshotResult {
+        private final long historyTimestamp;
+        private final boolean modListTxtGenerated;
+
+        private SnapshotResult(long historyTimestamp, boolean modListTxtGenerated) {
+            this.historyTimestamp = historyTimestamp;
+            this.modListTxtGenerated = modListTxtGenerated;
+        }
+
+        public long getHistoryTimestamp() {
+            return historyTimestamp;
+        }
+
+        public boolean isModListTxtGenerated() {
+            return modListTxtGenerated;
         }
     }
 }

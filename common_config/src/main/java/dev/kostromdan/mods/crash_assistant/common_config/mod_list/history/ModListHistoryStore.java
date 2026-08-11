@@ -11,17 +11,19 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.FileAlreadyExistsException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -62,21 +64,6 @@ public class ModListHistoryStore {
 
     public Path getDirectory() {
         return historyDirectory;
-    }
-
-    /** Cheap marker used to distinguish the first history-enabled launch. */
-    public synchronized boolean hasHistoryFiles() {
-        if (!Files.isDirectory(historyDirectory)) {
-            return false;
-        }
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(historyDirectory, "*.json")) {
-            return stream.iterator().hasNext();
-        } catch (IOException e) {
-            // On uncertainty, do not relabel a newly generated modlist.txt as a
-            // pre-history backup on a later launch.
-            LOGGER.error("Failed to check for existing mod-list history in {}", historyDirectory, e);
-            return true;
-        }
     }
 
     public synchronized ModListHistoryRecord beginLaunch(long launchStartedAt, LinkedHashSet<Mod> mods)
@@ -123,52 +110,6 @@ public class ModListHistoryStore {
         }
     }
 
-    public synchronized Optional<ModListHistoryRecord> markTitleScreen(long launchStartedAt)
-            throws IOException {
-        Optional<ModListHistoryRecord> current = getRecord(launchStartedAt);
-        if (!current.isPresent()) {
-            return Optional.empty();
-        }
-        ModListHistoryRecord updated = current.get().withMilestone(
-                ModListHistoryStatus.TITLE_SCREEN, true, current.get().hasReachedJoined());
-        save(updated);
-        return Optional.of(updated);
-    }
-
-    public synchronized Optional<ModListHistoryRecord> markJoined(long launchStartedAt)
-            throws IOException {
-        Optional<ModListHistoryRecord> current = getRecord(launchStartedAt);
-        if (!current.isPresent()) {
-            return Optional.empty();
-        }
-        ModListHistoryRecord updated = current.get().withMilestone(
-                ModListHistoryStatus.JOINED, current.get().hasReachedTitleScreen(), true);
-        save(updated);
-        return Optional.of(updated);
-    }
-
-    public synchronized Optional<ModListHistoryRecord> markCrashAssistantOpened(long launchStartedAt)
-            throws IOException {
-        Optional<ModListHistoryRecord> current = getRecord(launchStartedAt);
-        if (!current.isPresent()) {
-            return Optional.empty();
-        }
-        ModListHistoryRecord updated = current.get().withCrashAssistantOpened();
-        save(updated);
-        return Optional.of(updated);
-    }
-
-    public synchronized Optional<ModListHistoryRecord> markClosedWithoutCrash(long launchStartedAt)
-            throws IOException {
-        Optional<ModListHistoryRecord> current = getRecord(launchStartedAt);
-        if (!current.isPresent()) {
-            return Optional.empty();
-        }
-        ModListHistoryRecord updated = current.get().withClosedWithoutCrash();
-        save(updated);
-        return Optional.of(updated);
-    }
-
     public synchronized void save(ModListHistoryRecord record) throws IOException {
         Files.createDirectories(historyDirectory);
         Path target = pathFor(record.getTimestamp());
@@ -180,6 +121,31 @@ public class ModListHistoryStore {
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE);
             moveAtomically(temporary, target);
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
+    }
+
+    /**
+     * Atomically changes only the root status without materializing the mod list.
+     * Returns {@code false} when the requested launch record does not exist.
+     */
+    public synchronized boolean updateStatus(long timestamp, ModListHistoryStatus status)
+            throws IOException {
+        if (status == null) {
+            throw new IllegalArgumentException("status is required");
+        }
+        Path target = pathFor(timestamp);
+        if (!Files.isRegularFile(target)) {
+            return false;
+        }
+
+        Files.createDirectories(historyDirectory);
+        Path temporary = Files.createTempFile(historyDirectory, "." + timestamp + "-", ".tmp");
+        try {
+            rewriteStatus(target, temporary, timestamp, status);
+            moveAtomically(temporary, target);
+            return true;
         } finally {
             Files.deleteIfExists(temporary);
         }
@@ -237,10 +203,8 @@ public class ModListHistoryStore {
             return Optional.empty();
         }
 
-        boolean joinedRequired = current.hasReachedTitleScreen() || current.hasReachedJoined()
-                || current.getStatus() == ModListHistoryStatus.TITLE_SCREEN
-                || current.getStatus() == ModListHistoryStatus.JOINED
-                || current.getStatus() == ModListHistoryStatus.CRASHED_DURING_GAMEPLAY;
+        boolean joinedRequired = current.getStatus().reachedTitleScreen()
+                || current.getStatus().reachedJoinedWorld();
 
         ModListHistoryRecord legacyFallback = null;
         if (newestFirstRecords == null) {
@@ -257,23 +221,18 @@ public class ModListHistoryStore {
                 continue;
             }
             if (joinedRequired) {
-                if (candidate.hasReachedJoined()
-                        || candidate.getStatus() == ModListHistoryStatus.JOINED
-                        || candidate.getStatus() == ModListHistoryStatus.CRASHED_DURING_GAMEPLAY) {
+                if (candidate.getStatus().reachedJoinedWorld()) {
                     return Optional.of(new ModListComparisonReference(
                             candidate, ModListComparisonReference.Kind.JOINED));
                 }
                 continue;
             }
 
-            if (candidate.hasReachedJoined()
-                    || candidate.getStatus() == ModListHistoryStatus.JOINED
-                    || candidate.getStatus() == ModListHistoryStatus.CRASHED_DURING_GAMEPLAY) {
+            if (candidate.getStatus().reachedJoinedWorld()) {
                 return Optional.of(new ModListComparisonReference(
                         candidate, ModListComparisonReference.Kind.JOINED));
             }
-            if (candidate.hasReachedTitleScreen()
-                    || candidate.getStatus() == ModListHistoryStatus.TITLE_SCREEN) {
+            if (candidate.getStatus().reachedTitleScreen()) {
                 return Optional.of(new ModListComparisonReference(
                         candidate, ModListComparisonReference.Kind.TITLE_SCREEN));
             }
@@ -303,6 +262,14 @@ public class ModListHistoryStore {
             return Optional.empty();
         }
 
+        String source = legacyJson.toString();
+        if (!deleteSource) {
+            Optional<ModListHistoryRecord> existing = findLegacySnapshotBySource(source);
+            if (existing.isPresent()) {
+                return existing;
+            }
+        }
+
         byte[] sourceBytes = Files.readAllBytes(legacyJson);
         String sourceFingerprint = sha256(sourceBytes);
         LinkedHashSet<Mod> legacyMods;
@@ -312,15 +279,7 @@ public class ModListHistoryStore {
             throw new IOException("Failed to parse legacy mod list " + legacyJson, e);
         }
 
-        String source = legacyJson.toString();
         for (ModListHistoryRecord existing : listRecordsNewestFirst()) {
-            if (!deleteSource
-                    && existing.isLegacySnapshot()
-                    && source.equals(existing.getLegacySource())) {
-                // A modpack baseline changes over time; it is copied only once
-                // to seed upgrades from the pre-history version.
-                return Optional.of(existing);
-            }
             if (existing.isLegacySnapshot()
                     && source.equals(existing.getLegacySource())
                     && sourceFingerprint.equals(existing.getLegacyFingerprint())
@@ -350,31 +309,37 @@ public class ModListHistoryStore {
         return verified;
     }
 
-    /** Preserves the pre-history text file once before normal per-launch generation replaces it. */
-    public synchronized Optional<Path> preserveLegacyText(Path legacyText) throws IOException {
-        if (legacyText == null || !Files.isRegularFile(legacyText)) {
+    /** Finds the one modpack seed without deserializing every history mod list. */
+    private Optional<ModListHistoryRecord> findLegacySnapshotBySource(String source) {
+        if (!Files.isDirectory(historyDirectory)) {
             return Optional.empty();
         }
-        Path parent = historyDirectory.getParent();
-        if (parent == null) {
-            return Optional.empty();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(historyDirectory, "*.json")) {
+            for (Path path : stream) {
+                try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        String trimmed = line.trim();
+                        if (trimmed.startsWith("\"mods\":")) {
+                            break;
+                        }
+                        if (!trimmed.startsWith("\"legacySource\":")) {
+                            continue;
+                        }
+                        String jsonValue = trimmed.substring(trimmed.indexOf(':') + 1).trim();
+                        if (jsonValue.endsWith(",")) {
+                            jsonValue = jsonValue.substring(0, jsonValue.length() - 1);
+                        }
+                        if (source.equals(new JsonParser().parse(jsonValue).getAsString())) {
+                            return read(path);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to find a copied legacy mod-list snapshot", e);
         }
-        Files.createDirectories(parent);
-        Path backup = parent.resolve("legacy_modlist.txt");
-        if (Files.isRegularFile(backup)) {
-            return Optional.of(backup);
-        }
-        Path temporary = Files.createTempFile(parent, ".legacy_modlist-", ".tmp");
-        try {
-            Files.copy(legacyText, temporary, StandardCopyOption.REPLACE_EXISTING);
-            moveAtomically(temporary, backup);
-        } finally {
-            Files.deleteIfExists(temporary);
-        }
-        if (Files.size(backup) != Files.size(legacyText)) {
-            throw new IOException("Failed to verify preserved legacy modlist.txt");
-        }
-        return Optional.of(backup);
+        return Optional.empty();
     }
 
     private Path pathFor(long timestamp) {
@@ -401,8 +366,6 @@ public class ModListHistoryStore {
         if (record.getStatus() != null) {
             root.addProperty("status", record.getStatus().name());
         }
-        root.addProperty("reachedTitleScreen", record.hasReachedTitleScreen());
-        root.addProperty("reachedJoined", record.hasReachedJoined());
         if (record.isLegacySnapshot()) {
             root.addProperty("legacySnapshot", true);
             if (record.getLegacySource() != null) {
@@ -443,8 +406,6 @@ public class ModListHistoryStore {
         return new ModListHistoryRecord(
                 timestamp,
                 status,
-                getBoolean(root, "reachedTitleScreen"),
-                getBoolean(root, "reachedJoined"),
                 mods);
     }
 
@@ -456,8 +417,6 @@ public class ModListHistoryStore {
     private static boolean equivalent(ModListHistoryRecord expected, ModListHistoryRecord actual) {
         return expected.getTimestamp() == actual.getTimestamp()
                 && expected.getStatus() == actual.getStatus()
-                && expected.hasReachedTitleScreen() == actual.hasReachedTitleScreen()
-                && expected.hasReachedJoined() == actual.hasReachedJoined()
                 && expected.isLegacySnapshot() == actual.isLegacySnapshot()
                 && java.util.Objects.equals(expected.getLegacySource(), actual.getLegacySource())
                 && java.util.Objects.equals(expected.getLegacyFingerprint(), actual.getLegacyFingerprint())
@@ -467,6 +426,44 @@ public class ModListHistoryStore {
     private static boolean sameMods(LinkedHashSet<Mod> left, LinkedHashSet<Mod> right) {
         return HISTORY_GSON.toJson(left, HISTORY_MODS_TYPE)
                 .equals(HISTORY_GSON.toJson(right, HISTORY_MODS_TYPE));
+    }
+
+    private static void rewriteStatus(Path source,
+                                      Path destination,
+                                      long expectedTimestamp,
+                                      ModListHistoryStatus status) throws IOException {
+        boolean timestampFound = false;
+        boolean statusFound = false;
+        try (BufferedReader reader = Files.newBufferedReader(source, StandardCharsets.UTF_8);
+             BufferedWriter writer = Files.newBufferedWriter(
+                     destination,
+                     StandardCharsets.UTF_8,
+                     StandardOpenOption.TRUNCATE_EXISTING,
+                     StandardOpenOption.WRITE)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("  \"timestamp\": ")) {
+                    String value = line.substring(15).replace(",", "").trim();
+                    if (timestampFound || Long.parseLong(value) != expectedTimestamp) {
+                        throw new IOException("Unexpected timestamp in mod-list history record " + source);
+                    }
+                    timestampFound = true;
+                } else if (line.startsWith("  \"status\": ")) {
+                    if (statusFound) {
+                        throw new IOException("Duplicate status in mod-list history record " + source);
+                    }
+                    line = "  \"status\": \"" + status.name() + "\",";
+                    statusFound = true;
+                }
+                writer.write(line);
+                writer.newLine();
+            }
+        } catch (NumberFormatException e) {
+            throw new IOException("Invalid timestamp in mod-list history record " + source, e);
+        }
+        if (!timestampFound || !statusFound) {
+            throw new IOException("Incomplete mod-list history record " + source);
+        }
     }
 
     private static String sha256(byte[] bytes) throws IOException {

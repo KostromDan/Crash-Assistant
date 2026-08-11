@@ -30,6 +30,7 @@ public class Boot {
     private static boolean recursiveStart = false;
     private static boolean gpuDetect = false;
     private static boolean bootWarningsVisible = false;
+    private static boolean modListSnapshot = false;
     private static String bootWarningsJson = null;
     private static String startupWarningsJson = null;
     private static String serialisedGPUs = null;
@@ -69,6 +70,8 @@ public class Boot {
                     gpuDetect = true;
                 } else if ("-bootWarningsVisible".equals(args[i])) {
                     bootWarningsVisible = true;
+                } else if ("-modListSnapshot".equals(args[i])) {
+                    modListSnapshot = true;
                 }
             }
 
@@ -141,6 +144,11 @@ public class Boot {
                 System.exit(0);
             }
 
+            if (modListSnapshot) {
+                ModListSnapshotWorker.run(effectiveArgs.toArray(new String[0]));
+                System.exit(0);
+            }
+
             /**
              * If Minecraft JVM terminated by windows itself, all child processes will be also terminated.
              * So Crash Assistant can't be child process. This way we make Crash Assistant completely independent process.
@@ -180,10 +188,24 @@ public class Boot {
                 System.exit(0);
             }
 
+            String snapshotOutput = getModListSnapshotOutput(argsFilePath);
+            effectiveArgs.add("-modListSnapshotOutput");
+            effectiveArgs.add(Base64.getEncoder().encodeToString(
+                    snapshotOutput.getBytes(StandardCharsets.UTF_8)));
+            String[] crashAssistantAppArgs = effectiveArgs.toArray(new String[0]);
+            // Do not retain or print the encoded worker output through Boot.APP_ARGS.
+            effectiveArgs.remove(effectiveArgs.size() - 1);
+            effectiveArgs.remove(effectiveArgs.size() - 1);
+            snapshotOutput = null;
+
             Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
             Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);
-            mainMethod.invoke(null, (Object) effectiveArgs.toArray(new String[0]));
+            mainMethod.invoke(null, (Object) crashAssistantAppArgs);
         } catch (Throwable e) {
+            if (modListSnapshot) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
             Path logsFolder = Paths.get("logs", "crash_assistant");
             Files.createDirectories(logsFolder);
             StringWriter sw = new StringWriter();
@@ -308,6 +330,63 @@ public class Boot {
 
         } catch (Throwable ignored) {
             return "Error while getting output from boot warnings process: " + ErrorUtils.getErrorMessageAndStackTrace(ignored);
+        }
+    }
+
+    private static String getModListSnapshotOutput(String argsFilePath) {
+        Path outputFile = null;
+        try {
+            Path localFolder = Paths.get("local", "crash_assistant");
+            Files.createDirectories(localFolder);
+            outputFile = Files.createTempFile(localFolder, ".modlist-snapshot-", ".tmp");
+
+            List<String> command = new ArrayList<>();
+            command.add(JavaBinaryLocator.getJavaBinary());
+            for (String jvmArg : JVM_ARGS) {
+                if (!jvmArg.startsWith("-Dlog4j.configurationFile=")
+                        && !jvmArg.startsWith("-Dlog4j2.configurationFile=")) {
+                    command.add(jvmArg);
+                }
+            }
+            command.add("-Dlog4j.configurationFile=log4j2-console.xml");
+            command.add("-Dlog4j2.configurationFile=log4j2-console.xml");
+            command.add("-cp");
+            command.add(classPath);
+            command.add("dev.kostromdan.mods.crash_assistant.app.class_loading.Boot");
+            command.add("--args-file");
+            command.add(argsFilePath);
+            command.add("-modListSnapshot");
+
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.redirectErrorStream(true);
+            processBuilder.redirectOutput(outputFile.toFile());
+            Process process = processBuilder.start();
+            boolean finished = process.waitFor(10, TimeUnit.MINUTES);
+            if (!finished) {
+                process.destroyForcibly();
+                process.waitFor();
+            }
+
+            String output = new String(Files.readAllBytes(outputFile), StandardCharsets.UTF_8);
+            if (!finished) {
+                return output + System.lineSeparator()
+                        + "Mod-list snapshot process exceeded 10 minutes and was killed.";
+            }
+            if (process.exitValue() != 0) {
+                return output + System.lineSeparator()
+                        + "Mod-list snapshot process exited with code " + process.exitValue() + ".";
+            }
+            return output;
+        } catch (Throwable e) {
+            return "Failed to run mod-list snapshot process:\n"
+                    + ErrorUtils.getErrorMessageAndStackTrace(e);
+        } finally {
+            if (outputFile != null) {
+                try {
+                    Files.deleteIfExists(outputFile);
+                } catch (IOException ignored) {
+                }
+            }
         }
     }
 

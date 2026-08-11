@@ -279,6 +279,10 @@ public final class ModListHistoryDialog extends JDialog {
         // names (notably Russian) at the fixed dialog width.
         JPanel panel = new JPanel(new GridLayout(0, 3, 10, 2));
         for (ModListHistoryStatus status : ModListHistoryStatus.values()) {
+            if (status.isClosedWithoutCrash()
+                    && status != ModListHistoryStatus.CLOSED_WITHOUT_CRASH) {
+                continue;
+            }
             JCheckBox checkBox = new JCheckBox(statusLabel(status), true);
             checkBox.addItemListener(event -> applyFilters());
             filters.put(status, checkBox);
@@ -397,7 +401,10 @@ public final class ModListHistoryDialog extends JDialog {
                         if (row.isCurrent() || row.isLegacy()) {
                             return true;
                         }
-                        JCheckBox checkBox = filters.get(row.getStatus());
+                        ModListHistoryStatus filterStatus = row.getStatus().isClosedWithoutCrash()
+                                ? ModListHistoryStatus.CLOSED_WITHOUT_CRASH
+                                : row.getStatus();
+                        JCheckBox checkBox = filters.get(filterStatus);
                         return checkBox != null && checkBox.isSelected();
                     }
                 };
@@ -654,6 +661,8 @@ public final class ModListHistoryDialog extends JDialog {
             case CRASHED_DURING_GAMEPLAY:
                 return LanguageProvider.get("gui.modlist_history.status.crashed_during_gameplay");
             case CLOSED_WITHOUT_CRASH:
+            case CLOSED_WITHOUT_CRASH_AFTER_TITLE_SCREEN:
+            case CLOSED_WITHOUT_CRASH_AFTER_JOIN:
                 return LanguageProvider.get("gui.modlist_history.status.closed_without_crash");
             default:
                 throw new IllegalArgumentException("Unknown status " + status);
@@ -785,6 +794,8 @@ public final class ModListHistoryDialog extends JDialog {
                 case CRASHED_DURING_GAMEPLAY:
                     return new Color(165, 75, 185);
                 case CLOSED_WITHOUT_CRASH:
+                case CLOSED_WITHOUT_CRASH_AFTER_TITLE_SCREEN:
+                case CLOSED_WITHOUT_CRASH_AFTER_JOIN:
                     return new Color(50, 145, 205);
                 default:
                     return null;

@@ -338,7 +338,8 @@ public class ControlPanel {
 
     public void updateModListInfo() {
         if (!CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) return;
-        if (CrashAssistantConfig.getBoolean("modpack_modlist.add_modlist_txt_as_log")) {
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.add_modlist_txt_as_log")
+                && ModListHistoryManager.wasModListTxtGenerated()) {
             Path modListTxtPath = Paths.get("logs", "modlist.txt");
             synchronized (KnownCrashReasonMessage.class) {
                 LogsList.addIfExistsAndModified(new Log(LogType.MOD_LIST, modListTxtPath), false, false);

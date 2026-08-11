@@ -228,9 +228,15 @@ public class JarInJarHelper {
     }
 
     public static List<Mod> mapPathsToMods(List<Path> paths) {
-        return paths.stream()
-                .map(ModDataParser::parseModData)
-                .collect(Collectors.toList());
+        try {
+            return ModListUtils.withModListScanLock(() -> paths.stream()
+                    .map(ModDataParser::parseModData)
+                    .collect(Collectors.toList()));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to acquire the mod-list scan lock", e);
+        }
     }
 
     public static List<Mod> getModsContainingPart(String... parts) {

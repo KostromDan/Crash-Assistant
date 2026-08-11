@@ -7,8 +7,7 @@
   involving Current retain the Remove, Enable/Disable, Revert, Restore, and Show Folder actions, while
   snapshot-to-snapshot comparisons remain read-only.
 - Added importing of `modlist.txt` data from a file or the clipboard for comparison with Current. During migration,
-  the previous `modlist.json` snapshot is preserved in history and the previous `modlist.txt` is backed up before
-  per-launch generation replaces it.
+  the previous `modlist.json` snapshot is preserved in history.
 - Fixed mod-list comparisons missing an updated mod when its JAR was replaced without changing the file name or
   declared version. If both snapshots contain a comparable CurseForge or Modrinth hash and it differs, the mod is now
   treated as updated.
@@ -78,7 +77,6 @@
 - Audited Swing/EDT usage throughout the application and ensured UI operations run on the correct threads, fixing
   thread-safety issues that, in extremely rare cases, could cause freezes, deadlocks, or an inconsistent interface
   state.
-- Fixed `modlist.json` not being saved when joining a server through Direct Connect.
 - Fixed `modlist.json` potentially corrupting non-ASCII file names on systems whose default encoding was not UTF-8. It
   is now written as UTF-8 with a BOM, while existing no-BOM UTF-8 and legacy system-encoding files remain readable.
 - Fixed an extremely rare Linux startup race where process metadata for the Minecraft PID could be temporarily

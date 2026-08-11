@@ -2,6 +2,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryStore;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import org.apache.commons.jexl3.annotations.NoJexl;
 import org.apache.logging.log4j.LogManager;
@@ -9,19 +10,26 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class ModListUtils {
     public static final Logger LOGGER = LogManager.getLogger();
@@ -30,73 +38,119 @@ public class ModListUtils {
     private static final Path RESOURCEPACKS_FOLDER = Paths.get("resourcepacks");
     private static final Path DATAPACKS_FOLDER = Paths.get("datapacks");
     private static final Path JSON_FILE = Paths.get("config", "crash_assistant", "modlist.json");
+    private static final Path MOD_LIST_SCAN_LOCK_PATH = Paths.get("local", "crash_assistant", "mod_list_scan.lock");
+    private static final ReentrantLock MOD_LIST_OPERATION_LOCK = new ReentrantLock();
     private static final byte[] UTF_8_BOM = {
             (byte) 0xef, (byte) 0xbb, (byte) 0xbf
     };
     public static String currentUsername = "";
     private static LinkedHashSet<Mod> cachedModList = null;
+    private static boolean automaticUpdateScheduled;
+    private static volatile boolean lastScanSuccessful;
 
 
-    public synchronized static LinkedHashSet<Mod> getCurrentModList(boolean useCache) {
-        if (cachedModList != null && useCache) {
-            return cachedModList;
+    public static LinkedHashSet<Mod> getCurrentModList(boolean useCache) {
+        MOD_LIST_OPERATION_LOCK.lock();
+        try {
+            if (cachedModList != null && useCache) {
+                lastScanSuccessful = true;
+                return cachedModList;
+            }
+        } finally {
+            MOD_LIST_OPERATION_LOCK.unlock();
         }
         try {
-            LinkedHashSet<Mod> currentMods = new LinkedHashSet<>();
+            return withModListScanLock(() -> {
+                if (cachedModList != null && useCache) {
+                    lastScanSuccessful = true;
+                    return cachedModList;
+                }
+                LinkedHashSet<Mod> currentMods = scanCurrentModList();
+                if (useCache) {
+                    cachedModList = currentMods;
+                }
+                lastScanSuccessful = true;
+                return currentMods;
+            });
+        } catch (Exception e) {
+            lastScanSuccessful = false;
+            LOGGER.error("Error while getting current mod list: ", e);
+        }
+        return new LinkedHashSet<>();
+    }
 
-            if (CrashAssistantConfig.getBoolean("modpack_modlist.add_modloader_jar_name")) {
-                currentMods.add(new Mod(
-                        PlatformHelp.loaderJarName + " (modloader)",
-                        PlatformHelp.platform.name().toLowerCase(),
-                        PlatformHelp.platform.name().toLowerCase(),
-                        PlatformHelp.loaderJarName,
-                        null, null, new HashSet<>(), new ArrayList<>(), null,
-                        null, null)
-                );
+    /** Serializes mod parsing across threads and Crash Assistant JVMs. */
+    @NoJexl
+    public static <T> T withModListScanLock(Callable<T> operation) throws Exception {
+        MOD_LIST_OPERATION_LOCK.lock();
+        try {
+            if (MOD_LIST_OPERATION_LOCK.getHoldCount() > 1) {
+                return operation.call();
             }
+            Files.createDirectories(MOD_LIST_SCAN_LOCK_PATH.getParent());
+            try (FileChannel lockChannel = FileChannel.open(
+                    MOD_LIST_SCAN_LOCK_PATH, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                 FileLock ignored = lockChannel.lock()) {
+                return operation.call();
+            }
+        } finally {
+            MOD_LIST_OPERATION_LOCK.unlock();
+        }
+    }
 
-            if (Files.exists(MODS_FOLDER)) {
-                long start = System.currentTimeMillis();
+    private static LinkedHashSet<Mod> scanCurrentModList() throws Exception {
+        LinkedHashSet<Mod> currentMods = new LinkedHashSet<>();
 
-                ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-                List<Future<Mod>> futures = new ArrayList<>();
+        if (CrashAssistantConfig.getBoolean("modpack_modlist.add_modloader_jar_name")) {
+            currentMods.add(new Mod(
+                    PlatformHelp.loaderJarName + " (modloader)",
+                    PlatformHelp.platform.name().toLowerCase(),
+                    PlatformHelp.platform.name().toLowerCase(),
+                    PlatformHelp.loaderJarName,
+                    null, null, new HashSet<>(), new ArrayList<>(), null,
+                    null, null)
+            );
+        }
 
-                Files.list(MODS_FOLDER)
-                        .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".jar"))
-                        .sorted(new PathComparator())
-                        .forEach(path -> futures.add(executor.submit(() -> ModDataParser.parseModData(path))));
-
+        if (Files.exists(MODS_FOLDER)) {
+            long start = System.currentTimeMillis();
+            ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            List<Future<Mod>> futures = new ArrayList<>();
+            try {
+                try (Stream<Path> paths = Files.list(MODS_FOLDER)) {
+                    paths.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".jar"))
+                            .sorted(new PathComparator())
+                            .forEach(path -> futures.add(executor.submit(() -> ModDataParser.parseModData(path))));
+                }
                 for (Future<Mod> future : futures) {
                     currentMods.add(future.get());
                 }
-
+            } finally {
                 executor.shutdown();
-                LOGGER.info("Parsed " + currentMods.size() + " mod(s) metadata in " + (System.currentTimeMillis() - start) + " ms");
             }
-            if (Files.exists(RESOURCEPACKS_FOLDER) && CrashAssistantConfig.getBoolean("modpack_modlist.add_resourcepacks")) {
-                Files.list(RESOURCEPACKS_FOLDER).sorted(new PathComparator()).forEach(path -> {
+            LOGGER.info("Parsed " + currentMods.size() + " mod(s) metadata in " + (System.currentTimeMillis() - start) + " ms");
+        }
+        if (Files.exists(RESOURCEPACKS_FOLDER) && CrashAssistantConfig.getBoolean("modpack_modlist.add_resourcepacks")) {
+            try (Stream<Path> paths = Files.list(RESOURCEPACKS_FOLDER)) {
+                paths.sorted(new PathComparator()).forEach(path -> {
                     String filename = path.getFileName().toString();
                     if (Files.isDirectory(path) || filename.endsWith(".zip")) {
                         currentMods.add(new Mod(filename + " (resourcepack)"));
                     }
                 });
             }
-            if (Files.exists(DATAPACKS_FOLDER) && CrashAssistantConfig.getBoolean("modpack_modlist.add_datapacks")) {
-                Files.list(DATAPACKS_FOLDER).sorted(new PathComparator()).forEach(path -> {
+        }
+        if (Files.exists(DATAPACKS_FOLDER) && CrashAssistantConfig.getBoolean("modpack_modlist.add_datapacks")) {
+            try (Stream<Path> paths = Files.list(DATAPACKS_FOLDER)) {
+                paths.sorted(new PathComparator()).forEach(path -> {
                     String filename = path.getFileName().toString();
                     if (Files.isDirectory(path) || filename.endsWith(".zip")) {
                         currentMods.add(new Mod(filename + " (datapack)"));
                     }
                 });
             }
-            if (useCache) {
-                cachedModList = currentMods;
-            }
-            return currentMods;
-        } catch (Exception e) {
-            LOGGER.error("Error while getting current mod list: ", e);
         }
-        return new LinkedHashSet<>();
+        return currentMods;
     }
 
     public static Map<String, Mod> getCurrentModListMappedToModId() {
@@ -136,17 +190,27 @@ public class ModListUtils {
 
     static void writeModList(Path path, Collection<Mod> mods) throws IOException {
         Path parent = path.getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
-        }
+        Path directory = parent == null ? Paths.get(".") : parent;
+        Files.createDirectories(directory);
         byte[] json = Mod.GSON.toJson(mods, Mod.TYPE).getBytes(StandardCharsets.UTF_8);
         byte[] encoded = new byte[UTF_8_BOM.length + json.length];
         System.arraycopy(UTF_8_BOM, 0, encoded, 0, UTF_8_BOM.length);
         System.arraycopy(json, 0, encoded, UTF_8_BOM.length, json.length);
-        Files.write(path, encoded,
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING,
-                StandardOpenOption.WRITE);
+        Path temporary = Files.createTempFile(directory, ".modlist-", ".tmp");
+        try {
+            Files.write(temporary, encoded,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE);
+            try {
+                Files.move(temporary, path,
+                        StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException ignored) {
+                Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
     }
 
     /** Parses the new UTF-8+BOM format and both legacy no-BOM formats. */
@@ -230,36 +294,58 @@ public class ModListUtils {
             return;
         }
         try {
-            writeModList(JSON_FILE, getCurrentModList(false));
-            LOGGER.info("Modlist saved to " + JSON_FILE);
+            withModListScanLock(() -> {
+                LinkedHashSet<Mod> mods = getCurrentModList(false);
+                if (lastScanSuccessful) {
+                    // Preserve the pre-history modpack baseline even when the
+                    // title-screen update wins the race with the snapshot worker.
+                    try {
+                        ModListHistoryStore.getDefault().copyLegacySnapshot(JSON_FILE);
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to preserve the pre-history modlist.json", e);
+                    }
+                    writeModList(JSON_FILE, mods);
+                    LOGGER.info("Modlist saved to " + JSON_FILE);
+                }
+                return null;
+            });
         } catch (Exception e) {
             LOGGER.error("Error while saving Modlist", e);
         }
     }
 
-    /**
-     * Applies the long-standing modpack-baseline auto-update policy when a
-     * Quick Play / Direct Connect launch reaches a world without visiting the
-     * title screen. Ordinary installations only use launch history and never
-     * write {@code modlist.json}.
-     */
     @NoJexl
-    public static synchronized void autoUpdateModpackModListAfterDirectJoin() {
-        if (PlatformHelp.isLinkDefault()
-                || !CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
+    public static synchronized void scheduleAutomaticUpdate(String username) {
+        if (automaticUpdateScheduled) {
             return;
         }
-        String username = getCurrentUsername();
-        if (username == null || username.isEmpty()) {
-            LOGGER.warn("Cannot auto-update modlist.json after Direct Connect: current username is unavailable.");
-            return;
+        automaticUpdateScheduled = true;
+        if (username != null && !username.isEmpty()) {
+            currentUsername = username;
         }
-        if (CrashAssistantConfig.getModpackCreators().isEmpty()) {
-            CrashAssistantConfig.addModpackCreator(username);
-        }
-        if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update")
-                && CrashAssistantConfig.getModpackCreators().contains(username)) {
-            saveCurrentModList();
+        Thread updateThread = new Thread(ModListUtils::runAutomaticUpdate, "CrashAssistant-ModListUpdate");
+        updateThread.start();
+    }
+
+    private static void runAutomaticUpdate() {
+        try {
+            if (!CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
+                return;
+            }
+            String username = getCurrentUsername();
+            if (username == null || username.isEmpty()) {
+                LOGGER.warn("Cannot auto-update modlist.json: current username is unavailable.");
+                return;
+            }
+            if (CrashAssistantConfig.getModpackCreators().isEmpty()) {
+                CrashAssistantConfig.addModpackCreator(username);
+            }
+            if (CrashAssistantConfig.getBoolean("modpack_modlist.auto_update")
+                    && CrashAssistantConfig.getModpackCreators().contains(username)) {
+                saveCurrentModList();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to auto-update modlist.json", e);
         }
     }
 
@@ -269,6 +355,10 @@ public class ModListUtils {
             x.ifPresent(s -> currentUsername = s);
         }
         return currentUsername;
+    }
+
+    public static synchronized boolean wasLastScanSuccessful() {
+        return lastScanSuccessful;
     }
 
     @NoJexl

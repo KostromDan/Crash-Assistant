@@ -86,6 +86,8 @@ final class ModListHistoryRow {
         if (legacy) {
             return -1;
         }
-        return status == null ? -1 : status.ordinal();
+        return status == null ? -1 : status.isClosedWithoutCrash()
+                ? ModListHistoryStatus.CLOSED_WITHOUT_CRASH.ordinal()
+                : status.ordinal();
     }
 }

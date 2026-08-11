@@ -36,7 +36,6 @@ public class LogAnalyser {
     private static final Map<Thread, String> activeWorkers = new ConcurrentHashMap<>();
     private static final Object publicationLock = new Object();
     private static boolean reasonsRegistered = false;
-    private static boolean mixinApplyScheduled;
     private static volatile long analysisDeadlineNanos;
     private static volatile boolean analysisCancelled;
     private static boolean timeoutLogged;
@@ -371,12 +370,6 @@ public class LogAnalyser {
         for (KnownCrashReason reason : registeredReasonsForThisLog) {
             if (!canContinue()) {
                 break;
-            }
-            if (reason instanceof MixinApply) {
-                if (mixinApplyScheduled) {
-                    continue;
-                }
-                mixinApplyScheduled = true;
             }
             submitTask(pool, "analysing " + log.getFileName() + " with " + reason.getClass().getSimpleName(), () -> {
                 if (reason.matches(log)

@@ -81,8 +81,6 @@
 - Fixed `modlist.json` not being saved when joining a server through Direct Connect.
 - Fixed `modlist.json` potentially corrupting non-ASCII file names on systems whose default encoding was not UTF-8. It
   is now written as UTF-8 with a BOM, while existing no-BOM UTF-8 and legacy system-encoding files remain readable.
-- Fixed `MixinApply` analysis being scheduled once for every eligible log even though it already inspects the related
-  logs itself. It is now scheduled at most once per Crash Assistant launch.
 - Fixed an extremely rare Linux startup race where process metadata for the Minecraft PID could be temporarily
   unavailable, causing Crash Assistant to mistake the running game for an immediate crash and open during startup.
 - Marked Crash Assistant as a client-side mod in CurseForge publishing metadata for every supported Minecraft version.

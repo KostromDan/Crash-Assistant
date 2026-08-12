@@ -32,6 +32,7 @@ public class ModListDiff {
 
         Set<Mod> hashUpdatedOldMods = Collections.newSetFromMap(new IdentityHashMap<Mod, Boolean>());
         Set<Mod> hashUpdatedNewMods = Collections.newSetFromMap(new IdentityHashMap<Mod, Boolean>());
+        Set<Mod> groupedHashMismatchNewMods = Collections.newSetFromMap(new IdentityHashMap<Mod, Boolean>());
         Map<String, HashMatchCandidates> hashCandidatesByJarName =
                 new TreeMap<String, HashMatchCandidates>(String.CASE_INSENSITIVE_ORDER);
         int currentOrder = 0;
@@ -51,12 +52,17 @@ public class ModListDiff {
             Mod newMod = candidates.takeFirstWithDifferentComparableHash(oldMod);
             if (newMod == null) continue;
 
+            if (oldMod.getModId() != null && oldMod.getModId().equals(newMod.getModId())) {
+                groupedHashMismatchNewMods.add(newMod);
+                continue;
+            }
+
             LinkedHashSet<Mod> oldHashMods = new LinkedHashSet<>();
             oldHashMods.add(oldMod);
             LinkedHashSet<Mod> newHashMods = new LinkedHashSet<>();
             newHashMods.add(newMod);
             UpdatedPair hashUpdatedPair = new UpdatedPair(oldHashMods, newHashMods);
-            hashUpdatedPair.markModMessedUpWithVersion();
+            hashUpdatedPair.markMismatchedHash(newMod);
             updatedMods.add(hashUpdatedPair);
             hashUpdatedOldMods.add(oldMod);
             hashUpdatedNewMods.add(newMod);
@@ -78,6 +84,10 @@ public class ModListDiff {
                     .computeIfAbsent(mod.getModId(), k -> new UpdatedPair(new LinkedHashSet<>(), new LinkedHashSet<>()))
                     .getNewMods()
                     .add(mod);
+        }
+
+        for (Mod mod : groupedHashMismatchNewMods) {
+            updatedPairCandidates.get(mod.getModId()).markMismatchedHash(mod);
         }
 
         Iterator<Map.Entry<String, UpdatedPair>> iterator = updatedPairCandidates.entrySet().iterator();
@@ -365,7 +375,8 @@ public class ModListDiff {
                 } else {
                     appendModAttributes(sb, updatedPair.getOldMods(), Mod::getJarName, "red");
                     sb.append(" > ", false);
-                    appendModAttributes(sb, updatedPair.getNewMods(), Mod::getJarName, "green");
+                    appendModAttributes(sb, updatedPair.getNewMods(), mod -> mod.getJarName() +
+                            (updatedPair.hasMismatchedHash(mod) ? " (mismatched hash)" : ""), "green");
                     sb.append("");
                 }
 
@@ -379,11 +390,7 @@ public class ModListDiff {
             return false;
         }
 
-        Mod oldMod = updatedPair.getOldMods().iterator().next();
-        Mod newMod = updatedPair.getNewMods().iterator().next();
-        return oldMod.getJarName() != null && newMod.getJarName() != null &&
-                oldMod.getJarName().equalsIgnoreCase(newMod.getJarName()) &&
-                UpdatedPair.haveDifferentComparableHashes(oldMod, newMod);
+        return updatedPair.hasMismatchedHash(updatedPair.getNewMods().iterator().next());
     }
 
     private void appendModAttributes(ModListDiffStringBuilder sb, Collection<Mod> mods, Function<Mod, String> attributeExtractor, String color) {

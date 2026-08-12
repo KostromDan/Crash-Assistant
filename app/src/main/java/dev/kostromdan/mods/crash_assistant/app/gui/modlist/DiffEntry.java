@@ -19,6 +19,7 @@ class DiffEntry {
     final List<ModInstance> currentMods;
     final List<ModInstance> savedMods;
     final boolean messyPair;
+    final UpdatedPair updatedPair;
     final String tooltip;
     boolean selected = true;
     boolean resolved = false;
@@ -34,6 +35,7 @@ class DiffEntry {
         this.currentMods = currentMod == null ? Collections.<ModInstance>emptyList() : Collections.singletonList(ModInstance.fromMod(currentMod));
         this.savedMods = savedMod == null ? Collections.<ModInstance>emptyList() : Collections.singletonList(ModInstance.fromMod(savedMod));
         this.messyPair = currentMod != null && currentMod.isModMessedUpWithVersion();
+        this.updatedPair = null;
         this.tooltip = buildTooltip(currentMods, savedMods);
         this.modloaderEntry = detectModloader(currentMods, savedMods);
         this.actionableModFileEntry = detectActionableModFile(currentMods, savedMods);
@@ -45,6 +47,7 @@ class DiffEntry {
         this.currentMods = toInstances(pair.getNewMods());
         this.savedMods = toInstances(pair.getOldMods());
         this.messyPair = computeMessy(pair);
+        this.updatedPair = pair;
         this.tooltip = buildTooltip(currentMods, savedMods);
         this.modloaderEntry = detectModloader(currentMods, savedMods);
         this.actionableModFileEntry = detectActionableModFile(currentMods, savedMods);
@@ -119,7 +122,9 @@ class DiffEntry {
         List<String> lines = new ArrayList<String>();
         for (ModInstance mi : currentMods) {
             String baseName = mi.fileName();
-            if (!messy && mi.mod != null && mi.mod.isModMessedUpWithVersion() && hasText(mi.mod.getVersion())) {
+            if (updatedPair != null && updatedPair.hasMismatchedHash(mi.mod)) {
+                baseName = baseName + " (mismatched hash)";
+            } else if (!messy && mi.mod != null && mi.mod.isModMessedUpWithVersion() && hasText(mi.mod.getVersion())) {
                 baseName = baseName + " (" + mi.mod.getVersion() + ")";
             }
             lines.add(baseName);

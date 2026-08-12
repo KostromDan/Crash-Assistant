@@ -8,6 +8,7 @@ import java.util.Map;
 public class UpdatedPair {
     private final LinkedHashSet<Mod> oldMods;
     private final LinkedHashSet<Mod> newMods;
+    private final LinkedHashSet<Mod> mismatchedHashNewMods = new LinkedHashSet<>();
     private boolean modMessedUpWithVersion;
 
     public UpdatedPair(LinkedHashSet<Mod> oldMods, LinkedHashSet<Mod> newMods) {
@@ -24,6 +25,9 @@ public class UpdatedPair {
     }
 
     public boolean oldModsEqualsNewMods() {
+        if (!mismatchedHashNewMods.isEmpty()) {
+            return false;
+        }
         if (oldMods.equals(newMods)) {
             return true;
         }
@@ -33,8 +37,13 @@ public class UpdatedPair {
         return false;
     }
 
-    void markModMessedUpWithVersion() {
+    void markMismatchedHash(Mod newMod) {
+        mismatchedHashNewMods.add(newMod);
         modMessedUpWithVersion = true;
+    }
+
+    public boolean hasMismatchedHash(Mod newMod) {
+        return mismatchedHashNewMods.contains(newMod);
     }
 
     static boolean haveDifferentComparableHashes(Mod oldMod, Mod newMod) {

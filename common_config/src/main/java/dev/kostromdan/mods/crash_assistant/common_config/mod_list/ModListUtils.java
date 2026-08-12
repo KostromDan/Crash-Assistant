@@ -477,7 +477,6 @@ public class ModListUtils {
     @NoJexl
     public static void saveCurrentModList() {
         if (PlatformHelp.isLinkDefault()) {
-            LOGGER.info("Skipping modlist.json update in an ordinary installation; launch snapshots are stored in modlist_history.");
             return;
         }
         try {

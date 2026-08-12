@@ -27,6 +27,7 @@ class DiffEntry {
     ModListDiffDialog.ActionState revertState = ModListDiffDialog.ActionState.IDLE;
     ModListDiffDialog.ActionState restoreState = ModListDiffDialog.ActionState.IDLE;
     final boolean modloaderEntry;
+    final boolean actionableModFileEntry;
 
     DiffEntry(ModListDiffDialog.SectionType type, Mod currentMod, Mod savedMod) {
         this.type = type;
@@ -35,7 +36,8 @@ class DiffEntry {
         this.messyPair = currentMod != null && currentMod.isModMessedUpWithVersion();
         this.tooltip = buildTooltip(currentMods, savedMods);
         this.modloaderEntry = detectModloader(currentMods, savedMods);
-        this.selected = !modloaderEntry;
+        this.actionableModFileEntry = detectActionableModFile(currentMods, savedMods);
+        this.selected = actionableModFileEntry;
     }
 
     DiffEntry(UpdatedPair pair) {
@@ -45,7 +47,8 @@ class DiffEntry {
         this.messyPair = computeMessy(pair);
         this.tooltip = buildTooltip(currentMods, savedMods);
         this.modloaderEntry = detectModloader(currentMods, savedMods);
-        this.selected = !modloaderEntry;
+        this.actionableModFileEntry = detectActionableModFile(currentMods, savedMods);
+        this.selected = actionableModFileEntry;
     }
 
     private List<ModInstance> toInstances(Iterable<Mod> mods) {
@@ -88,6 +91,23 @@ class DiffEntry {
     private boolean isModloader(String name) {
         String dn = name == null ? "" : name.toLowerCase(Locale.ROOT);
         return dn.endsWith("(modloader)");
+    }
+
+    private boolean detectActionableModFile(List<ModInstance> current, List<ModInstance> saved) {
+        for (ModInstance mod : current) {
+            if (mod.path == null || isSyntheticNonModEntry(mod.fileName())) return false;
+        }
+        for (ModInstance mod : saved) {
+            if (mod.path == null || isSyntheticNonModEntry(mod.fileName())) return false;
+        }
+        return !current.isEmpty() || !saved.isEmpty();
+    }
+
+    private boolean isSyntheticNonModEntry(String name) {
+        String normalized = name == null ? "" : name.toLowerCase(Locale.ROOT);
+        return normalized.endsWith("(modloader)")
+                || normalized.endsWith("(resourcepack)")
+                || normalized.endsWith("(datapack)");
     }
 
     boolean isMessyForDisplay() {
@@ -285,8 +305,17 @@ class DiffEntry {
         Modrinth.VersionFileInfo modrinthMatch;
 
         static ModInstance fromMod(Mod mod) {
+            Path directPath = null;
+            if (mod != null) {
+                try {
+                    directPath = ModListUtils.resolveDirectModFile(mod.getJarName());
+                } catch (IllegalArgumentException ignored) {
+                    // Invalid/cross-platform path syntax may still be displayed in an
+                    // old or damaged snapshot, but it must never become actionable.
+                }
+            }
             return new ModInstance(mod,
-                    mod != null ? ModListUtils.MODS_FOLDER.resolve(mod.getJarName()) : null,
+                    directPath,
                     mod != null ? mod.getCurseForgeHash() : null,
                     normalizeHash(mod != null ? mod.getModrinthHash() : null));
         }

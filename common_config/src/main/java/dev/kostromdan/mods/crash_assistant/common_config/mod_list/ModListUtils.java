@@ -27,6 +27,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -46,15 +47,20 @@ public class ModListUtils {
     public static String currentUsername = "";
     private static LinkedHashSet<Mod> cachedModList = null;
     private static boolean automaticUpdateScheduled;
-    private static volatile boolean lastScanSuccessful;
 
 
     public static LinkedHashSet<Mod> getCurrentModList(boolean useCache) {
+        // Preserve the long-standing zero-copy cached-read path. Callers that also
+        // need the success bit use ModListScanResult#getMods(), which returns a copy.
+        return scanCurrentModListResult(useCache).mods;
+    }
+
+    /** Returns the collection and its success state as one immutable, race-free value. */
+    public static ModListScanResult scanCurrentModListResult(boolean useCache) {
         MOD_LIST_OPERATION_LOCK.lock();
         try {
             if (cachedModList != null && useCache) {
-                lastScanSuccessful = true;
-                return cachedModList;
+                return new ModListScanResult(cachedModList, true);
             }
         } finally {
             MOD_LIST_OPERATION_LOCK.unlock();
@@ -62,21 +68,85 @@ public class ModListUtils {
         try {
             return withModListScanLock(() -> {
                 if (cachedModList != null && useCache) {
-                    lastScanSuccessful = true;
-                    return cachedModList;
+                    return new ModListScanResult(cachedModList, true);
                 }
                 LinkedHashSet<Mod> currentMods = scanCurrentModList();
                 if (useCache) {
                     cachedModList = currentMods;
                 }
-                lastScanSuccessful = true;
-                return currentMods;
+                return new ModListScanResult(currentMods, true);
             });
         } catch (Exception e) {
-            lastScanSuccessful = false;
             LOGGER.error("Error while getting current mod list: ", e);
         }
-        return new LinkedHashSet<>();
+        return new ModListScanResult(new LinkedHashSet<Mod>(), false);
+    }
+
+    public static final class ModListScanResult {
+        private final LinkedHashSet<Mod> mods;
+        private final boolean successful;
+
+        private ModListScanResult(LinkedHashSet<Mod> mods, boolean successful) {
+            this.mods = mods == null ? new LinkedHashSet<Mod>() : mods;
+            this.successful = successful;
+        }
+
+        public LinkedHashSet<Mod> getMods() {
+            return new LinkedHashSet<Mod>(mods);
+        }
+
+        public boolean isSuccessful() {
+            return successful;
+        }
+    }
+
+    /** Resolves one physical mod file and rejects every path outside the configured mods directory. */
+    public static Path resolveDirectModFile(String fileName) {
+        if (fileName == null || fileName.isEmpty()
+                || ".".equals(fileName) || "..".equals(fileName)
+                || fileName.indexOf('/') >= 0 || fileName.indexOf('\\') >= 0
+                || fileName.indexOf(':') >= 0
+                || fileName.endsWith(".") || fileName.endsWith(" ")
+                || containsControlCharacter(fileName)) {
+            throw new IllegalArgumentException("Mod jar name must be a direct file name: " + fileName);
+        }
+        Path name;
+        try {
+            name = Paths.get(fileName);
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException("Invalid mod jar name: " + fileName, e);
+        }
+        if (name.isAbsolute() || name.getNameCount() != 1 || !fileName.equals(name.getFileName().toString())) {
+            throw new IllegalArgumentException("Mod jar name must be a direct file name: " + fileName);
+        }
+        Path mods = MODS_FOLDER.toAbsolutePath().normalize();
+        Path resolved = mods.resolve(name).normalize();
+        if (!mods.equals(resolved.getParent())) {
+            throw new IllegalArgumentException("Mod file is outside the configured mods directory: " + fileName);
+        }
+        return resolved;
+    }
+
+    private static boolean containsControlCharacter(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isISOControl(value.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Validates an already resolved path before a mod-management file operation. */
+    public static Path requireDirectModPath(Path path) {
+        if (path == null) {
+            throw new IllegalArgumentException("Mod file path is missing");
+        }
+        Path normalized = path.toAbsolutePath().normalize();
+        Path mods = MODS_FOLDER.toAbsolutePath().normalize();
+        if (normalized.getFileName() == null || !mods.equals(normalized.getParent())) {
+            throw new IllegalArgumentException("Mod file is outside the configured mods directory: " + path);
+        }
+        return normalized;
     }
 
     /** Serializes mod parsing across threads and Crash Assistant JVMs. */
@@ -114,7 +184,16 @@ public class ModListUtils {
 
         if (Files.exists(MODS_FOLDER)) {
             long start = System.currentTimeMillis();
-            ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            final boolean parserThreadsDaemon = Thread.currentThread().isDaemon();
+            final ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
+            ExecutorService executor = Executors.newFixedThreadPool(
+                    Runtime.getRuntime().availableProcessors(),
+                    runnable -> {
+                        Thread thread = defaultThreadFactory.newThread(runnable);
+                        thread.setName("CrashAssistant-ModList-Parser-" + thread.getId());
+                        thread.setDaemon(parserThreadsDaemon);
+                        return thread;
+                    });
             List<Future<Mod>> futures = new ArrayList<>();
             try {
                 try (Stream<Path> paths = Files.list(MODS_FOLDER)) {
@@ -126,7 +205,12 @@ public class ModListUtils {
                     currentMods.add(future.get());
                 }
             } finally {
-                executor.shutdown();
+                for (Future<Mod> future : futures) {
+                    if (!future.isDone()) {
+                        future.cancel(true);
+                    }
+                }
+                executor.shutdownNow();
             }
             LOGGER.info("Parsed " + currentMods.size() + " mod(s) metadata in " + (System.currentTimeMillis() - start) + " ms");
         }
@@ -295,8 +379,9 @@ public class ModListUtils {
         }
         try {
             withModListScanLock(() -> {
-                LinkedHashSet<Mod> mods = getCurrentModList(false);
-                if (lastScanSuccessful) {
+                ModListScanResult scan = scanCurrentModListResult(false);
+                if (scan.isSuccessful()) {
+                    LinkedHashSet<Mod> mods = scan.getMods();
                     // Preserve the pre-history modpack baseline even when the
                     // title-screen update wins the race with the snapshot worker.
                     try {
@@ -355,10 +440,6 @@ public class ModListUtils {
             x.ifPresent(s -> currentUsername = s);
         }
         return currentUsername;
-    }
-
-    public static synchronized boolean wasLastScanSuccessful() {
-        return lastScanSuccessful;
     }
 
     @NoJexl

@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -27,8 +28,8 @@ import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +37,8 @@ import java.util.Optional;
 /** Atomic persistence and reference selection for mod-list launch history. */
 public class ModListHistoryStore {
     private static final Logger LOGGER = LogManager.getLogger(ModListHistoryStore.class);
-    private static final int SCHEMA_VERSION = 1;
+    private static final int SCHEMA_VERSION = 2;
+    private static final int MAX_SUMMARY_HEADER_CHARS = 64 * 1024;
     private static final Type HISTORY_MODS_TYPE = new TypeToken<LinkedHashSet<Mod>>() {
     }.getType();
     private static final Gson HISTORY_GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -155,28 +157,37 @@ public class ModListHistoryStore {
         return read(pathFor(timestamp));
     }
 
-    public synchronized List<ModListHistoryRecord> listRecordsNewestFirst() {
+    /** Lists only record metadata; mod graphs stay on disk until a record is explicitly opened. */
+    public synchronized List<ModListHistorySummary> listSummariesNewestFirst() {
         if (!Files.isDirectory(historyDirectory)) {
             return Collections.emptyList();
         }
-        List<ModListHistoryRecord> records = new ArrayList<>();
+        List<ModListHistorySummary> summaries = new ArrayList<ModListHistorySummary>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(historyDirectory, "*.json")) {
             for (Path path : stream) {
-                Optional<ModListHistoryRecord> record = read(path);
-                if (record.isPresent()) {
-                    records.add(record.get());
-                }
+                Optional<ModListHistorySummary> summary = readSummary(path);
+                if (summary.isPresent()) summaries.add(summary.get());
             }
         } catch (IOException e) {
-            LOGGER.error("Failed to list mod-list history in {}", historyDirectory, e);
+            LOGGER.error("Failed to list mod-list history summaries in {}", historyDirectory, e);
         }
-        records.sort(new Comparator<ModListHistoryRecord>() {
-            @Override
-            public int compare(ModListHistoryRecord left, ModListHistoryRecord right) {
-                return Long.compare(right.getTimestamp(), left.getTimestamp());
-            }
-        });
-        return records;
+        summaries.sort((left, right) -> Long.compare(right.getTimestamp(), left.getTimestamp()));
+        return summaries;
+    }
+
+    public synchronized Optional<ModListHistorySummary> getSummary(long timestamp) {
+        return readSummary(pathFor(timestamp));
+    }
+
+    /** Deletes only an unreconciled launch record, never a migrated or finalized record. */
+    public synchronized boolean deleteIfStillStarted(long timestamp) throws IOException {
+        Optional<ModListHistorySummary> summary = getSummary(timestamp);
+        if (!summary.isPresent()
+                || summary.get().isLegacySnapshot()
+                || summary.get().getStatus() != ModListHistoryStatus.STARTED) {
+            return false;
+        }
+        return Files.deleteIfExists(pathFor(timestamp));
     }
 
     /**
@@ -191,57 +202,160 @@ public class ModListHistoryStore {
      * milestone candidate exists.
      */
     public synchronized Optional<ModListComparisonReference> findComparisonReference(
-            ModListHistoryRecord current) {
-        return findComparisonReference(current, listRecordsNewestFirst());
+            ModListHistorySummary current) {
+        if (current == null || current.isLegacySnapshot()) return Optional.empty();
+        Optional<ModListHistorySummary> selected = findComparisonReferenceSummaryOnDisk(
+                current.getTimestamp(), current.getStatus());
+        if (!selected.isPresent()) return Optional.empty();
+        Optional<ModListHistoryRecord> record = getRecord(selected.get().getTimestamp());
+        if (!record.isPresent()) return Optional.empty();
+        return Optional.of(new ModListComparisonReference(record.get(), referenceKind(selected.get())));
     }
 
-    /** Uses an already loaded newest-first snapshot list (for example in GUI loaders). */
-    public Optional<ModListComparisonReference> findComparisonReference(
-            ModListHistoryRecord current,
-            List<ModListHistoryRecord> newestFirstRecords) {
-        if (current == null) {
-            return Optional.empty();
-        }
+    /**
+     * Finds the automatic comparison baseline without retaining metadata objects
+     * for every launch. Numeric filenames are ordered newest-first, then bounded
+     * headers are inspected one at a time until the first suitable launch is found.
+     */
+    private Optional<ModListHistorySummary> findComparisonReferenceSummaryOnDisk(
+            long currentTimestamp,
+            ModListHistoryStatus currentStatus) {
+        long[] timestamps = listHistoryTimestampsAscending();
+        boolean joinedRequired = currentStatus.reachedTitleScreen()
+                || currentStatus.reachedJoinedWorld();
+        ModListHistorySummary olderLegacyFallback = null;
 
-        boolean joinedRequired = current.getStatus().reachedTitleScreen()
-                || current.getStatus().reachedJoinedWorld();
-
-        ModListHistoryRecord legacyFallback = null;
-        if (newestFirstRecords == null) {
-            return Optional.empty();
-        }
-        for (ModListHistoryRecord candidate : newestFirstRecords) {
-            if (candidate.getTimestamp() == current.getTimestamp()) {
-                continue;
-            }
+        // Normal candidates must be predecessors of the current launch. In the
+        // usual case this loop reads only a handful of small JSON headers.
+        for (int i = timestamps.length - 1; i >= 0; i--) {
+            long timestamp = timestamps[i];
+            if (timestamp >= currentTimestamp) continue;
+            Optional<ModListHistorySummary> candidateOptional = readSummary(pathFor(timestamp));
+            if (!candidateOptional.isPresent()) continue;
+            ModListHistorySummary candidate = candidateOptional.get();
             if (candidate.isLegacySnapshot()) {
-                if (legacyFallback == null) {
-                    legacyFallback = candidate;
-                }
+                if (olderLegacyFallback == null) olderLegacyFallback = candidate;
                 continue;
             }
-            if (joinedRequired) {
-                if (candidate.getStatus().reachedJoinedWorld()) {
-                    return Optional.of(new ModListComparisonReference(
-                            candidate, ModListComparisonReference.Kind.JOINED));
-                }
-                continue;
-            }
-
-            if (candidate.getStatus().reachedJoinedWorld()) {
-                return Optional.of(new ModListComparisonReference(
-                        candidate, ModListComparisonReference.Kind.JOINED));
-            }
-            if (candidate.getStatus().reachedTitleScreen()) {
-                return Optional.of(new ModListComparisonReference(
-                        candidate, ModListComparisonReference.Kind.TITLE_SCREEN));
+            if (isEligibleComparisonReference(candidate, joinedRequired)) {
+                return Optional.of(candidate);
             }
         }
 
-        return legacyFallback == null
-                ? Optional.<ModListComparisonReference>empty()
-                : Optional.of(new ModListComparisonReference(
-                        legacyFallback, ModListComparisonReference.Kind.LEGACY_SNAPSHOT));
+        // Legacy seeds are deliberately allowed to have a timestamp newer than
+        // the current launch (their filename originates from source mtime). They
+        // remain only a fallback when no real milestone candidate exists.
+        for (int i = timestamps.length - 1; i >= 0; i--) {
+            long timestamp = timestamps[i];
+            if (timestamp <= currentTimestamp) break;
+            Optional<ModListHistorySummary> candidateOptional = readSummary(pathFor(timestamp));
+            if (candidateOptional.isPresent() && candidateOptional.get().isLegacySnapshot()) {
+                return candidateOptional;
+            }
+        }
+        return Optional.ofNullable(olderLegacyFallback);
+    }
+
+    private static boolean isEligibleComparisonReference(
+            ModListHistorySummary candidate,
+            boolean joinedRequired) {
+        return joinedRequired
+                ? candidate.getStatus().reachedJoinedWorld()
+                : candidate.getStatus().reachedJoinedWorld()
+                || candidate.getStatus().reachedTitleScreen();
+    }
+
+    /**
+     * Materializes only primitive timestamps (not summaries or mod graphs).
+     * Directory enumeration and the fixed eight radix passes are both O(N).
+     */
+    private long[] listHistoryTimestampsAscending() {
+        if (!Files.isDirectory(historyDirectory)) return new long[0];
+        long[] timestamps = new long[16];
+        int count = 0;
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(historyDirectory, "*.json")) {
+            for (Path path : stream) {
+                String fileName = path.getFileName().toString();
+                String numericPart = fileName.substring(0, fileName.length() - ".json".length());
+                long timestamp;
+                try {
+                    timestamp = Long.parseLong(numericPart);
+                } catch (NumberFormatException ignored) {
+                    continue;
+                }
+                if (timestamp < 0L || !fileName.equals(Long.toString(timestamp) + ".json")) continue;
+                if (count == timestamps.length) {
+                    timestamps = Arrays.copyOf(timestamps, timestamps.length * 2);
+                }
+                timestamps[count++] = timestamp;
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to list mod-list history filenames in {}", historyDirectory, e);
+            return new long[0];
+        }
+        timestamps = Arrays.copyOf(timestamps, count);
+        radixSortNonNegativeLongs(timestamps);
+        return timestamps;
+    }
+
+    /** Stable LSD radix sort: eight linear passes for non-negative timestamps. */
+    private static void radixSortNonNegativeLongs(long[] values) {
+        if (values.length < 2) return;
+        long[] scratch = new long[values.length];
+        long[] source = values;
+        long[] destination = scratch;
+        int[] counts = new int[256];
+        int[] positions = new int[256];
+        for (int shift = 0; shift < Long.SIZE; shift += Byte.SIZE) {
+            Arrays.fill(counts, 0);
+            for (long value : source) {
+                counts[(int) ((value >>> shift) & 0xffL)]++;
+            }
+            int position = 0;
+            for (int bucket = 0; bucket < counts.length; bucket++) {
+                positions[bucket] = position;
+                position += counts[bucket];
+            }
+            for (long value : source) {
+                int bucket = (int) ((value >>> shift) & 0xffL);
+                destination[positions[bucket]++] = value;
+            }
+            long[] swap = source;
+            source = destination;
+            destination = swap;
+        }
+        if (source != values) {
+            System.arraycopy(source, 0, values, 0, values.length);
+        }
+    }
+
+    public Optional<ModListHistorySummary> findComparisonReferenceSummary(
+            long currentTimestamp, ModListHistoryStatus currentStatus,
+            List<ModListHistorySummary> newestFirstSummaries) {
+        boolean joinedRequired = currentStatus.reachedTitleScreen() || currentStatus.reachedJoinedWorld();
+        ModListHistorySummary legacyFallback = null;
+        if (newestFirstSummaries == null) return Optional.empty();
+        for (ModListHistorySummary candidate : newestFirstSummaries) {
+            if (candidate.getTimestamp() == currentTimestamp) continue;
+            if (candidate.isLegacySnapshot()) {
+                if (legacyFallback == null) legacyFallback = candidate;
+                continue;
+            }
+            // Concurrent/newer launches are not predecessors of this launch and
+            // must never drive actions against its installed mod set.
+            if (candidate.getTimestamp() > currentTimestamp) continue;
+            if (isEligibleComparisonReference(candidate, joinedRequired)) {
+                return Optional.of(candidate);
+            }
+        }
+        return Optional.ofNullable(legacyFallback);
+    }
+
+    private static ModListComparisonReference.Kind referenceKind(ModListHistorySummary summary) {
+        if (summary.isLegacySnapshot()) return ModListComparisonReference.Kind.LEGACY_SNAPSHOT;
+        return summary.getStatus().reachedJoinedWorld()
+                ? ModListComparisonReference.Kind.JOINED
+                : ModListComparisonReference.Kind.TITLE_SCREEN;
     }
 
     public synchronized Optional<ModListHistoryRecord> migrateLegacySnapshot(Path legacyJson)
@@ -279,10 +393,12 @@ public class ModListHistoryStore {
             throw new IOException("Failed to parse legacy mod list " + legacyJson, e);
         }
 
-        for (ModListHistoryRecord existing : listRecordsNewestFirst()) {
-            if (existing.isLegacySnapshot()
-                    && source.equals(existing.getLegacySource())
-                    && sourceFingerprint.equals(existing.getLegacyFingerprint())
+        for (ModListHistorySummary summary : listSummariesNewestFirst()) {
+            if (!summary.isLegacySnapshot() || !source.equals(summary.getLegacySource())) continue;
+            Optional<ModListHistoryRecord> existingRecord = getRecord(summary.getTimestamp());
+            if (!existingRecord.isPresent()) continue;
+            ModListHistoryRecord existing = existingRecord.get();
+            if (sourceFingerprint.equals(existing.getLegacyFingerprint())
                     && sameMods(existing.getMods(), legacyMods)) {
                 if (deleteSource) {
                     deleteLegacySourceIfUnchanged(legacyJson, sourceFingerprint);
@@ -291,13 +407,12 @@ public class ModListHistoryStore {
             }
         }
 
-        long timestamp = Math.max(0L, Files.getLastModifiedTime(legacyJson).toMillis());
-        while (Files.exists(pathFor(timestamp))) {
-            timestamp++;
-        }
-        ModListHistoryRecord migrated = ModListHistoryRecord.legacy(
-                timestamp, legacyMods, source, sourceFingerprint);
-        save(migrated);
+        ModListHistoryRecord migrated = saveLegacyAtAvailableTimestamp(
+                Files.getLastModifiedTime(legacyJson).toMillis(),
+                legacyMods,
+                source,
+                sourceFingerprint);
+        long timestamp = migrated.getTimestamp();
 
         Optional<ModListHistoryRecord> verified = getRecord(timestamp);
         if (!verified.isPresent() || !equivalent(migrated, verified.get())) {
@@ -309,35 +424,52 @@ public class ModListHistoryStore {
         return verified;
     }
 
+    /**
+     * Reserves the numeric filename before replacing it with the migrated record.
+     * The filesystem reservation prevents a concurrent launch JVM from selecting
+     * and then being overwritten at the same timestamp.
+     */
+    private ModListHistoryRecord saveLegacyAtAvailableTimestamp(
+            long preferredTimestamp,
+            LinkedHashSet<Mod> mods,
+            String source,
+            String fingerprint) throws IOException {
+        Files.createDirectories(historyDirectory);
+        long timestamp = Math.max(0L, preferredTimestamp);
+        Path reservation;
+        while (true) {
+            reservation = pathFor(timestamp);
+            try {
+                Files.createFile(reservation);
+                break;
+            } catch (FileAlreadyExistsException occupied) {
+                if (timestamp == Long.MAX_VALUE) {
+                    throw new IOException("No numeric timestamp is available for mod-list history", occupied);
+                }
+                timestamp++;
+            }
+        }
+
+        ModListHistoryRecord record = ModListHistoryRecord.legacy(
+                timestamp, mods, source, fingerprint);
+        try {
+            save(record);
+            return record;
+        } catch (IOException e) {
+            Files.deleteIfExists(reservation);
+            throw e;
+        } catch (RuntimeException e) {
+            Files.deleteIfExists(reservation);
+            throw e;
+        }
+    }
+
     /** Finds the one modpack seed without deserializing every history mod list. */
     private Optional<ModListHistoryRecord> findLegacySnapshotBySource(String source) {
-        if (!Files.isDirectory(historyDirectory)) {
-            return Optional.empty();
-        }
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(historyDirectory, "*.json")) {
-            for (Path path : stream) {
-                try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        String trimmed = line.trim();
-                        if (trimmed.startsWith("\"mods\":")) {
-                            break;
-                        }
-                        if (!trimmed.startsWith("\"legacySource\":")) {
-                            continue;
-                        }
-                        String jsonValue = trimmed.substring(trimmed.indexOf(':') + 1).trim();
-                        if (jsonValue.endsWith(",")) {
-                            jsonValue = jsonValue.substring(0, jsonValue.length() - 1);
-                        }
-                        if (source.equals(new JsonParser().parse(jsonValue).getAsString())) {
-                            return read(path);
-                        }
-                    }
-                }
+        for (ModListHistorySummary summary : listSummariesNewestFirst()) {
+            if (summary.isLegacySnapshot() && source.equals(summary.getLegacySource())) {
+                return getRecord(summary.getTimestamp());
             }
-        } catch (Exception e) {
-            LOGGER.error("Failed to find a copied legacy mod-list snapshot", e);
         }
         return Optional.empty();
     }
@@ -363,6 +495,7 @@ public class ModListHistoryStore {
         JsonObject root = new JsonObject();
         root.addProperty("schemaVersion", SCHEMA_VERSION);
         root.addProperty("timestamp", record.getTimestamp());
+        root.addProperty("modsCount", record.getModsCount());
         if (record.getStatus() != null) {
             root.addProperty("status", record.getStatus().name());
         }
@@ -384,14 +517,23 @@ public class ModListHistoryStore {
 
     private static ModListHistoryRecord deserialize(String json) {
         JsonObject root = new JsonParser().parse(json).getAsJsonObject();
+        if (!root.has("schemaVersion") || root.get("schemaVersion").getAsInt() != SCHEMA_VERSION
+                || !root.has("modsCount")) {
+            throw new IllegalArgumentException("Unsupported or incomplete mod-list history schema");
+        }
         long timestamp = root.get("timestamp").getAsLong();
+        int modsCount = root.get("modsCount").getAsInt();
         boolean legacy = getBoolean(root, "legacySnapshot");
         JsonElement modsElement = root.get("mods");
-        LinkedHashSet<Mod> mods = modsElement != null && modsElement.isJsonArray()
-                ? HISTORY_GSON.<LinkedHashSet<Mod>>fromJson(modsElement, HISTORY_MODS_TYPE)
-                : Mod.GSON.<LinkedHashSet<Mod>>fromJson(modsElement, Mod.TYPE);
+        if (modsElement == null || !modsElement.isJsonArray()) {
+            throw new IllegalArgumentException("History record has no mod graph");
+        }
+        LinkedHashSet<Mod> mods = HISTORY_GSON.fromJson(modsElement, HISTORY_MODS_TYPE);
         if (mods == null) {
             mods = new LinkedHashSet<>();
+        }
+        if (modsCount < 0 || modsCount != mods.size()) {
+            throw new IllegalArgumentException("History record modsCount does not match its mod graph");
         }
         if (legacy) {
             String source = root.has("legacySource") && !root.get("legacySource").isJsonNull()
@@ -409,9 +551,84 @@ public class ModListHistoryStore {
                 mods);
     }
 
+    private Optional<ModListHistorySummary> readSummary(Path path) {
+        if (!Files.isRegularFile(path)) return Optional.empty();
+        try (Reader fileReader = Files.newBufferedReader(path, StandardCharsets.UTF_8);
+             BufferedReader reader = new BufferedReader(
+                     new LimitedReader(fileReader, MAX_SUMMARY_HEADER_CHARS))) {
+            Integer schemaVersion = null;
+            Long timestamp = null;
+            Integer modsCount = null;
+            ModListHistoryStatus status = null;
+            boolean legacy = false;
+            String legacySource = null;
+            boolean modsFieldFound = false;
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String trimmed = line.trim();
+                if (trimmed.startsWith("\"mods\":")) {
+                    modsFieldFound = true;
+                    break;
+                }
+                int colon = trimmed.indexOf(':');
+                if (colon < 0) continue;
+                String key = trimmed.substring(0, colon).replace("\"", "").trim();
+                String value = trimmed.substring(colon + 1).trim();
+                if (value.endsWith(",")) value = value.substring(0, value.length() - 1);
+                if ("schemaVersion".equals(key)) schemaVersion = Integer.valueOf(value);
+                else if ("timestamp".equals(key)) timestamp = Long.valueOf(value);
+                else if ("modsCount".equals(key)) modsCount = Integer.valueOf(value);
+                else if ("status".equals(key)) status = ModListHistoryStatus.valueOf(
+                        new JsonParser().parse(value).getAsString());
+                else if ("legacySnapshot".equals(key)) legacy = Boolean.parseBoolean(value);
+                else if ("legacySource".equals(key)) legacySource = new JsonParser().parse(value).getAsString();
+            }
+            if (schemaVersion == null || schemaVersion.intValue() != SCHEMA_VERSION
+                    || timestamp == null || timestamp.longValue() < 0L
+                    || modsCount == null || modsCount.intValue() < 0
+                    || !modsFieldFound || legacy == (status != null)
+                    || !path.getFileName().toString().equals(timestamp + ".json")) {
+                throw new IOException("Incomplete mod-list history summary " + path);
+            }
+            return Optional.of(new ModListHistorySummary(
+                    timestamp.longValue(), status, modsCount.intValue(), legacy, legacySource));
+        } catch (Exception e) {
+            LOGGER.error("Failed to read mod-list history summary {}", path, e);
+            return Optional.empty();
+        }
+    }
+
     private static boolean getBoolean(JsonObject root, String name) {
         JsonElement value = root.get(name);
         return value != null && !value.isJsonNull() && value.getAsBoolean();
+    }
+
+    /** Prevents a corrupt/minified history file from allocating an unbounded header line. */
+    private static final class LimitedReader extends Reader {
+        private final Reader delegate;
+        private int remaining;
+
+        private LimitedReader(Reader delegate, int limit) {
+            this.delegate = delegate;
+            this.remaining = limit;
+        }
+
+        @Override
+        public int read(char[] buffer, int offset, int length) throws IOException {
+            if (remaining <= 0) {
+                return -1;
+            }
+            int read = delegate.read(buffer, offset, Math.min(length, remaining));
+            if (read > 0) {
+                remaining -= read;
+            }
+            return read;
+        }
+
+        @Override
+        public void close() throws IOException {
+            delegate.close();
+        }
     }
 
     private static boolean equivalent(ModListHistoryRecord expected, ModListHistoryRecord actual) {

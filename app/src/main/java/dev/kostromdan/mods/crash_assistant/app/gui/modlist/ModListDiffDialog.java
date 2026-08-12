@@ -1372,6 +1372,9 @@ public class ModListDiffDialog extends JFrame {
             addWarning(LanguageProvider.get("gui.modlist_diff.modloader_warning"));
             return false;
         }
+        if (!entry.actionableModFileEntry) {
+            return false;
+        }
         if ((action == SectionAction.REVERT || action == SectionAction.RESTORE) && !isLookupReadyForEntry(entry)) {
             warnLookupNotReady();
             return false;
@@ -1407,7 +1410,7 @@ public class ModListDiffDialog extends JFrame {
             if (closing.get()) return false;
             if (p == null) continue;
             try {
-                Files.deleteIfExists(p);
+                Files.deleteIfExists(ModListUtils.requireDirectModPath(p));
             } catch (Exception e) {
                 ok = false;
                 CrashAssistantApp.LOGGER.error("Failed to remove {}", p, e);
@@ -1433,6 +1436,7 @@ public class ModListDiffDialog extends JFrame {
                 if (closing.get()) return false;
                 Path path = resolveExistingPath(mi.path, mi);
                 if (path == null) continue;
+                path = ModListUtils.requireDirectModPath(path);
                 boolean currentlyDisabled = path.getFileName().toString().endsWith(".disabled");
                 if (disable && currentlyDisabled) continue;
                 if (!disable && !currentlyDisabled) continue;
@@ -1443,6 +1447,7 @@ public class ModListDiffDialog extends JFrame {
                 } else {
                     target = path.resolveSibling(path.getFileName().toString() + ".disabled");
                 }
+                target = ModListUtils.requireDirectModPath(target);
                 Files.move(path, target, StandardCopyOption.REPLACE_EXISTING);
                 if (closing.get()) return false;
                 mi.path = target;
@@ -1456,11 +1461,13 @@ public class ModListDiffDialog extends JFrame {
 
     private Path resolveExistingPath(Path path, DiffEntry.ModInstance instance) {
         if (path == null) return null;
+        path = ModListUtils.requireDirectModPath(path);
         if (Files.exists(path)) return path;
         String name = path.getFileName().toString();
         Path alt = name.endsWith(".disabled")
                 ? path.resolveSibling(name.replaceFirst("\\.disabled$", ""))
                 : path.resolveSibling(name + ".disabled");
+        alt = ModListUtils.requireDirectModPath(alt);
         if (Files.exists(alt)) {
             if (instance != null && !closing.get()) {
                 instance.path = alt;
@@ -1625,12 +1632,13 @@ public class ModListDiffDialog extends JFrame {
         if (cf != null && cf.fileName != null) targetFileName = cf.fileName;
         else if (mr != null && mr.fileName != null) targetFileName = mr.fileName;
 
-        Path finalDir = saved.path != null && saved.path.getParent() != null
-                ? saved.path.getParent()
-                : ModListUtils.MODS_FOLDER;
-        Path finalPath = finalDir.resolve(targetFileName);
+        // Both imported/history data and platform API responses are untrusted path inputs.
+        if (saved.path != null) {
+            ModListUtils.requireDirectModPath(saved.path);
+        }
+        Path finalPath = ModListUtils.resolveDirectModFile(targetFileName);
         Path disabledPath = finalPath.resolveSibling(finalPath.getFileName().toString() + ".disabled");
-        Path stagedTarget = stagingDir.resolve(targetFileName);
+        Path stagedTarget = stagingDir.resolve(finalPath.getFileName().toString());
 
         Path existing = findExistingMatching(saved, finalPath, disabledPath);
         if (existing != null) {
@@ -2096,6 +2104,7 @@ public class ModListDiffDialog extends JFrame {
         }
         if (p == null) return;
         try {
+            p = ModListUtils.requireDirectModPath(p);
             if (!Files.exists(p)) return;
             String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
             if (os.contains("win")) {
@@ -2189,6 +2198,7 @@ public class ModListDiffDialog extends JFrame {
 
     boolean isActionEnabled(DiffEntry entry, SectionAction action) {
         if (entry == null || action == null) return false;
+        if (!entry.actionableModFileEntry) return false;
         if (!comparison.isCurrentInstallationEditable()) return false;
         if (cancellationState.isAllRequested() || isCancelInProgressFor(entry)) return false;
         if (!isEntryActive(entry)) return false;

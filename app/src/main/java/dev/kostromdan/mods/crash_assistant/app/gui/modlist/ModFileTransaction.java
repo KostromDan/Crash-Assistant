@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.modlist;
 
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,12 +114,16 @@ final class ModFileTransaction {
                 ? Collections.<Installation>emptyList()
                 : new ArrayList<Installation>(installations);
         Set<Path> keptPaths = normalize(pathsToKeep);
+        for (Path keptPath : keptPaths) {
+            ModListUtils.requireDirectModPath(keptPath);
+        }
         LinkedHashMap<Path, Path> stagedByTarget = validateInstallations(preparedInstallations);
         LinkedHashSet<Path> touchedPaths = new LinkedHashSet<Path>();
         if (pathsToRemove != null) {
             for (Path path : pathsToRemove) {
                 if (path == null) continue;
                 Path normalized = normalize(path);
+                ModListUtils.requireDirectModPath(normalized);
                 if (!keptPaths.contains(normalized)) {
                     touchedPaths.add(normalized);
                 }
@@ -126,6 +132,7 @@ final class ModFileTransaction {
         for (Installation installation : preparedInstallations) {
             if (installation.existingSourceToRemove == null) continue;
             Path normalized = normalize(installation.existingSourceToRemove);
+            ModListUtils.requireDirectModPath(normalized);
             if (!keptPaths.contains(normalized)) {
                 touchedPaths.add(normalized);
             }
@@ -158,6 +165,7 @@ final class ModFileTransaction {
             for (Installation installation : preparedInstallations) {
                 checkCancelled(cancellationCheck);
                 Path target = normalize(installation.targetPath);
+                ModListUtils.requireDirectModPath(target);
                 Path parent = target.getParent();
                 if (parent != null) {
                     Files.createDirectories(parent);
@@ -190,6 +198,7 @@ final class ModFileTransaction {
                     throw new IOException("Prepared mod file is missing: " + installation.stagedPath);
                 }
                 Path target = normalize(installation.targetPath);
+                ModListUtils.requireDirectModPath(target);
                 if (stagedByTarget.put(target, installation.stagedPath) != null) {
                     throw new IOException("Multiple prepared mod files target the same path: " + target);
                 }

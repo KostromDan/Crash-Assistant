@@ -84,7 +84,8 @@ class SectionPanel {
                 DiffEntry entry = entries.get(convertRowIndexToModel(row));
                 int modelCol = convertColumnIndexToModel(column);
                 boolean active = dialog.isEntryActive(entry);
-                boolean enabled = active;
+                boolean enabled = active
+                        && (modelCol != model.selectionColumn || entry.actionableModFileEntry);
                 if (c instanceof JButton) {
                     enabled = active && c.isEnabled();
                     ModListDiffDialog.SectionAction action = actionColumns.get(modelCol);
@@ -214,7 +215,7 @@ class SectionPanel {
         if (!editableComparison || !dialog.isDialogOpen()) return;
         boolean target = master.isSelected();
         for (DiffEntry entry : entries) {
-            if (!entry.resolved) {
+            if (!entry.resolved && entry.actionableModFileEntry) {
                 entry.selected = target;
             }
         }
@@ -369,15 +370,20 @@ class SectionPanel {
 
     void updateHeader() {
         int selected = 0;
+        int selectable = 0;
         int total = 0;
         for (DiffEntry e : entries) {
             if (!e.resolved) {
                 total++;
-                if (e.selected) selected++;
+                if (e.actionableModFileEntry) {
+                    selectable++;
+                    if (e.selected) selected++;
+                }
             }
         }
         if (editableComparison) {
-            master.setSelected(selected == total && total > 0);
+            master.setEnabled(selectable > 0);
+            master.setSelected(selected == selectable && selectable > 0);
         }
         String name;
         switch (type) {
@@ -667,7 +673,9 @@ class SectionPanel {
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             DiffEntry entry = entries.get(rowIndex);
             if (!dialog.isDialogOpen() || !dialog.isEntryActive(entry)) return false;
-            if (columnIndex == selectionColumn) return editableComparison;
+            if (columnIndex == selectionColumn) {
+                return editableComparison && entry.actionableModFileEntry;
+            }
             if (columnIndex == curseForgeColumn) return entry.hasAnyCurseMatch();
             if (columnIndex == modrinthColumn) return entry.hasAnyModrinthMatch();
             ModListDiffDialog.SectionAction action = actionColumns.get(columnIndex);
@@ -695,7 +703,8 @@ class SectionPanel {
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            if (editableComparison && columnIndex == selectionColumn && dialog.isDialogOpen()) {
+            if (editableComparison && columnIndex == selectionColumn && dialog.isDialogOpen()
+                    && entries.get(rowIndex).actionableModFileEntry) {
                 entries.get(rowIndex).selected = (Boolean) aValue;
                 fireTableRowsUpdated(rowIndex, rowIndex);
             }

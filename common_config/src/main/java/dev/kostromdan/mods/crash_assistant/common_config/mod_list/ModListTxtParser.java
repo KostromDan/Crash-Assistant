@@ -2,7 +2,9 @@ package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
 import org.apache.commons.jexl3.annotations.NoJexl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +25,9 @@ import java.util.Map;
 @NoJexl
 public final class ModListTxtParser {
     private static final String COUNT_PREFIX = "Mods count:";
+    private static final long MAX_IMPORT_BYTES = 16L * 1024L * 1024L;
+    private static final int MAX_IMPORT_CHARS = 16 * 1024 * 1024;
+    private static final int MAX_TOP_LEVEL_MODS = 4096;
 
     private ModListTxtParser() {
     }
@@ -31,12 +36,19 @@ public final class ModListTxtParser {
         if (path == null) {
             throw new ModListTxtParseException("No modlist.txt file was selected.");
         }
-        return parse(new String(Files.readAllBytes(path), StandardCharsets.UTF_8));
+        long size = Files.size(path);
+        if (size > MAX_IMPORT_BYTES) {
+            throw new ModListTxtParseException("The modlist.txt is too large (maximum 16 MiB).");
+        }
+        return parse(new String(readBounded(path), StandardCharsets.UTF_8));
     }
 
     public static LinkedHashSet<Mod> parse(String text) throws ModListTxtParseException {
         if (text == null) {
             throw new ModListTxtParseException("The modlist.txt contents are missing.");
+        }
+        if (text.length() > MAX_IMPORT_CHARS) {
+            throw new ModListTxtParseException("The modlist.txt is too large (maximum 16 MiB).");
         }
 
         String normalized = text.replace("\r\n", "\n").replace('\r', '\n');
@@ -53,6 +65,9 @@ public final class ModListTxtParser {
         Integer expectedCount = null;
         if (lines[first].trim().startsWith(COUNT_PREFIX)) {
             expectedCount = parseCount(lines[first].trim());
+            if (expectedCount.intValue() > MAX_TOP_LEVEL_MODS) {
+                throw tooManyTopLevelMods();
+            }
             first = firstContentLine(lines, first + 1);
             if (first < 0) {
                 if (expectedCount == 0) {
@@ -105,6 +120,7 @@ public final class ModListTxtParser {
         }
 
         LinkedHashSet<Mod> result = new LinkedHashSet<Mod>();
+        int topLevelRows = 0;
         for (int i = headerIndex + 1; i < lines.length; i++) {
             String line = lines[i];
             if (line.trim().isEmpty() || isSeparator(line)) {
@@ -121,7 +137,8 @@ public final class ModListTxtParser {
 
             String rawJarCell = cells[jarIndex.intValue()];
             if (!rawJarCell.isEmpty() && Character.isWhitespace(rawJarCell.charAt(0))) {
-                // The writer indents jar-in-jar entries in its first column.
+                // The writer indents informational Jar-in-Jar entries and prefixes their
+                // archive-internal path. They never become actionable top-level mods.
                 continue;
             }
 
@@ -129,6 +146,8 @@ public final class ModListTxtParser {
             if (jarName.isEmpty()) {
                 throw new ModListTxtParseException("Empty jar name at line " + (i + 1) + ".");
             }
+            validateJarName(jarName, i + 1);
+            topLevelRows = countTopLevelRow(topLevelRows);
 
             String notes = cell(cells, columns, "notes");
             String mCreatorCell = cell(cells, columns, "ismcreator");
@@ -175,6 +194,7 @@ public final class ModListTxtParser {
     private static LinkedHashSet<Mod> parseDetailedLegacy(String[] lines, int first)
             throws ModListTxtParseException {
         LinkedHashSet<Mod> result = new LinkedHashSet<Mod>();
+        int topLevelRows = 0;
         for (int i = first; i < lines.length; i++) {
             String raw = lines[i];
             String trimmed = raw.trim();
@@ -185,6 +205,7 @@ public final class ModListTxtParser {
             if ("mixins:".equalsIgnoreCase(trimmed) || "jarjar:".equalsIgnoreCase(trimmed)) {
                 continue;
             }
+            topLevelRows = countTopLevelRow(topLevelRows);
             result.add(parseLegacyModLine(trimmed, i + 1));
         }
         return result;
@@ -193,11 +214,13 @@ public final class ModListTxtParser {
     private static LinkedHashSet<Mod> parseSimpleLegacy(String[] lines, int first)
             throws ModListTxtParseException {
         LinkedHashSet<Mod> result = new LinkedHashSet<Mod>();
+        int topLevelRows = 0;
         for (int i = first; i < lines.length; i++) {
             String line = lines[i].trim();
             if (line.isEmpty()) {
                 continue;
             }
+            topLevelRows = countTopLevelRow(topLevelRows);
             Mod mod = parseLegacyModLine(line, i + 1);
             if (!looksLikeTopLevelEntry(mod.getJarName())) {
                 throw new ModListTxtParseException("Unrecognized legacy modlist row at line " + (i + 1) + ".");
@@ -210,6 +233,38 @@ public final class ModListTxtParser {
         return result;
     }
 
+    private static byte[] readBounded(Path path) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream(8192);
+        byte[] buffer = new byte[8192];
+        long total = 0L;
+        try (InputStream input = Files.newInputStream(path)) {
+            int read;
+            while ((read = input.read(buffer)) >= 0) {
+                if (read == 0) {
+                    continue;
+                }
+                total += read;
+                if (total > MAX_IMPORT_BYTES) {
+                    throw new ModListTxtParseException("The modlist.txt is too large (maximum 16 MiB).");
+                }
+                output.write(buffer, 0, read);
+            }
+        }
+        return output.toByteArray();
+    }
+
+    private static int countTopLevelRow(int currentCount) throws ModListTxtParseException {
+        if (currentCount >= MAX_TOP_LEVEL_MODS) {
+            throw tooManyTopLevelMods();
+        }
+        return currentCount + 1;
+    }
+
+    private static ModListTxtParseException tooManyTopLevelMods() {
+        return new ModListTxtParseException(
+                "The modlist.txt contains too many top-level mods (maximum " + MAX_TOP_LEVEL_MODS + ").");
+    }
+
     private static Mod parseLegacyModLine(String line, int lineNumber) throws ModListTxtParseException {
         int delimiter = line.indexOf(" : ");
         String jarPart = delimiter >= 0 ? line.substring(0, delimiter).trim() : line.trim();
@@ -219,6 +274,7 @@ public final class ModListTxtParser {
         if (jarPart.isEmpty()) {
             throw new ModListTxtParseException("Empty jar name at line " + lineNumber + ".");
         }
+        validateJarName(jarPart, lineNumber);
         return new Mod(
                 jarPart, emptyToNull(modId), null, null,
                 mCreator ? Boolean.TRUE : null, null,
@@ -316,6 +372,16 @@ public final class ModListTxtParser {
                 || lower.endsWith("(modloader)")
                 || lower.endsWith("(resourcepack)")
                 || lower.endsWith("(datapack)");
+    }
+
+    private static void validateJarName(String jarName, int lineNumber) throws ModListTxtParseException {
+        try {
+            ModListUtils.resolveDirectModFile(jarName);
+        } catch (IllegalArgumentException e) {
+            throw new ModListTxtParseException(
+                    "Invalid jar name at line " + lineNumber
+                            + ": only a file directly inside the configured mods folder is allowed.", e);
+        }
     }
 
     public static final class ModListTxtParseException extends IOException {

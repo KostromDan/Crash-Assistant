@@ -3,7 +3,13 @@ package dev.kostromdan.mods.crash_assistant.app.logs_analyser;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -26,6 +32,7 @@ final class CurseForgeStdoutLogDeobfuscator {
     private static final String THROWABLE_START = "    <log4j:Throwable><![CDATA[";
     private static final String THROWABLE_END = "]]></log4j:Throwable>";
     private static final String EVENT_END = "  </log4j:Event>";
+    private static final int MAX_SUPPORT_PROBE_BYTES = 64 * 1024;
     private static final int MAX_BUFFERED_EVENT_CHARS = 32 * 1024 * 1024;
 
     private static final DateTimeFormatter TIME_FORMATTER =
@@ -42,7 +49,32 @@ final class CurseForgeStdoutLogDeobfuscator {
                 && REGISTERED_LOG_NAME.equals(log.getName());
     }
 
-    static boolean isSupported(BufferedReader reader) throws IOException {
+    static boolean isSupported(Path path) throws IOException {
+        byte[] prefix = new byte[MAX_SUPPORT_PROBE_BYTES];
+        int length = 0;
+        try (InputStream input = Files.newInputStream(path)) {
+            while (length < prefix.length) {
+                int read = input.read(prefix, length, prefix.length - length);
+                if (read < 0) {
+                    break;
+                }
+                if (read == 0) {
+                    continue;
+                }
+                length += read;
+            }
+        }
+        if (length == 0) {
+            return false;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                new ByteArrayInputStream(prefix, 0, length), StandardCharsets.UTF_8))) {
+            return isSupportedPrefix(reader);
+        }
+    }
+
+    private static boolean isSupportedPrefix(BufferedReader reader) throws IOException {
         String firstEventLine;
         while ((firstEventLine = reader.readLine()) != null && !isEventStart(firstEventLine)) {
             if (looksLikeLog4j(firstEventLine)) {
@@ -54,29 +86,10 @@ final class CurseForgeStdoutLogDeobfuscator {
         }
 
         String line = readTransportLine(reader);
-        if (line == null || !line.startsWith(MESSAGE_START)
-                || !skipCdata(reader, line, MESSAGE_END)) {
-            return false;
-        }
-        line = readTransportLine(reader);
-        if (line != null && line.startsWith(THROWABLE_START)) {
-            if (!skipCdata(reader, line, THROWABLE_END)) {
-                return false;
-            }
-            line = readTransportLine(reader);
-        }
-        return EVENT_END.equals(line);
-    }
-
-    private static boolean skipCdata(BufferedReader reader, String firstLine, String end) throws IOException {
-        String line = firstLine;
-        while (!line.endsWith(end)) {
-            line = readTransportLine(reader);
-            if (line == null) {
-                return false;
-            }
-        }
-        return true;
+        // The transport signature is already unambiguous at the event and Message
+        // opening. Do not require the first CDATA/event to end inside the prefix:
+        // a valid first message or throwable may itself be larger than 64 KiB.
+        return line != null && line.startsWith(MESSAGE_START);
     }
 
     private static String readTransportLine(BufferedReader reader) throws IOException {

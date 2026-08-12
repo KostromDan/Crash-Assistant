@@ -1,5 +1,9 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryManager;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.permissions.Permissions;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
@@ -21,17 +25,21 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 
 public class Boot {
-    private static final long MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS = 15L;
+    private static final long MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS = 20L;
     private static String classPath = null;
     private static boolean recursiveStart = false;
     private static boolean gpuDetect = false;
     private static boolean bootWarningsVisible = false;
-    private static boolean modListSnapshot = false;
+    private static boolean modListSnapshotTimedOut = false;
     private static String bootWarningsJson = null;
     private static String startupWarningsJson = null;
     private static String serialisedGPUs = null;
@@ -71,8 +79,14 @@ public class Boot {
                     gpuDetect = true;
                 } else if ("-bootWarningsVisible".equals(args[i])) {
                     bootWarningsVisible = true;
-                } else if ("-modListSnapshot".equals(args[i])) {
-                    modListSnapshot = true;
+                } else if (("-modListHistoryTimestamp".equals(args[i])
+                        || "-modListTxtGenerated".equals(args[i]))
+                        && i + 1 < args.length) {
+                    // These two small optional results are handed to the recursive
+                    // process directly. Keeping them out of the shared args file
+                    // avoids orphaning a committed STARTED record if an append fails.
+                    effectiveArgs.add(args[i]);
+                    effectiveArgs.add(args[++i]);
                 }
             }
 
@@ -145,19 +159,36 @@ public class Boot {
                 System.exit(0);
             }
 
-            if (modListSnapshot) {
-                ModListSnapshotWorker.run(effectiveArgs.toArray(new String[0]));
-                System.exit(0);
-            }
-
             /**
              * If Minecraft JVM terminated by windows itself, all child processes will be also terminated.
              * So Crash Assistant can't be child process. This way we make Crash Assistant completely independent process.
              *
              * Also, here we're locating GPUs with Vulkan or DirectX, it's increasing heap before GUI start,
              * so we're doing it on this TMP process, to not waste user resources on App awaiting stage.
-             */
+            */
             if (!recursiveStart) {
+                FutureTask<LinkedHashSet<Mod>> modListScan = null;
+                long modListScanDeadlineNanos = 0L;
+                try {
+                    if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
+                        applyModListPlatformArguments(effectiveArgs);
+                        modListScan = new FutureTask<>(ModListHistoryManager::scanSnapshotMods);
+                        Thread modListScanThread = new Thread(modListScan, "CrashAssistant-ModList-Snapshot");
+                        modListScanThread.setDaemon(true);
+                        modListScanDeadlineNanos = System.nanoTime()
+                                + TimeUnit.SECONDS.toNanos(MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS);
+                        modListScanThread.start();
+                    }
+                } catch (Throwable e) {
+                    // Mod-list collection is optional. A malformed platform path or a scanner
+                    // setup failure must not prevent the independent Crash Assistant process
+                    // from being launched.
+                    modListScan = null;
+                    modListScanDeadlineNanos = 0L;
+                    System.err.println("Failed to start the mod-list snapshot scan; continuing without it:\n"
+                            + ErrorUtils.getErrorMessageAndStackTrace(e));
+                }
+
                 List<String> baseChildCommand = new ArrayList<>();
                 baseChildCommand.add(JavaBinaryLocator.getJavaBinary());
                 baseChildCommand.addAll(JVM_ARGS);
@@ -173,40 +204,51 @@ public class Boot {
                     Files.write(Paths.get(argsFilePath), Arrays.asList("-serialisedGPUs", encodedGPUs), StandardOpenOption.APPEND);
                 }
 
-                if (bootWarningsJson != null) {
-                     String warningsOutput = getBootWarningsOutput(new ArrayList<>(baseChildCommand));
-                     if (warningsOutput != null) {
-                         String encodedWarnsOutput = Base64.getEncoder().encodeToString(warningsOutput.getBytes(StandardCharsets.UTF_8));
-                         Files.write(Paths.get(argsFilePath), Arrays.asList("-warnsProcessOutput", encodedWarnsOutput), StandardOpenOption.APPEND);
-                     }
+                LinkedHashSet<Mod> scannedMods = awaitModListSnapshotScan(
+                        modListScan, modListScanDeadlineNanos);
+
+                if (bootWarningsJson != null && !modListSnapshotTimedOut) {
+                    String warningsOutput = getBootWarningsOutput(new ArrayList<>(baseChildCommand));
+                    if (warningsOutput != null) {
+                        String encodedWarnsOutput = Base64.getEncoder().encodeToString(
+                                warningsOutput.getBytes(StandardCharsets.UTF_8));
+                        Files.write(Paths.get(argsFilePath), Arrays.asList(
+                                "-warnsProcessOutput", encodedWarnsOutput), StandardOpenOption.APPEND);
+                    }
+                } else if (bootWarningsJson != null) {
+                    System.err.println("Skipping the boot-warnings helper after the mod-list scan timeout "
+                            + "so the main Crash Assistant process can start immediately.");
                 }
 
+                // Commit only after every fallible preparation step. From here to
+                // ProcessBuilder.start() there is no file handoff: the small result
+                // is passed directly on the child command line.
+                ModListHistoryManager.SnapshotResult snapshotResult = scannedMods == null
+                        ? null
+                        : ModListHistoryManager.persistSnapshot(parentStarted, scannedMods);
                 List<String> finalLaunchCommand = new ArrayList<>(baseChildCommand);
                 finalLaunchCommand.add("-recursiveStart");
+                if (snapshotResult != null) {
+                    finalLaunchCommand.add("-modListHistoryTimestamp");
+                    finalLaunchCommand.add(Long.toString(snapshotResult.getHistoryTimestamp()));
+                    finalLaunchCommand.add("-modListTxtGenerated");
+                    finalLaunchCommand.add(Boolean.toString(snapshotResult.isModListTxtGenerated()));
+                }
 
                 ProcessBuilder pb = new ProcessBuilder(finalLaunchCommand);
-                pb.start();
+                try {
+                    pb.start();
+                } catch (Throwable launchFailure) {
+                    ModListHistoryManager.discardSnapshotBeforeHandoff(snapshotResult);
+                    throw launchFailure;
+                }
                 System.exit(0);
             }
 
-            String snapshotOutput = getModListSnapshotOutput(argsFilePath);
-            effectiveArgs.add("-modListSnapshotOutput");
-            effectiveArgs.add(Base64.getEncoder().encodeToString(
-                    snapshotOutput.getBytes(StandardCharsets.UTF_8)));
-            String[] crashAssistantAppArgs = effectiveArgs.toArray(new String[0]);
-            // Do not retain or print the encoded worker output through Boot.APP_ARGS.
-            effectiveArgs.remove(effectiveArgs.size() - 1);
-            effectiveArgs.remove(effectiveArgs.size() - 1);
-            snapshotOutput = null;
-
             Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
             Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);
-            mainMethod.invoke(null, (Object) crashAssistantAppArgs);
+            mainMethod.invoke(null, (Object) effectiveArgs.toArray(new String[0]));
         } catch (Throwable e) {
-            if (modListSnapshot) {
-                e.printStackTrace();
-                System.exit(-1);
-            }
             Path logsFolder = Paths.get("logs", "crash_assistant");
             Files.createDirectories(logsFolder);
             StringWriter sw = new StringWriter();
@@ -334,62 +376,68 @@ public class Boot {
         }
     }
 
-    private static String getModListSnapshotOutput(String argsFilePath) {
-        Path outputFile = null;
-        try {
-            Path localFolder = Paths.get("local", "crash_assistant");
-            Files.createDirectories(localFolder);
-            outputFile = Files.createTempFile(localFolder, ".modlist-snapshot-", ".tmp");
-
-            List<String> command = new ArrayList<>();
-            command.add(JavaBinaryLocator.getJavaBinary());
-            for (String jvmArg : JVM_ARGS) {
-                if (!jvmArg.startsWith("-Dlog4j.configurationFile=")
-                        && !jvmArg.startsWith("-Dlog4j2.configurationFile=")) {
-                    command.add(jvmArg);
-                }
-            }
-            command.add("-Dlog4j.configurationFile=log4j2-console.xml");
-            command.add("-Dlog4j2.configurationFile=log4j2-console.xml");
-            command.add("-cp");
-            command.add(classPath);
-            command.add("dev.kostromdan.mods.crash_assistant.app.class_loading.Boot");
-            command.add("--args-file");
-            command.add(argsFilePath);
-            command.add("-modListSnapshot");
-
-            ProcessBuilder processBuilder = new ProcessBuilder(command);
-            processBuilder.redirectErrorStream(true);
-            processBuilder.redirectOutput(outputFile.toFile());
-            Process process = processBuilder.start();
-            boolean finished = process.waitFor(MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (!finished) {
-                process.destroyForcibly();
-                process.waitFor();
-            }
-
-            String output = new String(Files.readAllBytes(outputFile), StandardCharsets.UTF_8);
-            if (!finished) {
-                return output + System.lineSeparator()
-                        + "Mod-list snapshot process exceeded "
-                        + MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS + " seconds and was killed.";
-            }
-            if (process.exitValue() != 0) {
-                return output + System.lineSeparator()
-                        + "Mod-list snapshot process exited with code " + process.exitValue() + ".";
-            }
-            return output;
-        } catch (Throwable e) {
-            return "Failed to run mod-list snapshot process:\n"
-                    + ErrorUtils.getErrorMessageAndStackTrace(e);
-        } finally {
-            if (outputFile != null) {
-                try {
-                    Files.deleteIfExists(outputFile);
-                } catch (IOException ignored) {
-                }
+    private static void applyModListPlatformArguments(List<String> args) {
+        String customLatestLogPath = null;
+        for (int i = 0; i < args.size(); i++) {
+            if ("-platform".equals(args.get(i)) && i + 1 < args.size()) {
+                PlatformHelp.platform = PlatformHelp.valueOf(args.get(++i));
+            } else if ("-platformOwerridenData".equals(args.get(i)) && i + 1 < args.size()) {
+                PlatformHelp.platform.deserializePlatformData(args.get(++i));
+            } else if ("-loaderJarName".equals(args.get(i)) && i + 1 < args.size()) {
+                PlatformHelp.loaderJarName = args.get(++i);
+            } else if ("-minecraftVersion".equals(args.get(i)) && i + 1 < args.size()) {
+                PlatformHelp.minecraftVersion = args.get(++i);
+            } else if ("-customLatestLogPath".equals(args.get(i)) && i + 1 < args.size()) {
+                customLatestLogPath = args.get(++i);
             }
         }
+        if (customLatestLogPath != null) {
+            ModListUtils.MODS_FOLDER = Paths.get(customLatestLogPath).getParent().getParent()
+                    .resolve("mods").resolve("fabric-" + PlatformHelp.minecraftVersion);
+        }
+    }
+
+    private static LinkedHashSet<Mod> awaitModListSnapshotScan(
+            FutureTask<LinkedHashSet<Mod>> modListScan,
+            long deadlineNanos) {
+        if (modListScan == null) {
+            return null;
+        }
+
+        try {
+            long remainingNanos = deadlineNanos - System.nanoTime();
+            if (remainingNanos <= 0L) {
+                modListSnapshotTimedOut = true;
+                modListScan.cancel(true);
+                System.err.println("Mod-list snapshot scan exceeded "
+                        + MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS + " seconds; continuing without a snapshot.");
+                return null;
+            }
+            LinkedHashSet<Mod> mods = modListScan.get(remainingNanos, TimeUnit.NANOSECONDS);
+            if (System.nanoTime() > deadlineNanos) {
+                modListSnapshotTimedOut = true;
+                System.err.println("Mod-list snapshot scan exceeded "
+                        + MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS + " seconds; continuing without a snapshot.");
+                return null;
+            }
+            return mods;
+        } catch (TimeoutException e) {
+            modListSnapshotTimedOut = true;
+            modListScan.cancel(true);
+            System.err.println("Mod-list snapshot scan exceeded "
+                    + MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS + " seconds; continuing without a snapshot.");
+        } catch (InterruptedException e) {
+            modListScan.cancel(true);
+            Thread.currentThread().interrupt();
+            System.err.println("Interrupted while waiting for the mod-list snapshot; continuing without it.");
+        } catch (ExecutionException e) {
+            System.err.println("Failed to scan the mod list; continuing without a snapshot:\n"
+                    + ErrorUtils.getErrorMessageAndStackTrace(e.getCause()));
+        } catch (Throwable e) {
+            System.err.println("Failed to collect the mod-list snapshot; continuing without it:\n"
+                    + ErrorUtils.getErrorMessageAndStackTrace(e));
+        }
+        return null;
     }
 
     public static String getStartupWarningsJson() {

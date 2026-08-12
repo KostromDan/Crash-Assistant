@@ -1,7 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
-import dev.kostromdan.mods.crash_assistant.app.class_loading.ModListSnapshotWorker;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
@@ -68,6 +67,7 @@ public class CrashAssistantApp {
     private static final long TERMINATED_PROCESSES_LOCATION_DELAY_MS = 5000L;
     public static volatile long terminatedProcessesLocationEndTime = 0;
     private static volatile boolean terminatedProcessesLocationFinished = false;
+    private static boolean modListTrackingEnabled = false;
 
     @NoJexl
     public static void main(String[] args) {
@@ -149,10 +149,15 @@ public class CrashAssistantApp {
                 } catch (Exception e) {
                     LOGGER.error("Failed to parse warnsProcessOutput", e);
                 }
-            } else if ("-modListSnapshotOutput".equals(args[i]) && i + 1 < args.length) {
-                long[] snapshotResult = parseModListSnapshotOutput(args[++i]);
-                historySnapshotTimestamp = snapshotResult[0];
-                modListTxtGenerated = snapshotResult[1] == 1L;
+            } else if ("-modListHistoryTimestamp".equals(args[i]) && i + 1 < args.length) {
+                try {
+                    historySnapshotTimestamp = Long.parseLong(args[++i]);
+                } catch (NumberFormatException e) {
+                    historySnapshotTimestamp = -1L;
+                    LOGGER.error("Failed to parse mod-list history timestamp", e);
+                }
+            } else if ("-modListTxtGenerated".equals(args[i]) && i + 1 < args.length) {
+                modListTxtGenerated = Boolean.parseBoolean(args[++i]);
             }
         }
 
@@ -234,27 +239,6 @@ public class CrashAssistantApp {
         }
     }
 
-    private static long[] parseModListSnapshotOutput(String encodedOutput) {
-        long historyTimestamp = -1L;
-        boolean txtGenerated = false;
-        try {
-            String decoded = new String(Base64.getDecoder().decode(encodedOutput), StandardCharsets.UTF_8);
-            LOGGER.info("Mod-list snapshot process output:\n{}", decoded);
-            for (String line : decoded.split("\\R")) {
-                if (!line.startsWith(ModListSnapshotWorker.RESULT_PREFIX)) {
-                    continue;
-                }
-                String[] result = line.substring(ModListSnapshotWorker.RESULT_PREFIX.length())
-                        .split(":", 2);
-                historyTimestamp = Long.parseLong(result[0]);
-                txtGenerated = result.length == 2 && Boolean.parseBoolean(result[1]);
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to parse mod-list snapshot process output", e);
-        }
-        return new long[]{historyTimestamp, txtGenerated ? 1L : 0L};
-    }
-
     private static boolean checkLoadingErrorScreen(long historySnapshotTimestamp,
                                                    boolean modListTxtGenerated) {
         if (ProcessSignalIO.exists("loading_error_fml", Boot.parentPID)) {
@@ -328,8 +312,14 @@ public class CrashAssistantApp {
                                             boolean modListTxtGenerated) {
         GUIStartTime = Instant.now().toEpochMilli();
 
-        ModListHistoryManager.attachSnapshot(historySnapshotTimestamp, modListTxtGenerated);
-        ModListHistoryManager.refreshMilestoneSignals(Boot.parentPID);
+        // A handed-off timestamp must still be finalized if the config changed
+        // between the disposable Boot process and this process.
+        modListTrackingEnabled = historySnapshotTimestamp >= 0L
+                || CrashAssistantConfig.getBoolean("modpack_modlist.enabled");
+        if (modListTrackingEnabled) {
+            ModListHistoryManager.attachSnapshot(historySnapshotTimestamp, modListTxtGenerated);
+            ModListHistoryManager.refreshMilestoneSignals(Boot.parentPID);
+        }
 
         UUIDUtils.startCheck();
 
@@ -516,7 +506,9 @@ public class CrashAssistantApp {
     }
 
     private static void onMinecraftCrashed() {
-        ModListHistoryManager.markCrashAssistantOpened();
+        if (modListTrackingEnabled) {
+            ModListHistoryManager.markCrashAssistantOpened();
+        }
         startApp();
     }
 
@@ -645,7 +637,7 @@ public class CrashAssistantApp {
         new Thread(() -> {
             boolean completed = false;
             boolean lateLogsProcessed = true;
-            boolean crashEvidenceFound = false;
+            boolean lateCrashAssistantTriggerFound = false;
             boolean terminatedProcessSearchFinished = false;
             try {
                 long hsErrRemainingDelay = startTime + LATE_HS_ERR_LOCATION_DELAY_MS - System.currentTimeMillis();
@@ -654,7 +646,7 @@ public class CrashAssistantApp {
                 }
 
                 boolean hsErrAdded = locateAndAddHsErr();
-                crashEvidenceFound = hsErrAdded;
+                lateCrashAssistantTriggerFound = hsErrAdded;
                 if (hsErrAdded) {
                     LOGGER.info("Added hs_err log later.");
                     if (!GUIStartedLaunching) {
@@ -682,12 +674,15 @@ public class CrashAssistantApp {
                     }
                     winEventAdded = true;
                 }
-                crashEvidenceFound = crashEvidenceFound || winEventAdded;
+                boolean winEventTriggersCrashAssistant = winEventAdded
+                        && CrashAssistantConfig.getBoolean("general.win_event_is_crash");
+                lateCrashAssistantTriggerFound = lateCrashAssistantTriggerFound
+                        || winEventTriggersCrashAssistant;
                 terminatedProcessSearchFinished = true;
 
                 if (winEventAdded) {
                     if (!GUIStartedLaunching) {
-                        if (CrashAssistantConfig.getBoolean("general.win_event_is_crash")) {
+                        if (winEventTriggersCrashAssistant) {
                             onMinecraftCrashed();
                         }
                     } else {
@@ -701,9 +696,11 @@ public class CrashAssistantApp {
             } finally {
                 if (peacefulInitialOutcome
                         && terminatedProcessSearchFinished
-                        && !crashEvidenceFound
+                        && !lateCrashAssistantTriggerFound
                         && !GUIStartedLaunching) {
-                    ModListHistoryManager.markClosedWithoutCrash();
+                    if (modListTrackingEnabled) {
+                        ModListHistoryManager.markClosedWithoutCrash();
+                    }
                 }
                 terminatedProcessesLocationFinished = completed;
                 notifyUploadReadinessChanged();

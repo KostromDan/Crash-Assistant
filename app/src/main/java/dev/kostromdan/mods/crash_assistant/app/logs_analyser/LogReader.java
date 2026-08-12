@@ -154,9 +154,7 @@ public class LogReader {
         if (!CurseForgeStdoutLogDeobfuscator.isTarget(log)) {
             return false;
         }
-        try (BufferedReader reader = createBufferedReader()) {
-            return CurseForgeStdoutLogDeobfuscator.isSupported(reader);
-        }
+        return CurseForgeStdoutLogDeobfuscator.isSupported(log.getPath());
     }
 
     private LogLineReader createForwardLineReader(boolean transformCurseForgeStdout) throws IOException {

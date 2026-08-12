@@ -1,7 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.gui.modlist.history;
 
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryRecord;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistorySummary;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryStatus;
 
 import java.util.Collection;
@@ -10,35 +10,39 @@ import java.util.LinkedHashSet;
 final class ModListHistoryRow {
     private final long timestamp;
     private final ModListHistoryStatus status;
-    private final LinkedHashSet<Mod> mods;
+    private final LinkedHashSet<Mod> currentMods;
+    private final int modsCount;
     private final boolean current;
     private final boolean legacy;
     private final String stableId;
 
     private ModListHistoryRow(long timestamp,
                               ModListHistoryStatus status,
-                              Collection<Mod> mods,
+                              Collection<Mod> currentMods,
+                              int modsCount,
                               boolean current,
                               boolean legacy,
                               String stableId) {
         this.timestamp = timestamp;
         this.status = status;
-        this.mods = mods == null ? new LinkedHashSet<Mod>() : new LinkedHashSet<Mod>(mods);
+        this.currentMods = currentMods == null ? null : new LinkedHashSet<Mod>(currentMods);
+        this.modsCount = modsCount;
         this.current = current;
         this.legacy = legacy;
         this.stableId = stableId;
     }
 
-    static ModListHistoryRow history(ModListHistoryRecord record) {
-        String id = record.isLegacySnapshot()
-                ? "legacy:" + record.getTimestamp() + ":" + String.valueOf(record.getLegacySource())
-                : "history:" + record.getTimestamp();
+    static ModListHistoryRow history(ModListHistorySummary summary) {
+        String id = summary.isLegacySnapshot()
+                ? "legacy:" + summary.getTimestamp() + ":" + String.valueOf(summary.getLegacySource())
+                : "history:" + summary.getTimestamp();
         return new ModListHistoryRow(
-                record.getTimestamp(),
-                record.getStatus(),
-                record.getMods(),
+                summary.getTimestamp(),
+                summary.getStatus(),
+                null,
+                summary.getModsCount(),
                 false,
-                record.isLegacySnapshot(),
+                summary.isLegacySnapshot(),
                 id);
     }
 
@@ -49,6 +53,7 @@ final class ModListHistoryRow {
                 timestamp,
                 status == null ? ModListHistoryStatus.STARTED : status,
                 mods,
+                mods == null ? 0 : mods.size(),
                 true,
                 false,
                 "current");
@@ -62,12 +67,15 @@ final class ModListHistoryRow {
         return status;
     }
 
-    LinkedHashSet<Mod> getMods() {
-        return new LinkedHashSet<Mod>(mods);
+    int getModsCount() {
+        return modsCount;
     }
 
-    int getModsCount() {
-        return mods.size();
+    LinkedHashSet<Mod> getCurrentMods() {
+        if (!current || currentMods == null) {
+            throw new IllegalStateException("Only the Current row has an in-memory mod graph");
+        }
+        return new LinkedHashSet<Mod>(currentMods);
     }
 
     boolean isCurrent() {

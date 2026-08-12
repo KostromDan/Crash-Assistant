@@ -17,6 +17,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.*;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListComparisonReference;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryManager;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryRecord;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistorySummary;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListComparison;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
@@ -365,7 +366,7 @@ public class ControlPanel {
         String historyMessageTitle = getLatestLaunchComparisonTitle(true);
         String historyMessagePart1 = getLatestLaunchComparisonPart1(true);
         String historyMessagePart2 = getLatestLaunchComparisonPart2(true);
-        Optional<ModListHistoryRecord> currentRecord = ModListHistoryManager.getCurrentRecord();
+        Optional<ModListHistorySummary> currentRecord = ModListHistoryManager.getCurrentSummary();
         if (currentRecord.isPresent()) {
             Optional<ModListComparisonReference> reference = ModListHistoryManager.getStore()
                     .findComparisonReference(currentRecord.get());
@@ -609,16 +610,29 @@ public class ControlPanel {
 
     public static void showModListDiff(Window parent) {
         stopMovingToTop = true;
-        ModListComparison comparison = resolveDefaultModListComparison();
-        if (comparison == null) {
-            JOptionPane.showMessageDialog(
-                    parent,
-                    LanguageProvider.get("gui.modlist_history.no_comparison_reference"),
-                    LanguageProvider.get("gui.modlist_history.comparison_title"),
-                    JOptionPane.INFORMATION_MESSAGE);
-            return;
+        final Window owner = parent == null ? CrashAssistantGUI.getFrame() : parent;
+        if (owner != null) {
+            owner.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         }
-        ModListDiffDialog.showDialog(parent, comparison);
+        Thread loader = new Thread(() -> {
+            final ModListComparison comparison = resolveDefaultModListComparison();
+            SwingUtilities.invokeLater(() -> {
+                if (owner != null) {
+                    owner.setCursor(Cursor.getDefaultCursor());
+                }
+                if (comparison == null) {
+                    JOptionPane.showMessageDialog(
+                            owner,
+                            LanguageProvider.get("gui.modlist_history.no_comparison_reference"),
+                            LanguageProvider.get("gui.modlist_history.comparison_title"),
+                            JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                ModListDiffDialog.showDialog(owner, comparison);
+            });
+        }, "modlist-default-comparison-loader");
+        loader.setDaemon(true);
+        loader.start();
     }
 
     /**
@@ -627,7 +641,11 @@ public class ControlPanel {
      * migrated/absent standalone modlist.json.
      */
     private static ModListComparison resolveDefaultModListComparison() {
-        LinkedHashSet<Mod> currentMods = ModListUtils.getCurrentModList(true);
+        ModListUtils.ModListScanResult scan = ModListUtils.scanCurrentModListResult(false);
+        if (!scan.isSuccessful()) {
+            return null;
+        }
+        LinkedHashSet<Mod> currentMods = scan.getMods();
         if (!PlatformHelp.isLinkDefault() && !ModListDiff.isModpackCreator()) {
             String title = getModpackComparisonTitle(false);
             return ModListComparison.againstCurrent(
@@ -639,7 +657,7 @@ public class ControlPanel {
                     currentMods);
         }
 
-        Optional<ModListHistoryRecord> currentRecord = ModListHistoryManager.getCurrentRecord();
+        Optional<ModListHistorySummary> currentRecord = ModListHistoryManager.getCurrentSummary();
         if (!currentRecord.isPresent()) {
             return null;
         }
@@ -656,10 +674,37 @@ public class ControlPanel {
     }
 
     private void showComparison(ModListDiffWidget widget) {
-        ModListComparison comparison = widget == null ? null : widget.getComparison();
+        final ModListComparison comparison = widget == null ? null : widget.getComparison();
         if (comparison == null) return;
         stopMovingToTop = true;
-        ModListDiffDialog.showDialog(getModListOwner(), comparison);
+        final Window owner = getModListOwner();
+        if (!comparison.isCurrentInstallationEditable()) {
+            ModListDiffDialog.showDialog(owner, comparison);
+            return;
+        }
+        if (owner != null) {
+            owner.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        }
+        Thread loader = new Thread(() -> {
+            final ModListUtils.ModListScanResult scan = ModListUtils.scanCurrentModListResult(false);
+            SwingUtilities.invokeLater(() -> {
+                if (owner != null) {
+                    owner.setCursor(Cursor.getDefaultCursor());
+                }
+                if (!scan.isSuccessful()) {
+                    JOptionPane.showMessageDialog(
+                            owner,
+                            LanguageProvider.get("gui.modlist_history.load_error")
+                                    .replace("$ERROR$", "Failed to scan the current mods folder."),
+                            LanguageProvider.get("gui.modlist_history.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                ModListDiffDialog.showDialog(owner, comparison.withFreshCurrent(scan.getMods()));
+            });
+        }, "modlist-current-refresh");
+        loader.setDaemon(true);
+        loader.start();
     }
 
     private void showModListHistory() {

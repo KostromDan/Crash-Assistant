@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.jar.*;
 import java.util.stream.Collectors;
@@ -63,12 +64,12 @@ public class ModDataParser {
             CachedModData cached = GSON.fromJson(json, CachedModData.class);
             if (cached == null || cached.mod == null || cached.fileSize == null ||
                     cached.lastModifiedMillis == null) {
-                // Cache entries written by older versions contain only the Mod object.
-                // They have no file identity, so they cannot safely be reused.
+                // An incomplete or damaged v5 entry has no trustworthy file identity.
                 return null;
             }
-            if (cached.fileSize.longValue() != Files.size(jarPath) ||
-                    cached.lastModifiedMillis.longValue() != Files.getLastModifiedTime(jarPath).toMillis()) {
+            FileIdentity current = readFileIdentity(jarPath);
+            if (cached.fileSize.longValue() != current.fileSize ||
+                    cached.lastModifiedMillis.longValue() != current.lastModifiedMillis) {
                 return null;
             }
             return cached.mod;
@@ -79,24 +80,15 @@ public class ModDataParser {
     }
 
     /**
-     * Saves the mod data to the cache.
-     * Does not save if modId or version is null.
+     * Saves parsed data with the file identity captured before that parse.
      *
      * @param jarPath The path to the JAR file.
      * @param mod     The Mod object to save.
+     * @param identity The stable pre/post-parse file identity.
      */
-    public static void saveModToCache(Path jarPath, Mod mod) {
+    private static void saveModToCache(Path jarPath, Mod mod, FileIdentity identity) {
         Path cacheFilePath = getCacheFilePath(jarPath);
-        CachedModData cached;
-        try {
-            cached = new CachedModData(
-                    Files.size(jarPath),
-                    Files.getLastModifiedTime(jarPath).toMillis(),
-                    mod);
-        } catch (Exception e) {
-            JarInJarHelper.LOGGER.error("Failed to read file metadata for cache " + jarPath, e);
-            return;
-        }
+        CachedModData cached = new CachedModData(identity.fileSize, identity.lastModifiedMillis, mod);
         try (RandomAccessFile raf = new RandomAccessFile(cacheFilePath.toFile(), "rw");
              FileChannel ch = raf.getChannel();
              FileLock ignored = ch.lock()) {
@@ -105,6 +97,29 @@ public class ModDataParser {
             ch.write(ByteBuffer.wrap(GSON.toJson(cached).getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
             JarInJarHelper.LOGGER.error("Failed to save mod data to cache for " + jarPath, e);
+        }
+    }
+
+    private static FileIdentity readFileIdentity(Path jarPath) throws IOException {
+        BasicFileAttributes attributes = Files.readAttributes(jarPath, BasicFileAttributes.class);
+        return new FileIdentity(
+                attributes.size(),
+                attributes.lastModifiedTime().toMillis());
+    }
+
+    private static final class FileIdentity {
+        private final long fileSize;
+        private final long lastModifiedMillis;
+
+        private FileIdentity(long fileSize, long lastModifiedMillis) {
+            this.fileSize = fileSize;
+            this.lastModifiedMillis = lastModifiedMillis;
+        }
+
+        private boolean matches(FileIdentity other) {
+            return other != null
+                    && fileSize == other.fileSize
+                    && lastModifiedMillis == other.lastModifiedMillis;
         }
     }
 
@@ -130,17 +145,66 @@ public class ModDataParser {
         Mod cached = getModFromCache(jarPath);
         if (cached != null) return cached;
 
+        ParseAttempt lastAttempt = null;
+        // A launcher or updater can replace a JAR while it is being fingerprinted.
+        // Retry once from a new identity, but never spin forever on a changing file.
+        for (int attempt = 0; attempt < 2; attempt++) {
+            FileIdentity before;
+            try {
+                before = readFileIdentity(jarPath);
+            } catch (IOException e) {
+                JarInJarHelper.LOGGER.warn("Failed to read file metadata before parsing " + jarPath, e);
+                return parseModDataWithoutCache(jarPath).mod;
+            }
+
+            lastAttempt = parseModDataWithoutCache(jarPath);
+
+            FileIdentity after;
+            try {
+                after = readFileIdentity(jarPath);
+            } catch (IOException e) {
+                JarInJarHelper.LOGGER.warn("Failed to read file metadata after parsing " + jarPath
+                        + "; parsed data will not be cached", e);
+                return lastAttempt.mod;
+            }
+
+            if (before.matches(after)) {
+                if (lastAttempt.cacheable) {
+                    saveModToCache(jarPath, lastAttempt.mod, before);
+                }
+                return lastAttempt.mod;
+            }
+
+            JarInJarHelper.LOGGER.warn("Mod file changed while being parsed: " + jarPath
+                    + (attempt == 0 ? "; retrying once" : "; parsed data will not be cached"));
+        }
+        return lastAttempt.mod;
+    }
+
+    private static ParseAttempt parseModDataWithoutCache(Path jarPath) {
         ModFingerprinter.IdentificationResult fingerprints = fingerprintJar(jarPath);
 
         try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-            Mod mod = parseJarFile(jarFile, jarPath.getFileName().toString(), null, fingerprints);
-            saveModToCache(jarPath, mod);
-            return mod;
+            return new ParseAttempt(
+                    parseJarFile(jarFile, jarPath.getFileName().toString(), null, fingerprints),
+                    true);
         } catch (Exception e) {
             JarInJarHelper.LOGGER.warn("Failed to parse " + jarPath.getFileName() + ": ", e);
-            return new Mod(jarPath.getFileName().toString(), null, null, null, null, null,
-                    new HashSet<>(), new ArrayList<>(), null,
-                    getCurseForgeHash(fingerprints, null), getModrinthHash(fingerprints, null));
+            return new ParseAttempt(
+                    new Mod(jarPath.getFileName().toString(), null, null, null, null, null,
+                            new HashSet<>(), new ArrayList<>(), null,
+                            getCurseForgeHash(fingerprints, null), getModrinthHash(fingerprints, null)),
+                    false);
+        }
+    }
+
+    private static final class ParseAttempt {
+        private final Mod mod;
+        private final boolean cacheable;
+
+        private ParseAttempt(Mod mod, boolean cacheable) {
+            this.mod = mod;
+            this.cacheable = cacheable;
         }
     }
 

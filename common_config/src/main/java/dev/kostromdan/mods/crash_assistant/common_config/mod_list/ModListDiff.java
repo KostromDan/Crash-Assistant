@@ -32,26 +32,34 @@ public class ModListDiff {
 
         Set<Mod> hashUpdatedOldMods = Collections.newSetFromMap(new IdentityHashMap<Mod, Boolean>());
         Set<Mod> hashUpdatedNewMods = Collections.newSetFromMap(new IdentityHashMap<Mod, Boolean>());
-        for (Mod oldMod : savedMods) {
-            for (Mod newMod : currentMods) {
-                if (hashUpdatedNewMods.contains(newMod) || oldMod.getJarName() == null ||
-                        newMod.getJarName() == null ||
-                        !oldMod.getJarName().equalsIgnoreCase(newMod.getJarName()) ||
-                        !UpdatedPair.haveDifferentComparableHashes(oldMod, newMod)) {
-                    continue;
-                }
-
-                LinkedHashSet<Mod> oldHashMods = new LinkedHashSet<>();
-                oldHashMods.add(oldMod);
-                LinkedHashSet<Mod> newHashMods = new LinkedHashSet<>();
-                newHashMods.add(newMod);
-                UpdatedPair hashUpdatedPair = new UpdatedPair(oldHashMods, newHashMods);
-                hashUpdatedPair.markModMessedUpWithVersion();
-                updatedMods.add(hashUpdatedPair);
-                hashUpdatedOldMods.add(oldMod);
-                hashUpdatedNewMods.add(newMod);
-                break;
+        Map<String, HashMatchCandidates> hashCandidatesByJarName =
+                new TreeMap<String, HashMatchCandidates>(String.CASE_INSENSITIVE_ORDER);
+        int currentOrder = 0;
+        for (Mod newMod : currentMods) {
+            String jarName = newMod.getJarName();
+            if (jarName != null && (newMod.getModrinthHash() != null || newMod.getCurseForgeHash() != null)) {
+                hashCandidatesByJarName
+                        .computeIfAbsent(jarName, ignored -> new HashMatchCandidates())
+                        .add(newMod, currentOrder);
             }
+            currentOrder++;
+        }
+        for (Mod oldMod : savedMods) {
+            if (oldMod.getJarName() == null) continue;
+            HashMatchCandidates candidates = hashCandidatesByJarName.get(oldMod.getJarName());
+            if (candidates == null) continue;
+            Mod newMod = candidates.takeFirstWithDifferentComparableHash(oldMod);
+            if (newMod == null) continue;
+
+            LinkedHashSet<Mod> oldHashMods = new LinkedHashSet<>();
+            oldHashMods.add(oldMod);
+            LinkedHashSet<Mod> newHashMods = new LinkedHashSet<>();
+            newHashMods.add(newMod);
+            UpdatedPair hashUpdatedPair = new UpdatedPair(oldHashMods, newHashMods);
+            hashUpdatedPair.markModMessedUpWithVersion();
+            updatedMods.add(hashUpdatedPair);
+            hashUpdatedOldMods.add(oldMod);
+            hashUpdatedNewMods.add(newMod);
         }
 
         LinkedHashMap<String, UpdatedPair> updatedPairCandidates = new LinkedHashMap<>();
@@ -87,6 +95,151 @@ public class ModListDiff {
                 updatedPairCandidates.containsKey(addedMod.getModId()));
         removedMods.removeIf(removedMod -> hashUpdatedOldMods.contains(removedMod) ||
                 updatedPairCandidates.containsKey(removedMod.getModId()));
+    }
+
+    /**
+     * Preserves the old greedy match (first still-unused current mod in current-list order),
+     * while finding it through hash buckets instead of rescanning the entire current list.
+     */
+    private static final class HashMatchCandidates {
+        private IndexedCandidate soleCandidate;
+        private AttributeIndex<String> modrinthHashes;
+        private AttributeIndex<Long> curseForgeHashes;
+        private boolean indexed;
+
+        private void add(Mod mod, int order) {
+            IndexedCandidate candidate = new IndexedCandidate(mod, order);
+            if (!indexed && soleCandidate == null) {
+                soleCandidate = candidate;
+                return;
+            }
+            if (!indexed) {
+                indexed = true;
+                addToIndexes(soleCandidate);
+                soleCandidate = null;
+            }
+            addToIndexes(candidate);
+        }
+
+        private Mod takeFirstWithDifferentComparableHash(Mod oldMod) {
+            if (!indexed) {
+                if (soleCandidate == null
+                        || !UpdatedPair.haveDifferentComparableHashes(oldMod, soleCandidate.mod)) {
+                    return null;
+                }
+                Mod selected = soleCandidate.mod;
+                soleCandidate = null;
+                return selected;
+            }
+
+            IndexedCandidate modrinthCandidate = oldMod.getModrinthHash() == null || modrinthHashes == null
+                    ? null
+                    : modrinthHashes.firstExcluding(oldMod.getModrinthHash());
+            IndexedCandidate curseForgeCandidate = oldMod.getCurseForgeHash() == null || curseForgeHashes == null
+                    ? null
+                    : curseForgeHashes.firstExcluding(oldMod.getCurseForgeHash());
+            IndexedCandidate selected = earlier(modrinthCandidate, curseForgeCandidate);
+            if (selected == null) return null;
+
+            Mod selectedMod = selected.mod;
+            if (selectedMod.getModrinthHash() != null) {
+                modrinthHashes.remove(selectedMod.getModrinthHash(), selected);
+            }
+            if (selectedMod.getCurseForgeHash() != null) {
+                curseForgeHashes.remove(selectedMod.getCurseForgeHash(), selected);
+            }
+            return selectedMod;
+        }
+
+        private void addToIndexes(IndexedCandidate candidate) {
+            Mod mod = candidate.mod;
+            if (mod.getModrinthHash() != null) {
+                if (modrinthHashes == null) {
+                    modrinthHashes = new AttributeIndex<String>(
+                            new TreeMap<String, CandidateBucket>(String.CASE_INSENSITIVE_ORDER));
+                }
+                modrinthHashes.add(mod.getModrinthHash(), candidate);
+            }
+            if (mod.getCurseForgeHash() != null) {
+                if (curseForgeHashes == null) {
+                    curseForgeHashes = new AttributeIndex<Long>(new HashMap<Long, CandidateBucket>());
+                }
+                curseForgeHashes.add(mod.getCurseForgeHash(), candidate);
+            }
+        }
+
+        private static IndexedCandidate earlier(IndexedCandidate left, IndexedCandidate right) {
+            if (left == null) return right;
+            if (right == null) return left;
+            return left.order <= right.order ? left : right;
+        }
+    }
+
+    /** Finds the first remaining candidate whose value is not equal to the excluded value. */
+    private static final class AttributeIndex<K> {
+        private final Map<K, CandidateBucket> bucketsByValue;
+        private final TreeMap<Integer, CandidateBucket> bucketMinima = new TreeMap<Integer, CandidateBucket>();
+
+        private AttributeIndex(Map<K, CandidateBucket> bucketsByValue) {
+            this.bucketsByValue = bucketsByValue;
+        }
+
+        private void add(K value, IndexedCandidate candidate) {
+            CandidateBucket bucket = bucketsByValue.get(value);
+            if (bucket == null) {
+                bucket = new CandidateBucket();
+                bucketsByValue.put(value, bucket);
+            } else {
+                bucketMinima.remove(bucket.firstOrder());
+            }
+            bucket.candidates.put(candidate.order, candidate);
+            bucketMinima.put(bucket.firstOrder(), bucket);
+        }
+
+        private IndexedCandidate firstExcluding(K excludedValue) {
+            Map.Entry<Integer, CandidateBucket> first = bucketMinima.firstEntry();
+            if (first == null) return null;
+            CandidateBucket excludedBucket = bucketsByValue.get(excludedValue);
+            if (first.getValue() == excludedBucket) {
+                first = bucketMinima.higherEntry(first.getKey());
+            }
+            return first == null ? null : first.getValue().firstCandidate();
+        }
+
+        private void remove(K value, IndexedCandidate candidate) {
+            CandidateBucket bucket = bucketsByValue.get(value);
+            if (bucket == null) return;
+            bucketMinima.remove(bucket.firstOrder());
+            bucket.candidates.remove(candidate.order);
+            if (bucket.candidates.isEmpty()) {
+                bucketsByValue.remove(value);
+            } else {
+                bucketMinima.put(bucket.firstOrder(), bucket);
+            }
+        }
+    }
+
+    private static final class CandidateBucket {
+        private final TreeMap<Integer, IndexedCandidate> candidates =
+                new TreeMap<Integer, IndexedCandidate>();
+
+        private int firstOrder() {
+            return candidates.firstKey();
+        }
+
+        private IndexedCandidate firstCandidate() {
+            return candidates.firstEntry().getValue();
+        }
+    }
+
+    private static final class IndexedCandidate {
+        private final Mod mod;
+        private final int order;
+
+        private IndexedCandidate(Mod mod, int order) {
+            this.mod = mod;
+            this.order = order;
+        }
     }
 
     public LinkedHashSet<Mod> getCurrentMods() {

@@ -29,10 +29,18 @@ public final class ModListHistoryManager {
     private ModListHistoryManager() {
     }
 
-    /** Heavy snapshot creation. This method is called only by the short-lived worker process. */
-    public static SnapshotResult createSnapshot(long launchStartedAt) {
+    /**
+     * Performs only the expensive mod-directory scan. Persistence is deliberately
+     * kept separate so a caller that gives up waiting cannot be followed by a
+     * late history write from the scanning thread.
+     */
+    public static LinkedHashSet<Mod> scanSnapshotMods() {
         try {
-            return ModListUtils.withModListScanLock(() -> createSnapshotLocked(launchStartedAt));
+            ModListUtils.ModListScanResult scan = ModListUtils.scanCurrentModListResult(false);
+            if (!scan.isSuccessful()) {
+                throw new IllegalStateException("Failed to scan the current mod list");
+            }
+            return scan.getMods();
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -40,14 +48,25 @@ public final class ModListHistoryManager {
         }
     }
 
-    private static SnapshotResult createSnapshotLocked(long launchStartedAt) {
+    /** Persists a mod collection only after its bounded scan completed successfully. */
+    public static SnapshotResult persistSnapshot(long launchStartedAt, LinkedHashSet<Mod> mods) {
+        boolean enabled;
+        try {
+            enabled = CrashAssistantConfig.getBoolean("modpack_modlist.enabled");
+        } catch (Exception e) {
+            LOGGER.error("Failed to re-check whether mod-list snapshots are enabled", e);
+            return new SnapshotResult(-1L, false);
+        }
+        if (!enabled) {
+            return new SnapshotResult(-1L, false);
+        }
+        if (mods == null) {
+            throw new IllegalArgumentException("mods are required");
+        }
+
         long preferredTimestamp = launchStartedAt > 0L
                 ? launchStartedAt
                 : System.currentTimeMillis();
-        LinkedHashSet<Mod> mods = ModListUtils.getCurrentModList(true);
-        if (!ModListUtils.wasLastScanSuccessful()) {
-            throw new IllegalStateException("Failed to scan the current mod list");
-        }
 
         long historyTimestamp = -1L;
         boolean historyWritten = false;
@@ -76,8 +95,13 @@ public final class ModListHistoryManager {
         }
 
         boolean txtWritten = false;
-        if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")
-                && CrashAssistantConfig.getBoolean("modpack_modlist.add_modlist_txt_as_log")) {
+        boolean shouldWriteTxt = false;
+        try {
+            shouldWriteTxt = CrashAssistantConfig.getBoolean("modpack_modlist.add_modlist_txt_as_log");
+        } catch (Exception e) {
+            LOGGER.error("Failed to read the modlist.txt snapshot setting", e);
+        }
+        if (shouldWriteTxt) {
             try {
                 Mod.writeModlistTxt(MODLIST_TXT, mods);
                 txtWritten = true;
@@ -88,7 +112,23 @@ public final class ModListHistoryManager {
         return new SnapshotResult(historyTimestamp, txtWritten);
     }
 
-    /** Attaches the lightweight waiter to the result produced by the worker. */
+    /** Rolls back only this Boot process's unhanded launch record. */
+    public static void discardSnapshotBeforeHandoff(SnapshotResult snapshot) {
+        if (snapshot == null || snapshot.getHistoryTimestamp() < 0L) {
+            return;
+        }
+        try {
+            if (!STORE.deleteIfStillStarted(snapshot.getHistoryTimestamp())) {
+                LOGGER.error("Refused or failed to discard unhanded mod-list history record {}",
+                        snapshot.getHistoryTimestamp());
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to discard unhanded mod-list history record {}",
+                    snapshot.getHistoryTimestamp(), e);
+        }
+    }
+
+    /** Attaches the long-lived app to the snapshot captured by the disposable Boot process. */
     public static synchronized void attachSnapshot(long historyTimestamp, boolean txtGenerated) {
         initialized = true;
         currentLaunchStartedAt = historyTimestamp;
@@ -149,12 +189,9 @@ public final class ModListHistoryManager {
         }
     }
 
-    /** Loads the full record only when GUI code actually asks for it. */
-    public static synchronized Optional<ModListHistoryRecord> getCurrentRecord() {
-        if (!historyAvailable) {
-            return Optional.empty();
-        }
-        return STORE.getRecord(currentLaunchStartedAt);
+    public static synchronized Optional<ModListHistorySummary> getCurrentSummary() {
+        if (!historyAvailable) return Optional.empty();
+        return STORE.getSummary(currentLaunchStartedAt);
     }
 
     public static synchronized boolean wasModListTxtGenerated() {

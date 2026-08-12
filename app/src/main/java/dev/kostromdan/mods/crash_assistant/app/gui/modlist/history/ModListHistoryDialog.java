@@ -8,8 +8,8 @@ import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListTxtParser;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListComparisonReference;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryRecord;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistorySummary;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryManager;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryStatus;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryStore;
@@ -207,46 +207,42 @@ public final class ModListHistoryDialog extends JDialog {
 
     private static LoadedRows loadRows() {
         ModListHistoryStore store = ModListHistoryManager.getStore();
-        Optional<ModListHistoryRecord> currentRecord = ModListHistoryManager.getCurrentRecord();
-        long currentTimestamp = currentRecord.isPresent()
-                ? currentRecord.get().getTimestamp()
+        Optional<ModListHistorySummary> currentSummary = ModListHistoryManager.getCurrentSummary();
+        long currentTimestamp = currentSummary.isPresent()
+                ? currentSummary.get().getTimestamp()
                 : System.currentTimeMillis();
-
-        ModListHistoryRow syntheticCurrent;
-        if (currentRecord.isPresent() && !currentRecord.get().isLegacySnapshot()) {
-            ModListHistoryRecord record = currentRecord.get();
-            syntheticCurrent = ModListHistoryRow.current(
-                    currentTimestamp, record.getStatus(), record.getMods());
-        } else {
-            syntheticCurrent = ModListHistoryRow.current(
-                    currentTimestamp,
-                    ModListHistoryStatus.STARTED,
-                    ModListUtils.getCurrentModList(true));
+        ModListUtils.ModListScanResult currentScan = ModListUtils.scanCurrentModListResult(false);
+        if (!currentScan.isSuccessful()) {
+            throw new IllegalStateException("Failed to scan the current mods folder.");
         }
+        ModListHistoryRow syntheticCurrent = ModListHistoryRow.current(
+                currentTimestamp,
+                currentSummary.isPresent() ? currentSummary.get().getStatus() : ModListHistoryStatus.STARTED,
+                currentScan.getMods());
 
         List<ModListHistoryRow> result = new ArrayList<ModListHistoryRow>();
         result.add(syntheticCurrent);
 
-        List<ModListHistoryRecord> records = store.listRecordsNewestFirst();
+        List<ModListHistorySummary> records = store.listSummariesNewestFirst();
         // Keep migration snapshots immediately below Current. They are honest,
         // unclassified manual baselines rather than a fabricated launch status.
-        for (ModListHistoryRecord record : records) {
+        for (ModListHistorySummary record : records) {
             if (record.isLegacySnapshot()) {
                 result.add(ModListHistoryRow.history(record));
             }
         }
-        for (ModListHistoryRecord record : records) {
+        for (ModListHistorySummary record : records) {
             if (record.isLegacySnapshot() || record.getTimestamp() == currentTimestamp) {
                 continue;
             }
             result.add(ModListHistoryRow.history(record));
         }
         String preferredId = null;
-        if (currentRecord.isPresent()) {
-            Optional<ModListComparisonReference> reference = store
-                    .findComparisonReference(currentRecord.get(), records);
+        if (currentSummary.isPresent()) {
+            Optional<ModListHistorySummary> reference = store.findComparisonReferenceSummary(
+                    currentSummary.get().getTimestamp(), currentSummary.get().getStatus(), records);
             if (reference.isPresent()) {
-                preferredId = ModListHistoryRow.history(reference.get().getRecord()).getStableId();
+                preferredId = ModListHistoryRow.history(reference.get()).getStableId();
             }
         }
         return new LoadedRows(result, preferredId);
@@ -367,7 +363,7 @@ public final class ModListHistoryDialog extends JDialog {
                     }
                     directory = Files.createTempDirectory("crash-assistant-modlist-");
                     modList = directory.resolve("modlist.txt");
-                    Mod.writeModlistTxt(modList, row.getMods());
+                    Mod.writeModlistTxt(modList, resolveRowMods(row));
                     directory.toFile().deleteOnExit();
                     modList.toFile().deleteOnExit();
                     Desktop.getDesktop().open(modList.toFile());
@@ -558,20 +554,63 @@ public final class ModListHistoryDialog extends JDialog {
     }
 
     private void compareSelected() {
-        ModListHistoryRow left = selected(leftTable);
-        ModListHistoryRow right = selected(rightTable);
+        final ModListHistoryRow left = selected(leftTable);
+        final ModListHistoryRow right = selected(rightTable);
         if (left == null || right == null || left.getStableId().equals(right.getStableId())) {
             return;
         }
 
         // ModListComparison normalizes Current to the installed/right side and
         // enables the usual mod-management actions. Two snapshots remain a
-        // read-only comparison.
-        ModListComparison comparison = ModListComparison.readOnly(
-                LanguageProvider.get("gui.modlist_history.comparison_title"),
-                rowLabel(left), sourceKind(left), left.getMods(),
-                rowLabel(right), sourceKind(right), right.getMods());
-        ModListDiffDialog.showDialog(this, comparison);
+        // read-only comparison. History graphs are intentionally loaded away
+        // from the EDT because a selected large JSON can take noticeable time.
+        compareButton.setEnabled(false);
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        Thread loader = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ModListComparison loadedComparison = null;
+                IOException loadFailure = null;
+                try {
+                    loadedComparison = ModListComparison.readOnly(
+                            LanguageProvider.get("gui.modlist_history.comparison_title"),
+                            rowLabel(left), sourceKind(left), resolveRowMods(left),
+                            rowLabel(right), sourceKind(right), resolveRowMods(right));
+                } catch (IOException e) {
+                    loadFailure = e;
+                }
+                final ModListComparison comparison = loadedComparison;
+                final IOException failure = loadFailure;
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!isDisplayable()) {
+                            return;
+                        }
+                        setCursor(Cursor.getDefaultCursor());
+                        updateCompareButton();
+                        if (failure != null) {
+                            showHistoryLoadError(ModListHistoryDialog.this, failure);
+                            return;
+                        }
+                        ModListDiffDialog.showDialog(ModListHistoryDialog.this, comparison);
+                    }
+                });
+            }
+        }, "modlist-history-comparison-loader");
+        loader.setDaemon(true);
+        loader.start();
+    }
+
+    private static LinkedHashSet<Mod> resolveRowMods(ModListHistoryRow row) throws IOException {
+        if (row.isCurrent()) {
+            return row.getCurrentMods();
+        }
+        Optional<ModListHistoryRecord> record = ModListHistoryManager.getStore().getRecord(row.getTimestamp());
+        if (!record.isPresent()) {
+            throw new IOException("The selected mod-list history record is unavailable or invalid.");
+        }
+        return record.get().getMods();
     }
 
     private static ModListComparison.SourceKind sourceKind(ModListHistoryRow row) {
@@ -596,7 +635,7 @@ public final class ModListHistoryDialog extends JDialog {
             try {
                 Object data = Toolkit.getDefaultToolkit().getSystemClipboard()
                         .getData(DataFlavor.stringFlavor);
-                importText(choice, data == null ? null : data.toString());
+                parseImportedModListAsync(choice, data == null ? null : data.toString(), null);
             } catch (Exception e) {
                 showImportError(choice, e);
             }
@@ -610,12 +649,7 @@ public final class ModListHistoryDialog extends JDialog {
             if (chooser.showOpenDialog(choice) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
-            try {
-                LinkedHashSet<Mod> imported = ModListTxtParser.parse(chooser.getSelectedFile().toPath());
-                openImportedComparison(choice, imported);
-            } catch (Exception e) {
-                showImportError(choice, e);
-            }
+            parseImportedModListAsync(choice, null, chooser.getSelectedFile().toPath());
         });
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 18));
@@ -676,15 +710,42 @@ public final class ModListHistoryDialog extends JDialog {
         return button;
     }
 
-    private void importText(JDialog choice, String text) {
-        try {
-            openImportedComparison(choice, ModListTxtParser.parse(text));
-        } catch (Exception e) {
-            showImportError(choice, e);
-        }
+    private void parseImportedModListAsync(final JDialog choice, final String text, final Path path) {
+        choice.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        Thread parser = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                LinkedHashSet<Mod> parsed = null;
+                Exception parseFailure = null;
+                try {
+                    parsed = path == null ? ModListTxtParser.parse(text) : ModListTxtParser.parse(path);
+                } catch (Exception e) {
+                    parseFailure = e;
+                }
+                final LinkedHashSet<Mod> imported = parsed;
+                final Exception failure = parseFailure;
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!choice.isDisplayable()) {
+                            return;
+                        }
+                        choice.setCursor(Cursor.getDefaultCursor());
+                        if (failure != null) {
+                            showImportError(choice, failure);
+                            return;
+                        }
+                        openImportedComparison(choice, imported);
+                    }
+                });
+            }
+        }, "modlist-import-parser");
+        parser.setDaemon(true);
+        parser.start();
     }
 
     private void openImportedComparison(JDialog choice, final LinkedHashSet<Mod> imported) {
+        final LinkedHashSet<Mod> freshCurrent = currentRow.getCurrentMods();
         choice.dispose();
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -695,7 +756,7 @@ public final class ModListHistoryDialog extends JDialog {
                         ModListComparison.SourceKind.IMPORTED_MODLIST,
                         imported,
                         LanguageProvider.get("gui.modlist_history.current"),
-                        currentRow.getMods());
+                        freshCurrent);
                 ModListDiffDialog.showDialog(ModListHistoryDialog.this, comparison);
             }
         });
@@ -710,6 +771,17 @@ public final class ModListHistoryDialog extends JDialog {
                 parent,
                 message,
                 LanguageProvider.get("gui.modlist_history.import.title"),
+                JOptionPane.ERROR_MESSAGE);
+    }
+
+    private static void showHistoryLoadError(Component parent, Exception error) {
+        String details = error.getMessage() == null
+                ? error.getClass().getSimpleName()
+                : error.getMessage();
+        JOptionPane.showMessageDialog(
+                parent,
+                LanguageProvider.get("gui.modlist_history.load_error").replace("$ERROR$", details),
+                LanguageProvider.get("gui.modlist_history.title"),
                 JOptionPane.ERROR_MESSAGE);
     }
 

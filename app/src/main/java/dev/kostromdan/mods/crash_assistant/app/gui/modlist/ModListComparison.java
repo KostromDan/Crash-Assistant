@@ -142,6 +142,20 @@ public final class ModListComparison {
         return leftKind == SourceKind.MODPACK_BASELINE && rightKind == SourceKind.CURRENT;
     }
 
+    /** Replaces only the live side while preserving the selected baseline and labels. */
+    public ModListComparison withFreshCurrent(Collection<Mod> currentMods) {
+        if (!currentInstallationEditable) {
+            return this;
+        }
+        return againstCurrent(
+                title,
+                leftLabel,
+                leftKind,
+                leftMods,
+                rightLabel,
+                currentMods);
+    }
+
     public ModListDiff createDiff() {
         return new ModListDiff(getLeftMods(), getRightMods());
     }

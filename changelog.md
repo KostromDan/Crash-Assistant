@@ -1,6 +1,5 @@
 1.11.12:
 
-- Added scripting APIs for extending copied analysis results and the generated-message structure.
 - Added persistent mod-list history for Minecraft launches. Each snapshot records whether the game only started, reached
   the title screen, joined a world, crashed during gameplay, or closed without a crash. The main mod-list comparison now
   selects a suitable previous launch dynamically instead of relying only on a single static baseline.
@@ -77,6 +76,7 @@
 - Fixed Scripts IDE on macOS opening at an incorrect size, which could cause some buttons to be missing.
 - Fixed a macOS rendering issue that could cause both Chinese and English characters to be missing in large-font Chinese
   text.
+- Added scripting APIs for extending copied analysis results and the generated-message structure.
 
 1.11.11:
 

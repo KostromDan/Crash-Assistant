@@ -11,8 +11,9 @@
 - Fixed mod-list comparisons missing an updated mod when its JAR was replaced without changing the file name or declared
   version. If both snapshots contain a comparable CurseForge or Modrinth hash and it differs, the mod is now treated as
   updated.
-- Mod list differences in Upload All messages are now always uploaded; the full text is included only if uploading
-  fails.
+- Non-empty mod list differences and unavailable-reference notices in Upload All messages are now uploaded. Generated
+  messages link non-empty differences, keep one-line notices inline without a link, and do not upload unchanged
+  comparisons.
 - Replaced the `general.upload_to` configuration option with `general.wrap_link`. Its previous value is not migrated and
   will be removed during the update. By default, copied log links now open in the new `kostromdan.dev` log viewer
   instead of `gnomebot.dev`.

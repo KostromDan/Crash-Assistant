@@ -52,6 +52,18 @@ public class Startup extends ScriptUtils {
         return new ScriptWarning(message);
     }
 
+    public static void putCopiedResult(String id, String text) {
+        GeneratedMessage.putAnalysisResult(id, text);
+    }
+
+    public static void putCopiedResult(String id, String text, int priority) {
+        GeneratedMessage.putAnalysisResult(id, text, priority);
+    }
+
+    public static void removeCopiedResult(String id) {
+        GeneratedMessage.removeAnalysisResult(id);
+    }
+
     /**
      * Flags the game to crash after startup scripts complete.
      * The process will exit with code -1 after displaying any boot warnings.

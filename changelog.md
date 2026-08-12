@@ -1,5 +1,6 @@
 1.11.12:
 
+- Added scripting APIs for extending copied analysis results and the generated-message structure.
 - Added persistent mod-list history for Minecraft launches. Each snapshot records whether the game only started, reached
   the title screen, joined a world, crashed during gameplay, or closed without a crash. The main mod-list comparison now
   selects a suitable previous launch dynamically instead of relying only on a single static baseline.

@@ -17,6 +17,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryManager;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.GeneratedMessage;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.JavaBinaryLocator;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ProcessHelper;
 import org.apache.commons.jexl3.annotations.NoJexl;
@@ -141,6 +142,13 @@ public class CrashAssistantApp {
                     LOGGER.info("Boot warnings: {}", decoded);
                 } catch (Exception e) {
                     LOGGER.error("Failed to parse bootWarnings", e);
+                }
+            } else if ("-generatedMessageState".equals(args[i]) && i + 1 < args.length) {
+                try {
+                    GeneratedMessage.importState(new String(
+                            Base64.getDecoder().decode(args[i + 1]), StandardCharsets.UTF_8));
+                } catch (Exception e) {
+                    LOGGER.error("Failed to parse generated message state", e);
                 }
             } else if ("-warnsProcessOutput".equals(args[i]) && i + 1 < args.length) {
                 try {

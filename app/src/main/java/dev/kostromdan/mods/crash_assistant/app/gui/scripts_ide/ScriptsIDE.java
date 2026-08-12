@@ -19,8 +19,9 @@ import dev.kostromdan.mods.crash_assistant.app.utils.ThemeUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLocalConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.AbstractScriptManager;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.permissions.Permissions;
-import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.GeneratedMessage;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Logger;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -653,6 +654,7 @@ public class ScriptsIDE {
             }
 
             runThread = new Thread(() -> {
+                String cachedGeneratedMessageState = GeneratedMessage.exportState();
                 try {
                     SwingUtilities.invokeLater(() -> consoleArea.setText(""));
                     
@@ -727,6 +729,7 @@ public class ScriptsIDE {
                     // Extract line number if JEXL failed
                     highlightErrorLine(ex.getMessage());
                 } finally {
+                    GeneratedMessage.importState(cachedGeneratedMessageState);
                     try {
                         org.apache.commons.io.FileUtils.deleteDirectory(tempIdeScriptsDir);
                     } catch (IOException ignored) {}

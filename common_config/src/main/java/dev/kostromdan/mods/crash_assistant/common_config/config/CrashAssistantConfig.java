@@ -236,7 +236,8 @@ public class CrashAssistantConfig {
                         "$LOGS$ - The joined logs\n" +
                         "$PROBLEMATIC_FRAME$ - hs_err frame\n" +
                         "$ANALYSIS_RESULT$ - Analysis results\n" +
-                        "$MODLIST_DIFF$ - Modlist changes",
+                        "$MODLIST_DIFF$ - Modlist changes\n" +
+                        "$CUSTOM/name$ - Entries added by scripts to the named custom slot",
                 "$HEADER$$TEXT_UNDER_CRASHED$$PREFIX$$LOGS$\n$PROBLEMATIC_FRAME$$ANALYSIS_RESULT$$MODLIST_DIFF$");
 
         addOption("generated_message.log_line_pattern",

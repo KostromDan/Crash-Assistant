@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app.scripts;
 
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.GeneratedMessage;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
 
@@ -46,6 +47,18 @@ public class Analysis extends ScriptUtils {
             warnings.add(warning);
             return warning;
         }
+    }
+
+    public static void putCopiedResult(String id, String text) {
+        GeneratedMessage.putAnalysisResult(id, text);
+    }
+
+    public static void putCopiedResult(String id, String text, int priority) {
+        GeneratedMessage.putAnalysisResult(id, text, priority);
+    }
+
+    public static void removeCopiedResult(String id) {
+        GeneratedMessage.removeAnalysisResult(id);
     }
     
     public static Map<Log, List<ScriptWarning>> getRegisteredWarnings() {

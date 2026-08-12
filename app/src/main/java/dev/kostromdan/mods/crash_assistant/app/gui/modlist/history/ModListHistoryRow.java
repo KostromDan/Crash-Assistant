@@ -14,6 +14,7 @@ final class ModListHistoryRow {
     private final int modsCount;
     private final boolean current;
     private final boolean legacy;
+    private final boolean modpackCondition;
     private final String stableId;
 
     private ModListHistoryRow(long timestamp,
@@ -22,6 +23,7 @@ final class ModListHistoryRow {
                               int modsCount,
                               boolean current,
                               boolean legacy,
+                              boolean modpackCondition,
                               String stableId) {
         this.timestamp = timestamp;
         this.status = status;
@@ -29,6 +31,7 @@ final class ModListHistoryRow {
         this.modsCount = modsCount;
         this.current = current;
         this.legacy = legacy;
+        this.modpackCondition = modpackCondition;
         this.stableId = stableId;
     }
 
@@ -43,6 +46,7 @@ final class ModListHistoryRow {
                 summary.getModsCount(),
                 false,
                 summary.isLegacySnapshot(),
+                false,
                 id);
     }
 
@@ -56,7 +60,20 @@ final class ModListHistoryRow {
                 mods == null ? 0 : mods.size(),
                 true,
                 false,
+                false,
                 "current");
+    }
+
+    static ModListHistoryRow modpackCondition(long timestamp, int modsCount) {
+        return new ModListHistoryRow(
+                timestamp,
+                null,
+                null,
+                modsCount,
+                false,
+                false,
+                true,
+                "modpack-condition");
     }
 
     long getTimestamp() {
@@ -86,12 +103,16 @@ final class ModListHistoryRow {
         return legacy;
     }
 
+    boolean isModpackCondition() {
+        return modpackCondition;
+    }
+
     String getStableId() {
         return stableId;
     }
 
     int getStatusSortOrder() {
-        if (legacy) {
+        if (legacy || modpackCondition) {
             return -1;
         }
         return status == null ? -1 : status.isClosedWithoutCrash()

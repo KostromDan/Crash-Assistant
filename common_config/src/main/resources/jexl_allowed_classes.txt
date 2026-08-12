@@ -52,6 +52,7 @@ dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModpackStatusChecker
 dev.kostromdan.mods.crash_assistant.common_config.mod_list.UpdatedPair
 dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp
 dev.kostromdan.mods.crash_assistant.common_config.scripts.JexlStreamArithmetic
+dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.GeneratedMessage
 dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Logger
 dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.MinecraftLogger
 dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptUtils

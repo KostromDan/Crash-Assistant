@@ -13,6 +13,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.utils.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.GeneratedMessage;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Startup;
 
@@ -129,6 +130,11 @@ public class JarInJarHelper {
             if (!startupWarnings.isEmpty()) {
                 argsList.add("-startupWarnings");
                 argsList.add(Base64.getEncoder().encodeToString(new GsonBuilder().create().toJson(startupWarnings).getBytes(StandardCharsets.UTF_8)));
+            }
+            if (GeneratedMessage.hasState()) {
+                argsList.add("-generatedMessageState");
+                argsList.add(Base64.getEncoder().encodeToString(
+                        GeneratedMessage.exportState().getBytes(StandardCharsets.UTF_8)));
             }
             if (tempDir.toAbsolutePath().toString().contains(Paths.get("lunarclient", "offline", "multiver").toString()) &&
                     ClassExistenceChecker.classExists("com.moonsworth.lunar.ichor.api.IchorAPI")) {

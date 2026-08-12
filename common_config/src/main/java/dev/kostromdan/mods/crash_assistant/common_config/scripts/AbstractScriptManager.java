@@ -1,9 +1,10 @@
 package dev.kostromdan.mods.crash_assistant.common_config.scripts;
 
+import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.permissions.Permissions;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.GeneratedMessage;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Logger;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptUtils;
-import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.JexlScript;
@@ -103,6 +104,7 @@ public abstract class AbstractScriptManager {
             return;
         }
 
+        GeneratedMessage.clearContributionsForScript(scriptName);
         Logger.info("Running script: {}", scriptName);
         ScriptUtils.setCurrentScriptName(scriptName);
         try {

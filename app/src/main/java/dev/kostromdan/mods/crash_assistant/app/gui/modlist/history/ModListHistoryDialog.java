@@ -6,6 +6,7 @@ import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListComparison;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 import dev.kostromdan.mods.crash_assistant.common_config.lang.LanguageProvider;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
+import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListDiff;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListTxtParser;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryRecord;
@@ -13,6 +14,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModLis
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryManager;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryStatus;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryStore;
+import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -78,6 +80,13 @@ public final class ModListHistoryDialog extends JDialog {
     private static final int MINIMUM_WIDTH = 760;
     private static final int MINIMUM_HEIGHT = 420;
     private static final AtomicBoolean OPENING_OR_OPEN = new AtomicBoolean(false);
+    private static final ModListHistoryStatus[] FILTER_ORDER = {
+            ModListHistoryStatus.STARTED,
+            ModListHistoryStatus.TITLE_SCREEN,
+            ModListHistoryStatus.CRASHED_DURING_GAMEPLAY,
+            ModListHistoryStatus.CLOSED_WITHOUT_CRASH,
+            ModListHistoryStatus.JOINED
+    };
 
     private final List<ModListHistoryRow> rows;
     private final ModListHistoryRow currentRow;
@@ -205,7 +214,7 @@ public final class ModListHistoryDialog extends JDialog {
         loader.start();
     }
 
-    private static LoadedRows loadRows() {
+    private static LoadedRows loadRows() throws IOException {
         ModListHistoryStore store = ModListHistoryManager.getStore();
         Optional<ModListHistorySummary> currentSummary = ModListHistoryManager.getCurrentSummary();
         long currentTimestamp = currentSummary.isPresent()
@@ -222,6 +231,20 @@ public final class ModListHistoryDialog extends JDialog {
 
         List<ModListHistoryRow> result = new ArrayList<ModListHistoryRow>();
         result.add(syntheticCurrent);
+
+        boolean showModpackCondition = !PlatformHelp.isLinkDefault()
+                && !ModListDiff.isModpackCreator()
+                && Files.isRegularFile(ModListUtils.getSavedModListPath());
+        if (showModpackCondition) {
+            try {
+                result.add(ModListHistoryRow.modpackCondition(
+                        currentTimestamp == Long.MIN_VALUE ? Long.MIN_VALUE : currentTimestamp - 1L,
+                        ModListUtils.getSavedModListSize()));
+            } catch (IOException e) {
+                CrashAssistantApp.LOGGER.error(
+                        "Skipping invalid modpack condition in mod-list history", e);
+            }
+        }
 
         List<ModListHistorySummary> records = store.listSummariesNewestFirst();
         // Keep migration snapshots immediately below Current. They are honest,
@@ -280,12 +303,8 @@ public final class ModListHistoryDialog extends JDialog {
         // Two predictable rows avoid FlowLayout clipping long localized status
         // names (notably Russian) at the fixed dialog width.
         JPanel panel = new JPanel(new GridLayout(0, 3, 10, 2));
-        for (ModListHistoryStatus status : ModListHistoryStatus.values()) {
-            if (status.isClosedWithoutCrash()
-                    && status != ModListHistoryStatus.CLOSED_WITHOUT_CRASH) {
-                continue;
-            }
-            JCheckBox checkBox = new JCheckBox(statusLabel(status), true);
+        for (ModListHistoryStatus status : FILTER_ORDER) {
+            JCheckBox checkBox = new JCheckBox(filterLabel(status), true);
             checkBox.addItemListener(event -> applyFilters());
             filters.put(status, checkBox);
             panel.add(checkBox);
@@ -470,7 +489,7 @@ public final class ModListHistoryDialog extends JDialog {
                     @Override
                     public boolean include(Entry<? extends ModListHistoryTableModel, ? extends Integer> entry) {
                         ModListHistoryRow row = entry.getModel().getRow(entry.getIdentifier().intValue());
-                        if (row.isCurrent() || row.isLegacy()) {
+                        if (row.isCurrent() || row.isLegacy() || row.isModpackCondition()) {
                             return true;
                         }
                         ModListHistoryStatus filterStatus = row.getStatus().isClosedWithoutCrash()
@@ -606,6 +625,9 @@ public final class ModListHistoryDialog extends JDialog {
         if (row.isCurrent()) {
             return row.getCurrentMods();
         }
+        if (row.isModpackCondition()) {
+            return ModListUtils.getSavedModList();
+        }
         Optional<ModListHistoryRecord> record = ModListHistoryManager.getStore().getRecord(row.getTimestamp());
         if (!record.isPresent()) {
             throw new IOException("The selected mod-list history record is unavailable or invalid.");
@@ -616,6 +638,9 @@ public final class ModListHistoryDialog extends JDialog {
     private static ModListComparison.SourceKind sourceKind(ModListHistoryRow row) {
         if (row.isCurrent()) {
             return ModListComparison.SourceKind.CURRENT;
+        }
+        if (row.isModpackCondition()) {
+            return ModListComparison.SourceKind.MODPACK_BASELINE;
         }
         return row.isLegacy()
                 ? ModListComparison.SourceKind.LEGACY_SNAPSHOT
@@ -789,6 +814,9 @@ public final class ModListHistoryDialog extends JDialog {
         if (row.isCurrent()) {
             return LanguageProvider.get("gui.modlist_history.current");
         }
+        if (row.isModpackCondition()) {
+            return LanguageProvider.get("gui.modlist_history.modpack_condition");
+        }
         if (row.isLegacy()) {
             return LanguageProvider.get("gui.modlist_history.legacy_snapshot");
         }
@@ -817,6 +845,23 @@ public final class ModListHistoryDialog extends JDialog {
         }
     }
 
+    private static String filterLabel(ModListHistoryStatus status) {
+        switch (status) {
+            case STARTED:
+                return LanguageProvider.get("gui.modlist_history.filter.crashed_during_startup");
+            case TITLE_SCREEN:
+                return LanguageProvider.get("gui.modlist_history.filter.crashed_before_world_join");
+            case CRASHED_DURING_GAMEPLAY:
+                return LanguageProvider.get("gui.modlist_history.filter.crashed_after_world_join");
+            case CLOSED_WITHOUT_CRASH:
+                return LanguageProvider.get("gui.modlist_history.filter.closed_without_crash");
+            case JOINED:
+                return LanguageProvider.get("gui.modlist_history.filter.unfinished_records");
+            default:
+                return statusLabel(status);
+        }
+    }
+
     private static String formatDate(long timestamp) {
         DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return format.format(new Date(timestamp));
@@ -826,7 +871,9 @@ public final class ModListHistoryDialog extends JDialog {
         @Override
         protected void setValue(Object value) {
             ModListHistoryRow row = (ModListHistoryRow) value;
-            setText(row.isLegacy()
+            setText(row.isModpackCondition()
+                    ? LanguageProvider.get("gui.modlist_history.modpack_condition")
+                    : row.isLegacy()
                     ? LanguageProvider.get("gui.modlist_history.legacy_snapshot")
                     : statusLabel(row.getStatus()));
         }
@@ -836,10 +883,13 @@ public final class ModListHistoryDialog extends JDialog {
         @Override
         protected void setValue(Object value) {
             ModListHistoryRow row = (ModListHistoryRow) value;
-            setText(row.isCurrent()
+            setText(row.isModpackCondition()
+                    ? LanguageProvider.get("gui.modlist_history.modpack_condition")
+                    : row.isCurrent()
                     ? LanguageProvider.get("gui.modlist_history.current")
                     : formatDate(row.getTimestamp()));
-            setFont(getFont().deriveFont(row.isCurrent() ? Font.BOLD : Font.PLAIN));
+            setFont(getFont().deriveFont(
+                    row.isCurrent() || row.isModpackCondition() ? Font.BOLD : Font.PLAIN));
         }
     }
 
@@ -929,7 +979,7 @@ public final class ModListHistoryDialog extends JDialog {
         }
 
         private static Color accent(ModListHistoryRow row) {
-            if (row.isLegacy() || row.getStatus() == null) {
+            if (row.isLegacy() || row.isModpackCondition() || row.getStatus() == null) {
                 return null;
             }
             switch (row.getStatus()) {

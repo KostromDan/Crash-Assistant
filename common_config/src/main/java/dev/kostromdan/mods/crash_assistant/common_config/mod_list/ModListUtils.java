@@ -1,5 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common_config.mod_list;
 
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryStore;
@@ -9,6 +11,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -263,6 +268,104 @@ public class ModListUtils {
             LOGGER.error("Error while getting Modlist", e);
         }
         return new LinkedHashSet<>();
+    }
+
+    /** Counts only top-level baseline entries without constructing the mod graph. */
+    public static int getSavedModListSize() throws IOException {
+        if (!Files.isRegularFile(JSON_FILE)) {
+            return 0;
+        }
+        if (Files.size(JSON_FILE) == 0L) {
+            return 0;
+        }
+        boolean hasBom = hasUtf8Bom(JSON_FILE);
+        LinkedHashSet<Charset> charsets = new LinkedHashSet<Charset>();
+        charsets.add(StandardCharsets.UTF_8);
+        if (!hasBom) {
+            addCharset(charsets, System.getProperty("native.encoding"));
+            charsets.add(Charset.defaultCharset());
+        }
+
+        IOException firstFailure = null;
+        for (Charset charset : charsets) {
+            try {
+                return countTopLevelModEntries(JSON_FILE, charset, hasBom);
+            } catch (IOException | RuntimeException failure) {
+                IOException wrapped = failure instanceof IOException
+                        ? (IOException) failure
+                        : new IOException("Invalid modlist.json for charset " + charset.name(), failure);
+                if (firstFailure == null) {
+                    firstFailure = wrapped;
+                } else {
+                    firstFailure.addSuppressed(wrapped);
+                }
+            }
+        }
+        throw firstFailure == null
+                ? new IOException("Invalid modlist.json")
+                : firstFailure;
+    }
+
+    private static int countTopLevelModEntries(Path path, Charset charset, boolean skipUtf8Bom)
+            throws IOException {
+        try (InputStream input = Files.newInputStream(path)) {
+            if (skipUtf8Bom) {
+                for (int i = 0; i < UTF_8_BOM.length; i++) {
+                    if (input.read() != (UTF_8_BOM[i] & 0xff)) {
+                        throw new IOException("Invalid UTF-8 BOM in " + path);
+                    }
+                }
+            }
+            try (Reader decoded = new InputStreamReader(
+                    input,
+                    charset.newDecoder()
+                            .onMalformedInput(CodingErrorAction.REPORT)
+                            .onUnmappableCharacter(CodingErrorAction.REPORT))) {
+                JsonReader json = new JsonReader(decoded);
+                JsonToken root = json.peek();
+                int count = 0;
+                if (root == JsonToken.BEGIN_ARRAY) {
+                    json.beginArray();
+                    while (json.hasNext()) {
+                        json.skipValue();
+                        count = incrementModCount(count);
+                    }
+                    json.endArray();
+                } else if (root == JsonToken.BEGIN_OBJECT) {
+                    json.beginObject();
+                    while (json.hasNext()) {
+                        json.nextName();
+                        json.skipValue();
+                        count = incrementModCount(count);
+                    }
+                    json.endObject();
+                } else {
+                    throw new IOException("modlist.json must contain an array or object");
+                }
+                if (json.peek() != JsonToken.END_DOCUMENT) {
+                    throw new IOException("Unexpected trailing content in modlist.json");
+                }
+                return count;
+            }
+        }
+    }
+
+    private static int incrementModCount(int count) throws IOException {
+        if (count == Integer.MAX_VALUE) {
+            throw new IOException("modlist.json contains too many entries");
+        }
+        return count + 1;
+    }
+
+    private static boolean hasUtf8Bom(Path path) throws IOException {
+        try (InputStream input = Files.newInputStream(path)) {
+            for (byte expected : UTF_8_BOM) {
+                if (input.read() != (expected & 0xff)) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     static LinkedHashSet<Mod> readModList(Path path) throws IOException {

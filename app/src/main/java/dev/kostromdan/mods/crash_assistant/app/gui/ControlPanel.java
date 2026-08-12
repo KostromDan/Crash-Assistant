@@ -19,6 +19,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModLis
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryRecord;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistorySummary;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.GeneratedMessage;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListComparison;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffDialog;
 import dev.kostromdan.mods.crash_assistant.app.gui.modlist.ModListDiffWidget;
@@ -64,6 +65,7 @@ public class ControlPanel {
     private volatile GeneratedMessageComparison generatedMessageComparison;
     private String generatedMsg = null;
     private List<FilePanel> generatedMsgBatch = Collections.emptyList();
+    private long generatedMsgScriptRevision = -1;
     private String uploadArrayViewerLink;
     private boolean uploadAllMessageCopied;
 
@@ -75,29 +77,35 @@ public class ControlPanel {
         boolean modListEnabled = CrashAssistantConfig.getBoolean("modpack_modlist.enabled");
         modListInitiallyVisible = modListEnabled;
         if (modListEnabled) {
-            modListContainer = new JPanel();
-            modListContainer.setLayout(new BoxLayout(modListContainer, BoxLayout.Y_AXIS));
+            modListContainer = new JPanel(new GridBagLayout());
+            modListContainer.setBorder(BorderFactory.createTitledBorder(
+                    LanguageProvider.get("gui.modlist_section_title")));
+            int modListRow = 0;
 
             boolean actualModpack = !PlatformHelp.isLinkDefault();
             boolean modpackCreator = ModListDiff.isModpackCreator();
             if (actualModpack && !modpackCreator) {
                 modpackModListWidget = new ModListDiffWidget(
-                        false,
-                        () -> { },
-                        () -> showComparison(modpackModListWidget)
-                );
-                modpackModListWidget.setLoading(getModpackComparisonTitle(false));
-                modListContainer.add(modpackModListWidget.getComponent());
-                modListContainer.add(Box.createVerticalStrut(3));
+                        () -> showComparison(modpackModListWidget));
+                modpackModListWidget.setLoading(getModpackComparisonSourceLabel());
+                modpackModListWidget.addTo(modListContainer, modListRow++);
             }
 
             historyModListWidget = new ModListDiffWidget(
-                    true,
-                    this::showModListHistory,
-                    () -> showComparison(historyModListWidget)
-            );
-            historyModListWidget.setLoading(getLatestLaunchComparisonTitle(false));
-            modListContainer.add(historyModListWidget.getComponent());
+                    () -> showComparison(historyModListWidget));
+            historyModListWidget.setLoading(getLatestLaunchComparisonSourceLabel());
+            historyModListWidget.addTo(modListContainer, modListRow++);
+
+            JButton showModListHistoryButton = new JButton(
+                    LanguageProvider.get("gui.show_modlist_history_button"));
+            showModListHistoryButton.addActionListener(event -> showModListHistory());
+            GridBagConstraints historyButtonConstraints = new GridBagConstraints();
+            historyButtonConstraints.gridx = 0;
+            historyButtonConstraints.gridy = modListRow;
+            historyButtonConstraints.gridwidth = GridBagConstraints.REMAINDER;
+            historyButtonConstraints.anchor = GridBagConstraints.LINE_START;
+            historyButtonConstraints.insets = new Insets(6, 5, 4, 5);
+            modListContainer.add(showModListHistoryButton, historyButtonConstraints);
             panel.add(modListContainer, BorderLayout.NORTH);
         }
 
@@ -366,6 +374,7 @@ public class ControlPanel {
         String historyMessageTitle = getLatestLaunchComparisonTitle(true);
         String historyMessagePart1 = getLatestLaunchComparisonPart1(true);
         String historyMessagePart2 = getLatestLaunchComparisonPart2(true);
+        String historySourceLabel = getLatestLaunchComparisonSourceLabel();
         Optional<ModListHistorySummary> currentRecord = ModListHistoryManager.getCurrentSummary();
         if (currentRecord.isPresent()) {
             Optional<ModListComparisonReference> reference = ModListHistoryManager.getStore()
@@ -380,6 +389,7 @@ public class ControlPanel {
                     historyMessageTitle = getHistoryComparisonTitle(resolved.getKind(), true);
                     historyMessagePart1 = getHistoryComparisonPart1(resolved.getKind(), true);
                     historyMessagePart2 = getHistoryComparisonPart2(resolved.getKind(), true);
+                    historySourceLabel = getHistoryComparisonSourceLabel(resolved.getKind());
                     historyComparison = createHistoryComparison(
                             historyTitle, resolved, currentMods);
                 }
@@ -394,19 +404,19 @@ public class ControlPanel {
         final ModListDiff finalHistoryDiff = historyComparison == null
                 ? null
                 : historyComparison.createDiff();
-        final String finalHistoryTitle = historyTitle;
+        final String finalHistorySourceLabel = historySourceLabel;
         SwingEDT.runAndWait(() -> {
             if (modpackModListWidget != null && finalModpackComparison != null) {
                 modpackModListWidget.setComparison(
-                        getModpackComparisonTitle(false),
+                        getModpackComparisonSourceLabel(),
                         finalModpackComparison,
                         finalModpackDiff);
             }
             if (finalHistoryComparison == null) {
-                historyModListWidget.setUnavailable(finalHistoryTitle);
+                historyModListWidget.setUnavailable(finalHistorySourceLabel);
             } else {
                 historyModListWidget.setComparison(
-                        finalHistoryTitle,
+                        finalHistorySourceLabel,
                         finalHistoryComparison,
                         finalHistoryDiff);
             }
@@ -461,6 +471,26 @@ public class ControlPanel {
 
     private static String getLatestLaunchComparisonPart2(boolean forMsg) {
         return LanguageProvider.getLangFunction(forMsg).apply("msg.modlist_changes_latest_launch_2");
+    }
+
+    private static String getModpackComparisonSourceLabel() {
+        return LanguageProvider.get("gui.modlist_comparison.modpack");
+    }
+
+    private static String getLatestLaunchComparisonSourceLabel() {
+        return LanguageProvider.get("gui.modlist_comparison.latest_launch");
+    }
+
+    private static String getHistoryComparisonSourceLabel(ModListComparisonReference.Kind kind) {
+        switch (kind) {
+            case JOINED:
+                return LanguageProvider.get("gui.modlist_comparison.latest_world_join");
+            case LEGACY_SNAPSHOT:
+                return LanguageProvider.get("gui.modlist_comparison.legacy_snapshot");
+            case TITLE_SCREEN:
+            default:
+                return getLatestLaunchComparisonSourceLabel();
+        }
     }
 
     private static String getHistoryComparisonTitle(ModListComparisonReference.Kind kind, boolean forMsg) {
@@ -761,7 +791,8 @@ public class ControlPanel {
             List<FilePanel> uploadBatch = Collections.unmodifiableList(
                     new ArrayList<>(fileListPanel.getFilePanelList())
             );
-            if (generatedMsg != null && !generatedMsgBatch.equals(uploadBatch)) {
+            if (generatedMsg != null && (!generatedMsgBatch.equals(uploadBatch)
+                    || generatedMsgScriptRevision != GeneratedMessage.getRevision())) {
                 generatedMsg = null;
             }
             if (generatedMsg == null) {
@@ -1006,12 +1037,14 @@ public class ControlPanel {
         }
 
         StringBuilder analysisResult = new StringBuilder();
-        if (!KnownCrashReasonMessage.getAllMessages().isEmpty() && CrashAssistantConfig.getBoolean("generated_message.put_analysis_result_to_message")) {
+        List<String> copiedAnalysisResults = GeneratedMessage.getAnalysisResults();
+        if ((!KnownCrashReasonMessage.getAllMessages().isEmpty() || !copiedAnalysisResults.isEmpty())
+                && CrashAssistantConfig.getBoolean("generated_message.put_analysis_result_to_message")) {
             ModListDiffStringBuilder analysis_sb = new ModListDiffStringBuilder();
             HashMap<KnownCrashReason, List<Log>> reasonToLogs = KnownCrashReasonMessage.getUniqueMessages();
 
             analysis_sb.append(LanguageProvider.getMsgLang("msg.found_analysis_1"), false);
-            analysis_sb.append(Integer.toString(reasonToLogs.size()), "blue", false);
+            analysis_sb.append(Integer.toString(reasonToLogs.size() + copiedAnalysisResults.size()), "blue", false);
             analysis_sb.append(LanguageProvider.getMsgLang("msg.found_analysis_2"));
 
             int scriptedResultsCount = (int) KnownCrashReasonMessage.getAllMessagesSnapshot().stream()
@@ -1041,22 +1074,13 @@ public class ControlPanel {
                 analysis_sb.append(LanguageProvider.getMsgLang("msg.scripted_analysis"), "blue", false);
                 analysis_sb.append(": " + scriptedResultsCount + " " + LanguageProvider.getMsgLang("msg.scripted_analysis_results"));
             }
+            copiedAnalysisResults.forEach(analysis_sb::append);
             String ansiAnalysis = analysis_sb.toAnsi(true).trim();
             if (!ansiAnalysis.isEmpty()) {
                 if (!problematicFrame.toString().isEmpty()) analysisResult.append("\n");
                 analysisResult.append(ansiAnalysis);
             }
         }
-
-
-        String finalStructure = CrashAssistantConfig.get("generated_message.message_structure", false);
-        String partialMsg = finalStructure
-                .replace("$HEADER$", header)
-                .replace("$TEXT_UNDER_CRASHED$", textUnderCrashed)
-                .replace("$PREFIX$", prefix)
-                .replace("$LOGS$", joinedLogs)
-                .replace("$PROBLEMATIC_FRAME$", problematicFrame.toString())
-                .replace("$ANALYSIS_RESULT$", analysisResult.toString());
 
         StringBuilder modListDiffContent = new StringBuilder();
         GeneratedMessageComparison generatedComparison = generatedMessageComparison;
@@ -1117,9 +1141,18 @@ public class ControlPanel {
             }
         }
 
-        generatedMsg = partialMsg
-                .replace("$MODLIST_DIFF$", modListDiffContent.toString());
+        String finalStructure = GeneratedMessage.getCurrentStructure();
+        Map<String, String> messageValues = new HashMap<>();
+        messageValues.put("HEADER", header);
+        messageValues.put("TEXT_UNDER_CRASHED", textUnderCrashed);
+        messageValues.put("PREFIX", prefix);
+        messageValues.put("LOGS", joinedLogs);
+        messageValues.put("PROBLEMATIC_FRAME", problematicFrame.toString());
+        messageValues.put("ANALYSIS_RESULT", analysisResult.toString());
+        messageValues.put("MODLIST_DIFF", modListDiffContent.toString());
+        generatedMsg = GeneratedMessage.renderStructure(finalStructure, messageValues);
         generatedMsgBatch = new ArrayList<>(uploadBatch);
+        generatedMsgScriptRevision = GeneratedMessage.getRevision();
 
         CrashAssistantApp.LOGGER.info("Generated message successfully:\n\n\n" + generatedMsg + "\n\n\n");
     }

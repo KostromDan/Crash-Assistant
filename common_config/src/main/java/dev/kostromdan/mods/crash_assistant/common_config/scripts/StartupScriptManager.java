@@ -3,6 +3,7 @@ package dev.kostromdan.mods.crash_assistant.common_config.scripts;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import com.electronwill.nightconfig.json.JsonFormat;
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.GeneratedMessage;
 import org.apache.commons.jexl3.JexlContext;
 
 import java.nio.charset.StandardCharsets;
@@ -34,6 +35,7 @@ public class StartupScriptManager extends AbstractScriptManager {
     }
 
     public static void runStartupSequence(Path appJarPath, Path modJarPath) {
+        GeneratedMessage.reset();
         migrateProblematicModsConfig();
         patchLegacyMigratedProblematicModsScript();
         patchLegacyExampleStartupScript();

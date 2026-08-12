@@ -8,6 +8,7 @@ import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantLo
 import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.ArgUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
+import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.GeneratedMessage;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptUtils;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.ScriptWarning;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.script_utils.Startup;
@@ -164,6 +165,7 @@ final class JexlDocumentationCompatibilityTest {
 
     private void testAnalysisAndGlobalState() {
         Analysis.getRegisteredWarnings().clear();
+        GeneratedMessage.reset();
         context.set("docLog", context.get("docLog"));
         assertTrue(execute("Analysis.addWarning('global documentation warning')") instanceof ScriptWarning,
                 "Global Analysis warning must be created");
@@ -181,6 +183,14 @@ final class JexlDocumentationCompatibilityTest {
         execute("Startup.setGlobal('startup-documentation-key', 'startup-value')");
         assertEquals("startup-value", execute("Analysis.getGlobal('startup-documentation-key')"));
         assertType(String.class, execute("LanguageProvider.get('custom.manual_crash')"));
+
+        ScriptUtils.setCurrentScriptName("log_analysis/documentation.jexl");
+        execute("Analysis.putCopiedResult('documented-result', 'Copied documentation result', 10)");
+        assertEquals(Arrays.asList("Copied documentation result"), GeneratedMessage.getAnalysisResults());
+        execute("Analysis.removeCopiedResult('documented-result')");
+        assertTrue(GeneratedMessage.getAnalysisResults().isEmpty(), "Copied result must be removable");
+        ScriptUtils.setCurrentScriptName(null);
+        GeneratedMessage.reset();
     }
 
     private void testScriptWarningConfiguration() {

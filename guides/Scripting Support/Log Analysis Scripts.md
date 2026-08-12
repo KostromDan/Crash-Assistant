@@ -43,9 +43,14 @@ To conveniently debug log analysis scripts you can use built-in IDE (`file -> Sc
 ### Creating Warnings (`Analysis`)
 * `Analysis.addWarning(String message)`: Creates a global warning not tied to a specific log (Use only if there is really no log object attached to this warning. Otherwise use the next option.). Returns `ScriptWarning`.
 * `Analysis.addWarning(Log log, String message)`: Creates a warning attached to `log`. Returns `ScriptWarning`.
+* `Analysis.putCopiedResult(String id, String text)`: Adds or updates a short record inside the copied message's standard `$ANALYSIS_RESULT$` block.
+* `Analysis.putCopiedResult(String id, String text, int priority)`: Same as above; higher-priority records are rendered first.
+* `Analysis.removeCopiedResult(String id)`: Removes the current script's copied result with this ID.
 * `Analysis.markRunAlways()`: Forces the script to run repeatedly on subsequent analysis passes (e.g. when late logs arrive, like `WIN_EVENT`).
 * `Analysis.setGlobal(String key, Object value)`: Persists an object across execution passes.
 * `Analysis.getGlobal(String key)`: Retrieves a persisted object.
+
+See [Generated Support Message](Generated%20Support%20Message.md) for output examples, custom `$CUSTOM/name$` slots, and session-only message-structure overrides.
 
 ### Warning Configuration (`ScriptWarning`)
 The object returned by `Analysis.addWarning(…)` allows method chaining to configure the warning popup.

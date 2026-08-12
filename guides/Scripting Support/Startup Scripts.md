@@ -9,7 +9,12 @@ The startup scripts are expected to be debugged by a launching minecraft process
 ### Throwing Launch Warnings (`Startup`)
 * `Startup.addBootWarning(String message)`: Adds warning that appears during startup. Minecraft launch continues. Returns `ScriptWarning`.
 * `Startup.addCrashWarning(String message)`: Adds warning that appears after crash. Returns `ScriptWarning`. Doesn't crash game by itself, use next option for it.
+* `Startup.putCopiedResult(String id, String text)`: Adds or updates a short record inside the copied message's standard `$ANALYSIS_RESULT$` block if Crash Assistant opens later.
+* `Startup.putCopiedResult(String id, String text, int priority)`: Same as above; higher-priority records are rendered first.
+* `Startup.removeCopiedResult(String id)`: Removes the current script's copied result with this ID.
 * `Startup.markForCrash()`: Terminates the Minecraft JVM client forcefully once all scripts are executed.
+
+See [Generated Support Message](Generated%20Support%20Message.md) for output examples, custom `$CUSTOM/name$` slots, message-structure overrides, and details about automatic transfer to the standalone Crash Assistant process.
 
 > **⚠️ CRITICAL WARNING:** If you use `markForCrash()` alongside `withDontShowAgain()`, you MUST explicitly check `CrashAssistantLocalConfig.get("your_dont_show_again_key")` in your script's logic before calling `markForCrash()`. Otherwise, when the user clicks "Don't Show Again", the warning popup will be hidden on the next launch, but your script will still silently crash the game!
 

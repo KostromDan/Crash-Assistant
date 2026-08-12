@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.app;
 
 import dev.kostromdan.mods.crash_assistant.app.class_loading.Boot;
+import dev.kostromdan.mods.crash_assistant.app.class_loading.ModListSnapshotWorker;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.KnownCrashReasonMessage;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.Log;
 import dev.kostromdan.mods.crash_assistant.app.logs_analyser.LogType;
@@ -157,6 +158,10 @@ public class CrashAssistantApp {
                 } catch (Exception e) {
                     LOGGER.error("Failed to parse warnsProcessOutput", e);
                 }
+            } else if ("-modListSnapshotOutput".equals(args[i]) && i + 1 < args.length) {
+                long[] snapshotResult = parseModListSnapshotOutput(args[++i]);
+                historySnapshotTimestamp = snapshotResult[0];
+                modListTxtGenerated = snapshotResult[1] == 1L;
             } else if ("-modListHistoryTimestamp".equals(args[i]) && i + 1 < args.length) {
                 try {
                     historySnapshotTimestamp = Long.parseLong(args[++i]);
@@ -245,6 +250,27 @@ public class CrashAssistantApp {
                 break;
             }
         }
+    }
+
+    private static long[] parseModListSnapshotOutput(String encodedOutput) {
+        long historyTimestamp = -1L;
+        boolean txtGenerated = false;
+        try {
+            String decoded = new String(Base64.getDecoder().decode(encodedOutput), StandardCharsets.UTF_8);
+            LOGGER.info("Mod-list snapshot process output:\n{}", decoded);
+            for (String line : decoded.split("\\R")) {
+                if (!line.startsWith(ModListSnapshotWorker.RESULT_PREFIX)) {
+                    continue;
+                }
+                String[] result = line.substring(ModListSnapshotWorker.RESULT_PREFIX.length())
+                        .split(":", 2);
+                historyTimestamp = Long.parseLong(result[0]);
+                txtGenerated = result.length == 2 && Boolean.parseBoolean(result[1]);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to parse mod-list snapshot process output", e);
+        }
+        return new long[]{historyTimestamp, txtGenerated ? 1L : 0L};
     }
 
     private static boolean checkLoadingErrorScreen(long historySnapshotTimestamp,

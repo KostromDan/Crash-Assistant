@@ -349,7 +349,11 @@ public class ModListDiff {
         if (!getUpdatedMods().isEmpty()) {
             sb.append(langFunc.apply("msg.updated_mods"));
             for (UpdatedPair updatedPair : getUpdatedMods()) {
-                if (!updatedPair.isAnyModMessedUpWithVersion()) {
+                if (isSameJarWithMismatchedHash(updatedPair)) {
+                    Mod currentMod = updatedPair.getNewMods().iterator().next();
+                    sb.append(currentMod.getJarName(), "blue", false);
+                    sb.append(" (mismatched hash)");
+                } else if (!updatedPair.isAnyModMessedUpWithVersion()) {
                     sb.append(updatedPair.getModId(), "blue", false);
                     sb.append(" (", false);
 
@@ -368,6 +372,18 @@ public class ModListDiff {
             }
         }
         return sb;
+    }
+
+    private static boolean isSameJarWithMismatchedHash(UpdatedPair updatedPair) {
+        if (updatedPair.getOldMods().size() != 1 || updatedPair.getNewMods().size() != 1) {
+            return false;
+        }
+
+        Mod oldMod = updatedPair.getOldMods().iterator().next();
+        Mod newMod = updatedPair.getNewMods().iterator().next();
+        return oldMod.getJarName() != null && newMod.getJarName() != null &&
+                oldMod.getJarName().equalsIgnoreCase(newMod.getJarName()) &&
+                UpdatedPair.haveDifferentComparableHashes(oldMod, newMod);
     }
 
     private void appendModAttributes(ModListDiffStringBuilder sb, Collection<Mod> mods, Function<Mod, String> attributeExtractor, String color) {

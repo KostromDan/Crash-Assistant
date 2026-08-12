@@ -1,9 +1,6 @@
 package dev.kostromdan.mods.crash_assistant.app.class_loading;
 
 import dev.kostromdan.mods.crash_assistant.common_config.config.CrashAssistantConfig;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.Mod;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.ModListUtils;
-import dev.kostromdan.mods.crash_assistant.common_config.mod_list.history.ModListHistoryManager;
 import dev.kostromdan.mods.crash_assistant.common_config.scripts.permissions.Permissions;
 import dev.kostromdan.mods.crash_assistant.common_config.platform.PlatformHelp;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ErrorUtils;
@@ -25,12 +22,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 public class Boot {
@@ -39,7 +35,7 @@ public class Boot {
     private static boolean recursiveStart = false;
     private static boolean gpuDetect = false;
     private static boolean bootWarningsVisible = false;
-    private static boolean modListSnapshotTimedOut = false;
+    private static boolean modListSnapshot = false;
     private static String bootWarningsJson = null;
     private static String startupWarningsJson = null;
     private static String serialisedGPUs = null;
@@ -79,6 +75,8 @@ public class Boot {
                     gpuDetect = true;
                 } else if ("-bootWarningsVisible".equals(args[i])) {
                     bootWarningsVisible = true;
+                } else if ("-modListSnapshot".equals(args[i])) {
+                    modListSnapshot = true;
                 } else if (("-modListHistoryTimestamp".equals(args[i])
                         || "-modListTxtGenerated".equals(args[i]))
                         && i + 1 < args.length) {
@@ -159,55 +157,22 @@ public class Boot {
                 System.exit(0);
             }
 
+            if (modListSnapshot) {
+                ModListSnapshotWorker.run(effectiveArgs.toArray(new String[0]));
+                System.exit(0);
+            }
+
             /**
              * If Minecraft JVM terminated by windows itself, all child processes will be also terminated.
              * So Crash Assistant can't be child process. This way we make Crash Assistant completely independent process.
              *
-             * Also, here we're locating GPUs with Vulkan or DirectX, it's increasing heap before GUI start,
-             * so we're doing it on this TMP process, to not waste user resources on App awaiting stage.
+             * The recursive process starts the short-lived GPU and mod-list workers. That keeps this
+             * disposable child small and ensures the workers survive an early Minecraft termination.
             */
             if (!recursiveStart) {
-                FutureTask<LinkedHashSet<Mod>> modListScan = null;
-                long modListScanDeadlineNanos = 0L;
-                try {
-                    if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
-                        applyModListPlatformArguments(effectiveArgs);
-                        modListScan = new FutureTask<>(ModListHistoryManager::scanSnapshotMods);
-                        Thread modListScanThread = new Thread(modListScan, "CrashAssistant-ModList-Snapshot");
-                        modListScanThread.setDaemon(true);
-                        modListScanDeadlineNanos = System.nanoTime()
-                                + TimeUnit.SECONDS.toNanos(MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS);
-                        modListScanThread.start();
-                    }
-                } catch (Throwable e) {
-                    // Mod-list collection is optional. A malformed platform path or a scanner
-                    // setup failure must not prevent the independent Crash Assistant process
-                    // from being launched.
-                    modListScan = null;
-                    modListScanDeadlineNanos = 0L;
-                    System.err.println("Failed to start the mod-list snapshot scan; continuing without it:\n"
-                            + ErrorUtils.getErrorMessageAndStackTrace(e));
-                }
+                List<String> baseChildCommand = createBaseChildCommand(argsFilePath);
 
-                List<String> baseChildCommand = new ArrayList<>();
-                baseChildCommand.add(JavaBinaryLocator.getJavaBinary());
-                baseChildCommand.addAll(JVM_ARGS);
-                baseChildCommand.add("-cp");
-                baseChildCommand.add(classPath);
-                baseChildCommand.add("dev.kostromdan.mods.crash_assistant.app.class_loading.Boot");
-                baseChildCommand.add("--args-file");
-                baseChildCommand.add(argsFilePath);
-
-                serialisedGPUs = getSerializedGPUsOnAnotherProcess(new ArrayList<>(baseChildCommand));
-                if (serialisedGPUs != null) {
-                    String encodedGPUs = Base64.getEncoder().encodeToString(serialisedGPUs.getBytes(StandardCharsets.UTF_8));
-                    Files.write(Paths.get(argsFilePath), Arrays.asList("-serialisedGPUs", encodedGPUs), StandardOpenOption.APPEND);
-                }
-
-                LinkedHashSet<Mod> scannedMods = awaitModListSnapshotScan(
-                        modListScan, modListScanDeadlineNanos);
-
-                if (bootWarningsJson != null && !modListSnapshotTimedOut) {
+                if (bootWarningsJson != null) {
                     String warningsOutput = getBootWarningsOutput(new ArrayList<>(baseChildCommand));
                     if (warningsOutput != null) {
                         String encodedWarnsOutput = Base64.getEncoder().encodeToString(
@@ -215,40 +180,43 @@ public class Boot {
                         Files.write(Paths.get(argsFilePath), Arrays.asList(
                                 "-warnsProcessOutput", encodedWarnsOutput), StandardOpenOption.APPEND);
                     }
-                } else if (bootWarningsJson != null) {
-                    System.err.println("Skipping the boot-warnings helper after the mod-list scan timeout "
-                            + "so the main Crash Assistant process can start immediately.");
                 }
 
-                // Commit only after every fallible preparation step. From here to
-                // ProcessBuilder.start() there is no file handoff: the small result
-                // is passed directly on the child command line.
-                ModListHistoryManager.SnapshotResult snapshotResult = scannedMods == null
-                        ? null
-                        : ModListHistoryManager.persistSnapshot(parentStarted, scannedMods);
                 List<String> finalLaunchCommand = new ArrayList<>(baseChildCommand);
                 finalLaunchCommand.add("-recursiveStart");
-                if (snapshotResult != null) {
-                    finalLaunchCommand.add("-modListHistoryTimestamp");
-                    finalLaunchCommand.add(Long.toString(snapshotResult.getHistoryTimestamp()));
-                    finalLaunchCommand.add("-modListTxtGenerated");
-                    finalLaunchCommand.add(Boolean.toString(snapshotResult.isModListTxtGenerated()));
-                }
 
                 ProcessBuilder pb = new ProcessBuilder(finalLaunchCommand);
-                try {
-                    pb.start();
-                } catch (Throwable launchFailure) {
-                    ModListHistoryManager.discardSnapshotBeforeHandoff(snapshotResult);
-                    throw launchFailure;
-                }
+                pb.start();
                 System.exit(0);
+            }
+
+            StartupWorkerOutputs workerOutputs = runStartupWorkersInParallel(argsFilePath);
+            serialisedGPUs = workerOutputs.getSerialisedGPUs();
+
+            String snapshotOutput = workerOutputs.getModListSnapshotOutput();
+            workerOutputs = null;
+            String[] crashAssistantAppArgs;
+            if (snapshotOutput != null) {
+                effectiveArgs.add("-modListSnapshotOutput");
+                effectiveArgs.add(Base64.getEncoder().encodeToString(
+                        snapshotOutput.getBytes(StandardCharsets.UTF_8)));
+                crashAssistantAppArgs = effectiveArgs.toArray(new String[0]);
+                // Do not retain or print the encoded worker output through Boot.APP_ARGS.
+                effectiveArgs.remove(effectiveArgs.size() - 1);
+                effectiveArgs.remove(effectiveArgs.size() - 1);
+                snapshotOutput = null;
+            } else {
+                crashAssistantAppArgs = effectiveArgs.toArray(new String[0]);
             }
 
             Class<?> crashAssistantAppClass = Class.forName("dev.kostromdan.mods.crash_assistant.app.CrashAssistantApp");
             Method mainMethod = crashAssistantAppClass.getMethod("main", String[].class);
-            mainMethod.invoke(null, (Object) effectiveArgs.toArray(new String[0]));
+            mainMethod.invoke(null, (Object) crashAssistantAppArgs);
         } catch (Throwable e) {
+            if (modListSnapshot) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
             Path logsFolder = Paths.get("logs", "crash_assistant");
             Files.createDirectories(logsFolder);
             StringWriter sw = new StringWriter();
@@ -277,6 +245,128 @@ public class Boot {
         if (crashAssistantModJarName == null) missingParameters.add("-crashAssistantModJarName");
         if (classPath == null) missingParameters.add("-classPath");
         return missingParameters;
+    }
+
+    private static List<String> createBaseChildCommand(String argsFilePath) {
+        List<String> command = new ArrayList<>();
+        command.add(JavaBinaryLocator.getJavaBinary());
+        command.addAll(JVM_ARGS);
+        command.add("-cp");
+        command.add(classPath);
+        command.add("dev.kostromdan.mods.crash_assistant.app.class_loading.Boot");
+        command.add("--args-file");
+        command.add(argsFilePath);
+        return command;
+    }
+
+    private static List<String> createConsoleOnlyWorkerCommand(String argsFilePath) {
+        List<String> command = new ArrayList<>();
+        command.add(JavaBinaryLocator.getJavaBinary());
+        for (String jvmArg : JVM_ARGS) {
+            if (!jvmArg.startsWith("-Dlog4j.configurationFile=")
+                    && !jvmArg.startsWith("-Dlog4j2.configurationFile=")) {
+                command.add(jvmArg);
+            }
+        }
+        command.add("-Dlog4j.configurationFile=log4j2-console.xml");
+        command.add("-Dlog4j2.configurationFile=log4j2-console.xml");
+        command.add("-cp");
+        command.add(classPath);
+        command.add("dev.kostromdan.mods.crash_assistant.app.class_loading.Boot");
+        command.add("--args-file");
+        command.add(argsFilePath);
+        return command;
+    }
+
+    private static StartupWorkerOutputs runStartupWorkersInParallel(String argsFilePath) {
+        List<String> baseWorkerCommand = createConsoleOnlyWorkerCommand(argsFilePath);
+        Callable<String> modListWorker = null;
+        String modListSetupError = null;
+        try {
+            if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")) {
+                modListWorker = () -> getModListSnapshotOutput(argsFilePath);
+            }
+        } catch (Throwable e) {
+            modListSetupError = "Failed to check whether the mod-list snapshot worker is enabled:\n"
+                    + ErrorUtils.getErrorMessageAndStackTrace(e);
+        }
+
+        StartupWorkerOutputs outputs = runWorkerTasksInParallel(
+                () -> getSerializedGPUsOnAnotherProcess(new ArrayList<>(baseWorkerCommand)),
+                modListWorker);
+        return modListSetupError == null
+                ? outputs
+                : new StartupWorkerOutputs(outputs.getSerialisedGPUs(), modListSetupError);
+    }
+
+    @NoJexl
+    static StartupWorkerOutputs runWorkerTasksInParallel(
+            Callable<String> gpuWorker,
+            Callable<String> modListWorker) {
+        FutureTask<String> gpuTask = new FutureTask<>(gpuWorker);
+        FutureTask<String> modListTask = modListWorker == null
+                ? null
+                : new FutureTask<>(modListWorker);
+
+        String gpuStartError = startWorkerTask(gpuTask, "CrashAssistant-GPU-Worker-Launcher");
+        String modListStartError = modListTask == null
+                ? null
+                : startWorkerTask(modListTask, "CrashAssistant-ModList-Worker-Launcher");
+
+        String gpuOutput = gpuStartError == null
+                ? awaitWorkerTask(gpuTask, "GPU detector")
+                : gpuStartError;
+        String modListOutput = null;
+        if (modListTask != null) {
+            modListOutput = modListStartError == null
+                    ? awaitWorkerTask(modListTask, "mod-list snapshot")
+                    : modListStartError;
+        }
+        return new StartupWorkerOutputs(gpuOutput, modListOutput);
+    }
+
+    private static String startWorkerTask(FutureTask<String> task, String threadName) {
+        try {
+            Thread thread = new Thread(task, threadName);
+            thread.setDaemon(true);
+            thread.start();
+            return null;
+        } catch (Throwable e) {
+            return "Failed to start " + threadName + ":\n"
+                    + ErrorUtils.getErrorMessageAndStackTrace(e);
+        }
+    }
+
+    private static String awaitWorkerTask(FutureTask<String> task, String workerName) {
+        try {
+            return task.get();
+        } catch (InterruptedException e) {
+            task.cancel(true);
+            Thread.currentThread().interrupt();
+            return "Interrupted while waiting for the " + workerName + " worker:\n"
+                    + ErrorUtils.getErrorMessageAndStackTrace(e);
+        } catch (ExecutionException e) {
+            return "Failed to run the " + workerName + " worker:\n"
+                    + ErrorUtils.getErrorMessageAndStackTrace(e.getCause());
+        }
+    }
+
+    static final class StartupWorkerOutputs {
+        private final String serialisedGPUs;
+        private final String modListSnapshotOutput;
+
+        private StartupWorkerOutputs(String serialisedGPUs, String modListSnapshotOutput) {
+            this.serialisedGPUs = serialisedGPUs;
+            this.modListSnapshotOutput = modListSnapshotOutput;
+        }
+
+        String getSerialisedGPUs() {
+            return serialisedGPUs;
+        }
+
+        String getModListSnapshotOutput() {
+            return modListSnapshotOutput;
+        }
     }
 
     private static void loadVulkanAddon() {
@@ -376,68 +466,48 @@ public class Boot {
         }
     }
 
-    private static void applyModListPlatformArguments(List<String> args) {
-        String customLatestLogPath = null;
-        for (int i = 0; i < args.size(); i++) {
-            if ("-platform".equals(args.get(i)) && i + 1 < args.size()) {
-                PlatformHelp.platform = PlatformHelp.valueOf(args.get(++i));
-            } else if ("-platformOwerridenData".equals(args.get(i)) && i + 1 < args.size()) {
-                PlatformHelp.platform.deserializePlatformData(args.get(++i));
-            } else if ("-loaderJarName".equals(args.get(i)) && i + 1 < args.size()) {
-                PlatformHelp.loaderJarName = args.get(++i);
-            } else if ("-minecraftVersion".equals(args.get(i)) && i + 1 < args.size()) {
-                PlatformHelp.minecraftVersion = args.get(++i);
-            } else if ("-customLatestLogPath".equals(args.get(i)) && i + 1 < args.size()) {
-                customLatestLogPath = args.get(++i);
-            }
-        }
-        if (customLatestLogPath != null) {
-            ModListUtils.MODS_FOLDER = Paths.get(customLatestLogPath).getParent().getParent()
-                    .resolve("mods").resolve("fabric-" + PlatformHelp.minecraftVersion);
-        }
-    }
-
-    private static LinkedHashSet<Mod> awaitModListSnapshotScan(
-            FutureTask<LinkedHashSet<Mod>> modListScan,
-            long deadlineNanos) {
-        if (modListScan == null) {
-            return null;
-        }
-
+    private static String getModListSnapshotOutput(String argsFilePath) {
+        Path outputFile = null;
         try {
-            long remainingNanos = deadlineNanos - System.nanoTime();
-            if (remainingNanos <= 0L) {
-                modListSnapshotTimedOut = true;
-                modListScan.cancel(true);
-                System.err.println("Mod-list snapshot scan exceeded "
-                        + MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS + " seconds; continuing without a snapshot.");
-                return null;
+            Path localFolder = Paths.get("local", "crash_assistant");
+            Files.createDirectories(localFolder);
+            outputFile = Files.createTempFile(localFolder, ".modlist-snapshot-", ".tmp");
+
+            List<String> command = createConsoleOnlyWorkerCommand(argsFilePath);
+            command.add("-modListSnapshot");
+
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.redirectErrorStream(true);
+            processBuilder.redirectOutput(outputFile.toFile());
+            Process process = processBuilder.start();
+            boolean finished = process.waitFor(MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                process.waitFor();
             }
-            LinkedHashSet<Mod> mods = modListScan.get(remainingNanos, TimeUnit.NANOSECONDS);
-            if (System.nanoTime() > deadlineNanos) {
-                modListSnapshotTimedOut = true;
-                System.err.println("Mod-list snapshot scan exceeded "
-                        + MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS + " seconds; continuing without a snapshot.");
-                return null;
+
+            String output = new String(Files.readAllBytes(outputFile), StandardCharsets.UTF_8);
+            if (!finished) {
+                return output + System.lineSeparator()
+                        + "Mod-list snapshot process exceeded "
+                        + MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS + " seconds and was killed.";
             }
-            return mods;
-        } catch (TimeoutException e) {
-            modListSnapshotTimedOut = true;
-            modListScan.cancel(true);
-            System.err.println("Mod-list snapshot scan exceeded "
-                    + MOD_LIST_SNAPSHOT_TIMEOUT_SECONDS + " seconds; continuing without a snapshot.");
-        } catch (InterruptedException e) {
-            modListScan.cancel(true);
-            Thread.currentThread().interrupt();
-            System.err.println("Interrupted while waiting for the mod-list snapshot; continuing without it.");
-        } catch (ExecutionException e) {
-            System.err.println("Failed to scan the mod list; continuing without a snapshot:\n"
-                    + ErrorUtils.getErrorMessageAndStackTrace(e.getCause()));
+            if (process.exitValue() != 0) {
+                return output + System.lineSeparator()
+                        + "Mod-list snapshot process exited with code " + process.exitValue() + ".";
+            }
+            return output;
         } catch (Throwable e) {
-            System.err.println("Failed to collect the mod-list snapshot; continuing without it:\n"
-                    + ErrorUtils.getErrorMessageAndStackTrace(e));
+            return "Failed to run mod-list snapshot process:\n"
+                    + ErrorUtils.getErrorMessageAndStackTrace(e);
+        } finally {
+            if (outputFile != null) {
+                try {
+                    Files.deleteIfExists(outputFile);
+                } catch (IOException ignored) {
+                }
+            }
         }
-        return null;
     }
 
     public static String getStartupWarningsJson() {

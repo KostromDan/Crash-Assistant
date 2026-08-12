@@ -112,7 +112,7 @@ public final class ModListHistoryManager {
         return new SnapshotResult(historyTimestamp, txtWritten);
     }
 
-    /** Rolls back only this Boot process's unhanded launch record. */
+    /** Rolls back an unhanded launch record while it is still in the initial state. */
     public static void discardSnapshotBeforeHandoff(SnapshotResult snapshot) {
         if (snapshot == null || snapshot.getHistoryTimestamp() < 0L) {
             return;
@@ -128,7 +128,7 @@ public final class ModListHistoryManager {
         }
     }
 
-    /** Attaches the long-lived app to the snapshot captured by the disposable Boot process. */
+    /** Attaches the long-lived app to the snapshot captured by the short-lived worker process. */
     public static synchronized void attachSnapshot(long historyTimestamp, boolean txtGenerated) {
         initialized = true;
         currentLaunchStartedAt = historyTimestamp;

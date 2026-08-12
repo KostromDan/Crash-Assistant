@@ -1238,6 +1238,7 @@ public class CrashAssistantGUI {
                 // history and must never be interpreted as a pack baseline.
                 if (PlatformHelp.isLinkDefault()) return;
                 if (ModListDiff.isModpackCreator()) return;
+                if (Files.notExists(ModListUtils.getSavedModListPath())) return;
                 int totalChanges = ModListDiff.getDiff(true).getTotalChanges();
                 if (totalChanges <= allowedChanges) return;
                 String message;

@@ -329,6 +329,7 @@
   "gui.modlist_comparison.latest_world_join": "Berbanding penyertaan dunia terakhir:",
   "gui.modlist_comparison.legacy_snapshot": "Berbanding syot kilat tersimpan:",
   "gui.modlist_comparison.modpack": "Berbanding pek mod:",
+  "gui.modlist_comparison.modpack_modlist_missing": "Perbandingan tidak tersedia: modlist.json tiada",
   "gui.modlist_diff.actions.restore": "Pulihkan",
   "gui.modlist_diff.actions.restored": "Berjaya dipulihkan",
   "gui.modlist_diff.actions.restoring": "Sedang memullihkan...",

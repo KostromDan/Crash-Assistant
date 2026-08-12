@@ -329,6 +329,7 @@
   "gui.modlist_comparison.latest_world_join": "最後にワールドへ参加した時点との比較：",
   "gui.modlist_comparison.legacy_snapshot": "保存されたスナップショットとの比較：",
   "gui.modlist_comparison.modpack": "Modpack との比較：",
+  "gui.modlist_comparison.modpack_modlist_missing": "比較できません：modlist.json がありません",
   "gui.modlist_diff.actions.restore": "復元",
   "gui.modlist_diff.actions.restored": "復元に成功しました",
   "gui.modlist_diff.actions.restoring": "復元中...",

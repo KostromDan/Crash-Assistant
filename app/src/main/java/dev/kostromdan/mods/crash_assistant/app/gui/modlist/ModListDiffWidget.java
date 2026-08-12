@@ -127,9 +127,12 @@ public final class ModListDiffWidget {
     }
 
     public void setUnavailable(String title) {
+        setUnavailable(title, LanguageProvider.get("gui.modlist_history.no_comparison_reference"));
+    }
+
+    public void setUnavailable(String title, String unavailable) {
         comparison = null;
         setSource(title);
-        String unavailable = LanguageProvider.get("gui.modlist_history.no_comparison_reference");
         showStatus(unavailable);
         diffButton.setEnabled(false);
         diffButton.setToolTipText(unavailable);

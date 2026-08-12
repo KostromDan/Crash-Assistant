@@ -329,6 +329,7 @@
   "gui.modlist_comparison.latest_world_join": "与上次进入世界相比：",
   "gui.modlist_comparison.legacy_snapshot": "与已保存的快照相比：",
   "gui.modlist_comparison.modpack": "与整合包相比：",
+  "gui.modlist_comparison.modpack_modlist_missing": "无法比较：缺少 modlist.json",
   "gui.modlist_diff.actions.restore": "恢复",
   "gui.modlist_diff.actions.restored": "恢复成功",
   "gui.modlist_diff.actions.restoring": "正在恢复...",

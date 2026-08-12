@@ -329,6 +329,7 @@
   "gui.modlist_comparison.latest_world_join": "Относительно последнего входа в мир:",
   "gui.modlist_comparison.legacy_snapshot": "Относительно сохранённого снимка:",
   "gui.modlist_comparison.modpack": "Относительно модпака:",
+  "gui.modlist_comparison.modpack_modlist_missing": "Сравнение недоступно: modlist.json отсутствует",
   "gui.modlist_diff.actions.restore": "Восстановить",
   "gui.modlist_diff.actions.restored": "Успешно восстановлено",
   "gui.modlist_diff.actions.restoring": "Восстановление...",

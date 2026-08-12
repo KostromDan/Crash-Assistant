@@ -329,6 +329,7 @@
   "gui.modlist_comparison.latest_world_join": "Verglichen mit dem letzten Weltbeitritt:",
   "gui.modlist_comparison.legacy_snapshot": "Verglichen mit dem gespeicherten Snapshot:",
   "gui.modlist_comparison.modpack": "Verglichen mit dem Modpack:",
+  "gui.modlist_comparison.modpack_modlist_missing": "Vergleich nicht verfügbar: modlist.json fehlt",
   "gui.modlist_diff.actions.restore": "Wiederherstellen",
   "gui.modlist_diff.actions.restored": "Erfolgreich wiederhergestellt",
   "gui.modlist_diff.actions.restoring": "Wiederherstellen...",

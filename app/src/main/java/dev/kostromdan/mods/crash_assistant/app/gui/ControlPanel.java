@@ -30,6 +30,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -357,7 +358,9 @@ public class ControlPanel {
 
         LinkedHashSet<Mod> currentMods = ModListUtils.getCurrentModList(true);
         ModListComparison modpackComparison = null;
-        if (modpackModListWidget != null) {
+        boolean modpackModListMissing = modpackModListWidget != null
+                && Files.notExists(ModListUtils.getSavedModListPath());
+        if (modpackModListWidget != null && !modpackModListMissing) {
             String title = getModpackComparisonTitle(false);
             modpackComparison = ModListComparison.againstCurrent(
                     title,
@@ -404,13 +407,20 @@ public class ControlPanel {
         final ModListDiff finalHistoryDiff = historyComparison == null
                 ? null
                 : historyComparison.createDiff();
+        final boolean finalModpackModListMissing = modpackModListMissing;
         final String finalHistorySourceLabel = historySourceLabel;
         SwingEDT.runAndWait(() -> {
-            if (modpackModListWidget != null && finalModpackComparison != null) {
-                modpackModListWidget.setComparison(
-                        getModpackComparisonSourceLabel(),
-                        finalModpackComparison,
-                        finalModpackDiff);
+            if (modpackModListWidget != null) {
+                if (finalModpackModListMissing) {
+                    modpackModListWidget.setUnavailable(
+                            getModpackComparisonSourceLabel(),
+                            LanguageProvider.get("gui.modlist_comparison.modpack_modlist_missing"));
+                } else if (finalModpackComparison != null) {
+                    modpackModListWidget.setComparison(
+                            getModpackComparisonSourceLabel(),
+                            finalModpackComparison,
+                            finalModpackDiff);
+                }
             }
             if (finalHistoryComparison == null) {
                 historyModListWidget.setUnavailable(finalHistorySourceLabel);
@@ -424,18 +434,22 @@ public class ControlPanel {
             modListContainer.repaint();
         });
 
-        if (modpackComparison != null) {
+        if (modpackModListWidget != null) {
             generatedMessageComparison = new GeneratedMessageComparison(
                     modpackComparison,
                     getModpackComparisonTitle(true),
                     getModpackComparisonPart1(true),
-                    getModpackComparisonPart2(true));
+                    getModpackComparisonPart2(true),
+                    modpackModListMissing
+                            ? LanguageProvider.getMsgLang("gui.modlist_comparison.modpack_modlist_missing")
+                            : null);
         } else {
             generatedMessageComparison = new GeneratedMessageComparison(
                     historyComparison,
                     historyMessageTitle,
                     historyMessagePart1,
-                    historyMessagePart2);
+                    historyMessagePart2,
+                    null);
         }
 
         new Thread(() -> {
@@ -810,7 +824,9 @@ public class ControlPanel {
                         : generatedComparison.title;
                 if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled") && generatedComparison != null) {
                     if (comparison == null) {
-                        String noComparisonText = createNoComparisonDiffMessage(comparisonTitle).toText();
+                        String noComparisonText = createNoComparisonDiffMessage(
+                                comparisonTitle,
+                                generatedComparison.noComparisonMessage).toText();
                         modlistDiffFuture = uploadModlistDiff(noComparisonText);
                     } else {
                         ModListDiff modListDiff = comparison.createDiff();
@@ -1100,7 +1116,9 @@ public class ControlPanel {
         if (CrashAssistantConfig.getBoolean("modpack_modlist.enabled")
                 && generatedComparison != null
                 && comparison == null) {
-            ModListDiffStringBuilder noComparisonBuilder = createNoComparisonDiffMessage(comparisonTitle);
+            ModListDiffStringBuilder noComparisonBuilder = createNoComparisonDiffMessage(
+                    comparisonTitle,
+                    generatedComparison.noComparisonMessage);
             String noComparisonText = noComparisonBuilder.toText();
             String noComparisonAnsi = noComparisonBuilder.toFormattedString(
                     CrashAssistantConfig.get("generated_message.ansi_block_pattern", false),
@@ -1199,10 +1217,13 @@ public class ControlPanel {
                 .replace("$LINK$", link);
     }
 
-    private static ModListDiffStringBuilder createNoComparisonDiffMessage(String comparisonTitle) {
+    private static ModListDiffStringBuilder createNoComparisonDiffMessage(String comparisonTitle,
+                                                                           String noComparisonMessage) {
         ModListDiffStringBuilder builder = new ModListDiffStringBuilder();
         builder.append(comparisonTitle == null ? "" : comparisonTitle);
-        builder.append(LanguageProvider.getMsgLang("msg.modlist_first_launch"), "blue");
+        builder.append(noComparisonMessage == null
+                ? LanguageProvider.getMsgLang("msg.modlist_first_launch")
+                : noComparisonMessage, "blue");
         return builder;
     }
 
@@ -1285,15 +1306,18 @@ public class ControlPanel {
         private final String title;
         private final String part1;
         private final String part2;
+        private final String noComparisonMessage;
 
         private GeneratedMessageComparison(ModListComparison comparison,
                                            String title,
                                            String part1,
-                                           String part2) {
+                                           String part2,
+                                           String noComparisonMessage) {
             this.comparison = comparison;
             this.title = title;
             this.part1 = part1;
             this.part2 = part2;
+            this.noComparisonMessage = noComparisonMessage;
         }
     }
 

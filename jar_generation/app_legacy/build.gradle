@@ -23,6 +23,13 @@ shadowJar {
 
     archiveClassifier.set('')
 
+    // This artifact is embedded as META-INF/jarjar/app.jar. Keep the
+    // multi-release marker on the nested app only; the enclosing common_config
+    // artifacts must remain ordinary JARs.
+    manifest {
+        attributes('Multi-Release': 'true')
+    }
+
     from(project(':app').layout.buildDirectory.file('libs/app.jar'))
 }
 

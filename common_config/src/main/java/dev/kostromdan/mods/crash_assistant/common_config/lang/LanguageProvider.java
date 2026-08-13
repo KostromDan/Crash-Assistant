@@ -96,7 +96,7 @@ public class LanguageProvider {
     @NoJexl
     public static void updateLang() {
         String selectedLanguage = getCurrentLang();
-        if (!Objects.equals(currentLangName, selectedLanguage)) {
+        if (!Objects.equals(currentLangName, selectedLanguage) && STANDALONE_APP) {
             LOGGER.info("Crash Assistant interface language: {}", selectedLanguage);
         }
         currentLangName = selectedLanguage;

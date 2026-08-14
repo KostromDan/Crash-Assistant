@@ -45,8 +45,7 @@ jar {
 	from zipTree("${rootProject.projectDir}/app_common-config_libs/common_config_1_18_2__upper.jar")
 }
 
-def parsedChangelog = file('../changelog.md').text.replaceAll(/\r\n|\r/, '\n').split(/(?:^|\n\n)\S.*?(?:\n\n|$)/)[1].trim() +
-		"\n\n### [See full changelog](https://kostromdan.github.io/Crash-Assistant/changelog.md)"
+def parsedChangelog = rootProject.file('app_common-config_libs/changelog.md').getText('UTF-8')
 
 if (System.getenv("MODRINTH_TOKEN") != null) {
 	modrinth {

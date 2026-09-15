@@ -63,7 +63,7 @@ if (System.getenv("MODRINTH_TOKEN") != null) {
         versionType = release_type
         changelog = parsedChangelog
         uploadFile = tasks.jar
-        gameVersions = ["26.2"]
+        gameVersions = ["26.2", "26.3"]
         loaders = ["forge"]
     }
 }
@@ -79,7 +79,7 @@ if (System.getenv("CF_TOKEN") != null) {
         mainFile.changelogType = "markdown"
         mainFile.releaseType = release_type
 
-        mainFile.addGameVersion("26.2")
+        mainFile.addGameVersion("26.2", "26.3")
         mainFile.addEnvironment("Client")
         mainFile.addModLoader("Forge")
     }

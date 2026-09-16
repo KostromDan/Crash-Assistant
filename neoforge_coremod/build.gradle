@@ -7,7 +7,7 @@ apply plugin: 'net.neoforged.moddev'
 apply plugin: 'idea'
 
 base {
-    archivesName = "CrashAssistant-neoforge-26.2"
+    archivesName = "CrashAssistant-neoforge-26.2-26.3"
 }
 
 neoForge {

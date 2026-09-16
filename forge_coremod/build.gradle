@@ -10,7 +10,7 @@ plugins {
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 base {
-    archivesName = "CrashAssistant-forge-26.2"
+    archivesName = "CrashAssistant-forge-26.2-26.3"
 }
 
 minecraft {

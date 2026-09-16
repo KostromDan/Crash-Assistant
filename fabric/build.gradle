@@ -14,7 +14,7 @@ dependencies {
 }
 
 base {
-	archivesName = "CrashAssistant-${project.name}-26.2"
+	archivesName = "CrashAssistant-${project.name}-26.2-26.3"
 }
 
 processResources {

@@ -1,3 +1,7 @@
+1.11.14:
+
+- 26.3: fixed compatibility with `Control Flex` mod.
+
 1.11.13:
 
 - 26.3 compat.

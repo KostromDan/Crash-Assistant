@@ -1,6 +1,7 @@
 package dev.kostromdan.mods.crash_assistant.common.utils;
 
 import dev.kostromdan.mods.crash_assistant.common_config.communication.ProcessSignalIO;
+import dev.kostromdan.mods.crash_assistant.common_config.loading_utils.JarInJarHelper;
 import dev.kostromdan.mods.crash_assistant.common_config.utils.ClassExistenceChecker;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11C;
@@ -32,7 +33,8 @@ public interface CurrentGPUDetector {
             }
 
             ProcessSignalIO.post("renderer", renderer);
-        } catch (Throwable ignored) {
+        } catch (Throwable e) {
+            JarInJarHelper.LOGGER.error("Failed to get gpu name: ", e);
         }
     }
 

@@ -11,10 +11,16 @@ public interface CurrentGPUDetector {
         try {
             long currentContext = 0L;
             if (ClassExistenceChecker.classExists("org.lwjgl.glfw.GLFW")) {
-                currentContext = GLFW.glfwGetCurrentContext();
+                try {
+                    currentContext = GLFW.glfwGetCurrentContext();
+                } catch (NoSuchMethodError ignored) {
+                    // Control Flex bundles a GLFW shim without glfwGetCurrentContext.
+                    if (ClassExistenceChecker.classExists("org.lwjgl.sdl.SDLVideo")) {
+                        currentContext = getSDLCurrentContext();
+                    }
+                }
             } else if (ClassExistenceChecker.classExists("org.lwjgl.sdl.SDLVideo")) {
-                currentContext = (long) Class.forName("org.lwjgl.sdl.SDLVideo")
-                        .getMethod("SDL_GL_GetCurrentContext").invoke(null);
+                currentContext = getSDLCurrentContext();
             }
             if (currentContext == 0L) {
                 return;
@@ -26,7 +32,12 @@ public interface CurrentGPUDetector {
             }
 
             ProcessSignalIO.post("renderer", renderer);
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
         }
+    }
+
+    private static long getSDLCurrentContext() throws ReflectiveOperationException {
+        return (long) Class.forName("org.lwjgl.sdl.SDLVideo")
+                .getMethod("SDL_GL_GetCurrentContext").invoke(null);
     }
 }

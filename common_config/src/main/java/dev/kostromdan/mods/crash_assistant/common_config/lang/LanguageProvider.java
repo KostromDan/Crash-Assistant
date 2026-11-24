@@ -147,6 +147,7 @@ public class LanguageProvider {
             langFilesInJarNames.add("crash_assistant_localization/de_de.json");
             langFilesInJarNames.add("crash_assistant_localization/en_us.json");
             langFilesInJarNames.add("crash_assistant_localization/ru_ru.json");
+            langFilesInJarNames.add("crash_assistant_localization/uk_ua.json");
             langFilesInJarNames.add("crash_assistant_localization/zh_cn.json");
             langFilesInJarNames.add("crash_assistant_localization/es_es.json");
             langFilesInJarNames.add("crash_assistant_localization/it_it.json");
